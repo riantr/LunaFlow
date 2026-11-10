@@ -1,0 +1,18 @@
+# Build output
+_build/
+
+# Fetched registry modules and the vendored dependency tree
+.repos/
+.mooncakes/
+.moon/
+
+# Tooling and editor scratch
+.arts/
+.codeartsdoer/
+.DS_Store
+Thumbs.db
+
+# Root-level QA scratch only. The pattern is anchored on purpose: a bare
+# `qa/` would also match `scripts/qa/`, and the harness has to be committed.
+# The harnesses write their working directories under `_build/qa/`.
+/qa/

@@ -1,0 +1,817 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/src/app"
+
+// Values
+pub fn array_candidates(String) -> Array[Value]
+
+pub fn basename(String) -> String
+
+pub fn build_cfg(Func) -> Cfg
+
+pub fn build_dep_graph(Array[TraceEvent]) -> DepGraph
+
+pub fn build_funnel(Array[Finding], AbsResult, ProofResult, Array[String]) -> FunnelResult
+
+pub fn build_taint(Array[TraceEvent], Array[Finding]) -> TaintGraph
+
+pub fn candidates_for(String) -> Array[Value]
+
+pub fn cfg_findings(Cfg) -> Array[Finding]
+
+pub fn cfg_label_counts(Cfg) -> Map[String, Int32]
+
+pub fn cfg_mermaid(Cfg) -> String
+
+pub fn check_contracts(ModuleAst, Array[String]) -> ProofResult
+
+pub fn clean(Value) -> Val
+
+pub fn code_span(String) -> String
+
+pub fn compare_versions(String, String) -> Int32
+
+pub fn contract_above(String, String, Int32) -> Contract
+
+pub fn count_calls(Func) -> Int32
+
+pub fn count_occurrences(String, String) -> Int32
+
+pub fn critical_functions(Array[Finding]) -> Array[String]
+
+pub fn dirname(String) -> String
+
+pub fn double_candidates() -> Array[Value]
+
+pub async fn fetch_module(Coord, String) -> FetchResult
+
+pub fn find_func(ModuleAst, String) -> Func?
+
+pub fn format_double(Double) -> String
+
+pub fn funcs_with_contracts(ModuleAst) -> Array[String]
+
+pub fn hex4(Int32) -> String
+
+pub fn int_candidates() -> Array[Value]
+
+pub fn is_array_type(String) -> Bool
+
+pub fn is_digit(Char) -> Bool
+
+pub fn is_ident_char(Char) -> Bool
+
+pub fn is_ident_start(Char) -> Bool
+
+pub fn is_numeric_type(String) -> Bool
+
+pub fn is_space(Char) -> Bool
+
+pub fn is_string_type(String) -> Bool
+
+pub fn json_escape(String) -> String
+
+pub fn lex(String) -> Array[Tok]
+
+pub async fn load_module(String, String, String, Int32) -> (ModuleAst, ScanStats)
+
+pub fn md_escape(String) -> String
+
+pub fn mermaid_id(String, Int32) -> String
+
+pub fn mermaid_label(String) -> String
+
+pub fn node_text(Map[String, String], DepNode) -> String
+
+pub fn normalize_ws(String) -> String
+
+pub fn parse_cobertura(String, String) -> Coverage
+
+pub fn parse_contract(Array[String], String, Int32) -> Contract
+
+pub fn parse_coord(String) -> Coord?
+
+pub fn parse_event_tag(String) -> EventKind?
+
+pub fn parse_file(String, String) -> SourceFile
+
+pub fn parse_int(String, Int32) -> Int32
+
+pub fn parse_manifest(String) -> Manifest
+
+pub fn parse_manifest_version(String) -> String
+
+pub fn parse_spec_expr(String, String, Int32) -> Expr?
+
+pub fn path_join(String, String) -> String
+
+pub fn pct(Int32, Int32) -> String
+
+pub fn proof_counts(Array[VC]) -> (Int32, Int32, Int32)
+
+pub fn read_line_at(Array[String], Int32) -> String
+
+pub fn render_args(Array[Expr]) -> String
+
+pub fn render_report(ReportInput) -> String
+
+pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
+
+pub fn run_function(Func, Map[String, Func], RunOptions, Int32) -> RunResult
+
+pub fn run_function_by_name(ModuleAst, String, RunOptions) -> RunResult
+
+pub fn run_module(ModuleAst, RunOptions) -> RunResult
+
+pub fn safe_stem(String) -> String
+
+pub fn slice_graph(DepGraph, ModuleAst, String, SliceDirection, Int32) -> SliceResult
+
+pub fn slice_mermaid(SliceResult, Int32) -> String
+
+pub fn sort_strings(Array[String]) -> Array[String]
+
+pub fn split_commas(String) -> Array[String]
+
+pub fn split_lines(String) -> Array[String]
+
+pub fn stmt_index(ModuleAst) -> Map[String, String]
+
+pub fn string_candidates() -> Array[Value]
+
+pub fn strip_ext(String) -> String
+
+pub fn synthesize(Func, Int32) -> Array[InputSet]
+
+pub fn taint_mermaid(TaintGraph, Int32) -> String
+
+pub fn tainted_value(Value) -> Val
+
+pub fn truncate(String, Int32) -> String
+
+pub fn unique_findings(Array[Finding]) -> Array[Finding]
+
+pub fn validate_mermaid(String) -> Array[String]
+
+pub fn version_parts(String) -> Array[Int32]
+
+// Errors
+
+// Types and methods
+pub struct AbsCell {
+  v : AbsVal
+  t : TaintMode
+}
+pub fn AbsCell::new(AbsVal, TaintMode) -> Self
+
+pub struct AbsContext {
+  fn_name : String
+  file : String
+  findings : Array[Finding]
+  ranges : Map[String, AbsRange]
+  mut steps : Int32
+  max_steps : Int32
+}
+
+pub struct AbsRange {
+  mut lo : Double
+  mut hi : Double
+  mut seen : Int32
+}
+
+pub struct AbsResult {
+  findings : Array[Finding]
+  ranges : Map[String, AbsRange]
+  functions : Int32
+  steps : Int32
+  iterations : Int32
+}
+
+pub struct AbsState {
+  env : Map[String, AbsCell]
+}
+pub fn AbsState::new() -> Self
+
+pub(all) enum AbsVal {
+  ABottom
+  AInt(Int32, Int32)
+  ADouble(Double, Double)
+  ABool(Bool, Bool)
+  AStr(Array[String])
+  AArr(Int32, Int32)
+  ATuple(Array[AbsVal])
+  ATop
+}
+pub fn AbsVal::code(Self) -> String
+
+#derive(Eq)
+pub(all) enum BinOp {
+  OpAdd
+  OpSub
+  OpMul
+  OpDiv
+  OpMod
+  OpEq
+  OpNe
+  OpLt
+  OpLe
+  OpGt
+  OpGe
+  OpAnd
+  OpOr
+  OpBitAnd
+  OpBitOr
+  OpBitXor
+  OpShl
+  OpShr
+}
+pub fn BinOp::equal(Self, Self) -> Bool
+pub fn BinOp::not_equal(Self, Self) -> Bool
+pub fn BinOp::symbol(Self) -> String
+
+type Builder
+
+pub struct Cfg {
+  fn_name : String
+  file : String
+  nodes : Array[CfgNode]
+  edges : Array[CfgEdge]
+  entry : Int32
+  exit : Int32
+  cyclomatic : Int32
+}
+pub fn Cfg::node(Self, Int32) -> CfgNode?
+
+pub struct CfgEdge {
+  from : Int32
+  to : Int32
+  kind : EdgeKind
+}
+
+pub struct CfgNode {
+  id : Int32
+  kind : NodeKind
+  label : String
+  fn_name : String
+  file : String
+  line : Int32
+  stmt : Int32
+}
+
+pub struct Contract {
+  requires : Array[Expr]
+  ensures : Array[Expr]
+  invariants : Array[Expr]
+  assigns : Array[String]
+  raw : Array[String]
+  errors : Array[String]
+}
+pub fn Contract::empty() -> Self
+pub fn Contract::has_spec(Self) -> Bool
+
+pub struct Coord {
+  author : String
+  name : String
+  version : String
+}
+pub fn Coord::to_string(Self) -> String
+
+pub struct Coverage {
+  hits : Map[String, Map[Int32, Int32]]
+  mut covered : Int32
+  mut total : Int32
+  source : String
+}
+pub fn Coverage::add(Self, String, Int32, Int32) -> Unit
+pub fn Coverage::hits_at(Self, String, Int32) -> Int32?
+pub fn Coverage::new(String) -> Self
+pub fn Coverage::ratio(Self) -> String
+
+pub struct DepEdge {
+  from : String
+  to : String
+  label : String
+}
+
+pub struct DepGraph {
+  nodes : Array[DepNode]
+  edges : Array[DepEdge]
+  index : Map[String, Int32]
+}
+pub fn DepGraph::new() -> Self
+
+pub struct DepNode {
+  key : String
+  fn_name : String
+  file : String
+  line : Int32
+  stmt : Int32
+  mut name : String
+  kind : String
+  mut tainted : Bool
+}
+
+#derive(Eq)
+pub(all) enum EdgeKind {
+  ESeq
+  ETrue
+  EFalse
+  EBack
+}
+pub fn EdgeKind::equal(Self, Self) -> Bool
+pub fn EdgeKind::not_equal(Self, Self) -> Bool
+
+#derive(Eq)
+pub(all) enum EventKind {
+  EvEnter
+  EvDef
+  EvRead
+  EvCond
+  EvCall
+  EvIndex
+  EvAlloc
+  EvLoop
+  EvReturn
+  EvSource
+  EvSink
+  EvAbort
+  EvBudget
+  EvUnsupported
+}
+pub fn EventKind::equal(Self, Self) -> Bool
+pub fn EventKind::not_equal(Self, Self) -> Bool
+pub fn EventKind::tag(Self) -> String
+
+pub struct Expr {
+  span : Span
+  kind : ExprKind
+}
+pub fn Expr::new(Span, ExprKind) -> Self
+pub fn Expr::render(Self) -> String
+pub fn Expr::unknown(Span, String) -> Self
+
+pub(all) enum ExprKind {
+  EInt(Int32)
+  EDouble(Double)
+  EBool(Bool)
+  EString(String)
+  EName(String)
+  EBin(BinOp, Expr, Expr)
+  EUn(UnOp, Expr)
+  ECall(String, Array[Expr])
+  EMethod(Expr, String, Array[Expr])
+  EField(Expr, String)
+  EIndex(Expr, Expr)
+  EArray(Array[Expr])
+  ETuple(Array[Expr])
+  EUnknown(String)
+}
+
+pub struct FetchResult {
+  root : String
+  version : String
+  ok : Bool
+  log : String
+}
+
+#derive(Eq)
+pub struct Finding {
+  kind : FindingKind
+  file : String
+  line : Int32
+  fn_name : String
+  message : String
+  mode : String
+  confidence : Double
+  evidence : String
+}
+pub fn Finding::equal(Self, Self) -> Bool
+pub fn Finding::new(FindingKind, String, Int32, String, String, String, Double, String) -> Self
+pub fn Finding::not_equal(Self, Self) -> Bool
+
+#derive(Eq)
+pub(all) enum FindingKind {
+  FDead
+  FUnreachable
+  FInfinite
+  FTaintIndex
+  FTaintAlloc
+  FRangeViolation
+  FParseGap
+  FBudget
+  FUnsupported
+}
+pub fn FindingKind::code(Self) -> String
+pub fn FindingKind::equal(Self, Self) -> Bool
+pub fn FindingKind::not_equal(Self, Self) -> Bool
+pub fn FindingKind::severity(Self) -> String
+
+pub struct Func {
+  name : String
+  params : Array[Param]
+  ret_ty : String
+  body : Array[Stmt]
+  span : Span
+  file : String
+  is_test : Bool
+  start_line : Int32
+  end_line : Int32
+  mut contract : Contract
+}
+
+pub struct FunnelResult {
+  level1 : Int32
+  level2 : Int32
+  new_level2 : Array[Finding]
+  proved : Int32
+  failed : Int32
+  unknown : Int32
+  critical : Array[String]
+  spec_gaps : Array[String]
+  abstract_functions : Int32
+  abstract_steps : Int32
+}
+
+pub struct InputSet {
+  args : Array[Val]
+}
+
+type Interp
+
+pub struct LineHit {
+  file : String
+  line : Int32
+  hits : Int32
+}
+
+pub struct Manifest {
+  mut name : String
+  mut version : String
+  deps : Array[String]
+  mut target : String
+}
+pub fn Manifest::empty() -> Self
+
+pub(all) struct ModuleAst {
+  coord : String
+  version : String
+  root : String
+  files : Array[SourceFile]
+  manifest_deps : Array[String]
+  manifest_target : String
+}
+pub fn ModuleAst::all_funcs(Self) -> Array[Func]
+pub fn ModuleAst::all_funcs_including_tests(Self) -> Array[Func]
+
+#derive(Eq)
+pub(all) enum NodeKind {
+  NEntry
+  NExit
+  NStmt
+  NBranch
+  NLoop
+  NMerge
+  NDead
+}
+pub fn NodeKind::equal(Self, Self) -> Bool
+pub fn NodeKind::not_equal(Self, Self) -> Bool
+
+type P
+
+pub struct Param {
+  name : String
+  ty : String
+  default : Expr?
+}
+pub fn Param::new(String, String, Expr?) -> Self
+
+pub struct ParseIssue {
+  file : String
+  line : Int32
+  message : String
+}
+
+pub struct ProofResult {
+  vcs : Array[VC]
+  mut functions_checked : Int32
+  mut functions_with_contract : Int32
+  spec_gaps : Array[String]
+}
+pub fn ProofResult::new() -> Self
+
+pub struct RangeStat {
+  mut min : Double
+  mut max : Double
+  mut count : Int32
+  values : Array[String]
+}
+pub fn RangeStat::new() -> Self
+pub fn RangeStat::observe(Self, Double, String) -> Unit
+
+pub struct Ranges {
+  stats : Map[String, RangeStat]
+  sites : Map[String, String]
+}
+pub fn Ranges::get(Self, String, String) -> RangeStat?
+pub fn Ranges::key(String, String) -> String
+pub fn Ranges::merge_from(Self, Self) -> Unit
+pub fn Ranges::new() -> Self
+pub fn Ranges::observe(Self, String, String, Double, String, String) -> Unit
+pub fn Ranges::site(Self, String, String) -> String
+
+pub(all) struct ReportInput {
+  coord : String
+  version : String
+  pinning : String
+  root : String
+  target : String
+  deps : Array[String]
+  files : Int32
+  funcs : Int32
+  stmts : Int32
+  unsupported : Int32
+  issues : Int32
+  cfgs : Array[Cfg]
+  cfg_findings : Array[Finding]
+  run : RunResult
+  taint : TaintGraph
+  slices : Array[SliceResult]
+  coverage : Coverage?
+  opts : ReportOptions
+  elapsed_ms : Int32
+  level : Int32
+  funnel : FunnelResult?
+  abstract : AbsResult?
+  proof : ProofResult?
+}
+
+pub(all) struct ReportOptions {
+  max_cfg : Int32
+  max_taint_nodes : Int32
+  max_slice_nodes : Int32
+  max_path_events : Int32
+}
+pub fn ReportOptions::default() -> Self
+
+pub(all) struct RunOptions {
+  trials : Int32
+  max_steps : Int32
+  max_depth : Int32
+  max_functions : Int32
+  entry_filter : String
+}
+pub fn RunOptions::default() -> Self
+
+pub struct RunResult {
+  events : Array[TraceEvent]
+  findings : Array[Finding]
+  ranges : Ranges
+  steps : Int32
+  trials : Int32
+  functions_run : Int32
+  functions_skipped : Array[String]
+}
+
+pub struct ScanStats {
+  mut files : Int32
+  mut funcs : Int32
+  mut stmts : Int32
+  mut unsupported : Int32
+  mut issues : Int32
+  skipped_files : Array[String]
+}
+pub fn ScanStats::new() -> Self
+pub fn ScanStats::parse_rate(Self) -> Double
+
+pub(all) enum Signal {
+  Normal
+  Returned(Val)
+  BreakLoop
+  ContinueLoop
+}
+
+#derive(Eq)
+pub(all) enum SliceDirection {
+  SliceBackward
+  SliceForward
+}
+pub fn SliceDirection::code(Self) -> String
+pub fn SliceDirection::equal(Self, Self) -> Bool
+pub fn SliceDirection::not_equal(Self, Self) -> Bool
+
+pub struct SliceEdge {
+  from : String
+  to : String
+  label : String
+}
+
+pub struct SliceNode {
+  key : String
+  fn_name : String
+  file : String
+  line : Int32
+  text : String
+  kind : String
+  depth : Int32
+}
+
+pub struct SliceResult {
+  criterion : String
+  direction : SliceDirection
+  nodes : Array[SliceNode]
+  edges : Array[SliceEdge]
+}
+pub fn SliceResult::add(Self, SliceNode) -> Unit
+pub fn SliceResult::has(Self, String) -> Bool
+pub fn SliceResult::new(String, SliceDirection) -> Self
+
+pub struct SourceFile {
+  path : String
+  lines : Array[String]
+  funcs : Array[Func]
+  issues : Array[ParseIssue]
+  mut parsed_stmts : Int32
+  mut unsupported_stmts : Int32
+}
+pub fn SourceFile::new(String, String) -> Self
+
+pub struct Span {
+  file : String
+  start_line : Int32
+  start_col : Int32
+  end_line : Int32
+  end_col : Int32
+}
+pub fn Span::empty(String) -> Self
+pub fn Span::merge(Self, Self) -> Self
+pub fn Span::new(String, Int32, Int32, Int32, Int32) -> Self
+pub fn Span::to_string(Self) -> String
+
+pub struct Stmt {
+  id : Int32
+  span : Span
+  kind : StmtKind
+  text : String
+}
+pub fn Stmt::new(Int32, Span, StmtKind, String) -> Self
+
+pub(all) enum StmtKind {
+  SLet(String, String, Expr)
+  SAssign(Expr, Expr)
+  SAssignOp(BinOp, Expr, Expr)
+  SIf(Expr, Array[Stmt], Array[Stmt])
+  SWhile(Expr, Array[Stmt])
+  SFor(String, Expr, Expr, Expr, Array[Stmt])
+  SForIn(String, Expr, Array[Stmt])
+  SReturn(Expr?)
+  SBreak
+  SContinue
+  SExpr(Expr)
+  SBlock(Array[Stmt])
+  STry(Array[Stmt])
+  SUnsupported(String)
+}
+
+pub struct TaintEdge {
+  from : Int32
+  to : Int32
+  label : String
+}
+
+pub struct TaintGraph {
+  nodes : Array[TaintNode]
+  edges : Array[TaintEdge]
+  sinks : Array[Finding]
+}
+pub fn TaintGraph::add_edge(Self, Int32, Int32, String) -> Unit
+pub fn TaintGraph::add_node(Self, TaintNodeKind, String, String, String, Int32) -> Int32
+pub fn TaintGraph::new() -> Self
+
+#derive(Eq)
+pub(all) enum TaintMode {
+  TClean
+  TMaybe
+  TTainted
+}
+pub fn TaintMode::code(Self) -> String
+pub fn TaintMode::equal(Self, Self) -> Bool
+pub fn TaintMode::join(Self, Self) -> Self
+pub fn TaintMode::not_equal(Self, Self) -> Bool
+
+pub struct TaintNode {
+  id : Int32
+  kind : TaintNodeKind
+  label : String
+  fn_name : String
+  file : String
+  line : Int32
+}
+
+#derive(Eq)
+pub(all) enum TaintNodeKind {
+  TSource
+  TStep
+  TSink
+}
+pub fn TaintNodeKind::code(Self) -> String
+pub fn TaintNodeKind::equal(Self, Self) -> Bool
+pub fn TaintNodeKind::not_equal(Self, Self) -> Bool
+
+pub struct Tok {
+  kind : TokKind
+  text : String
+  line : Int32
+  col : Int32
+}
+pub fn Tok::is_ident(Self) -> Bool
+pub fn Tok::is_text(Self, String) -> Bool
+
+#derive(Eq)
+pub(all) enum TokKind {
+  TOk
+  TIdent
+  TInt
+  TDouble
+  TString
+  TChar
+  TOp
+  TNewline
+  TEOF
+}
+pub fn TokKind::equal(Self, Self) -> Bool
+pub fn TokKind::not_equal(Self, Self) -> Bool
+
+pub struct TraceEvent {
+  kind : EventKind
+  fn_name : String
+  file : String
+  line : Int32
+  stmt : Int32
+  name : String
+  value : String
+  tainted : Bool
+  trial : Int32
+  detail : String
+}
+pub fn TraceEvent::new(EventKind, String, String, Int32, Int32, String, String, Bool, Int32, String) -> Self
+
+pub(all) enum Tri {
+  TriTrue
+  TriFalse
+  TriUnknown
+}
+
+#derive(Eq)
+pub(all) enum UnOp {
+  UnNeg
+  UnNot
+}
+pub fn UnOp::equal(Self, Self) -> Bool
+pub fn UnOp::not_equal(Self, Self) -> Bool
+
+pub struct VC {
+  fn_name : String
+  kind : String
+  file : String
+  line : Int32
+  goal : String
+  status : VCStatus
+  detail : String
+}
+
+#derive(Eq)
+pub(all) enum VCStatus {
+  VCProved
+  VCFailed
+  VCUnknown
+}
+pub fn VCStatus::code(Self) -> String
+pub fn VCStatus::equal(Self, Self) -> Bool
+pub fn VCStatus::not_equal(Self, Self) -> Bool
+
+pub struct Val {
+  v : Value
+  tainted : Bool
+}
+pub fn Val::new(Value, Bool) -> Self
+
+pub(all) enum Value {
+  VInt(Int32)
+  VDouble(Double)
+  VBool(Bool)
+  VStr(String)
+  VChar(Char)
+  VUnit
+  VArr(Array[Value])
+  VTuple(Array[Value])
+  VUnknown
+}
+pub fn Value::bool_of(Self) -> Bool?
+pub fn Value::len_of(Self) -> Int32?
+pub fn Value::numeric(Self) -> Double?
+pub fn Value::repr(Self) -> String
+
+type WalkState
+
+// Type aliases
+
+// Traits

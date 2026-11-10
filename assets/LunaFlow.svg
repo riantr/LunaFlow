@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-labelledby="title desc">
+  <title id="title">LunaFlow</title>
+  <desc id="desc">A flow mark: a green start node, a purple decision diamond, blue and pink branches through circular nodes into blue and yellow process nodes, merging at a knot above the LunaFlow wordmark.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.55" stop-color="#111827"/>
+      <stop offset="1" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="startFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c8e6c9"/>
+      <stop offset="1" stop-color="#8bc34a"/>
+    </linearGradient>
+    <linearGradient id="blueFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#90caf9"/>
+      <stop offset="1" stop-color="#42a5f5"/>
+    </linearGradient>
+    <linearGradient id="yellowFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff59d"/>
+      <stop offset="1" stop-color="#ffca28"/>
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect width="640" height="640" rx="120" fill="url(#bg)"/>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M320 132 L320 172" stroke="#94a3b8" stroke-width="7" marker-end="url(#arrow)"/>
+    <path d="M292 236 C260 268 218 284 190 296" stroke="#42a5f5" stroke-width="7" marker-end="url(#arrow)"/>
+    <path d="M348 236 C380 268 422 284 450 296" stroke="#ec407a" stroke-width="7" marker-end="url(#arrow)"/>
+    <path d="M190 332 C190 352 190 362 190 372" stroke="#42a5f5" stroke-width="7" marker-end="url(#arrow)"/>
+    <path d="M450 332 C450 352 450 362 450 372" stroke="#ec407a" stroke-width="7" marker-end="url(#arrow)"/>
+    <path d="M236 404 C270 424 288 436 306 448" stroke="#42a5f5" stroke-width="7" marker-end="url(#arrow)"/>
+    <path d="M404 404 C370 424 352 436 334 448" stroke="#ec407a" stroke-width="7" marker-end="url(#arrow)"/>
+    <path d="M320 512 L320 556" stroke="#c62828" stroke-width="6"/>
+    <path d="M320 556 L300 590" stroke="#c62828" stroke-width="4"/>
+    <path d="M320 556 L340 590" stroke="#c62828" stroke-width="4"/>
+    <path d="M320 556 L320 596" stroke="#c62828" stroke-width="4"/>
+  </g>
+
+  <g filter="url(#softGlow)">
+    <rect x="250" y="80" width="140" height="52" rx="26" fill="url(#startFill)" stroke="#33691e" stroke-width="3"/>
+    <path d="M320 172 L380 214 L320 256 L260 214 Z" fill="#9575cd" stroke="#4527a0" stroke-width="3"/>
+    <circle cx="190" cy="312" r="20" fill="#42a5f5" stroke="#1565c0" stroke-width="3"/>
+    <circle cx="450" cy="312" r="20" fill="#ec407a" stroke="#ad1457" stroke-width="3"/>
+    <rect x="120" y="372" width="140" height="56" rx="16" fill="url(#blueFill)" stroke="#1565c0" stroke-width="3"/>
+    <rect x="380" y="372" width="140" height="56" rx="16" fill="url(#yellowFill)" stroke="#f57f17" stroke-width="3"/>
+  </g>
+
+  <g transform="translate(320 480) rotate(45)">
+    <rect x="-26" y="-26" width="52" height="52" rx="6" fill="#e53935" stroke="#8e0000" stroke-width="2"/>
+    <rect x="-19" y="-19" width="38" height="38" rx="4" fill="none" stroke="#ffcdd2" stroke-width="2"/>
+  </g>
+
+  <text x="320" y="612" text-anchor="middle" fill="#f1f5f9" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="2">LunaFlow</text>
+</svg>

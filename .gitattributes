@@ -1,0 +1,24 @@
+# The line endings of the source files are the repository's business, not the
+# clone's. A clone must not depend on the cloner's `core.autocrlf` to
+# reproduce the tree, because the release gate (`moon fmt --check`) and the
+# verification scripts under `scripts/` both read the files as they are.
+#
+# This matters on Windows: `core.autocrlf=true` is set in the system Git
+# configuration, so without these rules a fresh clone would check the source
+# out with CRLF and the formatter would disagree with the committed bytes.
+
+*.mbt    text eol=lf
+*.mod    text eol=lf
+moon.pkg text eol=lf
+*.md     text eol=lf
+*.py     text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.toml   text eol=lf
+*.mjs    text eol=lf
+*.feature text eol=lf
+*.json   text eol=lf
+*.jsonl  text eol=lf
+*.txt    text eol=lf
+LICENSE  text eol=lf
+.gitattributes text eol=lf

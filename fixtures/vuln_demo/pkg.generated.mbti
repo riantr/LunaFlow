@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/fixtures/vuln_demo"
+
+// Values
+pub fn classify(Int32) -> Int32
+
+pub fn copy_prefix(Array[Int32], Int32) -> Int32
+
+pub fn double(Int32) -> Int32
+
+pub fn get_checked(Array[Int32], Int32) -> Int32
+
+pub fn get_negative(Array[Int32], Int32) -> Int32
+
+pub fn get_unsafe(Array[Int32], Int32) -> Int32
+
+pub fn lookup(Array[Int32], Int32) -> Int32
+
+pub fn make_window(Int32) -> Array[Int32]
+
+pub fn parse_len(String) -> Int32
+
+pub fn spin() -> Int32
+
+pub fn sum_to(Int32) -> Int32
+
+pub fn unreachable_demo(Int32) -> Int32
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,125 @@
+name: check
+
+run-name: check ${{ github.ref_name }}
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: 1
+      # The typos release the gate was verified against locally. The pin has to
+      # match the version that passed here, or the gate is a different gate.
+      TYPOS_VERSION: v1.50.3
+      # The toolchain the source is written against. `moon fmt --check` is
+      # sensitive to the formatter of the version, so the gate has to run the
+      # pinned one: installing "latest" would make the release depend on
+      # whatever the toolchain does that week.
+      MOON_VERSION: 0.1.20261102
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MoonBit
+        run: |
+          # The MoonBit CDN only serves the "latest" binaries: every
+          # versioned path answers 403, so the toolchain cannot be pinned
+          # from here. The version check below is therefore a policy about
+          # what the runner found, not a download.
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: MoonBit version
+        run: |
+          moon version --all
+          moonrun --version
+          installed="$(moon version --all | head -1 | awk '{print $2}')"
+          echo "MoonBit $installed (the gate was verified against $MOON_VERSION)"
+          oldest="$(printf '%s\n%s\n' "$MOON_VERSION" "$installed" | sort -V | head -1)"
+          if [ "$oldest" != "$MOON_VERSION" ]; then
+            echo "::error::MoonBit $installed is OLDER than the verified $MOON_VERSION; the source may need a newer toolchain."
+            exit 1
+          fi
+          if [ "$installed" != "$MOON_VERSION" ]; then
+            echo "::warning::MoonBit $installed is NEWER than the verified $MOON_VERSION. Every gate below has to pass as it is; if the formatter changed, `moon fmt --check` is where that shows up."
+          fi
+
+      # Refresh the registry metadata before anything else, so the dependency
+      # check below reads a current index.
+      - name: Update dependencies
+        run: moon update
+
+      - name: Check the pinned dependency is the registry latest
+        run: |
+          # `moon update` refreshes the index; it does NOT change the pin. The
+          # pin is what the gate and the release have to agree with, so it is
+          # checked against the registry here and reported when it drifts.
+          pinned="$(awk -F'"' '/moonbitlang\/async@/ { print $2; exit }' moon.mod)"
+          latest="$(curl -fsSL https://mooncakes.io/api/v0/modules/moonbitlang/async | python3 -c 'import json,sys; print(json.load(sys.stdin)["latest_version"])')"
+          echo "pinned: $pinned   registry latest: $latest"
+          if [ "$pinned" != "$latest" ]; then
+            echo "::warning::moonbitlang/async is pinned at $pinned but the registry latest is $latest. Bump it with 'moon add --upgrade moonbitlang/async@$latest' and re-run the gate before releasing."
+          fi
+
+      # NATIVE ONLY. The module declares `supported_targets = "+native"`, and
+      # `moon check --target wasm` fails with "does not support target
+      # backend 'wasm'". There is no second backend to check.
+      #
+      # No --deny-warn either: 133 warnings are outstanding (the deprecated
+      # `Map::new()` calls, the `test_unqualified_package` notices in the
+      # tests, and a handful of unused values). They are catalogued as a
+      # finding in docs/qa/REPORT.md, not hidden behind a flag.
+      - name: Check package (native)
+        run: moon check --target native
+
+      - name: Test package (native)
+        run: moon test src/app --target native
+
+      - name: Check formatting
+        run: moon fmt --check
+
+      - name: Build the CLI
+        run: moon build src/cli --target native
+
+      - name: Download typos
+        run: curl -LsSf https://github.com/crate-ci/typos/releases/download/$TYPOS_VERSION/typos-$TYPOS_VERSION-x86_64-unknown-linux-musl.tar.gz | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"
+
+      - name: Check typos
+        run: typos
+
+      # The committed artefacts, validated against the pinned file names.
+      - name: Verify the committed reports
+        run: node scripts/verify.mjs
+
+      # The QA harness. These are the same scripts and the same thresholds the
+      # README publishes, so a green run here is the claim in the README.
+      - name: Acceptance scenarios (Gherkin)
+        run: node scripts/qa/gherkin.mjs
+
+      - name: End-to-end runs and determinism
+        run: node scripts/qa/e2e.mjs
+
+      - name: Robustness corpus
+        run: node scripts/qa/fuzz.mjs
+
+      - name: Output confinement
+        run: node scripts/qa/path_traversal.mjs
+
+      - name: Nesting degradation
+        run: node scripts/qa/deep_nesting_probe.mjs
+
+      - name: Vendored-tree isolation
+        run: node scripts/qa/vendor_isolation.mjs

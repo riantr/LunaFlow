@@ -1,0 +1,23 @@
+{
+  "module": "riantr/moonbit_static_analysis@latest",
+  "version": "0.4.43",
+  "report": "reports/riantr_moonbit_static_analysis@latest_0.4.43.md",
+  "files": 164,
+  "functions": 1953,
+  "statements": 14505,
+  "unsupported_statements": 399,
+  "trace_events": 27785,
+  "steps": 5004,
+  "elapsed_ms": 998,
+  "dead_code": 48,
+  "unreachable": 0,
+  "infinite_loop": 0,
+  "taint_sinks": 103,
+  "range_vars": 65,
+  "level": 3,
+  "abstract_findings": 47,
+  "vcs_proved": 0,
+  "vcs_failed": 0,
+  "vcs_unknown": 0,
+  "slices": 1
+}

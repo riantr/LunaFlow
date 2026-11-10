@@ -1,0 +1,39 @@
+# Configuration for https://github.com/crate-ci/typos
+#
+# Run with `typos` (cargo install typos-cli). The CI gate runs it before the
+# publish, because a spelling failure has been the real blocker in more than
+# one release pipeline.
+
+[files]
+extend-exclude = [
+  # Build output and the fetched/vendored trees.
+  "_build/",
+  ".repos/",
+  ".mooncakes/",
+  # The committed report artefacts. They are generated, and they quote the
+  # ANALYSED module's source verbatim -- including identifiers that are not
+  # English words (`iy` in doubleML's `lpq.mbt`, `propert` in a static
+  # analysis snippet). Correcting them would falsify the artefact: the
+  # report has to be byte-identical to what the analyzer produced.
+  "reports/",
+  # Binary and generated payloads.
+  "*.png",
+  "*.jsonl",
+]
+
+[default.extend-words]
+# The project, the registry and the ecosystem around them.
+moonbit = "moonbit"
+MoonBit = "MoonBit"
+mooncakes = "mooncakes"
+mooncake = "mooncake"
+riantr = "riantr"
+mbti = "mbti"
+mermaid = "mermaid"
+LunaFlow = "LunaFlow"
+lunaflow = "lunaflow"
+
+# Tokeniser false positives. These are ordinary English words, not
+# misspellings, and there is nothing to correct in the source:
+#   unparseable -- "skips unparseable statements", in the design record
+unparseable = "unparseable"

@@ -1,0 +1,17 @@
+// LunaFlow command line entry point
+//
+// The library package is imported by its full path inside the module. A
+// `moon.pkg` import takes **no version**: the module's own version is pinned
+// in `moon.mod`, and a version here is an import the toolchain cannot find.
+import {
+  "riantr/LunaFlow/src/app",
+  "moonbitlang/core/env",
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+}
+
+pkgtype(kind: "executable")
+
+options(
+  "allow-experimental-packages": [ "moonbitlang/core/async" ],
+)

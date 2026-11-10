@@ -1,0 +1,23 @@
+{
+  "module": "local/module",
+  "version": "0.0.0",
+  "report": "reports/local_module_0.0.0.md",
+  "files": 1,
+  "functions": 12,
+  "statements": 36,
+  "unsupported_statements": 0,
+  "trace_events": 889,
+  "steps": 158,
+  "elapsed_ms": 5,
+  "dead_code": 3,
+  "unreachable": 1,
+  "infinite_loop": 1,
+  "taint_sinks": 28,
+  "range_vars": 8,
+  "level": 3,
+  "abstract_findings": 11,
+  "vcs_proved": 2,
+  "vcs_failed": 1,
+  "vcs_unknown": 3,
+  "slices": 1
+}
