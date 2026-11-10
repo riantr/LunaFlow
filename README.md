@@ -126,7 +126,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.2
+moon add riantr/LunaFlow@0.1.3
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -134,7 +134,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.2",
+  "riantr/LunaFlow@0.1.3",
 }
 ```
 
@@ -185,7 +185,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.2](https://mooncakes.io/docs/riantr/LunaFlow@0.1.2).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.3](https://mooncakes.io/docs/riantr/LunaFlow@0.1.3).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -394,7 +394,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/verify_published.mjs 0.1.1` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.3` | **4 passed, 0 failed** |
 `moon 0.1.20261102`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
