@@ -140,6 +140,74 @@ fn quoted_value(line : String) -> String? {
 }
 
 ///|
+/// The versions a `moon fetch` log names, in the order they appear.
+///
+/// The log is free-form and its shape differs between platforms, so this does
+/// not try to parse a sentence. It looks for the module NAME followed by a
+/// path separator -- `/` or `\`, because the separator is a property of the
+/// platform -- and takes the version-shaped token that follows: the name of
+/// the directory the fetch wrote.
+///
+/// The name is matched without the author prefix on purpose. The Windows log
+/// prints the resolved path with backslashes
+/// (`.repos\riantr\moonbit_doubleML\0.164.64`), so a marker built from the
+/// coordinate `riantr/moonbit_doubleML/` never matches there.
+///
+/// MEASURED (the Linux CI runner): the toolchain prints a download block
+/// whose lines contain "Success" and "Successfully fetched
+/// riantr/moonbit_doubleML@0.164.64", and the previous scan -- to the next
+/// " to " -- turned that into the version
+///
+///     0.164.64\nSuccess\nSuccessfully fetched riantr/moonbit_doubleML@0.164.64
+///
+/// which names no directory. The analyzer then read an empty tree and
+/// reported 0 statements, 0 coverage and 0 findings with exit 0: a green
+/// run over nothing. The token is cut at the first character that cannot be
+/// part of a version instead, so it is "0.164.64".
+pub fn log_version_candidates(log : String, name : String) -> Array[String] {
+  let out : Array[String] = []
+  for line in log.split("\n") {
+    let mut rest = line
+    let mut hops = 0
+    while hops < 16 {
+      hops = hops + 1
+      match rest.find(name) {
+        None => break
+        Some(i) => {
+          let after = rest[i + name.length():].to_owned()
+          // The name has to be followed by a path separator. The coordinate
+          // form (`name@version`) is not a directory and is skipped.
+          if after.has_prefix("/") || after.has_prefix("\\") {
+            let token = version_token(after[1:].to_owned())
+            if token != "" && not(out.contains(token)) {
+              out.push(token)
+            }
+          }
+          rest = after
+        }
+      }
+    }
+  }
+  out
+}
+
+///|
+/// The leading version-shaped token of `s`: digits and dots, up to the first
+/// character that cannot be part of a version.
+fn version_token(s : String) -> String {
+  let buf = StringBuilder::new()
+  for c in s {
+    let code = c.to_int()
+    if (code >= 48 && code <= 57) || c == '.' {
+      buf.write_char(c)
+    } else {
+      break
+    }
+  }
+  buf.to_string()
+}
+
+///|
 pub struct FetchResult {
   root : String
   version : String
@@ -162,34 +230,35 @@ pub async fn fetch_module(coord : Coord, cwd : String) -> FetchResult {
     _ => (1, "", "failed to spawn moon")
   }
   let log = (out.text() catch { _ => "" }) + (err.text() catch { _ => "" })
-  let mut version = if pinned { coord.version } else { "" }
-  let marker = spec + "/"
-  match log.find(marker) {
-    Some(i) => {
-      let rest = log[i + marker.length():].to_owned()
-      match rest.find(" to ") {
-        Some(j) => if version == "" { version = rest[:j].to_owned() }
-        None => ()
-      }
-    }
-    None => ()
-  }
   let base = path_join(
     path_join(path_join(cwd, ".repos"), coord.author),
     coord.name,
   )
+  // THE FILESYSTEM IS THE AUTHORITY ON THE VERSION. The log only names a
+  // candidate, and a candidate is only accepted when the directory it names
+  // really exists. Without that check a log-shaped quirk becomes an analysed
+  // tree of zero files that still exits 0.
+  let versions = @fs.readdir(base, sort=true) catch { _ => [] }
+  let mut best = ""
+  for v in versions {
+    if best == "" || compare_versions(v, best) > 0 {
+      best = v
+    }
+  }
+  let mut version = if pinned { coord.version } else { "" }
   if version == "" {
-    let versions = @fs.readdir(base, sort=true) catch { _ => [] }
-    let mut best = ""
-    for v in versions {
-      if best == "" || compare_versions(v, best) > 0 {
-        best = v
+    for candidate in log_version_candidates(log, coord.name) {
+      if @fs.exists(path_join(base, candidate)) {
+        version = candidate
+        break
       }
     }
-    version = best
+    if version == "" {
+      version = best
+    }
   }
   let root = if version == "" { base } else { path_join(base, version) }
-  { root, version, ok: code == 0 && version != "", log, }
+  { root, version, ok: code == 0 && version != "" && @fs.exists(root), log, }
 }
 
 ///|

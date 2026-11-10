@@ -74,6 +74,8 @@ pub fn lex(String) -> Array[Tok]
 
 pub async fn load_module(String, String, String, Int32) -> (ModuleAst, ScanStats)
 
+pub fn log_version_candidates(String, String) -> Array[String]
+
 pub fn md_escape(String) -> String
 
 pub fn mermaid_id(String, Int32) -> String
