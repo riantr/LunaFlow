@@ -126,7 +126,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.1
+moon add riantr/LunaFlow@0.1.2
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -134,7 +134,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.1",
+  "riantr/LunaFlow@0.1.2",
 }
 ```
 
@@ -185,7 +185,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.1](https://mooncakes.io/docs/riantr/LunaFlow@0.1.1).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.2](https://mooncakes.io/docs/riantr/LunaFlow@0.1.2).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -394,7 +394,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-
+| `node scripts/qa/verify_published.mjs 0.1.1` | **4 passed, 0 failed** |
 `moon 0.1.20261102`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
@@ -420,9 +420,11 @@ runs against the same thresholds.
 Cobertura report), `dup.mjs` (clone detection), `load.mjs` (peak memory and
 parallel throughput), `depth_sweep.mjs` (the nesting-degradation curve),
 `vendor_isolation.mjs` (a `--dir` scan must not ingest the vendored dependency
-tree) and `cli_resolver.mjs` (the built CLI has to be found under either name
-the toolchain produces). The report for the last deep QA pass is
-`docs/qa/REPORT.md`.
+tree), `cli_resolver.mjs` (the built CLI has to be found under either name
+the toolchain produces) and `verify_published.mjs` (install the **published**
+version from a clean consumer and call its API — the check that a green gate
+cannot give you, because the gate checks the commit and this checks what the
+registry serves). The report for the last deep QA pass is `docs/qa/REPORT.md`.
 
 Two things deliberately **not** claimed. No production-load testing has been
 done, and no comparison against another analyzer on the same workload has been
@@ -529,7 +531,7 @@ condition is unknown rather than guessed.
 
 - `src/cli` — the executable in this module, the command line over the same
   library.
-- `scripts/qa/` — sixteen dependency-free harnesses and tools; ten of them
+- `scripts/qa/` — seventeen dependency-free harnesses and tools; eleven of them
   drive the built binary as a real process against the fixture, the two
   registry modules and a hostile-input corpus.
 - `docs/design.md` — the design record for the implementation in `src/app`.
