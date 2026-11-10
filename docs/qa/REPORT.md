@@ -1,4 +1,4 @@
-# Deep QA report — LunaFlow (`riantr/LunaFlow`) @ 0.1.0
+# Deep QA report — LunaFlow (`riantr/LunaFlow`) @ 0.1.1
 
 Date: 2026-11-10
 Scope: the whole repository in `D:\src\MiniMax\Projects\MoonBit\moonbit_LunaFlow`
@@ -23,7 +23,7 @@ there is no commit history to audit and no diff to review the changes against
 | SAST | ✅ gates green after fixes — 0 errors, 133 warnings (167 at start), `moon fmt --check` exit 0 | `scripts/qa/warn_census.mjs` |
 | DAST | ⚠️ no server to scan; the real surface is *analysing hostile input* → three write/crash/scope defects found and fixed | `scripts/qa/path_traversal.mjs`, `scripts/qa/fuzz.mjs`, `scripts/qa/vendor_isolation.mjs` |
 | 依赖 (dependencies) | ✅ `moonbitlang/async@0.22.9` is the registry latest; Apache-2.0; 3 dead imports removed | mooncakes API + `moon check` |
-| 单元 (unit) | ✅ 33/33 pass (24 before this pass) | `moon test src/app --target native` |
+| 单元 (unit) | ✅ 37/37 pass (24 before this pass) | `moon test src/app --target native` |
 | 集成 (integration) | ✅ pipeline + CLI-vs-library paths green; funnel counters pinned | `pipeline_test.mbt`, `scripts/qa/e2e.mjs` |
 | API | ⚠️ 204 public declarations, 43 consumed by the CLI — the whole engine is `pub` | `pkg.generated.mbti` |
 | 契约 (contract / L3) | ✅ 6 new edge-case tests; 2 real defects found and fixed (`\nothing`, invariant-only functions) | `contract_edges_test.mbt` |
@@ -74,7 +74,7 @@ this session:
 | `depth_sweep.mjs` at depth 5,000 | crash (5,000/2,000) | 254 statements, 1 gap, 1 issue, exit 0 |
 | `moon fmt --check` | exit −1 | exit 0 |
 | `moon check` warnings | 167 | 133 |
-| `moon test src/app` | 24/24 | 33/33 |
+| `moon test src/app` | 24/24 | 37/37 |
 | Gherkin | — (did not exist) | 7/7 |
 | E2E | — (did not exist) | 56/56 |
 | `vendor_isolation.mjs` | 384 files parsed (362 of them foreign) | 1 file parsed, 0 foreign |
@@ -90,6 +90,19 @@ one unsupported statement, which is what `depth_sweep.mjs` now pins:
 | ---: | ---: | ---: | ---: | ---: |
 | 10 / 50 / 100 / 250 | 0 | 11 / 51 / 101 / 251 | 0 | 0 |
 | 256 … 5,000 | 0 | 254 | 1 | 1 |
+
+### Fixed in the release run (found by the Linux CI runner, 2026-11-10)
+
+Three defects surfaced only when the gate ran on the GitHub runner. All three
+produced a **green** result that described nothing, which is why they were
+worth fixing rather than noting: a green result that means nothing is
+indistinguishable from a green result that means something.
+
+| # | Sev | Finding | Evidence | Fix |
+| --- | --- | --- | --- | --- |
+| H3 | High | **The fetched version was scanned out of the `moon fetch` log.** The log is free-form and its shape differs per platform; the version was taken as everything up to the next `" to "`. On Linux that produced `0.164.64\nSuccess\nSuccessfully fetched riantr/moonbit_doubleML@0.164.64` — a name matching no directory. The analyzer then read an empty tree and reported **0 statements, 0 coverage (NaN%), 0 findings, exit 0**. | CI run 42849113293: `doubleML A4: frontend coverage >= 95% — NaN%`, `statements — 0` | `src/app/scan.mbt`: `log_version_candidates` cuts the token at the first character that cannot be part of a version; the module name is matched without the author prefix (the Windows log prints the path with backslashes); a candidate is accepted only when the directory exists. Four tests in `src/app/scan_test.mbt` pin both log shapes. |
+| H4 | Medium | **The harness looked for the built CLI under the wrong name on Linux.** The MoonBit native target names the executable `cli.exe` on *every* platform — on Linux it is an ELF binary with a Windows extension. The resolver picked the name by platform, so the CLI never ran and the failure surfaced three steps later as a missing output file. | CI run 42846198002: `ENOENT .../_build/qa/gherkin/fixture/local_module_0.0.0_summary.json`; the build log shows the artifact path ends in `cli.exe` on the runner | `scripts/qa/cli_bin.mjs`: `resolveCli` tries the names the toolchain actually produces; `requireCli` stops with "missing CLI binary" instead of letting it become a confusing error later; `scripts/qa/cli_resolver.mjs` pins both layouts and the empty case |
+| M11 | Medium | **The vendored-tree regression asserted the wrong thing.** It checked that the report does not contain the string `_build/`, but the report records the analysed root and the harness's scratch directory lives under `_build/`. The assertion failed on the runner while the code was correct. | CI run 42849532063: `FAIL report never mentions _build/` | `scripts/qa/vendor_isolation.mjs` now asserts on ingested *content* (a foreign file name and a foreign function) and that the module's own function *is* present, so the run cannot pass by doing nothing. Checked against a reverted fix: 3 failures without it, none with it. |
 
 ### Registered, not fixed
 

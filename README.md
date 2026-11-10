@@ -5,7 +5,7 @@
 [![mooncakes](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmooncakes.io%2Fapi%2Fv0%2Fmodules%2Friantr%2FLunaFlow&query=%24.version&label=mooncakes&prefix=v)](https://mooncakes.io/docs/riantr/LunaFlow)
 [![release](https://img.shields.io/github/v/release/riantr/LunaFlow)](https://github.com/riantr/LunaFlow/releases)
 [![license](https://img.shields.io/github/license/riantr/LunaFlow)](LICENSE)
-[![tests](https://img.shields.io/badge/tests-33%2F33-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
+[![tests](https://img.shields.io/badge/tests-37%2F37-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
 
 Trace-driven, three-proof-strength control-flow, taint, value-range, slicing and
 contract analysis for MoonBit modules published on
@@ -126,7 +126,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.0
+moon add riantr/LunaFlow@0.1.1
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -134,7 +134,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.0",
+  "riantr/LunaFlow@0.1.1",
 }
 ```
 
@@ -185,7 +185,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.0](https://mooncakes.io/docs/riantr/LunaFlow@0.1.0).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.1](https://mooncakes.io/docs/riantr/LunaFlow@0.1.1).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -216,12 +216,15 @@ possible value. The natural self-check
 moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
 ```
 
-therefore cannot work here, and it fails for two independent reasons. The
-module is not published yet, so the registry has no such coordinate; and
-`moon build src/cli --target wasm` reports *"Package 'riantr/LunaFlow/src/cli'
-does not support target backend 'wasm'. Supported backends: [native]"*. The
-wasm backend also has no process spawning, so the `moon fetch` that resolves a
-registry coordinate could not exist there either.
+therefore cannot work here. MEASURED against the published 0.1.0, it fails
+with *"Prebuilt wasm asset does not exist"*, and the reason is a backend
+constraint: `moon build src/cli --target wasm` reports *"Package
+'riantr/LunaFlow/src/cli' does not support target backend 'wasm'. Supported
+backends: [native]"*. The registry confirms it from the other side — the
+published manifest carries `"supported-targets": "+native"` and
+`has_package: false`, where every wasm-capable sibling module has
+`has_package: true`. The wasm backend also has no process spawning, so the
+`moon fetch` that resolves a registry coordinate could not exist there either.
 
 Even on a wasm-capable build the invocation would have to carry the
 subcommand: `moonx` passes everything after the package coordinate to the
@@ -246,9 +249,22 @@ published from a workstation.
 Before every release the dependency pin is brought to the registry latest —
 `moon add --upgrade moonbitlang/async@<latest>` — and the whole gate is
 re-run against it. `moon update` on its own only refreshes the registry
-index: it leaves `moon.mod` untouched, so a release that trusted it would
-ship against a stale pin. The workflow checks the pin against the registry
-and reports the drift.
+index: it leaves `moon.mod` untouched (MEASURED: exit 0, `moon.mod` byte-for-
+byte unchanged), so a release that trusted it would ship against a stale pin.
+The workflow runs `moon update`, then checks the pin against the registry and
+reports the drift.
+
+### What changed in 0.1.1
+
+**0.1.0 was published, and this release fixes what it exposed.** 0.1.0 carried
+a README that said the module "is not published yet" — a sentence that was
+true when it was written and false the moment the CI published it — and test
+counts from before the CI fixes. The registry serves the README as the
+module's documentation page, so a stale README there is a defect in the
+product, not in the repository.
+
+This release also carries the three defects that the Linux CI runner found in
+0.1.0, which are described below.
 
 ### What changed in 0.1.0
 
@@ -295,6 +311,35 @@ a target literally named `\nothing`; and a function whose only annotation was
 contract was considered absent. The published surface grew by those fixes and
 nothing else changed shape.
 
+**Three more defects surfaced when the release ran on the Linux CI runner**,
+and they are worth naming because each one produced a *green* result that
+meant nothing:
+
+- **The version was scanned out of the `moon fetch` log**, which is free-form
+  text whose shape differs between platforms. On Linux the scan took
+  everything up to the next `" to "` and produced the version
+  `0.164.64\nSuccess\nSuccessfully fetched …` — a name that matches no
+  directory. The analyzer then read an empty tree and reported **0 statements,
+  0 coverage, 0 findings, exit 0**. The filesystem is now the authority: the
+  version is cut at the first character that cannot be part of a version, and
+  a candidate is only accepted when the directory it names really exists.
+- **The harness looked for the built CLI under the wrong name.** The MoonBit
+  native target names the executable `cli.exe` on *every* platform, Linux
+  included, where the file is an ELF binary with a Windows extension. The
+  resolver picked the name by platform, so on the runner the CLI never ran and
+  the failure surfaced three steps later as a missing output file.
+- **The vendored-tree regression asserted the wrong thing.** It checked that
+  the report does not contain the string `_build/`, but the report records the
+  analysed root and the harness's scratch directory lives under `_build/`. It
+  now asserts on ingested *content* — a foreign file name and a foreign
+  function — and it was checked against a reverted fix to prove it can go
+  red.
+
+A green result that describes nothing is worse than a red one, because it is
+indistinguishable from a real one. That is the whole reason the release is
+gated in CI rather than run by hand: the runner is a different machine, and
+these three defects were invisible on the machine that wrote the code.
+
 ### Packages and targets
 
 | Package | Kind | Native | Wasm | Wasm-GC | JS |
@@ -315,7 +360,7 @@ moon.mod                   module metadata (native target)
 src/app/                   14 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, report renderer
-src/app/*_test.mbt         33 tests
+src/app/*_test.mbt         37 tests in 7 files
 src/cli/main.mbt           async native CLI
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
 features/                  acceptance scenarios in Gherkin
@@ -338,8 +383,8 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 133 warnings, 0 errors |
-| `moon test src/app --target native` | **33 passed, 0 failed** |
+| `moon check --target native` | exit 0, 135 warnings, 0 errors |
+| `moon test src/app --target native` | **37 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
@@ -347,7 +392,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
 | `node scripts/qa/path_traversal.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
-| `node scripts/qa/vendor_isolation.mjs` | **10 passed, 0 failed** |
+| `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
+| `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 
 `moon 0.1.20261102`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
@@ -372,9 +418,11 @@ runs against the same thresholds.
 `scripts/qa/` also carries the rest of the deep-QA tooling: `warn_census.mjs`
 (warning triage), `metrics.mjs` (size/complexity plus line coverage from the
 Cobertura report), `dup.mjs` (clone detection), `load.mjs` (peak memory and
-parallel throughput), `depth_sweep.mjs` (the nesting-degradation curve) and
+parallel throughput), `depth_sweep.mjs` (the nesting-degradation curve),
 `vendor_isolation.mjs` (a `--dir` scan must not ingest the vendored dependency
-tree). The report for the last deep QA pass is `docs/qa/REPORT.md`.
+tree) and `cli_resolver.mjs` (the built CLI has to be found under either name
+the toolchain produces). The report for the last deep QA pass is
+`docs/qa/REPORT.md`.
 
 Two things deliberately **not** claimed. No production-load testing has been
 done, and no comparison against another analyzer on the same workload has been
@@ -481,9 +529,9 @@ condition is unknown rather than guessed.
 
 - `src/cli` — the executable in this module, the command line over the same
   library.
-- `scripts/qa/` — eleven dependency-free harnesses that drive the built
-  binary as a real process against the fixture, the two registry modules and a
-  hostile-input corpus.
+- `scripts/qa/` — sixteen dependency-free harnesses and tools; ten of them
+  drive the built binary as a real process against the fixture, the two
+  registry modules and a hostile-input corpus.
 - `docs/design.md` — the design record for the implementation in `src/app`.
 
 Outside this repository: **none that the registry knows about.** The registry
