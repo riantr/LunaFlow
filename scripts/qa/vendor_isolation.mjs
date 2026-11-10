@@ -8,6 +8,18 @@
 // 362 came from the vendored `moonbitlang/async` module. Every finding and
 // every number in that report then described a third party's code.
 //
+// WHAT IS ASSERTED, AND WHY IT IS NOT THE OBVIOUS THING.
+//
+// The obvious assertion -- "the report does not contain the string
+// `_build/`" -- is wrong, and it failed on the Linux CI runner. The report
+// records the analysed ROOT, and the scratch directory this harness builds
+// lives under `_build/`, so the report names `_build/` in the root path
+// without having ingested anything from it.
+//
+// So the assertions are about INGESTED CONTENT, not about path strings: the
+// foreign file has a name and a function that the module's own file does not
+// have, and neither may appear in the report.
+//
 // Usage: node scripts/qa/vendor_isolation.mjs
 
 import { spawnSync } from 'node:child_process';
@@ -29,17 +41,23 @@ const out = resolve(root, '_build', 'qa', 'vendor_isolation', 'out');
 rmSync(work, { recursive: true, force: true });
 rmSync(out, { recursive: true, force: true });
 
+// The module's own source.
 const own = `///|
-pub fn own(x : Int32) -> Int32 {
+pub fn own_source_marker(x : Int32) -> Int32 {
   x + 1
 }
 `;
 
+// The foreign source: the name and the function are the markers.
 const foreign = `///|
-pub fn foreign() -> Int32 {
+pub fn foreign_source_marker() -> Int32 {
   42
 }
 `;
+
+const FOREIGN_FILE = 'foreign_dep.mbt';
+const FOREIGN_FN = 'foreign_source_marker';
+const OWN_FN = 'own_source_marker';
 
 // One real source file, plus one file behind every skipped directory name.
 mkdirSync(join(work, 'src'), { recursive: true });
@@ -50,7 +68,7 @@ const skipDirs = ['.mooncakes', '.repos', '.git', '_build', 'target', 'node_modu
 for (const d of skipDirs) {
   const dir = join(work, d, 'dep', 'src');
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'dep.mbt'), foreign);
+  writeFileSync(join(dir, FOREIGN_FILE), foreign);
 }
 
 const r = spawnSync(
@@ -79,8 +97,18 @@ const md = readdirSync(out).find((f) => f.endsWith('.md'));
 check('one report written', Boolean(md), md ?? '');
 if (md) {
   const text = readFileSync(join(out, md), 'utf8');
+  // The foreign file was not ingested.
+  check('report does not contain the foreign file name', !text.includes(FOREIGN_FILE), '');
+  check('report does not contain the foreign function', !text.includes(FOREIGN_FN), '');
+  // The module's own source WAS ingested, so the run is not a no-op.
+  check('report contains the module own function', text.includes(OWN_FN), '');
+  // Every skipped directory is a directory the walker must not descend into.
   for (const d of skipDirs) {
-    check(`report never mentions ${d}/`, !text.includes(`${d}/`), '');
+    check(
+      `report does not contain a file under ${d}/`,
+      !text.includes(`${d}/${FOREIGN_FILE}`),
+      '',
+    );
   }
 }
 
