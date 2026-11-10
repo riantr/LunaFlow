@@ -4,10 +4,10 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { resolveCli } from './cli_bin.mjs';
+import { requireCli } from './cli_bin.mjs';
 
 const root = process.cwd();
-const exe = resolveCli(root);
+const exe = requireCli(root);
 const base = join(root, '_build', 'qa', 'sweep');
 if (existsSync(base)) rmSync(base, { recursive: true, force: true });
 mkdirSync(join(base, 'mod'), { recursive: true });

@@ -10,10 +10,10 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readdirSync, statSync, rmSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { resolveCli } from './cli_bin.mjs';
+import { requireCli } from './cli_bin.mjs';
 
 const root = process.cwd();
-const exe = resolveCli(root);
+const exe = requireCli(root);
 const base = join(root, '_build', 'qa', 'trav');
 
 const SOURCE = 'pub fn f(x : Int) -> Int {\n  x\n}\n';

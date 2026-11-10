@@ -13,10 +13,10 @@ import {
 } from 'node:fs';
 import { join, relative, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { resolveCli } from './cli_bin.mjs';
+import { requireCli } from './cli_bin.mjs';
 
 const root = process.cwd();
-const exe = resolveCli(root);
+const exe = requireCli(root);
 if (!exists(exe)) {
   console.error('missing CLI binary; run: moon build src/cli --target native');
   process.exit(2);
