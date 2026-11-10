@@ -67,7 +67,11 @@ function check(name, ok, detail = '') {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`);
 }
 
-const add = spawnSync('moon', ['add', 'riantr/LunaFlow'], {
+// The coordinate is PINNED on purpose. A bare `moon add riantr/LunaFlow`
+// resolves to the newest published version, so asking for an older release
+// with it would silently test the newest one instead -- which is how this
+// script managed to report "0.1.1 is not pinned" while testing 0.1.2.
+const add = spawnSync('moon', ['add', `riantr/LunaFlow@${version}`], {
   cwd: dir,
   encoding: 'utf8',
   timeout: 300000,
