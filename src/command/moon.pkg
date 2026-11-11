@@ -1,0 +1,27 @@
+// The COMMAND layer: argument parsing, the analysis run, and the report
+// writing. A LIBRARY, not an entrypoint.
+//
+// The module has two executables -- the root package, which is what `moonx`
+// resolves, and `src/cli`, which is the published CLI coordinate -- and they
+// share this code. Two main packages cannot import each other without a
+// deprecation warning ("Move reusable APIs into a non-main package and keep
+// main packages as entrypoints"), so the reusable part lives here and both
+// entrypoints are thin.
+//
+// The async runtime comes from the toolchain-bundled `moonbitlang/core`
+// module, and `moonbitlang/core/async` is EXPERIMENTAL there: using it has
+// to be acknowledged, or the build refuses it.
+
+import {
+  "riantr/LunaFlow/src/app",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/fs",
+}
+
+options(
+  "allow-experimental-packages": [
+    "moonbitlang/core/async",
+    "moonbitlang/core/async/fs",
+    "moonbitlang/core/async/process",
+  ],
+)

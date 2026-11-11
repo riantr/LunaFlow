@@ -2,18 +2,47 @@
 //
 // The analyzer never compiles the module it analyses: it parses the MoonBit
 // source it is pointed at, executes a model of it, and writes a Markdown
-// report with embedded Mermaid diagrams. That is why the only dependency is
-// `moonbitlang/async`, and why the module is native-only — the async IO,
-// process and filesystem packages it needs do not exist on the other backends.
+// report with embedded Mermaid diagrams.
+//
+// THE ASYNC RUNTIME COMES FROM THE TOOLCHAIN, AND THERE IS NO DEPENDENCY
+// BELOW. The runtime is `moonbitlang/core/async`, part of the
+// `moonbitlang/core` module the toolchain already bundles, so there is no pin
+// here that could disagree with the toolchain that builds the artifact — and
+// that disagreement is exactly what broke releases before, when a pinned
+// runtime and the host's own copy were two different versions.
+//
+// The host ABI MODULE NAME did not change: a wasm import's module name comes
+// from the FFI declaration in the source, and `moonbitlang/core/async`
+// still declares its host externs under the name "moonbitlang/async". What
+// changed is the SET of symbols, and the set got BIGGER. The floor is
+// therefore a TOOLCHAIN now, and it is higher than it was: a host that still
+// carries the standalone `moonbitlang/async` module cannot instantiate this
+// artifact, and the failure is "function import requires a callable" at
+// instantiation rather than at build time. See the README for the measured
+// contract.
+//
+// `moonbitlang/core/async` is still marked EXPERIMENTAL by the core team, so
+// every package that uses it says so in
+// `options("allow-experimental-packages": ...)`. That is the other side of
+// the same trade: a package that ships with the toolchain but is not yet
+// stable.
+//
+// NATIVE AND WASM, NOT JS AND NOT WASM-GC. The analyzer needs the filesystem
+// (it reads the sources it analyses) and process spawning (it runs
+// `moon fetch`), and the async runtime implements both only on native and
+// wasm. On wasm-gc the `fs` and `process` packages have no implementation
+// at all — they compile to nothing, and every call site becomes "value not
+// found in package" — so naming the supported set makes check/test SKIP that
+// backend instead of failing with a wall of errors.
 //
 // The module coordinate is `riantr/LunaFlow`: `riantr` is the author and
-// `LunaFlow` the module. The library package is `riantr/LunaFlow/src/app` and
-// the executable is `riantr/LunaFlow/src/cli`; the two differ because a
-// `moon.pkg` import carries no version and a `moon.mod` import does.
+// `LunaFlow` the module. The library package is `riantr/LunaFlow/src/app`,
+// the CLI is `riantr/LunaFlow/src/cli`, and the module's ROOT package is the
+// executable `moonx` resolves.
 
 name = "riantr/LunaFlow"
 
-version = "0.1.3"
+version = "0.1.4"
 
 // The file with the real content. The registry publishes this file as the
 // module's documentation page.
@@ -42,10 +71,13 @@ keywords = [
 
 description = "Trace-driven three-proof-strength control-flow, taint, value-range, slicing and contract analysis for MoonBit modules, as one Markdown report with Mermaid diagrams"
 
-preferred_target = "native"
+// WASM, not native: the registry publishes ONE artifact per version, and
+// `moonx` runs the WASM one — `moonx --target` accepts no other value. A
+// module whose preferred target is native publishes a native artifact, and
+// `moonx <module>@latest` then fails with "Prebuilt wasm asset does not
+// exist". The native build is still supported and still what the local QA
+// harness runs; it is just not the artifact the registry serves.
 
-supported_targets = "+native"
+preferred_target = "wasm"
 
-import {
-  "moonbitlang/async@0.22.9",
-}
+supported_targets = "+native+wasm"

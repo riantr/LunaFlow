@@ -1,0 +1,33 @@
+// The module's ROOT package: the executable `moonx` resolves.
+//
+// It exists so `moonx riantr/LunaFlow@latest <target>` works without naming
+// a package — an unpinned `moonx <module>` resolves the ROOT package, and
+// with no root executable it fails with "Prebuilt wasm asset does not exist".
+//
+// The root is a thin forwarder: the CLI implementation is in `src/command`,
+// which is a library, because the module has two executables (this one and
+// `src/cli`) and two main packages cannot import each other. Nothing in this
+// module depends on the root package, and nothing outside the module imports
+// the bare module path.
+//
+// The async runtime comes from the toolchain-bundled `moonbitlang/core`
+// module, and `moonbitlang/core/async` is EXPERIMENTAL there: using it has
+// to be acknowledged, or the build refuses it.
+
+supported_targets = "+native+wasm"
+
+pkgtype(kind: "executable")
+
+options(
+  "allow-experimental-packages": [
+    "moonbitlang/core/async",
+    "moonbitlang/core/async/fs",
+    "moonbitlang/core/async/process",
+  ],
+)
+
+import {
+  "riantr/LunaFlow/src/command",
+  "moonbitlang/core/env",
+  "moonbitlang/core/async",
+}

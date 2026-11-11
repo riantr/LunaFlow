@@ -6,7 +6,6 @@ package "riantr/LunaFlow/src/cli"
 // Errors
 
 // Types and methods
-type Opts
 
 // Type aliases
 

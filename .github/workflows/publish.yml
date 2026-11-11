@@ -95,29 +95,78 @@ jobs:
       - name: Update dependencies
         run: moon update
 
-      - name: Check the pinned dependency is the registry latest
+      - name: Check the runtime comes from the toolchain
         run: |
-          # `moon update` refreshes the index; it does NOT change the pin. The
-          # pin is what the gate and the release have to agree with, so it is
-          # checked against the registry here and reported when it drifts.
-          pinned="$(awk -F'"' '/moonbitlang\/async@/ { print $2; exit }' moon.mod)"
-          latest="$(curl -fsSL https://mooncakes.io/api/v0/modules/moonbitlang/async | python3 -c 'import json,sys; print(json.load(sys.stdin)["latest_version"])')"
-          echo "pinned: $pinned   registry latest: $latest"
-          if [ "$pinned" != "$latest" ]; then
-            echo "::warning::moonbitlang/async is pinned at $pinned but the registry latest is $latest. Bump it with 'moon add --upgrade moonbitlang/async@$latest' and re-run the gate before releasing."
+          # There is NO pinned runtime any more. The async runtime is
+          # `moonbitlang/core/async`, part of the `moonbitlang/core` module the
+          # toolchain already bundles, so there is nothing here that can drift
+          # from the registry -- and nothing that can disagree with the host
+          # that instantiates the published artifact.
+          #
+          # What this check enforces is the swap ITSELF: a `moonbitlang/async`
+          # dependency coming back would put the pin, and the host-floor
+          # disagreement, back.
+          if grep -q 'moonbitlang/async@' moon.mod; then
+            echo "::error::moon.mod pins moonbitlang/async again. The runtime must come from the toolchain's bundled moonbitlang/core."
+            exit 1
           fi
+          hits="$(git ls-files | grep 'moon\.pkg$' | xargs -r grep -l '"moonbitlang/async' || true)"
+          if [ -n "$hits" ]; then
+            echo "::error::a tracked moon.pkg imports moonbitlang/async again: $hits"
+            exit 1
+          fi
+          if ! grep -q 'moonbitlang/core/async' moon.pkg; then
+            echo "::error::the root package does not import moonbitlang/core/async."
+            exit 1
+          fi
+          echo "runtime: moonbitlang/core/async (from the toolchain; no pin to drift)"
 
+      # NATIVE AND WASM. The module declares `supported_targets = "+native+wasm"`:
+      # the analyzer needs the filesystem and process spawning, and the async
+      # runtime implements both on those two backends only. wasm-gc has no
+      # `fs`/`process` implementation upstream at all, and js has no async
+      # runtime, so neither is supported.
+      #
+      # No --deny-warn either: the warnings are outstanding (the deprecated
+      # `Map::new()` calls, the `test_unqualified_package` notices in the
+      # tests, and a handful of unused values). They are catalogued as a
+      # finding in docs/qa/REPORT.md, not hidden behind a flag.
       - name: Check package (native)
         run: moon check --target native
 
       - name: Test package (native)
         run: moon test src/app --target native
 
+      - name: Check package (wasm)
+        run: moon check --target wasm
+
+      - name: Test package (wasm)
+        run: moon test src/app --target wasm
+
       - name: Check formatting
         run: moon fmt --check
 
       - name: Build the CLI
         run: moon build src/cli --target native
+
+      # The ROOT package is what `moonx <module>@latest` resolves, and the
+      # registry publishes its artifact. A root package that is not an
+      # executable, or that does not build for wasm, fails ONLY after a
+      # release -- so it is checked before one.
+      - name: Build the root package (wasm)
+        run: moon build . --target wasm
+
+      - name: Check the root package
+        run: node scripts/qa/root_package.mjs
+
+      # The published wasm is not self-contained: it imports host symbols, and
+      # the HOST has to provide every one of them when the module is
+      # instantiated. The floor is a property of the TOOLCHAIN now, so it is
+      # measured against the runner's own bundled core -- and a symbol the
+      # bundled core does not declare is a host that fails with "function
+      # import requires a callable" at instantiation.
+      - name: Check the host requirements
+        run: node scripts/qa/host_requirements.mjs
 
       # The resolver must find the executable under either name the
       # toolchain could produce. This is the check that keeps a platform

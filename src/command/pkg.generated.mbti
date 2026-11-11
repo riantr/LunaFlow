@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/src/command"
+
+// Values
+pub async fn run(Array[String]) -> Unit
+
+// Errors
+
+// Types and methods
+type Opts
+
+// Type aliases
+
+// Traits

@@ -5,7 +5,7 @@
 [![mooncakes](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmooncakes.io%2Fapi%2Fv0%2Fmodules%2Friantr%2FLunaFlow&query=%24.version&label=mooncakes&prefix=v)](https://mooncakes.io/docs/riantr/LunaFlow)
 [![release](https://img.shields.io/github/v/release/riantr/LunaFlow)](https://github.com/riantr/LunaFlow/releases)
 [![license](https://img.shields.io/github/license/riantr/LunaFlow)](LICENSE)
-[![tests](https://img.shields.io/badge/tests-37%2F37-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
+[![tests](https://img.shields.io/badge/tests-41%2F41-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
 
 Trace-driven, three-proof-strength control-flow, taint, value-range, slicing and
 contract analysis for MoonBit modules published on
@@ -126,7 +126,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.3
+moon add riantr/LunaFlow@0.1.4
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -134,7 +134,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.3",
+  "riantr/LunaFlow@0.1.4",
 }
 ```
 
@@ -185,7 +185,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.3](https://mooncakes.io/docs/riantr/LunaFlow@0.1.3).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.4](https://mooncakes.io/docs/riantr/LunaFlow@0.1.4).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -193,52 +193,90 @@ From a checkout of the module directory, the same executable runs directly:
 moon run src/cli -- analyze <author>/<module>[@<version>|@latest]
 ```
 
-`moonx` — the registry runner — does **not** apply to this module. The reason is
-a backend constraint, and it is spelled out under
-[What the release was checked on](#what-the-release-was-checked-on).
+**`moonx` runs this module.** The registry runner executes a published package
+without installing it, and the natural self-check is:
+
+```sh
+moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
+```
+
+That works, and it is what the root package is for: `moonx` resolves the ROOT
+package of a module coordinate, so a module with no root executable fails with
+*"Prebuilt wasm asset does not exist"*. This module has one — a thin forwarder
+to `src/command` — and the registry publishes its **wasm** artifact, because
+`moonx --target` accepts no other value.
+
+The CLI also accepts a **bare coordinate**, which is what `moonx` passes as the
+program's first argument:
+
+```sh
+moonx riantr/LunaFlow@latest riantr/LunaFlow@latest   # the bare coordinate IS the target
+moon run src/cli -- riantr/LunaFlow@latest              # the same thing, locally
+```
+
+A bare coordinate is an implicit `analyze`. A local path is not: `./fixtures`
+has an author part of `.`, which is not a name, so it is refused rather than
+mistaken for a module.
 
 ### What the release was checked on
 
 `moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715` — the toolchain every
 number in this file was measured on.
 
-The module is **native-only** by design: the analyzer reaches the filesystem
-and spawns `moon fetch` through `moonbitlang/async/fs` and
-`moonbitlang/async/process`, and those packages do not exist on the wasm, wasm-gc
-or js backends. `preferred_target` is `native` and `supported_targets` is
-`+native` rather than a claim that other targets were tried and failed.
+The module is **native and wasm**. The analyzer reaches the filesystem and
+spawns `moon fetch`, and the async runtime implements both on those two
+backends: `supported_targets` is `+native+wasm`, and `preferred_target` is
+`wasm` because the registry publishes ONE artifact per version and
+`moonx --target` takes `wasm` as its one possible value.
 
-`moonx` — the registry runner that executes a published package without
-installing it — is **wasm-only**: its `--target` option takes `wasm` as its one
-possible value. The natural self-check
+The wasm backend really does work, and it is not a degraded build:
 
 ```sh
-moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
+moon run . --target wasm -- analyze riantr/moonbit_static_analysis@latest --out reports
 ```
 
-therefore cannot work here. MEASURED against the published 0.1.0, it fails
-with *"Prebuilt wasm asset does not exist"*, and the reason is a backend
-constraint: `moon build src/cli --target wasm` reports *"Package
-'riantr/LunaFlow/src/cli' does not support target backend 'wasm'. Supported
-backends: [native]"*. The registry confirms it from the other side — the
-published manifest carries `"supported-targets": "+native"` and
-`has_package: false`, where every wasm-capable sibling module has
-`has_package: true`. The wasm backend also has no process spawning, so the
-`moon fetch` that resolves a registry coordinate could not exist there either.
+That fetches the target, analyses it and writes the report from the wasm
+artifact — the same numbers as the native run.
 
-Even on a wasm-capable build the invocation would have to carry the
-subcommand: `moonx` passes everything after the package coordinate to the
-program, and this CLI takes `analyze` as its first argument —
+**wasm-gc is not supported, and it is not a choice.** MEASURED:
+`moon build src/cli --target wasm-gc` fails with **14 errors**, every one of
+them *"value not found in package"* — `fs.read_file`, `fs.readdir`,
+`fs.exists`, `fs.kind`, `process.collect_output`. The reason is upstream:
+`moonbitlang/core/async/fs` and `moonbitlang/core/async/process` ship
+`native` and `wasm` implementations only, and their whole import block is
+guarded by `#cfg(any(target="native", target="wasm"))`. On wasm-gc they
+compile to nothing. The async runtime's own event loop is a
+`unimplemented.mbt` stub there.
 
-```sh
-moonx riantr/LunaFlow/src/cli@latest analyze riantr/LunaFlow@latest
-```
+This module's OWN source is wasm-gc clean — `moon check --target wasm-gc`
+reports **zero errors in this repository's files** — so the dependency is the
+only thing in the way, and it is upstream's to fix.
 
-The equivalent self-check is native, and it needs no registry entry at all:
+### The host contract
 
-```sh
-moon run src/cli -- analyze --dir .
-```
+The published wasm is not self-contained. It imports **108 host symbols**, and
+the HOST has to provide every one of them when the module is instantiated:
+`moonx` supplies them from the async runtime bundled with the *user's*
+MoonBit toolchain.
+
+| Import module | Symbols | Served by |
+|---|---:|---|
+| `moonbitlang/async` | 95 | the toolchain's bundled core |
+| `__moonbit_fs_unstable` | 12 | the toolchain's bundled core |
+| `wasi_snapshot_preview1` | 1 | the host runtime's WASI |
+
+The ABI module name is still `"moonbitlang/async"` even though the package
+path is now `moonbitlang/core/async`: a wasm import's module name comes from
+the FFI declaration in the source, and the source still declares it that way.
+What changed is the SET of symbols, and the set grew — so the floor is a
+**toolchain**, not a pinned dependency, and a host that still carries the
+standalone `moonbitlang/async` module cannot instantiate this artifact.
+
+MEASURED against the toolchain this release was verified on:
+`moonbitlang/core` 0.10.19+bee578715 declares 272 host symbols and covers
+**107 of 107** of the artifact's core-extern imports. The contract is measured
+from the artifact's own import section by `scripts/qa/host_requirements.mjs`
+and recorded in `docs/host_requirements.txt`.
 
 **The release is CI-driven.** Pushing the release tag runs
 `.github/workflows/publish.yml`, which re-runs this gate, checks that the
@@ -246,13 +284,62 @@ README names the released version, publishes to mooncakes with the
 `MOONCAKES_RIANTR_TOKEN` secret, and creates the GitHub Release. Nothing is
 published from a workstation.
 
-Before every release the dependency pin is brought to the registry latest —
-`moon add --upgrade moonbitlang/async@<latest>` — and the whole gate is
-re-run against it. `moon update` on its own only refreshes the registry
-index: it leaves `moon.mod` untouched (MEASURED: exit 0, `moon.mod` byte-for-
-byte unchanged), so a release that trusted it would ship against a stale pin.
-The workflow runs `moon update`, then checks the pin against the registry and
-reports the drift.
+**There is no dependency pin any more.** The async runtime comes from the
+toolchain-bundled `moonbitlang/core` module, so `moon.mod` has no import
+block at all — there is nothing that can drift from the registry, and nothing
+that can disagree with the host that instantiates the artifact. The CI check
+enforces the swap itself: a `moonbitlang/async` dependency coming back is an
+error, not a warning.
+
+The trade is a real one, and it is worth stating plainly.
+`moonbitlang/core/async` is still marked **experimental** by the core team, so
+every package that uses it says so in
+`options("allow-experimental-packages": ...)`. And the minimum host toolchain
+moved up with the swap, because the artifact now asks the host for more symbols
+than the standalone module provided.
+
+### What changed in 0.1.4
+
+**This release moves the runtime to the toolchain and makes the module runnable
+from the registry.**
+
+- **The runtime comes from the toolchain.** The dependency on
+  `moonbitlang/async` is gone; the async runtime is
+  `moonbitlang/core/async`, part of the `moonbitlang/core` module the
+  toolchain already bundles. `moon.mod` has no import block any more. The
+  trade is stated above: the package is experimental, and the minimum host
+  toolchain moved up, because the artifact asks the host for a bigger set of
+  symbols than the standalone module provided. The set is measured, not
+  asserted — 108 host imports, 107 of them covered by the bundled core, and
+  the contract is in `docs/host_requirements.txt`.
+- **The module has a root package, and `moonx` runs it.**
+  `moonx riantr/LunaFlow@latest riantr/LunaFlow@latest` is the self-check, and
+  it works. That needed three things: a root package that is an executable
+  (without one, `moonx` says *"Prebuilt wasm asset does not exist"*), a
+  wasm artifact for the registry to publish (`preferred_target = "wasm"`), and
+  a CLI that treats a bare coordinate as an implicit `analyze`.
+- **The module builds and runs for wasm.** `supported_targets` is
+  `+native+wasm`, and the wasm artifact fetches, analyses and writes the
+  report. wasm-gc is still excluded, and the reason is upstream's — see
+  [The host contract](#the-host-contract).
+- **A version-pinning bug, found by the new gate.** The Windows `moon fetch`
+  log prints the resolved path, and when the module name is a SUFFIX of the
+  repository directory name — `moonbit_LunaFlow` for the module `LunaFlow` —
+  the text after the name starts with `\.repos\`. A dot is a version
+  character, so the token came out as `"."`. That candidate was then accepted
+  because `base + "/."` **exists**: it resolves to the base directory itself.
+  Analysing the module with itself therefore pinned the analysis to the BASE
+  directory, and the report claimed the resolved version was `"."`. The
+  filesystem's own listing is now the authority — a candidate is accepted only
+  when it is a real entry in it — and a version token needs at least one
+  digit. Four regression tests pin it.
+
+The package layout changed with the root package. The CLI implementation moved
+out of `src/cli` and into `src/command`, because the module now has two
+executables (the root package and `src/cli`) and two main packages cannot
+import each other — the toolchain's own message says *"Move reusable APIs into a
+non-main package and keep main packages as entrypoints"*. `moon run src/cli`
+and `moon run .` both work, and there is one implementation behind them.
 
 ### What changed in 0.1.1
 
@@ -344,11 +431,15 @@ these three defects were invisible on the machine that wrote the code.
 
 | Package | Kind | Native | Wasm | Wasm-GC | JS |
 |---|---|---:|---:|---:|---:|
-| `riantr/LunaFlow/src/app` | library | yes | — | — | — |
-| `riantr/LunaFlow/src/cli` | executable | yes | — | — | — |
+| `riantr/LunaFlow` (root) | executable | yes | yes | — | — |
+| `riantr/LunaFlow/src/app` | library | yes | yes | — | — |
+| `riantr/LunaFlow/src/command` | library | yes | yes | — | — |
+| `riantr/LunaFlow/src/cli` | executable | yes | yes | — | — |
 
-A `—` means the package's own `moon.pkg` restricts it that way: the module is
-native-only because its IO, process and filesystem dependencies are native-only.
+A `—` means the runtime does not implement what the package needs there. The
+analyzer needs the filesystem and process spawning, and the async runtime
+implements both on native and wasm only; on wasm-gc the `fs` and `process`
+packages compile to nothing, and js has no async runtime at all.
 
 ## Layout
 
@@ -356,25 +447,32 @@ native-only because its IO, process and filesystem dependencies are native-only.
 LunaFlow.png               the mark this README shows
 LunaFlow_Logo.png          the same artwork at 1024x1024
 LICENSE                    MIT
-moon.mod                   module metadata (native target)
+moon.mod                   module metadata (native and wasm)
+moon.pkg                    the ROOT package: the executable moonx resolves
+main.mbt                    the root entrypoint, a forwarder to src/command
 src/app/                   14 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, report renderer
-src/app/*_test.mbt         37 tests in 7 files
-src/cli/main.mbt           async native CLI
+src/app/*_test.mbt         41 tests in 7 files
+src/command/                the CLI implementation, as a library
+src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
 docs/qa/REPORT.md          deep QA report (security, coverage, metrics)
+docs/host_requirements.txt  the published wasm's host contract, measured
 reports/                   generated reports for the validation modules
 scripts/verify.mjs         dependency-free acceptance checker
 scripts/qa/                dependency-free QA harnesses
 ```
 
-The library has **one external dependency**: `moonbitlang/async`, for the
-filesystem and process access the CLI needs. The frontend is a structural
-parser for the MoonBit subset the analyses need; `match` arms, closures,
-`impl` bodies and functional `for` are counted as gaps, not silently dropped.
+The library has **no external dependency**. The filesystem and process access
+the CLI needs come from `moonbitlang/core/async`, part of the `moonbitlang/core`
+module the toolchain already bundles — so there is no version to pin, and no way
+for the build and the host to disagree about which runtime is in play. The
+frontend is a structural parser for the MoonBit subset the analyses need;
+`match` arms, closures, `impl` bodies and functional `for` are counted as
+gaps, not silently dropped.
 
 ## Verification
 
@@ -383,9 +481,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 135 warnings, 0 errors |
-| `moon test src/app --target native` | **37 passed, 0 failed** |
+| `moon check --target native` | exit 0, 136 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 136 warnings, 0 errors |
+| `moon test src/app --target native` | **41 passed, 0 failed** |
+| `moon test src/app --target wasm` | **41 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
+| `moon build . --target wasm` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **56 passed, 0 failed** |
@@ -394,6 +495,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **14 passed, 0 failed** |
+| `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/verify_published.mjs 0.1.3` | **4 passed, 0 failed** |
 `moon 0.1.20261102`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
@@ -421,10 +524,14 @@ Cobertura report), `dup.mjs` (clone detection), `load.mjs` (peak memory and
 parallel throughput), `depth_sweep.mjs` (the nesting-degradation curve),
 `vendor_isolation.mjs` (a `--dir` scan must not ingest the vendored dependency
 tree), `cli_resolver.mjs` (the built CLI has to be found under either name
-the toolchain produces) and `verify_published.mjs` (install the **published**
-version from a clean consumer and call its API — the check that a green gate
-cannot give you, because the gate checks the commit and this checks what the
-registry serves). The report for the last deep QA pass is `docs/qa/REPORT.md`.
+the toolchain produces), `root_package.mjs` (the root package `moonx` resolves
+has to be an executable, has to build for wasm, and has to accept a bare
+coordinate), `host_requirements.mjs` (the published wasm's host imports have to
+be covered by the toolchain's bundled core) and `verify_published.mjs` (install
+the **published** version from a clean consumer and call its API — the check
+that a green gate cannot give you, because the gate checks the commit and this
+checks what the registry serves). The report for the last deep QA pass is
+`docs/qa/REPORT.md`.
 
 Two things deliberately **not** claimed. No production-load testing has been
 done, and no comparison against another analyzer on the same workload has been
@@ -481,7 +588,13 @@ moon coverage report -f cobertura -o cov.xml
 moon run src/cli --target native -- analyze <coord> --coverage cov.xml --out reports
 ```
 
-The binary is `_build/native/debug/build/src/cli/cli.exe`.
+The binary is `_build/native/debug/build/src/cli/cli.exe`, and the root
+package's is `_build/native/debug/build/LunaFlow.exe`. From the registry,
+there is no install step at all:
+
+```sh
+moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
+```
 
 ## Example
 
@@ -531,7 +644,9 @@ condition is unknown rather than guessed.
 
 - `src/cli` — the executable in this module, the command line over the same
   library.
-- `scripts/qa/` — seventeen dependency-free harnesses and tools; eleven of them
+- `src/command` — the CLI implementation, shared by `src/cli` and the root
+  package that `moonx` resolves.
+- `scripts/qa/` — nineteen dependency-free harnesses and tools; thirteen of them
   drive the built binary as a real process against the fixture, the two
   registry modules and a hostile-input corpus.
 - `docs/design.md` — the design record for the implementation in `src/app`.

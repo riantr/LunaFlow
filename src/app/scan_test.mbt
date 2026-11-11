@@ -43,3 +43,40 @@ test "log_version_candidates: a version directory in the path is found" {
   let got = @app.log_version_candidates(log, "moonbit_doubleML")
   assert_true(got.contains("0.164.62"))
 }
+
+///|
+test "log_version_candidates: a dot is not a version" {
+  // MEASURED on Windows, analysing the module with ITSELF. The fetch log
+  // prints the resolved path, and the module name is a SUFFIX of the
+  // repository directory name -- "moonbit_LunaFlow" for the module
+  // "LunaFlow" -- so the text after the name begins with "\.repos\". The
+  // leading dot used to be cut out as a version-shaped token.
+  let log = "Latest version of riantr/LunaFlow is 0.1.3\nInfo: riantr/LunaFlow@0.1.3 already exists at D:\\src\\MiniMax\\Projects\\MoonBit\\moonbit_LunaFlow\\.repos\\riantr\\LunaFlow\\0.1.3"
+  let got = @app.log_version_candidates(log, "LunaFlow")
+  for c in got {
+    assert_true(c != ".")
+    assert_true(c.has_prefix("0.1.3"))
+  }
+  assert_true(got.contains("0.1.3"))
+}
+
+///|
+test "pin_version: a real directory wins over a log token" {
+  let log = "Info: riantr/LunaFlow@0.1.3 already exists at D:\\src\\moonbit_LunaFlow\\.repos\\riantr\\LunaFlow\\0.1.3"
+  // The listing is the authority: only "0.1.3" is a real directory there.
+  assert_eq(@app.pin_version(log, "LunaFlow", ["0.1.3"]), "0.1.3")
+}
+
+///|
+test "pin_version: a token that is not a directory is not pinned" {
+  // "." resolves to the base directory itself, so an "exists" test would
+  // accept it. It names no version, and the newest real directory wins.
+  let log = "Info: riantr/LunaFlow@0.1.3 already exists at D:\\src\\moonbit_LunaFlow\\.repos\\riantr\\LunaFlow\\0.1.3"
+  assert_eq(@app.pin_version(log, "LunaFlow", ["0.1.1", "0.1.3"]), "0.1.3")
+  assert_eq(@app.pin_version(log, "LunaFlow", ["0.1.1"]), "0.1.1")
+}
+
+///|
+test "pin_version: no directory and no log candidate is no version" {
+  assert_eq(@app.pin_version("Info: nothing to do", "LunaFlow", []), "")
+}

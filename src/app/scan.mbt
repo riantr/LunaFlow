@@ -194,17 +194,66 @@ pub fn log_version_candidates(log : String, name : String) -> Array[String] {
 ///|
 /// The leading version-shaped token of `s`: digits and dots, up to the first
 /// character that cannot be part of a version.
+///
+/// A token needs at least one DIGIT. Dots alone are not a version: the
+/// Windows fetch log prints the resolved path, and when the module name is a
+/// SUFFIX of a directory name -- `moonbit_LunaFlow` for the module
+/// `LunaFlow` -- the text after the name starts with `\.repos\`, whose
+/// leading dot used to be cut out as the token ".". A trailing dot is dropped
+/// for the same reason: "0.1." is a path fragment, not a version.
 fn version_token(s : String) -> String {
   let buf = StringBuilder::new()
+  let mut digits = 0
   for c in s {
     let code = c.to_int()
     if (code >= 48 && code <= 57) || c == '.' {
+      if code >= 48 && code <= 57 {
+        digits = digits + 1
+      }
       buf.write_char(c)
     } else {
       break
     }
   }
-  buf.to_string()
+  if digits == 0 {
+    return ""
+  }
+  let mut out = buf.to_string()
+  while out.has_suffix(".") {
+    out = out[0:out.length() - 1].to_owned()
+  }
+  out
+}
+
+///|
+/// The version to pin, given the fetch log and the directories the fetch wrote.
+///
+/// THE DIRECTORY LIST IS THE AUTHORITY. A log candidate is accepted only when
+/// it is a real ENTRY of `versions` -- not when a path built from it merely
+/// EXISTS, because `base + "/."` resolves to `base` itself. That test let a
+/// log token of "." through, and the analysis pinned itself to the BASE
+/// directory: the report claimed the resolved version was "." and the source
+/// root was "./.repos/<author>/<module>/.".
+///
+/// When no candidate is a real directory, the NEWEST directory wins: the
+/// fetch wrote it, and the version directory is what the analysis reads.
+pub fn pin_version(
+  log : String,
+  name : String,
+  versions : Array[String],
+) -> String {
+  for candidate in log_version_candidates(log, name) {
+    if versions.contains(candidate) {
+      return candidate
+    }
+  }
+  let mut best = ""
+  for v in versions {
+    if best == "" || compare_versions(v, best) > 0 {
+      best = v
+    }
+  }
+  best
 }
 
 ///|
@@ -220,16 +269,26 @@ pub async fn fetch_module(coord : Coord, cwd : String) -> FetchResult {
   let spec = coord.author + "/" + coord.name
   let pinned = coord.version != "" && coord.version != "latest"
   let request = if pinned { spec + "@" + coord.version } else { spec }
-  let (code, out, err) = @process.collect_output(
+  // `moonbitlang/core/async/process` has no `collect_output`: the
+  // child's streams are redirected to `read_from_process()` and read back off
+  // the `ProcessResult`. The same three facts come out — exit code, stdout,
+  // stderr — so the caller does not change.
+  //
+  // `run` does NOT raise: a spawn that fails comes back as a non-zero exit
+  // code with an empty log, not as an error to catch. That is the shape the
+  // call below assumes, and it is why there is no `catch` here.
+  let result = @process.run(
     "moon",
     ["fetch", request, "--no-update"],
     inherit_env=true,
+    stdout=@process.read_from_process(),
+    stderr=@process.read_from_process(),
     cwd~,
     no_console_window=true,
-  ) catch {
-    _ => (1, "", "failed to spawn moon")
-  }
-  let log = (out.text() catch { _ => "" }) + (err.text() catch { _ => "" })
+  )
+  let code = result.exit_code
+  let log = (result.stdout_text() catch { _ => "" }) +
+    (result.stderr_text() catch { _ => "" })
   let base = path_join(
     path_join(path_join(cwd, ".repos"), coord.author),
     coord.name,
@@ -239,23 +298,9 @@ pub async fn fetch_module(coord : Coord, cwd : String) -> FetchResult {
   // really exists. Without that check a log-shaped quirk becomes an analysed
   // tree of zero files that still exits 0.
   let versions = @fs.readdir(base, sort=true) catch { _ => [] }
-  let mut best = ""
-  for v in versions {
-    if best == "" || compare_versions(v, best) > 0 {
-      best = v
-    }
-  }
   let mut version = if pinned { coord.version } else { "" }
   if version == "" {
-    for candidate in log_version_candidates(log, coord.name) {
-      if @fs.exists(path_join(base, candidate)) {
-        version = candidate
-        break
-      }
-    }
-    if version == "" {
-      version = best
-    }
+    version = pin_version(log, coord.name, versions)
   }
   let root = if version == "" { base } else { path_join(base, version) }
   { root, version, ok: code == 0 && version != "" && @fs.exists(root), log, }
@@ -356,8 +401,7 @@ pub async fn load_module(
   let stats = ScanStats::new()
   for rel in st.files {
     let full = path_join(root, rel)
-    let data = @fs.read_file(full) catch { _ => continue }
-    let text = data.text() catch { _ => continue }
+    let text = @fs.read_text(full) catch { _ => continue }
     let sf = parse_file(rel, text)
     stats.files = stats.files + 1
     stats.funcs = stats.funcs + sf.funcs.length()
@@ -371,7 +415,7 @@ pub async fn load_module(
   }
   let manifest_path = path_join(root, "moon.mod")
   let manifest = if @fs.exists(manifest_path) {
-    let d = @fs.read_file(manifest_path) catch {
+    let d = @fs.read_text(manifest_path) catch {
       _ =>
         return (
           {
@@ -385,7 +429,7 @@ pub async fn load_module(
           stats,
         )
     }
-    parse_manifest(d.text() catch { _ => "" })
+    parse_manifest(d)
   } else {
     Manifest::empty()
   }

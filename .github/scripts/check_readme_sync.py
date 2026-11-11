@@ -15,9 +15,11 @@ The check therefore does two things:
 
 Only LunaFlow's OWN coordinates are checked. The README also names other
 modules -- ``riantr/moonbit_doubleML@latest`` resolves to 0.164.62 in the
-committed report table, and the dependency is named as
-``moonbitlang/async@0.22.9`` -- and those versions are not this release's
-business.
+committed report table -- and those versions are not this release's business.
+
+(The module itself has no pinned dependency any more: the async runtime comes
+from the toolchain-bundled ``moonbitlang/core``, so there is no dependency
+version to keep in step with.)
 
 It exits 1 and prints the offending lines when they disagree.
 """

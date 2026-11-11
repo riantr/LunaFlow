@@ -1,17 +1,24 @@
 // LunaFlow command line entry point
 //
+// A MAIN package, and a thin one: the implementation is in `src/command`,
+// which is a library. The module's root package is the other executable, and
+// it exists so `moonx <module>@latest` has a root package to resolve.
+//
 // The library package is imported by its full path inside the module. A
 // `moon.pkg` import takes **no version**: the module's own version is pinned
 // in `moon.mod`, and a version here is an import the toolchain cannot find.
 import {
-  "riantr/LunaFlow/src/app",
+  "riantr/LunaFlow/src/command",
   "moonbitlang/core/env",
-  "moonbitlang/async",
-  "moonbitlang/async/fs",
+  "moonbitlang/core/async",
 }
 
 pkgtype(kind: "executable")
 
 options(
-  "allow-experimental-packages": [ "moonbitlang/core/async" ],
+  "allow-experimental-packages": [
+    "moonbitlang/core/async",
+    "moonbitlang/core/async/fs",
+    "moonbitlang/core/async/process",
+  ],
 )
