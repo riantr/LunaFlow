@@ -441,10 +441,41 @@ fixed:
 
 Measured on this module's own source: dead-code findings **8 → 3**, unreachable
 **2 → 1**, infinite loops **2 → 1** — and the 3 / 1 / 1 that remain are the
-vulnerability fixture's, which exists to be found. On doubleML and on the peer
-module every number is unchanged, and the committed doubleML artefact is
-byte-identical apart from the wall clock. The test suite is **66 tests**, up
-from 59.
+vulnerability fixture's, which exists to be found. At that point on doubleML
+and on the peer module every number was unchanged, and the committed doubleML
+artefact was byte-identical apart from the wall clock.
+
+**The second peer run, pointed at this working tree, and the one file neither
+side could read.** `moonx riantr/moonbit_static_analysis@latest .` asks the
+peer to scan the tree as it stands rather than the published module. It
+reports **0 actionable findings** against 243 rows — 232 notices and 11
+unreliable, nothing withheld: all three defects above are gone. The row left
+worth acting on is the file it cannot parse — `src/command/command.mbt`,
+`expected ')'` — and turning that one around found a defect on **our** side as
+well, in the same construct:
+
+- **A MoonBit multiline string (`#|`) was lexed as a string that ended at the
+  end of its first line.** The construct is a *string literal*, not a comment:
+  `#|` opens it, the text after the marker is the first chunk, every following
+  line whose first non-blank characters are `#|` is one more chunk, and the
+  value is the chunks joined with `"\n"`. The old lexer took the rest of the
+  first line and left the rest of the literal in the token stream, so
+  `usage()` was shredded into thirty-odd statements, the function was not
+  recognised as a function at all, and the statements around it were counted
+  as unsupported. The literal is modelled now, and so is the newline that ends
+  its last chunk line: without that newline the statement after the literal
+  was parsed as part of it, which is how one `let` in a test file became one
+  unsupported statement instead of three understood ones.
+
+Measured after it: on this module's own source the statements understood went
+**3,346 → 3,093**, the unsupported statements **195 → 175**, and the functions
+extracted **395 → 396** — the `usage()` function is a function again. (The
+measured-runs table above re-measures the tree after this revision's own test
+file was added, so it reads 29 files and 3,126 statements.) On the peer module,
+which writes its own block strings, the statements understood went
+**12,997 → 12,970** and the unsupported statements **611 → 595**; on doubleML
+every number is unchanged, and the committed doubleML artefact is byte-identical
+apart from the wall clock. The test suite is **73 tests**, up from 59.
 
 ### What changed in 0.1.4
 
@@ -611,7 +642,7 @@ main.mbt                    the root entrypoint, a forwarder to src/command
 src/app/                   14 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, report renderer
-src/app/*_test.mbt         66 tests in 10 files
+src/app/*_test.mbt         73 tests in 11 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -645,8 +676,8 @@ The gate, and the result it produced for this version:
 | `moon fmt --check` | exit 0 |
 | `moon check --target native` | exit 0, 131 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 131 warnings, 0 errors |
-| `moon test src/app --target native` | **66 passed, 0 failed** |
-| `moon test src/app --target wasm` | **66 passed, 0 failed** |
+| `moon test src/app --target native` | **73 passed, 0 failed** |
+| `moon test src/app --target wasm` | **73 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
@@ -666,10 +697,10 @@ measured runs committed with the reports:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.5 s |
-| `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,997 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.4 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
+| `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 28 | 3,346 | 12,492 | 20 | 2 / 1 / 3 | 3 | 1 | 0.17 s |
+| `LunaFlow` itself (`--dir .`) | 29 | 3,126 | 12,560 | 22 | 2 / 1 / 3 | 3 | 1 | 0.14 s |
 
 **Reproduction status (2026-11-11).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -831,8 +862,24 @@ peer's own scope notes, not defects: 215 of them say that an `if` expression,
 a `match` arm, a struct, an enum or a test declaration is outside the subset
 the peer analyses — and the `if` expression is a construct **this** module
 models and the peer does not. The peer also cannot parse one file of this
-module (`src/command/command.mbt`, a `#| |#` block comment), and it says so
-rather than guessing.
+module (`src/command/command.mbt`), and it says so rather than guessing.
+
+**That one file is a shared blind spot, and both sides were wrong about it.**
+MoonBit's multiline string literal -- the `#|` form -- is a *string*, not a
+comment: `#|` opens it, the text after the marker is the first chunk, every
+following line whose first non-blank characters are `#|` is one more chunk, and
+the value is the chunks joined with `"\n"`. There is no `|#` terminator (a bare
+`#` is a lexing error in MoonBit), and a bare `#|` line is an **empty chunk**,
+not the end of the literal. The peer's model trims the chunks and joins them
+with a space, and reads the bare `#|` as the closer, so it stops the literal
+two lines into `usage()` and reads the rest as code. This module's model was
+wrong in a different way: it took the rest of the first line and left the rest
+of the literal in the token stream, so `usage()` was shredded into thirty-odd
+statements and the function was not recognised at all. The semantics were
+settled against the toolchain **by value** -- "does `moon check` accept it"
+measures nothing here, because the toolchain accepts every shape of this
+construct -- and `usage()`'s value is now byte-identical to the toolchain's
+(1569 characters, same hash).
 
 ## What this is not
 
@@ -840,7 +887,7 @@ rather than guessing.
   the abstract input set cannot exclude. L3 proves individual VCs from
   specifications. Absence of a finding is never a proof.
 * **Not a full MoonBit frontend.** Unsupported syntax is measured and reported
-  (1.06 % of statements on doubleML, 4.43 % on static_analysis). Expression and
+  (1.06 % of statements on doubleML, 4.39 % on static_analysis). Expression and
   statement nesting beyond 256 levels is refused as a recorded parse gap rather
   than risked on the native stack.
 * **Not alias-aware.** Taint is field- and index-insensitive, with a depth-6

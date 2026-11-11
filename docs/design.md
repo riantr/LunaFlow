@@ -112,12 +112,14 @@ Everything is coordinate-driven; there is no allow-list. `--dir <path>` analyzes
 
 The frontend is a structural parser for the MoonBit subset needed by the analyses, not a full type-checking frontend. Supported: `fn` (including `Type::method` names), parameters and return annotations, `let`/`let mut`, assignments and compound assignments, `if/else if/else`, `while`, C-style `for` and `for … in` (including the destructuring `for k, v in entries`), `return`, `break`, `continue`, blocks, `try` bodies, array/tuple literals, struct and record literals, qualified paths (`CART::Leaf`, `Rec::{ … }`), named arguments, calls, method calls, field access, indexing, `if` and `match` expressions, function literals, unary/binary operations, multi-line `#|` strings.
 
+The `#|` string is modelled the way the toolchain builds it, and the semantics were measured **by value** rather than by acceptance -- `moon check` accepts every shape of this construct, so acceptance measures nothing here. `#|` opens the literal, the text after the marker is the first chunk, every following line whose first non-blank characters are `#|` is one more chunk, and the value is the chunks joined with `"\n"`. There is no `|#` terminator (a bare `#` is a lexing error in MoonBit), a bare `#|` line is an **empty chunk** rather than the closer, a chunk is not trimmed, and a blank line inside the literal is skipped. The newline that ends the last chunk line is the statement separator before whatever follows, so it is a token of its own; the newlines between chunk lines are string content.
+
 Unsupported constructs are counted, not hidden: `match` arms, `impl` bodies, functional `for`, and `loop` are recorded as `SUnsupported` / `EvUnsupported` and appear in the CFG as `unsupported: …` nodes. A construct the parser has no rule for at all — an operator it does not model — is folded into the statement it belongs to and counted as unsupported, so it cannot shred itself into statements of its own. Report §2 states statements-understood vs unsupported, so the reader can judge confidence per module. Measured frontend coverage:
 
 | Module | Statements understood | Unsupported | Coverage |
 | --- | --- | --- | --- |
 | doubleML 0.164.64 | 29,853 | 320 | **98.94 %** |
-| static_analysis 0.4.46 | 12,997 | 611 | **95.51 %** |
+| static_analysis 0.4.46 | 12,970 | 595 | **95.61 %** |
 
 The counts fell because the old ones were wrong: the parser shredded every construct it did not model into one statement per fragment, and a shredded fragment ate the closing brace of its function, so whole function bodies were truncated. The coverage number is *lower* than before because the analyzer now says what it does not understand instead of silently shredding it.
 
@@ -415,7 +417,7 @@ Outputs, all deterministic except `elapsed_ms`:
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | doubleML 0.164.64 (120 fn) | 220 | 29,853 | 218,391 | 166 | 0 / 0 / 0 (no specs) | 0 | 73 | 4.5 s | 94 KB | 33.8 MB |
-| static_analysis 0.4.46 (200 fn) | 199 | 12,997 | 14,296 | 43 | 0 / 0 / 0 (no specs) | 0 | 6 | 1.4 s | 62 KB | 4.5 MB |
+| static_analysis 0.4.46 (200 fn) | 199 | 12,970 | 14,296 | 43 | 0 / 0 / 0 (no specs) | 0 | 6 | 1.0 s | 62 KB | 4.5 MB |
 | fixtures/vuln_demo | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms | 21 KB | 79 KB |
 
 The statement counts fell and the dead-code column emptied because the old
@@ -490,7 +492,7 @@ Interpretation:
 **Limitations (explicit)**
 
 - unsound: unexecuted inputs/paths are invisible; absence of a finding is not a proof;
-- `match`, closures, `impl` bodies and functional `for` are gaps (1.06 % / 4.43 % of statements in the validation modules);
+- `match`, closures, `impl` bodies and functional `for` are gaps (1.06 % / 4.39 % of statements in the validation modules);
 - taint is field- and index-insensitive, no alias analysis, depth-6 interprocedural cutoff;
 - loop-counter implicit taint is conservative and can over-report;
 - ranges are sampled unions, not fixpoints;

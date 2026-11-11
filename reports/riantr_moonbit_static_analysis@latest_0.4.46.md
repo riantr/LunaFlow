@@ -19,15 +19,15 @@
 | --- | --- |
 | Source files parsed | 199 |
 | Functions extracted | 2417 |
-| Statements understood | 12997 |
-| Statements unsupported | 611 |
-| Frontend coverage | 95.5% |
+| Statements understood | 12970 |
+| Statements unsupported | 595 |
+| Frontend coverage | 95.6% |
 | Parse issues | 0 |
 | CFG functions | 600 of 2417 — the first 600 in file order; 1817 functions had no CFG and can carry no CFG finding |
 | Trace events | 14296 |
 | Interpreted steps | 2780 |
 | Observed functions | 120 |
-| Wall time (analyzer) | 1434 ms |
+| Wall time (analyzer) | 988 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -59,7 +59,7 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 8 findings | — | 120 functions | observed facts |
-| L2 abstract | 43 findings | 42 | 120 functions, 4979 steps | exhaustive over the input abstraction |
+| L2 abstract | 43 findings | 42 | 120 functions, 4975 steps | exhaustive over the input abstraction |
 | L3 contracts | 0 VCs | 0 failed, 0 unknown | 25 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
