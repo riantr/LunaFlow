@@ -10,10 +10,10 @@
 # now "moonbitlang/core/async": the module name comes from the FFI
 # declaration in the source, and the source still declares it that way.
 #
-# artifact: D:/src/MiniMax/Projects/MoonBit/moonbit_LunaFlow/_build/wasm/debug/build/LunaFlow.wasm
-# function imports: 108
+# artifact: /_build/wasm/debug/build/LunaFlow.wasm
+# function imports: 107
 #   __moonbit_fs_unstable: 12
-#   moonbitlang/async: 95
+#   moonbitlang/async: 94
 #   wasi_snapshot_preview1: 1
 
 [__moonbit_fs_unstable]
@@ -47,7 +47,6 @@ event_bus/try_register
 event_bus/wait
 fd_util/close_fd
 fd_util/invalid_fd
-fd_util/pipe
 fs/dir_buffer_min_size
 fs/dir_entry_get_file_id
 fs/dir_entry_get_name_len

@@ -140,113 +140,22 @@ fn quoted_value(line : String) -> String? {
 }
 
 ///|
-/// The versions a `moon fetch` log names, in the order they appear.
-///
-/// The log is free-form and its shape differs between platforms, so this does
-/// not try to parse a sentence. It looks for the module NAME followed by a
-/// path separator -- `/` or `\`, because the separator is a property of the
-/// platform -- and takes the version-shaped token that follows: the name of
-/// the directory the fetch wrote.
-///
-/// The name is matched without the author prefix on purpose. The Windows log
-/// prints the resolved path with backslashes
-/// (`.repos\riantr\moonbit_doubleML\0.164.64`), so a marker built from the
-/// coordinate `riantr/moonbit_doubleML/` never matches there.
-///
-/// MEASURED (the Linux CI runner): the toolchain prints a download block
-/// whose lines contain "Success" and "Successfully fetched
-/// riantr/moonbit_doubleML@0.164.64", and the previous scan -- to the next
-/// " to " -- turned that into the version
-///
-///     0.164.64\nSuccess\nSuccessfully fetched riantr/moonbit_doubleML@0.164.64
-///
-/// which names no directory. The analyzer then read an empty tree and
-/// reported 0 statements, 0 coverage and 0 findings with exit 0: a green
-/// run over nothing. The token is cut at the first character that cannot be
-/// part of a version instead, so it is "0.164.64".
-pub fn log_version_candidates(log : String, name : String) -> Array[String] {
-  let out : Array[String] = []
-  for line in log.split("\n") {
-    let mut rest = line
-    let mut hops = 0
-    while hops < 16 {
-      hops = hops + 1
-      match rest.find(name) {
-        None => break
-        Some(i) => {
-          let after = rest[i + name.length():].to_owned()
-          // The name has to be followed by a path separator. The coordinate
-          // form (`name@version`) is not a directory and is skipped.
-          if after.has_prefix("/") || after.has_prefix("\\") {
-            let token = version_token(after[1:].to_owned())
-            if token != "" && not(out.contains(token)) {
-              out.push(token)
-            }
-          }
-          rest = after
-        }
-      }
-    }
-  }
-  out
-}
 
 ///|
-/// The leading version-shaped token of `s`: digits and dots, up to the first
-/// character that cannot be part of a version.
+/// The version to pin, given the directories the fetch wrote.
 ///
-/// A token needs at least one DIGIT. Dots alone are not a version: the
-/// Windows fetch log prints the resolved path, and when the module name is a
-/// SUFFIX of a directory name -- `moonbit_LunaFlow` for the module
-/// `LunaFlow` -- the text after the name starts with `\.repos\`, whose
-/// leading dot used to be cut out as the token ".". A trailing dot is dropped
-/// for the same reason: "0.1." is a path fragment, not a version.
-fn version_token(s : String) -> String {
-  let buf = StringBuilder::new()
-  let mut digits = 0
-  for c in s {
-    let code = c.to_int()
-    if (code >= 48 && code <= 57) || c == '.' {
-      if code >= 48 && code <= 57 {
-        digits = digits + 1
-      }
-      buf.write_char(c)
-    } else {
-      break
-    }
-  }
-  if digits == 0 {
-    return ""
-  }
-  let mut out = buf.to_string()
-  while out.has_suffix(".") {
-    out = out[0:out.length() - 1].to_owned()
-  }
-  out
-}
-
-///|
-/// The version to pin, given the fetch log and the directories the fetch wrote.
+/// THE DIRECTORY LIST IS THE AUTHORITY. The directories under
+/// `.repos/<author>/<module>/` are the versions that were actually fetched,
+/// and the newest of them is the one `@latest` resolved to. Nothing is
+/// scanned out of the fetch log: the fetch runs QUIET, so there is no log to
+/// scan, and a log that is parsed is a log that can be wrong.
 ///
-/// THE DIRECTORY LIST IS THE AUTHORITY. A log candidate is accepted only when
-/// it is a real ENTRY of `versions` -- not when a path built from it merely
-/// EXISTS, because `base + "/."` resolves to `base` itself. That test let a
-/// log token of "." through, and the analysis pinned itself to the BASE
-/// directory: the report claimed the resolved version was "." and the source
-/// root was "./.repos/<author>/<module>/.".
-///
-/// When no candidate is a real directory, the NEWEST directory wins: the
-/// fetch wrote it, and the version directory is what the analysis reads.
-pub fn pin_version(
-  log : String,
-  name : String,
-  versions : Array[String],
-) -> String {
-  for candidate in log_version_candidates(log, name) {
-    if versions.contains(candidate) {
-      return candidate
-    }
-  }
+/// The list is the authority and not a path that merely EXISTS, because
+/// `base + "/."` resolves to `base` itself. A version-shaped token of "."
+/// passes such a test while naming no version at all. MEASURED: a self
+/// analysis once pinned itself to the BASE directory that way, and the report
+/// claimed the resolved version was ".".
+pub fn pin_version(versions : Array[String]) -> String {
   let mut best = ""
   for v in versions {
     if best == "" || compare_versions(v, best) > 0 {
@@ -261,7 +170,7 @@ pub struct FetchResult {
   root : String
   version : String
   ok : Bool
-  log : String
+  note : String
 }
 
 ///|
@@ -269,41 +178,60 @@ pub async fn fetch_module(coord : Coord, cwd : String) -> FetchResult {
   let spec = coord.author + "/" + coord.name
   let pinned = coord.version != "" && coord.version != "latest"
   let request = if pinned { spec + "@" + coord.version } else { spec }
-  // `moonbitlang/core/async/process` has no `collect_output`: the
-  // child's streams are redirected to `read_from_process()` and read back off
-  // the `ProcessResult`. The same three facts come out — exit code, stdout,
-  // stderr — so the caller does not change.
+  // THE FETCH'S OUTPUT IS NOT CAPTURED, and that is a decision rather than
+  // a limitation.
   //
-  // `run` does NOT raise: a spawn that fails comes back as a non-zero exit
-  // code with an empty log, not as an error to catch. That is the shape the
-  // call below assumes, and it is why there is no `catch` here.
+  // The redirection API of `moonbitlang/core/async/process` changed shape
+  // between the core versions the toolchain ships. MEASURED, core 0.10.19 ->
+  // 0.10.20:
+  //
+  //   read_from_process()  -> &ProcessOutput
+  //                        -> (ReadFromProcess, SharedProcessOutput) raise
+  //   run's stdout~        : &ProcessOutput = @stdio.stdout
+  //                        : ProcessOutput = Inherit
+  //
+  // So a call that captures the output compiles against ONE core version and
+  // not the other, and the toolchain -- not this module -- decides which core
+  // is in play. The call below uses only the part of the API that is the same
+  // in both.
+  //
+  // The version comes from the FILESYSTEM, which is the authority anyway: the
+  // directories the fetch wrote are the thing that is actually analysed, and
+  // nothing has to be parsed out of free-form log text to find them.
+  //
+  // The fetch runs QUIET, so it prints nothing on success, and it inherits the
+  // parent's streams, so its error message -- the useful part -- reaches the
+  // user directly.
   let result = @process.run(
     "moon",
-    ["fetch", request, "--no-update"],
+    ["fetch", request, "--no-update", "--quiet"],
     inherit_env=true,
-    stdout=@process.read_from_process(),
-    stderr=@process.read_from_process(),
     cwd~,
     no_console_window=true,
   )
   let code = result.exit_code
-  let log = (result.stdout_text() catch { _ => "" }) +
-    (result.stderr_text() catch { _ => "" })
   let base = path_join(
     path_join(path_join(cwd, ".repos"), coord.author),
     coord.name,
   )
-  // THE FILESYSTEM IS THE AUTHORITY ON THE VERSION. The log only names a
-  // candidate, and a candidate is only accepted when the directory it names
-  // really exists. Without that check a log-shaped quirk becomes an analysed
-  // tree of zero files that still exits 0.
   let versions = @fs.readdir(base, sort=true) catch { _ => [] }
   let mut version = if pinned { coord.version } else { "" }
   if version == "" {
-    version = pin_version(log, coord.name, versions)
+    version = pin_version(versions)
   }
   let root = if version == "" { base } else { path_join(base, version) }
-  { root, version, ok: code == 0 && version != "" && @fs.exists(root), log, }
+  let ok = code == 0 && version != "" && @fs.exists(root)
+  let note = if ok {
+    "fetched " + request + " -> " + root
+  } else {
+    "`moon fetch " +
+    request +
+    "` exited with code " +
+    code.to_string() +
+    "; no version directory under " +
+    base
+  }
+  { root, version, ok, note, }
 }
 
 ///|

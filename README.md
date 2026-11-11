@@ -5,7 +5,7 @@
 [![mooncakes](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmooncakes.io%2Fapi%2Fv0%2Fmodules%2Friantr%2FLunaFlow&query=%24.version&label=mooncakes&prefix=v)](https://mooncakes.io/docs/riantr/LunaFlow)
 [![release](https://img.shields.io/github/v/release/riantr/LunaFlow)](https://github.com/riantr/LunaFlow/releases)
 [![license](https://img.shields.io/github/license/riantr/LunaFlow)](LICENSE)
-[![tests](https://img.shields.io/badge/tests-41%2F41-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
+[![tests](https://img.shields.io/badge/tests-38%2F38-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
 
 Trace-driven, three-proof-strength control-flow, taint, value-range, slicing and
 contract analysis for MoonBit modules published on
@@ -221,7 +221,10 @@ mistaken for a module.
 ### What the release was checked on
 
 `moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715` — the toolchain every
-number in this file was measured on.
+number in this file was measured on — **and** `moon 0.1.20261104`, carrying
+`moonc v0.10.20+65efd5b93`, which is what the CI runner installs. Both build
+this module, and the reason that is checked rather than hoped for is under
+[The core compatibility contract](#the-core-compatibility-contract).
 
 The module is **native and wasm**. The analyzer reaches the filesystem and
 spawns `moon fetch`, and the async runtime implements both on those two
@@ -254,14 +257,14 @@ only thing in the way, and it is upstream's to fix.
 
 ### The host contract
 
-The published wasm is not self-contained. It imports **108 host symbols**, and
+The published wasm is not self-contained. It imports **107 host symbols**, and
 the HOST has to provide every one of them when the module is instantiated:
 `moonx` supplies them from the async runtime bundled with the *user's*
 MoonBit toolchain.
 
 | Import module | Symbols | Served by |
 |---|---:|---|
-| `moonbitlang/async` | 95 | the toolchain's bundled core |
+| `moonbitlang/async` | 94 | the toolchain's bundled core |
 | `__moonbit_fs_unstable` | 12 | the toolchain's bundled core |
 | `wasi_snapshot_preview1` | 1 | the host runtime's WASI |
 
@@ -274,9 +277,61 @@ standalone `moonbitlang/async` module cannot instantiate this artifact.
 
 MEASURED against the toolchain this release was verified on:
 `moonbitlang/core` 0.10.19+bee578715 declares 272 host symbols and covers
-**107 of 107** of the artifact's core-extern imports. The contract is measured
+**106 of 106** of the artifact's core-extern imports. The contract is measured
 from the artifact's own import section by `scripts/qa/host_requirements.mjs`
 and recorded in `docs/host_requirements.txt`.
+
+### The core compatibility contract
+
+The runtime comes from the toolchain, so the version of `moonbitlang/core`
+this module builds against is **the user's toolchain**, not a pin here. That
+is the point of the swap — and it is also a hazard, because the core's API is
+allowed to change shape between toolchains, and this module has to build
+against all of them.
+
+MEASURED, the hard way: the first attempt at this release passed on
+`moon 0.1.20261102` (core 0.10.19) and **failed on the CI runner**, which
+installs the newest MoonBit — `moon 0.1.20261104`, core 0.10.20:
+
+```text
+Error: [4014]
+  ╭─[ src/app/scan.mbt:284:12 ]
+ 284 │     stdout=@process.read_from_process(),
+    │            ──────────────┬─────────────
+    │                          ╰─────────────── Expr Type Mismatch
+       has type : (ReadFromProcess, SharedProcessOutput)
+       wanted   : ProcessOutput
+```
+
+The capture call was written against the older core. Between the two:
+
+| Declaration | core 0.10.19 | core 0.10.20 |
+|---|---|---|
+| `read_from_process()` | `-> &ProcessOutput` | `-> (ReadFromProcess, SharedProcessOutput) raise` |
+| `run`'s `stdout~` | `&ProcessOutput = @stdio.stdout` | `ProcessOutput = Inherit` |
+
+So the fix is not a patch to one call — it is to **use only the part of the
+API that is the same in both**, and to let the filesystem be the authority:
+
+- the fetch runs `moon fetch --quiet`, so it prints nothing on success and its
+  error reaches the user directly;
+- the version comes from the directories the fetch wrote, not from parsing a
+  log;
+- the child inherits the parent's streams, so nothing has to be captured.
+
+That is also a better design than the one it replaced. The version used to be
+scanned out of the `moon fetch` log, and that scan was the source of two
+separate defects — a garbage version on the Linux runner (a green run over an
+empty tree) and a version of `"."` on Windows. With the log gone, that whole
+class of bug is gone by construction.
+
+**The contract is checked, not hoped for.**
+`scripts/qa/core_compat.mjs` fetches the registry's newest `moonbitlang/core`,
+finds every core on the machine, and compares the declarations this module
+actually uses — the parameters it passes and the return type, because a
+parameter it does not pass may change shape without breaking anything, while
+a return type that changes always does. MEASURED: **12 declarations,
+identical in 3 cores** (registry 0.1.20261105, local 0.10.20, local 0.10.19).
 
 **The release is CI-driven.** Pushing the release tag runs
 `.github/workflows/publish.yml`, which re-runs this gate, checks that the
@@ -310,7 +365,7 @@ from the registry.**
   trade is stated above: the package is experimental, and the minimum host
   toolchain moved up, because the artifact asks the host for a bigger set of
   symbols than the standalone module provided. The set is measured, not
-  asserted — 108 host imports, 107 of them covered by the bundled core, and
+  asserted — 107 host imports, 106 of them covered by the bundled core, and
   the contract is in `docs/host_requirements.txt`.
 - **The module has a root package, and `moonx` runs it.**
   `moonx riantr/LunaFlow@latest riantr/LunaFlow@latest` is the self-check, and
@@ -322,17 +377,27 @@ from the registry.**
   `+native+wasm`, and the wasm artifact fetches, analyses and writes the
   report. wasm-gc is still excluded, and the reason is upstream's — see
   [The host contract](#the-host-contract).
-- **A version-pinning bug, found by the new gate.** The Windows `moon fetch`
-  log prints the resolved path, and when the module name is a SUFFIX of the
-  repository directory name — `moonbit_LunaFlow` for the module `LunaFlow` —
-  the text after the name starts with `\.repos\`. A dot is a version
-  character, so the token came out as `"."`. That candidate was then accepted
-  because `base + "/."` **exists**: it resolves to the base directory itself.
-  Analysing the module with itself therefore pinned the analysis to the BASE
-  directory, and the report claimed the resolved version was `"."`. The
-  filesystem's own listing is now the authority — a candidate is accepted only
-  when it is a real entry in it — and a version token needs at least one
-  digit. Four regression tests pin it.
+- **The fetch log is gone, and with it a whole class of bug.** The version used
+  to be scanned out of the `moon fetch` log — free-form text whose shape differs
+  between platforms. It is now taken from the directories the fetch wrote. The
+  log scan was the source of two separate defects (a garbage version on the
+  Linux runner, a green run over an empty tree; a version of `"."` on Windows),
+  and removing it removes both by construction. The Windows case is the
+  sharper one: the fetch log prints the resolved path, and when the module name
+  is a SUFFIX of the repository directory name — `moonbit_LunaFlow` for the
+  module `LunaFlow` — the text after the name starts with `\.repos\`. A dot is
+  a version character, so the token came out as `"."`. That candidate was then
+  accepted because `base + "/."` **exists**: it resolves to the base directory
+  itself. Analysing the module with itself therefore pinned the analysis to
+  the BASE directory, and the report claimed the resolved version was `"."`.
+- **The module builds against every core a user may have.** The runtime comes
+  from the toolchain, so the core's API is allowed to change shape between
+  toolchains — and it did, between core 0.10.19 and 0.10.20, in the middle of
+  this release. The details are under
+  [The core compatibility contract](#the-core-compatibility-contract); the
+  short version is that the fetch no longer captures the child's output, so it
+  uses only the API that is the same in both, and
+  `scripts/qa/core_compat.mjs` checks the rest.
 
 The package layout changed with the root package. The CLI implementation moved
 out of `src/cli` and into `src/command`, because the module now has two
@@ -453,7 +518,7 @@ main.mbt                    the root entrypoint, a forwarder to src/command
 src/app/                   14 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, report renderer
-src/app/*_test.mbt         41 tests in 7 files
+src/app/*_test.mbt         38 tests in 7 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -481,10 +546,10 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 136 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 136 warnings, 0 errors |
-| `moon test src/app --target native` | **41 passed, 0 failed** |
-| `moon test src/app --target wasm` | **41 passed, 0 failed** |
+| `moon check --target native` | exit 0, 134 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 134 warnings, 0 errors |
+| `moon test src/app --target native` | **38 passed, 0 failed** |
+| `moon test src/app --target wasm` | **38 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
@@ -496,7 +561,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **14 passed, 0 failed** |
-| `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
+| `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** |
+| `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
 | `node scripts/qa/verify_published.mjs 0.1.3` | **4 passed, 0 failed** |
 `moon 0.1.20261102`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
@@ -527,7 +593,9 @@ tree), `cli_resolver.mjs` (the built CLI has to be found under either name
 the toolchain produces), `root_package.mjs` (the root package `moonx` resolves
 has to be an executable, has to build for wasm, and has to accept a bare
 coordinate), `host_requirements.mjs` (the published wasm's host imports have to
-be covered by the toolchain's bundled core) and `verify_published.mjs` (install
+be covered by the toolchain's bundled core), `core_compat.mjs` (every
+declaration this module uses has to be the same in every core a user may
+have) and `verify_published.mjs` (install
 the **published** version from a clean consumer and call its API — the check
 that a green gate cannot give you, because the gate checks the commit and this
 checks what the registry serves). The report for the last deep QA pass is
@@ -646,7 +714,7 @@ condition is unknown rather than guessed.
   library.
 - `src/command` — the CLI implementation, shared by `src/cli` and the root
   package that `moonx` resolves.
-- `scripts/qa/` — nineteen dependency-free harnesses and tools; thirteen of them
+- `scripts/qa/` — twenty dependency-free harnesses and tools; thirteen of them
   drive the built binary as a real process against the fixture, the two
   registry modules and a hostile-input corpus.
 - `docs/design.md` — the design record for the implementation in `src/app`.

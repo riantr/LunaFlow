@@ -88,6 +88,20 @@ jobs:
           fi
           echo "runtime: moonbitlang/core/async (from the toolchain; no pin to drift)"
 
+      # The runtime comes from the toolchain, so the version of
+      # `moonbitlang/core` this module builds against is the USER's toolchain,
+      # not a pin here. The core's API can change shape between toolchains,
+      # and this module has to build against all of them.
+      #
+      # MEASURED: this very release failed on the runner because
+      # `read_from_process()` changed its return type between core 0.10.19 and
+      # 0.10.20, and the capture call compiled against one and not the other.
+      # The gate fetches the registry's newest core and compares every
+      # declaration this module uses against it, and against every core on the
+      # machine.
+      - name: Check the core compatibility
+        run: node scripts/qa/core_compat.mjs
+
       # NATIVE AND WASM. The module declares `supported_targets = "+native+wasm"`:
       # the analyzer needs the filesystem and process spawning, and the async
       # runtime implements both on those two backends only. wasm-gc has no

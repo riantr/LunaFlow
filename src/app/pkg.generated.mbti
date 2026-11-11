@@ -74,8 +74,6 @@ pub fn lex(String) -> Array[Tok]
 
 pub async fn load_module(String, String, String, Int32) -> (ModuleAst, ScanStats)
 
-pub fn log_version_candidates(String, String) -> Array[String]
-
 pub fn md_escape(String) -> String
 
 pub fn mermaid_id(String, Int32) -> String
@@ -108,7 +106,7 @@ pub fn path_join(String, String) -> String
 
 pub fn pct(Int32, Int32) -> String
 
-pub fn pin_version(String, String, Array[String]) -> String
+pub fn pin_version(Array[String]) -> String
 
 pub fn proof_counts(Array[VC]) -> (Int32, Int32, Int32)
 
@@ -374,7 +372,7 @@ pub struct FetchResult {
   root : String
   version : String
   ok : Bool
-  log : String
+  note : String
 }
 
 #derive(Eq)

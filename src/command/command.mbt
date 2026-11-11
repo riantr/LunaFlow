@@ -398,7 +398,7 @@ async fn analyze(opts : Opts) -> Unit {
         if !fetched.ok {
           println("ERROR\tcould not resolve " + coord)
           if !opts.quiet {
-            println(fetched.log)
+            println(fetched.note)
           }
           return
         }
