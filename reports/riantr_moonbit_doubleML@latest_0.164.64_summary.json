@@ -1,0 +1,23 @@
+{
+  "module": "riantr/moonbit_doubleML@latest",
+  "version": "0.164.64",
+  "report": "reports/riantr_moonbit_doubleML@latest_0.164.64.md",
+  "files": 220,
+  "functions": 2520,
+  "statements": 29853,
+  "unsupported_statements": 320,
+  "trace_events": 218391,
+  "steps": 42818,
+  "elapsed_ms": 3891,
+  "dead_code": 0,
+  "unreachable": 0,
+  "infinite_loop": 0,
+  "taint_sinks": 73,
+  "range_vars": 61,
+  "level": 3,
+  "abstract_findings": 166,
+  "vcs_proved": 0,
+  "vcs_failed": 0,
+  "vcs_unknown": 0,
+  "slices": 1
+}

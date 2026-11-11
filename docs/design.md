@@ -110,14 +110,16 @@ Everything is coordinate-driven; there is no allow-list. `--dir <path>` analyzes
 
 ### 3.4 Syntax evolution and frontend coverage
 
-The frontend is a structural parser for the MoonBit subset needed by the analyses, not a full type-checking frontend. Supported: `fn` (including `Type::method` names), parameters and return annotations, `let`/`let mut`, assignments and compound assignments, `if/else if/else`, `while`, C-style `for` and `for … in`, `return`, `break`, `continue`, blocks, `try` bodies, array/tuple literals, calls, method calls, field access, indexing, unary/binary operations, multi-line `#|` strings.
+The frontend is a structural parser for the MoonBit subset needed by the analyses, not a full type-checking frontend. Supported: `fn` (including `Type::method` names), parameters and return annotations, `let`/`let mut`, assignments and compound assignments, `if/else if/else`, `while`, C-style `for` and `for … in` (including the destructuring `for k, v in entries`), `return`, `break`, `continue`, blocks, `try` bodies, array/tuple literals, struct and record literals, qualified paths (`CART::Leaf`, `Rec::{ … }`), named arguments, calls, method calls, field access, indexing, `if` and `match` expressions, function literals, unary/binary operations, multi-line `#|` strings.
 
-Unsupported constructs are counted, not hidden: `match` arms, closures, `impl` bodies, functional `for`, and `loop` are recorded as `SUnsupported` / `EvUnsupported` and appear in the CFG as `unsupported: …` nodes. Report §2 states statements-understood vs unsupported, so the reader can judge confidence per module. Measured frontend coverage:
+Unsupported constructs are counted, not hidden: `match` arms, `impl` bodies, functional `for`, and `loop` are recorded as `SUnsupported` / `EvUnsupported` and appear in the CFG as `unsupported: …` nodes. A construct the parser has no rule for at all — an operator it does not model — is folded into the statement it belongs to and counted as unsupported, so it cannot shred itself into statements of its own. Report §2 states statements-understood vs unsupported, so the reader can judge confidence per module. Measured frontend coverage:
 
 | Module | Statements understood | Unsupported | Coverage |
 | --- | --- | --- | --- |
-| doubleML 0.164.62 | 43,822 | 58 | **99.87 %** |
-| static_analysis 0.4.43 | 14,505 | 399 | **97.32 %** |
+| doubleML 0.164.64 | 29,853 | 320 | **98.94 %** |
+| static_analysis 0.4.45 | 11,750 | 545 | **95.57 %** |
+
+The counts fell because the old ones were wrong: the parser shredded every construct it did not model into one statement per fragment, and a shredded fragment ate the closing brace of its function, so whole function bodies were truncated. The coverage number is *lower* than before because the analyzer now says what it does not understand instead of silently shredding it.
 
 Compatibility strategy: the parser is tolerant (it clamps brace depth and skips unparseable statements) so a new syntax form degrades to an explicit gap instead of aborting the file. When a module's coverage is low, the report says so, and the coverage bridge can still supply compiled-execution evidence.
 
@@ -297,7 +299,7 @@ Sinks:
 
 MoonBit has no raw pointer arithmetic; "pointer" sinks in the TrustInSoft sense are represented by array indexing and `Ref` values. `Ref` reads/writes currently degrade to unknown (documented limitation).
 
-Imprecision: field-insensitive, container-index-insensitive, no alias analysis, depth-6 call cutoff, unsupported `match` arms break propagation, and the conservative loop-counter rule can produce false positives. On the validation modules this yields 102 sinks (doubleML) and 411 (static_analysis) — high by design because every parameter is treated as hostile input; the report exposes the rule and the observed value for triage.
+Imprecision: field-insensitive, container-index-insensitive, no alias analysis, depth-6 call cutoff, unsupported `match` arms break propagation, and the conservative loop-counter rule can produce false positives. On the validation modules this yields 73 sinks (doubleML) and 4 (static_analysis) — the count is the number of distinct sites, since one site observed in many trials is one sink — high by design because every parameter is treated as hostile input; the report exposes the rule and the observed value for triage.
 
 ### 5.6 Value ranges
 
@@ -412,20 +414,27 @@ Outputs, all deterministic except `elapsed_ms`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.62 (120 fn) | 220 | 43,822 | 162,708 | 127 | 0 / 0 / 0 (no specs) | 137 | 102 | 6.0 s | 124 KB | 27.4 MB |
-| static_analysis 0.4.43 (200 fn) | 164 | 14,505 | 27,785 | 47 | 0 / 0 / 0 (no specs) | 48 | 103 | 3.0 s | 78 KB | 4.2 MB |
-| fixtures/vuln_demo | 1 | 36 | 889 | 11 | 2 / 1 / 3 | 3 | 28 | 5 ms | 24 KB | 117 KB |
+| doubleML 0.164.64 (120 fn) | 220 | 29,853 | 218,391 | 166 | 0 / 0 / 0 (no specs) | 0 | 73 | 3.9 s | 94 KB | 33.8 MB |
+| static_analysis 0.4.45 (200 fn) | 185 | 11,750 | 8,860 | 41 | 0 / 0 / 0 (no specs) | 0 | 4 | 1.0 s | 55 KB | 1.3 MB |
+| fixtures/vuln_demo | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms | 21 KB | 79 KB |
 
-Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 27 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-functions` or stream events to disk.
+The statement counts fell and the dead-code column emptied because the old
+numbers were wrong: the parser shredded every construct it did not model into
+one statement per fragment, and a shredded fragment ate the closing brace of
+its function, so whole function bodies were truncated. Neither module has an
+unreachable statement, and the analyzer now says so. The event count rose
+because the analyzer understands more of the module and explores more paths.
 
-Deep-QA measurements (2026-11-10, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `scripts/qa/metrics.mjs`):
+Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 34 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-functions` or stream events to disk.
+
+Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `scripts/qa/metrics.mjs`):
 
 | Measurement | Value |
 | --- | --- |
-| doubleML full run (`@latest` → 0.164.64), wall time | 5.7–6.2 s |
+| doubleML full run (`@latest` → 0.164.64), wall time | 8.5–9 s |
 | doubleML full run, peak working set (sampled) | 295.9 MB |
-| doubleML full run, trace size / events | 56.5 MB / 350,994 (default `--trials 8`) |
-| doubleML documented parameters (`--trials 4 --max-functions 120`) | 162,708 events, 102 sinks, 137 dead, 2.9 s |
+| doubleML full run, trace size / events | 70.3 MB / 387,638 (default `--trials 8`) |
+| doubleML documented parameters (`--trials 4 --max-functions 120`) | 218,391 events, 73 sinks, 0 dead, 3.9 s |
 | fixture run, peak working set | 7.5 MB |
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
 | LunaFlow's own line coverage (`moon coverage`) | **31.55 %** (1,156 / 3,664 lines of `src/app`) |
@@ -481,7 +490,7 @@ Interpretation:
 **Limitations (explicit)**
 
 - unsound: unexecuted inputs/paths are invisible; absence of a finding is not a proof;
-- `match`, closures, `impl` bodies and functional `for` are gaps (0.13 % / 2.68 % of statements in the validation modules);
+- `match`, closures, `impl` bodies and functional `for` are gaps (1.06 % / 4.43 % of statements in the validation modules);
 - taint is field- and index-insensitive, no alias analysis, depth-6 interprocedural cutoff;
 - loop-counter implicit taint is conservative and can over-report;
 - ranges are sampled unions, not fixpoints;

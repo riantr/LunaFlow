@@ -130,9 +130,9 @@ fn emit_stmts(
           if efirst >= 0 {
             b.edge(c, efirst, EFalse)
           }
-          let tterm = emit_stmts_terminated(b, then_b)
+          let tterm = stmts_always_exit(then_b)
           let eterm = if else_b.length() > 0 {
-            emit_stmts_terminated(b, else_b)
+            stmts_always_exit(else_b)
           } else {
             false
           }
@@ -202,10 +202,10 @@ fn emit_stmts(
           b.edge(h, after, EFalse)
           cur = after
         }
-        SForIn(name, iter, body) => {
+        SForIn(names, iter, body) => {
           let h = b.node(
             NLoop,
-            "for " + name + " in " + iter.render(),
+            "for " + names.join(", ") + " in " + iter.render(),
             s.span,
             s.id,
           )
@@ -272,21 +272,30 @@ fn emit_stmts(
 }
 
 ///|
-fn emit_stmts_terminated(b : Builder, stmts : Array[Stmt]) -> Bool {
-  let mut terminated = false
+/// True when the statement always leaves its block.
+///
+/// An `if` leaves only when BOTH branches leave. An `if` without an `else`
+/// has a fall-through path -- the condition may be false -- so the code after
+/// it is reachable. Treating it as an exit made every statement after a
+/// guarded `return` unreachable code.
+fn stmt_always_exits(s : Stmt) -> Bool {
+  match s.kind {
+    SReturn(_) | SBreak | SContinue => true
+    SIf(_, a, c) => stmts_always_exit(a) && stmts_always_exit(c)
+    _ => false
+  }
+}
+
+///|
+/// True when the block always leaves: one of its statements always leaves, so
+/// the ones after it are unreachable. An empty block never leaves.
+fn stmts_always_exit(stmts : Array[Stmt]) -> Bool {
   for s in stmts {
-    match s.kind {
-      SReturn(_) | SBreak | SContinue => terminated = true
-      SIf(_, a, c) =>
-        if emit_stmts_terminated(b, a) &&
-          (c.length() == 0 || emit_stmts_terminated(b, c)) {
-          terminated = true
-        }
-      _ => ()
+    if stmt_always_exits(s) {
+      return true
     }
   }
-  ignore(b)
-  terminated
+  false
 }
 
 ///|

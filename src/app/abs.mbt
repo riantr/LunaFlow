@@ -911,10 +911,12 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
       }
       refine_cond(cur, cond, false)
     }
-    SForIn(n, iter, body) => {
+    SForIn(names, iter, body) => {
       let ci = abs_eval(ctx, st, iter)
       let cur = copy_state(st)
-      cur.env[n] = AbsCell::new(ATop, ci.t)
+      for n in names {
+        cur.env[n] = AbsCell::new(ATop, ci.t)
+      }
       let after = abs_block(ctx, cur, body)
       abs_join_state(cur, after)
     }

@@ -9,6 +9,7 @@ struct Opts {
   mut direction : String
   mut coverage_path : String
   mut max_cfg : Int32
+  mut max_cfg_functions : Int32
   mut max_taint : Int32
   mut max_slice : Int32
   mut quiet : Bool
@@ -30,6 +31,7 @@ fn Opts::default() -> Opts {
     direction: "backward",
     coverage_path: "",
     max_cfg: 8,
+    max_cfg_functions: 600,
     max_taint: 40,
     max_slice: 40,
     quiet: false,
@@ -67,6 +69,10 @@ fn usage() -> String {
     #|  --forward           forward slice (default: backward)
     #|  --coverage <xml>    import a Cobertura XML from `moon coverage report`
     #|  --max-cfg <n>       CFG diagrams to render (default: 8)
+    #|  --max-cfg-functions <n>
+    #|                      functions the CFG pass covers (default: 600; the
+    #|                      FIRST ones in file order, so a larger module
+    #|                      leaves the rest with no CFG and no CFG finding)
     #|  --quiet             only print the report path
   )
 }
@@ -183,6 +189,12 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
       i = i + 2
     } else if a == "--max-cfg" {
       o.max_cfg = @app.parse_int(arg_value(args, i), o.max_cfg)
+      i = i + 2
+    } else if a == "--max-cfg-functions" {
+      o.max_cfg_functions = @app.parse_int(
+        arg_value(args, i),
+        o.max_cfg_functions,
+      )
       i = i + 2
     } else if a == "--max-taint" {
       o.max_taint = @app.parse_int(arg_value(args, i), o.max_taint)
@@ -432,7 +444,7 @@ async fn analyze(opts : Opts) -> Unit {
   let cfgs : Array[@app.Cfg] = []
   let cfg_findings : Array[@app.Finding] = []
   let mut i = 0
-  while i < funcs.length() && i < 600 {
+  while i < funcs.length() && i < opts.max_cfg_functions {
     let c = @app.build_cfg(funcs[i])
     cfgs.push(c)
     for f in @app.cfg_findings(c) {

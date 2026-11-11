@@ -200,7 +200,9 @@ pub(all) enum StmtKind {
   SIf(Expr, Array[Stmt], Array[Stmt])
   SWhile(Expr, Array[Stmt])
   SFor(String, Expr, Expr, Expr, Array[Stmt])
-  SForIn(String, Expr, Array[Stmt])
+  // The binder is a list because a `for` may destructure: `for k, v in
+  // entries` binds two names. One name for a plain binder.
+  SForIn(Array[String], Expr, Array[Stmt])
   SReturn(Expr?)
   SBreak
   SContinue
@@ -378,6 +380,7 @@ pub(all) enum FindingKind {
   FUnreachable
   FInfinite
   FTaintIndex
+  FTaintIndexRange
   FTaintAlloc
   FRangeViolation
   FParseGap
@@ -395,6 +398,7 @@ pub fn FindingKind::code(self : FindingKind) -> String {
     FUnreachable => "UNREACHABLE"
     FInfinite => "INFINITE-LOOP"
     FTaintIndex => "TAINT-INDEX"
+    FTaintIndexRange => "TAINT-INDEX-RANGE"
     FTaintAlloc => "TAINT-ALLOC"
     FRangeViolation => "RANGE-VIOLATION"
     FParseGap => "PARSE-GAP"
@@ -409,6 +413,7 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     FDead | FUnreachable | FParseGap => "info"
     FInfinite | FRangeViolation | FBudget => "warning"
     FTaintIndex | FTaintAlloc => "error"
+    FTaintIndexRange => "warning"
     FUnsupported => "info"
   }
 }

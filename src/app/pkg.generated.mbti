@@ -16,6 +16,8 @@ pub fn build_taint(Array[TraceEvent], Array[Finding]) -> TaintGraph
 
 pub fn candidates_for(String) -> Array[Value]
 
+pub fn cfg_coverage(Int32, Int32) -> String
+
 pub fn cfg_findings(Cfg) -> Array[Finding]
 
 pub fn cfg_label_counts(Cfg) -> Map[String, Int32]
@@ -396,6 +398,7 @@ pub(all) enum FindingKind {
   FUnreachable
   FInfinite
   FTaintIndex
+  FTaintIndexRange
   FTaintAlloc
   FRangeViolation
   FParseGap
@@ -663,7 +666,7 @@ pub(all) enum StmtKind {
   SIf(Expr, Array[Stmt], Array[Stmt])
   SWhile(Expr, Array[Stmt])
   SFor(String, Expr, Expr, Expr, Array[Stmt])
-  SForIn(String, Expr, Array[Stmt])
+  SForIn(Array[String], Expr, Array[Stmt])
   SReturn(Expr?)
   SBreak
   SContinue

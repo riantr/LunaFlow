@@ -7,8 +7,11 @@ import { join, basename } from 'node:path';
 
 const dir = process.argv[2] ?? 'reports';
 const required = [
-  'riantr_moonbit_doubleML@latest_0.164.62.md',
-  'riantr_moonbit_static_analysis@latest_0.4.43.md',
+  // The artefacts are regenerated when the analyser changes, and the module
+  // version is part of the file name, so the pin moves with them. These are
+  // the versions the committed reports were generated from.
+  'riantr_moonbit_doubleML@latest_0.164.64.md',
+  'riantr_moonbit_static_analysis@latest_0.4.45.md',
   'local_module_0.0.0.md',
 ];
 
@@ -117,12 +120,23 @@ for (const name of required) {
 }
 
 const summaryExpectations = [
-  ['riantr_moonbit_doubleML@latest_0.164.62_summary.json', 40000, 0.95],
-  ['riantr_moonbit_static_analysis@latest_0.4.43_summary.json', 7000, 0.95],
-  ['local_module_0.0.0_summary.json', 30, 1.0],
+  // The statement floors moved down with the parsing fix: the old numbers
+  // (43822 and 14505) counted the shredded fragments of constructs the
+  // parser did not model, and the shredded fragment ate the closing brace of
+  // its function, so whole function bodies were truncated. The honest counts
+  // are 29853 and 11750.
+  //
+  // The dead-code bounds are the same story from the other side. The check
+  // used to be "at least one", and it passed only because of the shredding:
+  // every fragment that followed a `return` was one row. Neither module has
+  // an unreachable statement, so both now report none. The fixture is the
+  // dead-code fixture, and it still reports its three.
+  ['riantr_moonbit_doubleML@latest_0.164.64_summary.json', 25000, 0.95, 0, 0],
+  ['riantr_moonbit_static_analysis@latest_0.4.45_summary.json', 7000, 0.95, 0, 0],
+  ['local_module_0.0.0_summary.json', 30, 1.0, 3, 3],
 ];
 
-for (const [file, minStmts, minCoverage] of summaryExpectations) {
+for (const [file, minStmts, minCoverage, minDead, maxDead] of summaryExpectations) {
   const path = join(dir, file);
   if (!existsSync(path)) {
     check(`summary exists: ${file}`, false, 'missing');
@@ -144,7 +158,11 @@ for (const [file, minStmts, minCoverage] of summaryExpectations) {
   );
   check(`${file}: trace events > 0`, s.trace_events > 0, `${s.trace_events}`);
   check(`${file}: taint sinks ≥ 1`, s.taint_sinks >= 1, `${s.taint_sinks}`);
-  check(`${file}: dead-code findings ≥ 1`, s.dead_code >= 1, `${s.dead_code}`);
+  check(
+    `${file}: dead-code findings in [${minDead}, ${maxDead}]`,
+    s.dead_code >= minDead && s.dead_code <= maxDead,
+    `${s.dead_code}`,
+  );
   check(`${file}: slices ≥ 1`, s.slices >= 1, `${s.slices}`);
   check(`${file}: selected level ≥ 1`, s.level >= 1, `L${s.level}`);
   check(`${file}: abstract_findings present`, typeof s.abstract_findings === 'number', `${s.abstract_findings}`);

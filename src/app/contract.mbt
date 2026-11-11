@@ -841,7 +841,7 @@ fn exec_contract_stmts(
         exec_contract_stmts(body, sb, facts, fn_name, file, vcs, ensures)
         havoc(state, names)
       }
-      SForIn(n, iter, body) => {
+      SForIn(names, iter, body) => {
         collect_expr_vcs(
           iter,
           state,
@@ -851,7 +851,7 @@ fn exec_contract_stmts(
           s.span.start_line,
           vcs,
         )
-        let names : Array[String] = [n]
+        let names = names.copy()
         assigned_names(body, names)
         let sb = state.copy()
         exec_contract_stmts(body, sb, facts, fn_name, file, vcs, ensures)

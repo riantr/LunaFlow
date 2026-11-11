@@ -257,6 +257,14 @@ pub fn lex(src : String) -> Array[Tok] {
           break
         }
       }
+      // The effect marker `~` belongs to the name it follows: `x~` is ONE
+      // identifier, not an identifier and an operator. Left as a separate
+      // token it became a statement of its own -- and a statement that
+      // follows a `return` is unreachable code.
+      if i < n && src.get_char(i).unwrap_or(' ') == '~' {
+        i = i + 1
+        col = col + 1
+      }
       toks.push({
         kind: TIdent,
         text: src[start:i].to_string(),
@@ -284,7 +292,8 @@ pub fn lex(src : String) -> Array[Tok] {
       two == "->" ||
       two == ".." ||
       two == "::" ||
-      two == "??"
+      two == "??" ||
+      two == "|>"
     if is_two {
       toks.push({ kind: TOp, text: two, line, col: start_col, })
       i = i + 2

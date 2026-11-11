@@ -107,6 +107,7 @@ The module is a library plus an executable, so "what you get" is a set of
 | `LunaFlow analyze --slice "<crit>"` | dynamic backward/forward slice | Mermaid graph + statement table |
 | `LunaFlow analyze --coverage cov.xml` | compiled-suite coverage mapped onto CFG nodes | report §4.4 |
 | `LunaFlow analyze --list-functions` | function, file, statement count | `FUNCTION<TAB>FILE<TAB>STATEMENTS` |
+| `LunaFlow analyze --max-cfg-functions <n>` | how many functions the CFG pass covers (default 600) | report §2 states what was not covered |
 | `@app.load_module(root, coord, version, limit)` | the parsed module and its ingestion statistics | `(ModuleAst, ScanStats)` |
 | `@app.check_contracts(ast, ["f"])` | the verification conditions of a function | `ProofResult` |
 | `@app.run_abstract(ast, max_functions, max_steps)` | the L2 findings of a module | `AbsResult` |
@@ -118,7 +119,7 @@ repository's own claims.
 
 The three artefacts are the point of the tool. The **report** is the human
 artefact — ten sections, Mermaid diagrams, `file:line` on every claim. The
-**trace** is the audit evidence: one JSON object per event, 27 MB for a
+**trace** is the audit evidence: one JSON object per event, 34 MB for a
 doubleML run, and the reason the numbers above are checkable rather than
 asserted. The **summary** is the machine artefact: counters a CI gate can read
 without parsing prose.
@@ -518,7 +519,7 @@ main.mbt                    the root entrypoint, a forwarder to src/command
 src/app/                   14 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, report renderer
-src/app/*_test.mbt         38 tests in 7 files
+src/app/*_test.mbt         59 tests in 9 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -536,8 +537,10 @@ the CLI needs come from `moonbitlang/core/async`, part of the `moonbitlang/core`
 module the toolchain already bundles — so there is no version to pin, and no way
 for the build and the host to disagree about which runtime is in play. The
 frontend is a structural parser for the MoonBit subset the analyses need;
-`match` arms, closures, `impl` bodies and functional `for` are counted as
-gaps, not silently dropped.
+`match` arms, `impl` bodies and functional `for` are counted as gaps, not
+silently dropped. A construct the parser has no rule for at all is folded into
+the statement it belongs to and counted as unsupported, so it cannot shred
+itself into statements of its own.
 
 ## Verification
 
@@ -548,8 +551,8 @@ The gate, and the result it produced for this version:
 | `moon fmt --check` | exit 0 |
 | `moon check --target native` | exit 0, 134 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 134 warnings, 0 errors |
-| `moon test src/app --target native` | **38 passed, 0 failed** |
-| `moon test src/app --target wasm` | **38 passed, 0 failed** |
+| `moon test src/app --target native` | **59 passed, 0 failed** |
+| `moon test src/app --target wasm` | **59 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
@@ -569,20 +572,24 @@ measured runs committed with the reports:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.62 | 220 | 43,822 | 162,708 | 127 (115 new) | 0 (no specs) | 137 | 102 | 6.0 s |
-| `riantr/moonbit_static_analysis@latest` → 0.4.43 | 164 | 14,505 | 27,785 | 47 | 0 (no specs) | 48 | 103 | 3.0 s |
-| `fixtures/vuln_demo` | 1 | 36 | 889 | 11 | 2 / 1 / 3 | 3 | 28 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 22 | 3,497 | 17,957 | 24 | 2 / 1 / 3 | 24 | 3 | 0.15 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 3.9 s |
+| `riantr/moonbit_static_analysis@latest` → 0.4.45 | 185 | 11,750 | 8,860 | 41 | 0 (no specs) | 0 | 4 | 1.0 s |
+| `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
+| `LunaFlow` itself (`--dir .`) | 27 | 3,322 | 12,211 | 22 | 2 / 1 / 3 | 8 | 1 | 0.17 s |
 
-**Reproduction status (2026-11-10).** The rows above are the committed
-artefacts, pinned to the versions resolved on the day they were generated. On
-2026-11-10 `@latest` resolved to `0.164.64` and `0.4.45`. Re-running the
-documented parameters (`--trials 4 --max-functions 120`) reproduces the
-doubleML L1 numbers exactly — 43,822 statements, 162,708 trace events, 102
-taint sinks, 137 dead-code findings, 2,520 functions, 2.9 s — while L2 lands at
-126 findings instead of the committed 127. `scripts/verify.mjs` validates the
-committed artefacts by pinned file name; `scripts/qa/e2e.mjs` validates fresh
-runs against the same thresholds.
+**Reproduction status (2026-11-11).** The rows above are the committed
+artefacts, pinned to the versions resolved on the day they were generated. They
+were regenerated for this release, and every number in them moved: the previous
+rows said 43,822 statements, 137 dead-code findings and 102 taint sinks for
+doubleML, and 14,505 / 48 / 103 for the static-analysis module. The reason is
+in the next section — the old numbers counted the shredded fragments of
+constructs the parser did not model, and a shredded fragment ate the closing
+brace of its function, so whole function bodies were truncated. The committed
+numbers are now the honest ones: neither module has an unreachable statement,
+and the analyzer says so.
+
+`scripts/verify.mjs` validates the committed artefacts by pinned file name;
+`scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.
 
 `scripts/qa/` also carries the rest of the deep-QA tooling: `warn_census.mjs`
 (warning triage), `metrics.mjs` (size/complexity plus line coverage from the
@@ -598,14 +605,106 @@ declaration this module uses has to be the same in every core a user may
 have) and `verify_published.mjs` (install
 the **published** version from a clean consumer and call its API — the check
 that a green gate cannot give you, because the gate checks the commit and this
-checks what the registry serves). The report for the last deep QA pass is
-`docs/qa/REPORT.md`.
+checks what the registry serves). The report of the last deep QA pass is
+`docs/qa/REPORT.md` — it covers 0.1.3 and is dated 2026-11-10, so it is a
+record of that pass and not a claim about this version.
 
 Two things deliberately **not** claimed. No production-load testing has been
-done, and no comparison against another analyzer on the same workload has been
-run. The comparison baseline in `docs/design.md` §8 covers Frama-C /
-TrustInSoft Analyzer, Joern, CodeQL, SVF and Soot as a **design** comparison,
-not as a measured head-to-head.
+done, and no head-to-head comparison against another analyzer **on the same
+workload** has been run — the two analyzers were pointed at different modules,
+so the numbers are not comparable. The comparison baseline in
+`docs/design.md` §8 covers Frama-C / TrustInSoft Analyzer, Joern, CodeQL, SVF
+and Soot as a **design** comparison, not as a measured head-to-head.
+
+### The cross-check against another analyzer's module
+
+`riantr/moonbit_static_analysis` runs LunaFlow against its own source and
+reports what it finds. On 0.4.45 that was **136 findings: 37 dead-code, 98
+taint-index, 1 budget**. Every one of them was a false positive, and the
+adjudication is worth recording because the reasons are not what the report
+said.
+
+**What the report got right.** The 21 rows in `src/flow/laws_test.mbt` were
+multi-line `return` expressions whose continuation lines were parsed as
+statements of their own, and the ones after the `return` inherited its
+deadness. That was true, and it was LunaFlow's bug.
+
+**What the report got wrong.** The 16 rows in `src/parser/parser.mbt` were
+attributed to a nested `return` being treated as an exit of the enclosing
+block. They were not: the cause was a struct literal being shredded into one
+statement per field. And the observation that the verdict "is not a function
+of the file's own bytes" had no mechanism until the positional 600-function CFG
+window was found — a file's findings depended on how many functions preceded
+it, and the window is now disclosed in the report and configurable with
+`--max-cfg-functions`.
+
+**The five root causes, all in the frontend.**
+
+1. A struct literal was not modelled, so `{ a: x, b: 2, }` became one
+   statement per fragment, and it ate the enclosing block's closing brace —
+   which truncated the function.
+2. A binary expression did not continue across a newline, so each continuation
+   line became its own statement.
+3. A `match` expression leaked its arms into the enclosing statement list.
+4. `::` was lexed but not parsed, so `return CART::Leaf(...)` left the tail
+   behind as statements. `::` is not a list-cons operator in MoonBit —
+   `1 :: [2]` is a parse error in the real toolchain — so it is only ever a
+   qualified path.
+5. A string or character literal whose content was `{` was counted as a brace.
+   `match rsplit_at(seg, "{") {` stopped the arm scanner at the string, the
+   block ran on past the end of the function, and the functions after it were
+   lost.
+
+Two more were found while fixing those: a `for` that destructures
+(`for k, v in entries`) left its loop body behind as a block, and an `if`
+without an `else` was treated as an unconditional exit, so the code after a
+guarded `return` was called unreachable.
+
+**The repair is two layers.** The constructs above are now *modelled* — the
+qualified path, the qualified record literal, the destructuring `for`, the
+named argument, the `if` expression, the function literal. And the parser no
+longer lets an unmodelled construct shred itself: a tail it has no rule for is
+folded into the statement it belongs to and counted as unsupported, instead of
+becoming statements of its own. The second layer is the one that generalises —
+without it the next construct the parser does not know would shred itself
+again, and the dead-code verdict would come back with it.
+
+**Measured, on identical trees.**
+
+| | published 0.1.4 | this tree |
+|---|---:|---:|
+| `moonbit_static_analysis@0.4.45` — dead code | 37 | **0** |
+| `moonbit_static_analysis@0.4.45` — taint sinks | 98 | **5** |
+| `moonbit_doubleML@0.164.64` — dead code | 137 | **0** |
+| `moonbit_doubleML@0.164.64` — statements | 43,822 | **29,853** |
+| `moonbit_doubleML@0.164.64` — frontend coverage | 99.87 % | **98.94 %** |
+
+The statement count went **down** because it was wrong before: the old number
+counted the shredded fragments, and a shredded fragment ate the closing brace
+of its function, so whole function bodies were truncated. A per-function
+cross-check against the published build confirms it — the two builds agree on
+all 2,514 functions of doubleML, and the 184 functions where the new count is
+*higher* are the ones the old build truncated (`sensitivity_analysis` was 3
+statements, it is 13).
+
+The taint sinks fell for two different reasons, and the two are worth telling
+apart. 93 of the 98 rows on the peer module came from just two sites: the sink
+list was deduplicated by whole-finding equality, and the observed value is in
+the evidence, so one read observed in many trials became dozens of rows. The
+sinks are now deduplicated by site. The other 5 were a bounds question the old
+analysis did not ask: a tainted index whose observed value was *inside* the
+array is now a warning that says so, and only an index that was witnessed out
+of range — or one whose bounds could not be resolved — stays an error.
+
+**What is still not covered.** The CFG pass builds the CFG for the first 600
+functions in file order, so the other 1,920 functions of doubleML can carry no
+CFG finding; the report says so in the ingestion table rather than letting
+"no findings" read as "clean". The taint synthesizer's string candidates carry
+no `::` or `/` shapes, so branches that depend on those shapes are not
+explored. Nested function declarations are consumed as one unit and are not
+analysed on their own. And the peer's own attribution of the 16 parser rows
+was wrong in a way that would have sent the next fix in the wrong direction —
+which is why the correction belongs here and not only in the fix.
 
 ## What this is not
 
@@ -613,7 +712,7 @@ not as a measured head-to-head.
   the abstract input set cannot exclude. L3 proves individual VCs from
   specifications. Absence of a finding is never a proof.
 * **Not a full MoonBit frontend.** Unsupported syntax is measured and reported
-  (0.13 % of statements on doubleML, 2.68 % on static_analysis). Expression and
+  (1.06 % of statements on doubleML, 4.43 % on static_analysis). Expression and
   statement nesting beyond 256 levels is refused as a recorded parse gap rather
   than risked on the native stack.
 * **Not alias-aware.** Taint is field- and index-insensitive, with a depth-6

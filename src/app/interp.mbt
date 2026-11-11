@@ -100,6 +100,8 @@ fn seed_reads(p : Interp, csv : String) -> Unit {
 }
 
 ///|
+
+///|
 fn apply_implicit_loop_taint(p : Interp, env : Map[String, Val]) -> Unit {
   for name in p.reads.copy() {
     match env.get(name) {
@@ -112,6 +114,43 @@ fn apply_implicit_loop_taint(p : Interp, env : Map[String, Val]) -> Unit {
 ///|
 fn numeric_of(v : Val) -> Double? {
   v.v.numeric()
+}
+
+///|
+/// Bind the binders of a `for` loop. A plain binder takes the element; a
+/// destructuring binder takes the parts of a tuple element, one name per
+/// part. An element that is not a tuple leaves every name unknown rather
+/// than guessing.
+fn bind_for_binders(
+  p : Interp,
+  env : Map[String, Val],
+  names : Array[String],
+  item : Value,
+  tainted : Bool,
+  span : Span,
+  stmt : Int32,
+) -> Unit {
+  if names.length() == 1 {
+    let v = Val::new(item, tainted)
+    env[names[0]] = v
+    observe_def(p, names[0], v, span, stmt)
+    return
+  }
+  let parts = match item {
+    VTuple(xs) => xs
+    _ => []
+  }
+  let mut i = 0
+  for n in names {
+    let v = if i < parts.length() {
+      Val::new(parts[i], tainted)
+    } else {
+      Val::new(VUnknown, tainted)
+    }
+    env[n] = v
+    observe_def(p, n, v, span, stmt)
+    i = i + 1
+  }
 }
 
 ///|
@@ -289,18 +328,53 @@ fn eval(p : Interp, env : Map[String, Val], e : Expr) -> Val {
         ),
       )
       if iv.tainted {
-        p.findings.push(
-          Finding::new(
-            FTaintIndex,
-            p.file,
-            e.span.start_line,
-            p.func_name,
-            "tainted value reaches an array index / buffer offset",
-            "dynamic+symbolic",
-            0.8,
-            base.render() + "[" + iv.v.repr() + "]",
-          ),
-        )
+        // The alarm is about the OUT-OF-BOUNDS risk. When the observed index
+        // was inside the observed array, that risk was not witnessed, and the
+        // honest finding is the weaker claim -- untrusted input selects the
+        // element -- not an error that it may go out of bounds.
+        let len = bv.v.len_of()
+        let witnessed_in_range = match (len, iv.v.numeric()) {
+          (Some(n), Some(d)) => {
+            let i = d.to_int()
+            i >= 0 && i < n
+          }
+          _ => false
+        }
+        let evidence = base.render() +
+          "[" +
+          iv.v.repr() +
+          "]" +
+          (match len {
+            Some(n) => " of length " + n.to_string()
+            None => ""
+          })
+        if witnessed_in_range {
+          p.findings.push(
+            Finding::new(
+              FTaintIndexRange,
+              p.file,
+              e.span.start_line,
+              p.func_name,
+              "untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed",
+              "dynamic+symbolic",
+              0.5,
+              evidence,
+            ),
+          )
+        } else {
+          p.findings.push(
+            Finding::new(
+              FTaintIndex,
+              p.file,
+              e.span.start_line,
+              p.func_name,
+              "tainted value reaches an array index / buffer offset",
+              "dynamic+symbolic",
+              0.8,
+              evidence,
+            ),
+          )
+        }
       }
       match (bv.v, iv.v.numeric()) {
         (VArr(xs), Some(d)) => {
@@ -386,6 +460,21 @@ fn eval_method(
     }
   } else if m == "to_string" {
     Val::new(VStr(rv.v.repr()), rv.tainted)
+  } else if m == "to_array" {
+    // `String::to_array` is modelled with the REAL characters. Without it the
+    // result was an unknown value, and an unknown value has no LENGTH -- so
+    // every index into a string was an index of unknown bounds, and the
+    // taint alarm on it could never be resolved either way.
+    match rv.v {
+      VStr(s) => {
+        let xs : Array[Value] = []
+        for ch in s.to_array() {
+          xs.push(VStr(ch.to_string()))
+        }
+        Val::new(VArr(xs), rv.tainted)
+      }
+      _ => Val::new(VUnknown, rv.tainted)
+    }
   } else if m == "copy" {
     match rv.v {
       VArr(xs) => Val::new(VArr(xs.copy()), rv.tainted)
@@ -925,7 +1014,7 @@ fn exec_stmt(
       }
       Normal
     }
-    SForIn(name, iter, body) => {
+    SForIn(names, iter, body) => {
       let src = eval(p, env, iter)
       let src_names = unique_reads(p)
       match src.v {
@@ -933,8 +1022,7 @@ fn exec_stmt(
           let mut i = 0
           while i < xs.length() && p.steps < p.max_steps {
             seed_reads(p, src_names)
-            env[name] = Val::new(xs[i], src.tainted)
-            observe_def(p, name, Val::new(xs[i], src.tainted), s.span, s.id)
+            bind_for_binders(p, env, names, xs[i], src.tainted, s.span, s.id)
             let sig = exec_block(p, env, body, fn_name)
             match sig {
               BreakLoop => break

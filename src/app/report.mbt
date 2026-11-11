@@ -234,6 +234,39 @@ pub fn validate_mermaid(text : String) -> Array[String] {
 }
 
 ///|
+/// How much of the module the CFG pass covered. The pass takes the FIRST
+/// functions in file order, so a module with more functions than the window
+/// leaves the rest with NO CFG -- and a file's findings then depend on how
+/// many functions happen to precede it. Saying so is the difference between
+/// "this module is clean" and "this module was not looked at".
+fn cfg_coverage_line(input : ReportInput) -> String {
+  cfg_coverage(input.cfgs.length(), input.funcs)
+}
+
+///|
+/// How much of the module the CFG pass covered. The pass takes the FIRST
+/// functions in file order, so a module with more functions than the window
+/// leaves the rest with NO CFG -- and a file's findings then depend on how
+/// many functions happen to precede it. Saying so is the difference between
+/// "this module is clean" and "this module was not looked at".
+pub fn cfg_coverage(have : Int32, total : Int32) -> String {
+  if have >= total {
+    return total.to_string() +
+      " of " +
+      total.to_string() +
+      " — every function"
+  }
+  have.to_string() +
+  " of " +
+  total.to_string() +
+  " — the first " +
+  have.to_string() +
+  " in file order; " +
+  (total - have).to_string() +
+  " functions had no CFG and can carry no CFG finding"
+}
+
+///|
 fn finding_row(f : Finding) -> String {
   "| " +
   f.kind.code() +
@@ -701,9 +734,7 @@ pub fn render_report(input : ReportInput) -> String {
     " |\n",
   )
   out.write_string("| Parse issues | " + input.issues.to_string() + " |\n")
-  out.write_string(
-    "| CFG functions | " + input.cfgs.length().to_string() + " |\n",
-  )
+  out.write_string("| CFG functions | " + cfg_coverage_line(input) + " |\n")
   out.write_string(
     "| Trace events | " + input.run.events.length().to_string() + " |\n",
   )

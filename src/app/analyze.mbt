@@ -252,13 +252,44 @@ pub fn build_taint(
     }
   }
   for f in findings {
-    if f.kind == FTaintIndex || f.kind == FTaintAlloc {
-      if !g.sinks.contains(f) {
+    if f.kind == FTaintIndex ||
+      f.kind == FTaintAlloc ||
+      f.kind == FTaintIndexRange {
+      // Dedupe by SITE, not by the whole finding: the same index read is
+      // observed once per trial and once per loop iteration, each with its
+      // own observed value in the evidence, so a structural comparison never
+      // matched and one site became dozens of rows. The in-range note and
+      // the witnessed out-of-bounds risk are the SAME site: the risk wins.
+      let key = taint_site_key(f)
+      let mut at = -1
+      let mut i = 0
+      while i < g.sinks.length() {
+        if taint_site_key(g.sinks[i]) == key {
+          at = i
+          break
+        }
+        i = i + 1
+      }
+      if at < 0 {
         g.sinks.push(f)
+      } else if f.kind == FTaintIndex && g.sinks[at].kind == FTaintIndexRange {
+        g.sinks[at] = f
       }
     }
   }
   g
+}
+
+///|
+/// The identity of a taint sink's site. The in-range note and the witnessed
+/// out-of-bounds risk share one key: they are one site, two verdicts.
+fn taint_site_key(f : Finding) -> String {
+  let cls = if f.kind == FTaintIndex || f.kind == FTaintIndexRange {
+    "index"
+  } else {
+    f.kind.code()
+  }
+  cls + "|" + f.file + "|" + f.line.to_string() + "|" + f.fn_name
 }
 
 ///|

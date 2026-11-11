@@ -19,15 +19,15 @@
 | --- | --- |
 | Source files parsed | 1 |
 | Functions extracted | 12 |
-| Statements understood | 36 |
+| Statements understood | 32 |
 | Statements unsupported | 0 |
 | Frontend coverage | 100.0% |
 | Parse issues | 0 |
-| CFG functions | 12 |
-| Trace events | 889 |
-| Interpreted steps | 158 |
+| CFG functions | 12 of 12 — every function |
+| Trace events | 604 |
+| Interpreted steps | 156 |
 | Observed functions | 12 |
-| Wall time (analyzer) | 5 ms |
+| Wall time (analyzer) | 4 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -59,7 +59,7 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 12 findings | — | 12 functions | observed facts |
-| L2 abstract | 11 findings | 4 | 12 functions, 110 steps | exhaustive over the input abstraction |
+| L2 abstract | 11 findings | 4 | 12 functions, 102 steps | exhaustive over the input abstraction |
 | L3 contracts | 6 VCs | 1 failed, 3 unknown | 9 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
@@ -208,13 +208,9 @@ flowchart TD
   classDef stmtNode fill:#e3f2fd,stroke:#1565c0
   n0(["entry make_window"]):::entryNode
   n1(["exit"]):::exitNode
-  n2["Array"]:::stmtNode
-  n3["::"]:::stmtNode
-  n4["make(n, 0)"]:::stmtNode
+  n2["Array::make(n, 0)"]:::stmtNode
   n0 --> n2
-  n2 --> n3
-  n3 --> n4
-  n4 --> n1
+  n2 --> n1
 ```
 
 Observed path (trial 0, first 2 events): `call@22` -> `def@21`
@@ -233,19 +229,15 @@ flowchart TD
   n0(["entry parse_len"]):::entryNode
   n1(["exit"]):::exitNode
   n2["let n = s.length()"]:::stmtNode
-  n3["let arr = Array"]:::stmtNode
-  n4["::"]:::stmtNode
-  n5["make(n, 0)"]:::stmtNode
-  n6["arr[n - 1]"]:::stmtNode
+  n3["let arr = Array::make(n, 0)"]:::stmtNode
+  n4["arr[n - 1]"]:::stmtNode
   n0 --> n2
   n2 --> n3
   n3 --> n4
-  n4 --> n5
-  n5 --> n6
-  n6 --> n1
+  n4 --> n1
 ```
 
-Observed path (trial 0, first 5 events): `def@27` -> `def@28` -> `call@28` -> `index@29` -> `def@26`
+Observed path (trial 0, first 5 events): `def@27` -> `call@28` -> `def@28` -> `index@29` -> `def@26`
 
 #### `get_checked` (lib.mbt)
 
@@ -265,7 +257,7 @@ flowchart TD
   n2 --> n1
 ```
 
-Observed path (trial 0, first 2 events): `index@71` -> `def@70`
+Observed path (trial 0, first 2 events): `index@73` -> `def@72`
 
 #### `get_unsafe` (lib.mbt)
 
@@ -285,7 +277,7 @@ flowchart TD
   n2 --> n1
 ```
 
-Observed path (trial 0, first 2 events): `index@77` -> `def@76`
+Observed path (trial 0, first 2 events): `index@81` -> `def@80`
 
 ### 4.2 CFG findings
 
@@ -329,32 +321,32 @@ flowchart LR
   t11["total = ?"]:::step
   t12[["index: buffer[1]"]]:::sink
   t13["total = ?"]:::step
-  t14["source: buffer"]:::src
-  t15["source: len"]:::src
-  t16[["index: buffer[0]"]]:::sink
-  t17["total = ?"]:::step
-  t18[["index: buffer[1]"]]:::sink
-  t19["total = ?"]:::step
-  t20[["index: buffer[2]"]]:::sink
-  t21["total = ?"]:::step
-  t22[["index: buffer[3]"]]:::sink
-  t23["total = ?"]:::step
-  t24[["index: buffer[4]"]]:::sink
-  t25["total = ?"]:::step
-  t26["source: buffer"]:::src
-  t27["source: len"]:::src
-  t28["source: buffer"]:::src
-  t29["source: len"]:::src
-  t30["source: buffer"]:::src
-  t31["source: len"]:::src
-  t32[["index: buffer[0]"]]:::sink
-  t33["total = 0"]:::step
-  t34["source: values"]:::src
-  t35["source: index"]:::src
-  t36["source: values"]:::src
-  t37["source: index"]:::src
-  t38[["index: values[0]"]]:::sink
-  t39["source: values"]:::src
+  t14["source: values"]:::src
+  t15["source: index"]:::src
+  t16["source: values"]:::src
+  t17["source: index"]:::src
+  t18[["index: values[0]"]]:::sink
+  t19["source: values"]:::src
+  t20["source: index"]:::src
+  t21[["index: values[1]"]]:::sink
+  t22["source: values"]:::src
+  t23["source: index"]:::src
+  t24[["index: values[2]"]]:::sink
+  t25["source: n"]:::src
+  t26["source: n"]:::src
+  t27["source: n"]:::src
+  t28["source: n"]:::src
+  t29["source: s"]:::src
+  t30["n = 0"]:::step
+  t31["arr = ?"]:::step
+  t32[["index: arr[-1]"]]:::sink
+  t33["source: s"]:::src
+  t34["n = 3"]:::step
+  t35["arr = ?"]:::step
+  t36[["index: arr[2]"]]:::sink
+  t37["source: s"]:::src
+  t38["n = 16"]:::step
+  t39["arr = ?"]:::step
   t4 -->|reaches-sink| t6
   t7 -->|propagates| t7
   t4 -->|propagates| t7
@@ -366,32 +358,22 @@ flowchart LR
   t8 -->|reaches-sink| t12
   t13 -->|propagates| t13
   t8 -->|propagates| t13
-  t13 -->|reaches-sink| t16
-  t14 -->|reaches-sink| t16
-  t17 -->|propagates| t17
-  t14 -->|propagates| t17
+  t16 -->|reaches-sink| t18
   t17 -->|reaches-sink| t18
-  t14 -->|reaches-sink| t18
-  t19 -->|propagates| t19
-  t14 -->|propagates| t19
-  t19 -->|reaches-sink| t20
-  t14 -->|reaches-sink| t20
-  t21 -->|propagates| t21
-  t14 -->|propagates| t21
-  t21 -->|reaches-sink| t22
-  t14 -->|reaches-sink| t22
-  t23 -->|propagates| t23
-  t14 -->|propagates| t23
+  t19 -->|reaches-sink| t21
+  t20 -->|reaches-sink| t21
+  t22 -->|reaches-sink| t24
   t23 -->|reaches-sink| t24
-  t14 -->|reaches-sink| t24
-  t25 -->|propagates| t25
-  t14 -->|propagates| t25
-  t25 -->|reaches-sink| t32
+  t29 -->|propagates| t30
+  t30 -->|propagates| t31
+  t31 -->|reaches-sink| t32
   t30 -->|reaches-sink| t32
-  t33 -->|propagates| t33
-  t30 -->|propagates| t33
-  t36 -->|reaches-sink| t38
-  t37 -->|reaches-sink| t38
+  t33 -->|propagates| t34
+  t34 -->|propagates| t35
+  t35 -->|reaches-sink| t36
+  t34 -->|reaches-sink| t36
+  t37 -->|propagates| t38
+  t38 -->|propagates| t39
 ```
 
 ### 5.1 Taint sinks
@@ -399,33 +381,11 @@ flowchart LR
 | Rule | Severity | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 | TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 | TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_checked | lib.mbt:71 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_checked | lib.mbt:71 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_checked | lib.mbt:71 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_checked | lib.mbt:71 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_checked | lib.mbt:71 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:77 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:77 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:77 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:77 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:77 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_negative | lib.mbt:82 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_negative | lib.mbt:82 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_negative | lib.mbt:82 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_negative | lib.mbt:82 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_negative | lib.mbt:82 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | get_checked | lib.mbt:73 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | get_unsafe | lib.mbt:81 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | get_negative | lib.mbt:88 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 
 ### 5.2 L2 abstract findings (may-analysis)
 
@@ -438,12 +398,12 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | classify | lib.mbt:50 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | classify | lib.mbt:50 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| TAINT-INDEX | error | get_checked | lib.mbt:71 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | get_checked | lib.mbt:71 | index may be out of bounds on some inputs | L2-abstract | 0.6 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:77 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | get_unsafe | lib.mbt:77 | index may be out of bounds on some inputs | L2-abstract | 0.6 |
-| TAINT-INDEX | error | get_negative | lib.mbt:82 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | get_negative | lib.mbt:82 | index may be out of bounds on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | get_checked | lib.mbt:73 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | get_checked | lib.mbt:73 | index may be out of bounds on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | get_unsafe | lib.mbt:81 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | get_unsafe | lib.mbt:81 | index may be out of bounds on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | get_negative | lib.mbt:88 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | get_negative | lib.mbt:88 | index may be out of bounds on some inputs | L2-abstract | 0.6 |
 
 ## 6. Value ranges
 
@@ -459,12 +419,12 @@ Every definition event is keyed by function, source line and variable, so a valu
 | spin | 43 | n | 1, 2, 3, 4, 5, 6 |
 | parse_len | 27 | n | 0, 3, 16, 64 |
 | copy_prefix | 4 | i | 0 |
-| copy_prefix | 7 | i | 1, 2, 3, 4, 5 |
+| copy_prefix | 7 | i | 1, 2 |
 | sum_to | 61 | total | 0 |
 | sum_to | 63 | total | 0 |
 | parse_len | 28 | arr | ? |
 | copy_prefix | 3 | total | 0 |
-| copy_prefix | 6 | total | ?, 0 |
+| copy_prefix | 6 | total | ? |
 
 ### 6.2 Function-level range union (L1)
 
@@ -472,12 +432,12 @@ Every definition event is keyed by function, source line and variable, so a valu
 | --- | --- | --- | --- | --- | --- | --- |
 | spin | n | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | lib.mbt:41:3 |
 | parse_len | n | 0 | 64 | 4 | 0, 3, 16, 64 | lib.mbt:27:3 |
-| lookup | <ret> | 0 | 0 | 2 | 0 | lib.mbt:13:5-18:2 |
-| sum_to | total | 0 | 0 | 197 | 0 | lib.mbt:61:3 |
-| copy_prefix | i | 0 | 5 | 34 | 0, 1, 2, 3, 4, 5 | lib.mbt:4:3 |
-| classify | <ret> | -1 | 1 | 5 | -1, 0, 1 | lib.mbt:49:5-57:2 |
-| copy_prefix | total | 0 | 0 | 18 | 0 | lib.mbt:3:3 |
-| unreachable_demo | <ret> | -1 | 5 | 5 | -1, 0, 1, 2, 5 | lib.mbt:33:5-37:2 |
+| lookup | <ret> | 0 | 0 | 1 | 0 | lib.mbt:13:5-18:2 |
+| sum_to | total | 0 | 0 | 132 | 0 | lib.mbt:61:3 |
+| copy_prefix | i | 0 | 2 | 14 | 0, 1, 2 | lib.mbt:4:3 |
+| classify | <ret> | -1 | 1 | 4 | -1, 0, 1 | lib.mbt:49:5-57:2 |
+| copy_prefix | total | 0 | 0 | 8 | 0 | lib.mbt:3:3 |
+| unreachable_demo | <ret> | -1 | 2 | 4 | -1, 0, 1, 2 | lib.mbt:33:5-37:2 |
 
 ### 6.3 Abstract may-ranges (L2)
 
@@ -532,12 +492,12 @@ Deductive verification is WP-style: each contract becomes verification condition
 
 | Function | VC kind | Location | Status | Goal | Detail |
 | --- | --- | --- | --- | --- | --- |
-| get_checked | index-bounds | lib.mbt:70 | proved | `((n >= 0) && (n < values.length()))` | entailed by preconditions or interval arithmetic |
-| get_checked | ensures | lib.mbt:70 | unknown | `(values[n] >= 0)` | insufficient facts for a decision |
-| get_unsafe | index-bounds | lib.mbt:76 | unknown | `((n >= 0) && (n < values.length()))` | insufficient facts for a decision |
-| get_unsafe | ensures | lib.mbt:76 | unknown | `(values[n] >= 0)` | insufficient facts for a decision |
-| get_negative | index-bounds | lib.mbt:81 | failed | `((n >= 0) && (n < values.length()))` | preconditions or intervals refute the goal |
-| double | ensures | lib.mbt:87 | proved | `((n + n) >= 0)` | entailed by preconditions or interval arithmetic |
+| get_checked | index-bounds | lib.mbt:72 | proved | `((n >= 0) && (n < values.length()))` | entailed by preconditions or interval arithmetic |
+| get_checked | ensures | lib.mbt:72 | unknown | `(values[n] >= 0)` | insufficient facts for a decision |
+| get_unsafe | index-bounds | lib.mbt:80 | unknown | `((n >= 0) && (n < values.length()))` | insufficient facts for a decision |
+| get_unsafe | ensures | lib.mbt:80 | unknown | `(values[n] >= 0)` | insufficient facts for a decision |
+| get_negative | index-bounds | lib.mbt:87 | failed | `((n >= 0) && (n < values.length()))` | preconditions or intervals refute the goal |
+| double | ensures | lib.mbt:95 | proved | `((n + n) >= 0)` | entailed by preconditions or interval arithmetic |
 
 Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `copy_prefix (lib.mbt:2)`, `lookup (lib.mbt:13)`, `parse_len (lib.mbt:26)`, `spin (lib.mbt:40)`, `classify (lib.mbt:49)`
 
