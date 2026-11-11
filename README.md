@@ -5,7 +5,7 @@
 [![mooncakes](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmooncakes.io%2Fapi%2Fv0%2Fmodules%2Friantr%2FLunaFlow&query=%24.version&label=mooncakes&prefix=v)](https://mooncakes.io/docs/riantr/LunaFlow)
 [![release](https://img.shields.io/github/v/release/riantr/LunaFlow)](https://github.com/riantr/LunaFlow/releases)
 [![license](https://img.shields.io/github/license/riantr/LunaFlow)](LICENSE)
-[![tests](https://img.shields.io/badge/tests-38%2F38-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
+[![tests](https://img.shields.io/badge/tests-73%2F73-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
 
 Trace-driven, three-proof-strength control-flow, taint, value-range, slicing and
 contract analysis for MoonBit modules published on
@@ -127,7 +127,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.5
+moon add riantr/LunaFlow@0.1.6
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -135,7 +135,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.5",
+  "riantr/LunaFlow@0.1.6",
 }
 ```
 
@@ -186,7 +186,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.5](https://mooncakes.io/docs/riantr/LunaFlow@0.1.5).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.6](https://mooncakes.io/docs/riantr/LunaFlow@0.1.6).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -258,14 +258,14 @@ only thing in the way, and it is upstream's to fix.
 
 ### The host contract
 
-The published wasm is not self-contained. It imports **107 host symbols**, and
+The published wasm is not self-contained. It imports **108 host symbols**, and
 the HOST has to provide every one of them when the module is instantiated:
 `moonx` supplies them from the async runtime bundled with the *user's*
 MoonBit toolchain.
 
 | Import module | Symbols | Served by |
 |---|---:|---|
-| `moonbitlang/async` | 94 | the toolchain's bundled core |
+| `moonbitlang/async` | 95 | the toolchain's bundled core |
 | `__moonbit_fs_unstable` | 12 | the toolchain's bundled core |
 | `wasi_snapshot_preview1` | 1 | the host runtime's WASI |
 
@@ -278,7 +278,7 @@ standalone `moonbitlang/async` module cannot instantiate this artifact.
 
 MEASURED against the toolchain this release was verified on:
 `moonbitlang/core` 0.10.19+bee578715 declares 272 host symbols and covers
-**106 of 106** of the artifact's core-extern imports. The contract is measured
+**107 of 107** of the artifact's core-extern imports. The contract is measured
 from the artifact's own import section by `scripts/qa/host_requirements.mjs`
 and recorded in `docs/host_requirements.txt`.
 
@@ -354,56 +354,9 @@ every package that uses it says so in
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
 
-### What changed in 0.1.5
+### What changed in 0.1.6
 
-**This release fixes the parser, and the false findings it produced.**
-
-`riantr/moonbit_static_analysis` runs LunaFlow against its own source and
-reports what it finds. On 0.4.45 that produced **136 findings — 37 dead-code,
-98 taint-index, 1 budget — and every one of them was a false positive.** All of
-them had the same cause in LunaFlow's frontend: the parser shredded a construct
-it does not model into one statement per fragment, and the fragments that
-followed a `return` inherited its deadness.
-
-- **Seven root causes, all in the frontend.** A struct literal was not
-  modelled, so `{ a: x, b: 2, }` became one statement per field — and it ate
-  the enclosing block's closing brace, which truncated the function. A binary
-  expression did not continue across a newline. A `match` expression leaked
-  its arms. `::` was lexed but not parsed, so `return CART::Leaf(...)` left its
-  tail behind. A string or character literal whose content was `{` was counted
-  as a brace, and the block ran on past the end of the function, taking the
-  functions after it with it. A `for` that destructures left its loop body
-  behind as a block. And an `if` without an `else` was treated as an
-  unconditional exit, so the code after a guarded `return` was called
-  unreachable.
-- **The repair is two layers.** The constructs above are now *modelled* — the
-  qualified path, the qualified record literal, the destructuring `for`, the
-  named argument, the `if` expression, the function literal. And the parser no
-  longer lets an unmodelled construct shred itself: a tail it has no rule for
-  is folded into the statement it belongs to and counted as unsupported. The
-  second layer generalises — without it the next construct the parser does
-  not know would shred itself again.
-- **Taint sinks are deduplicated by site**, not by whole-finding equality; the
-  observed value is in the evidence, so one read observed in many trials became
-  dozens of rows. And a tainted index whose observed value was *inside* the
-  array is now a warning that says so; only an index witnessed out of range,
-  or one whose bounds cannot be resolved, stays an error.
-- **"No findings" no longer reads as "clean".** The CFG pass covers the first
-  600 functions in file order, so the rest of a large module can carry no CFG
-  finding. The report now says so in its ingestion table, and
-  `--max-cfg-functions` makes the window configurable.
-
-Measured on identical trees: dead-code findings on the static-analysis module
-**37 → 0** and on doubleML **137 → 0**; taint sinks on the static-analysis
-module **98 → 5**. The statement count for doubleML *fell* from 43,822 to
-29,853, because the old number counted the shredded fragments and the
-truncated function bodies. The full adjudication, including the one place the
-peer report's own attribution was wrong, is in
-[The cross-check against another analyzer's module](#the-cross-check-against-another-analyzers-module).
-
-### What changed after 0.1.5 (unreleased)
-
-**This revision is what the peer analyzer found when it was pointed at this module.**
+**This release is what the peer analyzer found when it was pointed at this module.**
 
 `moonx riantr/moonbit_static_analysis@latest riantr/LunaFlow@latest` scans
 LunaFlow's own source. On 0.4.45 — and unchanged on 0.4.46 — it reported **3
@@ -470,12 +423,70 @@ well, in the same construct:
 Measured after it: on this module's own source the statements understood went
 **3,346 → 3,093**, the unsupported statements **195 → 175**, and the functions
 extracted **395 → 396** — the `usage()` function is a function again. (The
-measured-runs table above re-measures the tree after this revision's own test
+measured-runs table above re-measures the tree after this release's own test
 file was added, so it reads 29 files and 3,126 statements.) On the peer module,
 which writes its own block strings, the statements understood went
 **12,997 → 12,970** and the unsupported statements **611 → 595**; on doubleML
 every number is unchanged, and the committed doubleML artefact is byte-identical
 apart from the wall clock. The test suite is **73 tests**, up from 59.
+
+**The host floor moved with the toolchain, and the contract was re-measured.**
+The published artifact imports **108 host symbols** now, one more than 0.1.5:
+`fd_util/pipe`. That symbol comes from the toolchain's own runtime, not from
+this module's source — the module itself did not grow a single host call — so
+the floor is still a toolchain and not a pinned dependency. What changed is
+that the set grew, and a host that carries the older core cannot instantiate
+this artifact. The contract is measured, not asserted: against the core the
+release was verified on (`moonbitlang/core` 0.10.19+bee578715) **107 of 107**
+of the artifact's core-extern imports are covered, and
+`docs/host_requirements.txt` records the list.
+
+### What changed in 0.1.5
+
+**This release fixes the parser, and the false findings it produced.**
+
+`riantr/moonbit_static_analysis` runs LunaFlow against its own source and
+reports what it finds. On 0.4.45 that produced **136 findings — 37 dead-code,
+98 taint-index, 1 budget — and every one of them was a false positive.** All of
+them had the same cause in LunaFlow's frontend: the parser shredded a construct
+it does not model into one statement per fragment, and the fragments that
+followed a `return` inherited its deadness.
+
+- **Seven root causes, all in the frontend.** A struct literal was not
+  modelled, so `{ a: x, b: 2, }` became one statement per field — and it ate
+  the enclosing block's closing brace, which truncated the function. A binary
+  expression did not continue across a newline. A `match` expression leaked
+  its arms. `::` was lexed but not parsed, so `return CART::Leaf(...)` left its
+  tail behind. A string or character literal whose content was `{` was counted
+  as a brace, and the block ran on past the end of the function, taking the
+  functions after it with it. A `for` that destructures left its loop body
+  behind as a block. And an `if` without an `else` was treated as an
+  unconditional exit, so the code after a guarded `return` was called
+  unreachable.
+- **The repair is two layers.** The constructs above are now *modelled* — the
+  qualified path, the qualified record literal, the destructuring `for`, the
+  named argument, the `if` expression, the function literal. And the parser no
+  longer lets an unmodelled construct shred itself: a tail it has no rule for
+  is folded into the statement it belongs to and counted as unsupported. The
+  second layer generalises — without it the next construct the parser does
+  not know would shred itself again.
+- **Taint sinks are deduplicated by site**, not by whole-finding equality; the
+  observed value is in the evidence, so one read observed in many trials became
+  dozens of rows. And a tainted index whose observed value was *inside* the
+  array is now a warning that says so; only an index witnessed out of range,
+  or one whose bounds cannot be resolved, stays an error.
+- **"No findings" no longer reads as "clean".** The CFG pass covers the first
+  600 functions in file order, so the rest of a large module can carry no CFG
+  finding. The report now says so in its ingestion table, and
+  `--max-cfg-functions` makes the window configurable.
+
+Measured on identical trees: dead-code findings on the static-analysis module
+**37 → 0** and on doubleML **137 → 0**; taint sinks on the static-analysis
+module **98 → 5**. The statement count for doubleML *fell* from 43,822 to
+29,853, because the old number counted the shredded fragments and the
+truncated function bodies. The full adjudication, including the one place the
+peer report's own attribution was wrong, is in
+[The cross-check against another analyzer's module](#the-cross-check-against-another-analyzers-module).
 
 ### What changed in 0.1.4
 
@@ -489,7 +500,7 @@ from the registry.**
   trade is stated above: the package is experimental, and the minimum host
   toolchain moved up, because the artifact asks the host for a bigger set of
   symbols than the standalone module provided. The set is measured, not
-  asserted — 107 host imports, 106 of them covered by the bundled core, and
+  asserted — 108 host imports, 107 of them covered by the bundled core, and
   the contract is in `docs/host_requirements.txt`.
 - **The module has a root package, and `moonx` runs it.**
   `moonx riantr/LunaFlow@latest riantr/LunaFlow@latest` is the self-check, and
@@ -689,7 +700,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **14 passed, 0 failed** |
-| `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** |
+| `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
 | `node scripts/qa/verify_published.mjs 0.1.3` | **4 passed, 0 failed** |
 `moon 0.1.20261102`, native backend, Windows 11, warm `.repos` cache. The
@@ -702,7 +713,7 @@ measured runs committed with the reports:
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
 | `LunaFlow` itself (`--dir .`) | 29 | 3,126 | 12,560 | 22 | 2 / 1 / 3 | 3 | 1 | 0.14 s |
 
-**Reproduction status (2026-11-11).** The rows above are the committed
+**Reproduction status (2026-11-12).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
 were regenerated for this release, and every number in them moved: the previous
 rows said 43,822 statements, 137 dead-code findings and 102 taint sinks for

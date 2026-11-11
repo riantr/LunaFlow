@@ -11,9 +11,9 @@
 # declaration in the source, and the source still declares it that way.
 #
 # artifact: /_build/wasm/debug/build/LunaFlow.wasm
-# function imports: 107
+# function imports: 108
 #   __moonbit_fs_unstable: 12
-#   moonbitlang/async: 94
+#   moonbitlang/async: 95
 #   wasi_snapshot_preview1: 1
 
 [__moonbit_fs_unstable]
@@ -47,6 +47,7 @@ event_bus/try_register
 event_bus/wait
 fd_util/close_fd
 fd_util/invalid_fd
+fd_util/pipe
 fs/dir_buffer_min_size
 fs/dir_entry_get_file_id
 fs/dir_entry_get_name_len
