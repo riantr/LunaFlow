@@ -127,7 +127,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.4
+moon add riantr/LunaFlow@0.1.5
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -135,7 +135,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.4",
+  "riantr/LunaFlow@0.1.5",
 }
 ```
 
@@ -186,7 +186,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.4](https://mooncakes.io/docs/riantr/LunaFlow@0.1.4).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.5](https://mooncakes.io/docs/riantr/LunaFlow@0.1.5).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -353,6 +353,53 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.5
+
+**This release fixes the parser, and the false findings it produced.**
+
+`riantr/moonbit_static_analysis` runs LunaFlow against its own source and
+reports what it finds. On 0.4.45 that produced **136 findings — 37 dead-code,
+98 taint-index, 1 budget — and every one of them was a false positive.** All of
+them had the same cause in LunaFlow's frontend: the parser shredded a construct
+it does not model into one statement per fragment, and the fragments that
+followed a `return` inherited its deadness.
+
+- **Seven root causes, all in the frontend.** A struct literal was not
+  modelled, so `{ a: x, b: 2, }` became one statement per field — and it ate
+  the enclosing block's closing brace, which truncated the function. A binary
+  expression did not continue across a newline. A `match` expression leaked
+  its arms. `::` was lexed but not parsed, so `return CART::Leaf(...)` left its
+  tail behind. A string or character literal whose content was `{` was counted
+  as a brace, and the block ran on past the end of the function, taking the
+  functions after it with it. A `for` that destructures left its loop body
+  behind as a block. And an `if` without an `else` was treated as an
+  unconditional exit, so the code after a guarded `return` was called
+  unreachable.
+- **The repair is two layers.** The constructs above are now *modelled* — the
+  qualified path, the qualified record literal, the destructuring `for`, the
+  named argument, the `if` expression, the function literal. And the parser no
+  longer lets an unmodelled construct shred itself: a tail it has no rule for
+  is folded into the statement it belongs to and counted as unsupported. The
+  second layer generalises — without it the next construct the parser does
+  not know would shred itself again.
+- **Taint sinks are deduplicated by site**, not by whole-finding equality; the
+  observed value is in the evidence, so one read observed in many trials became
+  dozens of rows. And a tainted index whose observed value was *inside* the
+  array is now a warning that says so; only an index witnessed out of range,
+  or one whose bounds cannot be resolved, stays an error.
+- **"No findings" no longer reads as "clean".** The CFG pass covers the first
+  600 functions in file order, so the rest of a large module can carry no CFG
+  finding. The report now says so in its ingestion table, and
+  `--max-cfg-functions` makes the window configurable.
+
+Measured on identical trees: dead-code findings on the static-analysis module
+**37 → 0** and on doubleML **137 → 0**; taint sinks on the static-analysis
+module **98 → 5**. The statement count for doubleML *fell* from 43,822 to
+29,853, because the old number counted the shredded fragments and the
+truncated function bodies. The full adjudication, including the one place the
+peer report's own attribution was wrong, is in
+[The cross-check against another analyzer's module](#the-cross-check-against-another-analyzers-module).
 
 ### What changed in 0.1.4
 
@@ -671,7 +718,7 @@ again, and the dead-code verdict would come back with it.
 
 **Measured, on identical trees.**
 
-| | published 0.1.4 | this tree |
+| | published 0.1.4 | 0.1.5 |
 |---|---:|---:|
 | `moonbit_static_analysis@0.4.45` — dead code | 37 | **0** |
 | `moonbit_static_analysis@0.4.45` — taint sinks | 98 | **5** |
