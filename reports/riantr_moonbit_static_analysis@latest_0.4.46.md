@@ -1,4 +1,4 @@
-# LunaFlow analysis report — riantr/moonbit_static_analysis@latest@0.4.45
+# LunaFlow analysis report — riantr/moonbit_static_analysis@latest@0.4.46
 
 > Trace-driven (dynamic-first) control-flow, data-flow, value-range and slicing analysis for a mooncakes.io module.
 
@@ -7,9 +7,9 @@
 | Item | Value |
 | --- | --- |
 | Requested coordinate | `riantr/moonbit_static_analysis@latest` |
-| Resolved version | `0.4.45` |
-| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.4.45` for ingestion, execution and reporting |
-| Source root | `./.repos/riantr/moonbit_static_analysis/0.4.45` |
+| Resolved version | `0.4.46` |
+| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.4.46` for ingestion, execution and reporting |
+| Source root | `./.repos/riantr/moonbit_static_analysis/0.4.46` |
 | Declared target | `wasm` |
 | Direct dependencies | (none) |
 
@@ -17,17 +17,17 @@
 
 | Metric | Value |
 | --- | --- |
-| Source files parsed | 185 |
-| Functions extracted | 2241 |
-| Statements understood | 11750 |
-| Statements unsupported | 545 |
+| Source files parsed | 199 |
+| Functions extracted | 2417 |
+| Statements understood | 12997 |
+| Statements unsupported | 611 |
 | Frontend coverage | 95.5% |
 | Parse issues | 0 |
-| CFG functions | 600 of 2241 — the first 600 in file order; 1641 functions had no CFG and can carry no CFG finding |
-| Trace events | 8860 |
-| Interpreted steps | 1889 |
+| CFG functions | 600 of 2417 — the first 600 in file order; 1817 functions had no CFG and can carry no CFG finding |
+| Trace events | 14296 |
+| Interpreted steps | 2780 |
 | Observed functions | 120 |
-| Wall time (analyzer) | 1007 ms |
+| Wall time (analyzer) | 1434 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -49,8 +49,8 @@ flowchart LR
   classDef l1 fill:#dcedc8,stroke:#33691e
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
-  L1["L1 concrete: 6 findings"]:::l1
-  L2["L2 abstract: 41 findings, 40 new"]:::l2
+  L1["L1 concrete: 8 findings"]:::l1
+  L2["L2 abstract: 43 findings, 42 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -58,25 +58,21 @@ flowchart LR
 
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
-| L1 concrete | 6 findings | — | 120 functions | observed facts |
-| L2 abstract | 41 findings | 40 | 120 functions, 4603 steps | exhaustive over the input abstraction |
-| L3 contracts | 0 VCs | 0 failed, 0 unknown | 23 critical functions | specs required |
+| L1 concrete | 8 findings | — | 120 functions | observed facts |
+| L2 abstract | 43 findings | 42 | 120 functions, 4979 steps | exhaustive over the input abstraction |
+| L3 contracts | 0 VCs | 0 failed, 0 unknown | 25 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
 
-Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `mm_after_last`, `notice_lines`, `scan`, `suffix_of`, `fetch_moon_mod_imports`, `parse_moon_mod_imports`, `mermaid_states`, `pick_files`, `emit_file`, `cap`, `pad3`, `parse_nosec`, `apply_nosec`, `stamp_utc`, `pad2`, `pad4`, `slug`, `first_line`, `mm_valid_id`, `mm_state_id`, `mm_check`
+Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_after_last`, `notice_lines`, `scan`, `suffix_of`, `fetch_moon_mod_imports`, `parse_moon_mod_imports`, `mermaid_states`, `pick_files`, `emit_file`, `cap`, `pad3`, `parse_nosec`, `apply_nosec`, `version_gt`, `stamp_utc`, `pad2`, `pad4`, `slug`, `first_line`, `mm_valid_id`, `mm_state_id`, `mm_check`
 
-Functions escalated without any contract (spec gap at L3): `notice_lines (src/sa/main.mbt:231)`, `scan (src/sa/main.mbt:698)`, `suffix_of (src/sa/main.mbt:1526)`, `dir_of (src/sa/main.mbt:1571)`, `fetch_moon_mod_imports (src/sa/main.mbt:1641)`, `parse_moon_mod_imports (src/sa/main.mbt:1696)`, `ok_segment (src/sa/main.mbt:1807)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `pick_files (src/sa/mermaid.mbt:109)`, `emit_file (src/sa/mermaid.mbt:178)`, `cap (src/sa/mermaid.mbt:387)`, `pad3 (src/sa/profile.mbt:131)`, `parse_nosec (src/sa/profile.mbt:224)`, `apply_nosec (src/sa/profile.mbt:296)`, `stamp_utc (src/sa/provenance.mbt:130)`, `pad2 (src/sa/provenance.mbt:172)`, `pad4 (src/sa/provenance.mbt:181)`, `slug (src/sa/provenance.mbt:323)`, `first_line (src/sa/provenance.mbt:480)`, `mm_valid_id (src/sa/mermaid_test.mbt:195)`, `mm_after_last (src/sa/mermaid_test.mbt:236)`, `mm_state_id (src/sa/mermaid_test.mbt:274)`, `mm_check (src/sa/mermaid_test.mbt:297)`, `pad3 (src/report/report_0507_test.mbt:65)`
+Functions escalated without any contract (spec gap at L3): `notice_lines (src/sa/main.mbt:231)`, `scan (src/sa/main.mbt:698)`, `suffix_of (src/sa/main.mbt:1530)`, `dir_of (src/sa/main.mbt:1575)`, `fetch_moon_mod_imports (src/sa/main.mbt:1645)`, `parse_moon_mod_imports (src/sa/main.mbt:1700)`, `ok_segment (src/sa/main.mbt:1811)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `pick_files (src/sa/mermaid.mbt:109)`, `emit_file (src/sa/mermaid.mbt:178)`, `cap (src/sa/mermaid.mbt:387)`, `pad3 (src/sa/profile.mbt:131)`, `parse_nosec (src/sa/profile.mbt:224)`, `apply_nosec (src/sa/profile.mbt:296)`, `version_gt (src/sa/version.mbt:50)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `stamp_utc (src/sa/provenance.mbt:130)`, `pad2 (src/sa/provenance.mbt:172)`, `pad4 (src/sa/provenance.mbt:181)`, `slug (src/sa/provenance.mbt:323)`, `first_line (src/sa/provenance.mbt:480)`, `mm_valid_id (src/sa/mermaid_test.mbt:195)`, `mm_after_last (src/sa/mermaid_test.mbt:236)`, `mm_state_id (src/sa/mermaid_test.mbt:274)`, `mm_check (src/sa/mermaid_test.mbt:297)`, `pad3 (src/report/report_0507_test.mbt:65)`
 
 ## 4. Control-flow analysis
 
 CFG nodes are built from the parsed statement tree; execution paths come from the concrete-execution trace engine. Dead/unreachable detection is static; path coverage and budget findings are dynamic. See `docs/design.md` §5 for the mapping rules.
 
 ### 4.1 CFG diagrams (top 8 by cyclomatic complexity)
-
-#### `Parser::parse_stmt` (src/parser/parser.mbt)
-
-_Diagram omitted: 163 nodes exceeds the readability cap (90). Findings for this function are listed below._
 
 #### `scan` (src/sa/main.mbt)
 
@@ -787,6 +783,99 @@ flowchart TD
 
 Observed path (trial 0, first 8 events): `def@298` -> `def@299` -> `def@300` -> `def@301` -> `call@302` -> `def@302` -> `cond@353` -> `def@297`
 
+#### `laws_violation` (src/flow/laws_test.mbt)
+
+```mermaid
+flowchart TD
+  classDef entryNode fill:#dcedc8,stroke:#33691e,stroke-width:2px
+  classDef exitNode fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px
+  classDef branchNode fill:#fff9c4,stroke:#f9a825
+  classDef loopNode fill:#e1bee7,stroke:#6a1b9a
+  classDef mergeNode fill:#eceff1,stroke:#607d8b
+  classDef deadNode fill:#eeeeee,stroke:#9e9e9e
+  classDef stmtNode fill:#e3f2fd,stroke:#1565c0
+  n0(["entry laws_violation"]):::entryNode
+  n1(["exit"]):::exitNode
+  n2{{"for a in elems"}}:::loopNode
+  n3{"if (lat.eq(lat.join(a, a), a) == false)"}:::branchNode
+  n4["return (#quot;not idempotent at #quot; + show(a))"]:::stmtNode
+  n5("merge"):::mergeNode
+  n6{"if (lat.eq(lat.join(lat.bot(), a), a) == false)"}:::branchNode
+  n7["return (#quot;the bottom is not the identity of the join at #quot; + show(a))"]:::stmtNode
+  n8("merge"):::mergeNode
+  n9{{"for b in elems"}}:::loopNode
+  n10["let jab =(lat.join)(a, b)"]:::stmtNode
+  n11{"if (lat.eq(jab, lat.join(b, a)) == false)"}:::branchNode
+  n12["return (((#quot;not commutative at #quot; + show(a)) + #quot; and #quot;) + show(b))"]:::stmtNode
+  n13("merge"):::mergeNode
+  n14{"if (order(a, jab) == false)"}:::branchNode
+  n15["return (((#quot;the join is not an upper bound of its LEFT operand at #quot; + show(a))..."]:::stmtNode
+  n16("merge"):::mergeNode
+  n17{"if (order(b, jab) == false)"}:::branchNode
+  n18["return (((#quot;the join is not an upper bound of its RIGHT operand at #quot; + show(a)..."]:::stmtNode
+  n19("merge"):::mergeNode
+  n20["let both = order(a, b) && order(b, a)"]:::stmtNode
+  n21{"if ((both == lat.eq(a, b)) == false)"}:::branchNode
+  n22["return (((#quot;eq and order disagree at #quot; + show(a)) + #quot; and #quot;) + show(b))"]:::stmtNode
+  n23("merge"):::mergeNode
+  n24{{"for c in elems"}}:::loopNode
+  n25{"if (lat.eq(lat.join(jab, c), lat.join(a, lat.join(b, c))) == false)"}:::branchNode
+  n26["return (((((#quot;not associative at #quot; + show(a)) + #quot;, #quot;) + show(b)) + #..."]:::stmtNode
+  n27("merge"):::mergeNode
+  n28{"if ((order(a, c) && order(b, c)) && (order(jab, c) == false))"}:::branchNode
+  n29["return ((((((#quot;the join is not the LEAST upper bound at #quot; + show(a)) + #quot; ..."]:::stmtNode
+  n30("merge"):::mergeNode
+  n31("after-loop"):::mergeNode
+  n32("after-loop"):::mergeNode
+  n33("after-loop"):::mergeNode
+  n34[""]:::stmtNode
+  n0 --> n2
+  n4 --> n1
+  n3 -->|true| n4
+  n3 -->|false| n5
+  n5 --> n6
+  n7 --> n1
+  n6 -->|true| n7
+  n6 -->|false| n8
+  n8 --> n9
+  n10 --> n11
+  n12 --> n1
+  n11 -->|true| n12
+  n11 -->|false| n13
+  n13 --> n14
+  n15 --> n1
+  n14 -->|true| n15
+  n14 -->|false| n16
+  n16 --> n17
+  n18 --> n1
+  n17 -->|true| n18
+  n17 -->|false| n19
+  n19 --> n20
+  n20 --> n21
+  n22 --> n1
+  n21 -->|true| n22
+  n21 -->|false| n23
+  n23 --> n24
+  n26 --> n1
+  n25 -->|true| n26
+  n25 -->|false| n27
+  n27 --> n28
+  n29 --> n1
+  n28 -->|true| n29
+  n28 -->|false| n30
+  n24 -->|true| n25
+  n29 -.->|back| n24
+  n24 -->|false| n31
+  n9 -->|true| n10
+  n9 -.->|back| n9
+  n9 -->|false| n32
+  n2 -->|true| n3
+  n2 -.->|back| n2
+  n2 -->|false| n33
+  n33 --> n34
+  n34 --> n1
+```
+
 ### 4.2 CFG findings
 
 _No findings._
@@ -857,9 +946,11 @@ flowchart LR
 
 | Rule | Severity | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| TAINT-INDEX-RANGE | warning | dir_of | src/sa/main.mbt:1576 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1811 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1814 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | dir_of | src/sa/main.mbt:1580 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1815 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1818 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | ssa_cost_over_files | src/sa/ssa_cost.mbt:111 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | ssa_cost_over_files | src/sa/ssa_cost.mbt:112 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
 | TAINT-INDEX | error | mm_after_last | src/sa/mermaid_test.mbt:238 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 
 ### 5.2 L2 abstract findings (may-analysis)
@@ -871,16 +962,16 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | UNREACHABLE | info | notice_lines | src/sa/main.mbt:238 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | scan | src/sa/main.mbt:716 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | scan | src/sa/main.mbt:716 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | suffix_of | src/sa/main.mbt:1539 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | suffix_of | src/sa/main.mbt:1539 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| TAINT-INDEX | error | dir_of | src/sa/main.mbt:1576 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dir_of | src/sa/main.mbt:1590 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| UNREACHABLE | info | fetch_moon_mod_imports | src/sa/main.mbt:1667 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | fetch_moon_mod_imports | src/sa/main.mbt:1667 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | parse_moon_mod_imports | src/sa/main.mbt:1716 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | parse_moon_mod_imports | src/sa/main.mbt:1716 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | ok_segment | src/sa/main.mbt:1808 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | ok_segment | src/sa/main.mbt:1808 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| UNREACHABLE | info | suffix_of | src/sa/main.mbt:1543 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| UNREACHABLE | info | suffix_of | src/sa/main.mbt:1543 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| TAINT-INDEX | error | dir_of | src/sa/main.mbt:1580 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dir_of | src/sa/main.mbt:1594 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| UNREACHABLE | info | fetch_moon_mod_imports | src/sa/main.mbt:1671 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| UNREACHABLE | info | fetch_moon_mod_imports | src/sa/main.mbt:1671 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| UNREACHABLE | info | parse_moon_mod_imports | src/sa/main.mbt:1720 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| UNREACHABLE | info | parse_moon_mod_imports | src/sa/main.mbt:1720 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| UNREACHABLE | info | ok_segment | src/sa/main.mbt:1812 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| UNREACHABLE | info | ok_segment | src/sa/main.mbt:1812 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | TAINT-INDEX | error | mermaid_states | src/sa/mermaid.mbt:89 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | pick_files | src/sa/mermaid.mbt:114 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | emit_file | src/sa/mermaid.mbt:351 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
@@ -892,6 +983,8 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | TAINT-INDEX | error | parse_nosec | src/sa/profile.mbt:234 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | apply_nosec | src/sa/profile.mbt:302 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | apply_nosec | src/sa/profile.mbt:302 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| TAINT-INDEX | error | version_gt | src/sa/version.mbt:55 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | version_gt | src/sa/version.mbt:56 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | stamp_utc | src/sa/provenance.mbt:131 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | stamp_utc | src/sa/provenance.mbt:131 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | pad2 | src/sa/provenance.mbt:173 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
@@ -920,39 +1013,44 @@ Every definition event is keyed by function, source line and variable, so a valu
 
 | Function | Line | Variable | Observed values |
 | --- | --- | --- | --- |
-| bump | 1508 | n | ? |
+| bump | 1512 | n | ? |
 | slug | 324 | buf | ? |
 | slug | 343 | out | "?" |
-| dir_of | 1574 | i | -1, 2, 15, 63 |
-| dir_of | 1580 | i | 1, 0, -1, 14, 13, 12 |
-| is_dir | 1168 | d | ? |
+| dir_of | 1578 | i | -1, 2, 15, 63 |
+| dir_of | 1584 | i | 1, 0, -1, 14, 13, 12 |
+| is_dir | 1172 | d | ? |
 | note | 370 | line | ?, "stand behind them -- a form it does n...", "resolve. ... |
 | scan | 711 | root | "" |
-| wanted | 1244 | n | () |
-| wanted | 1245 | s | () |
-| analyze | 1325 | n | () |
-| analyze | 1326 | k | () |
+| wanted | 1248 | n | () |
+| wanted | 1249 | s | () |
+| analyze | 1329 | n | () |
+| analyze | 1330 | k | () |
 | ctx_line | 622 | t | ? |
 | is_hiding | 81 | h | 0, 1 |
-| kind_of | 1255 | s | () |
-| kind_of | 1256 | n | () |
-| reify | 1746 | buf | ? |
+| kind_of | 1259 | s | () |
+| kind_of | 1260 | n | () |
+| reify | 1750 | buf | ? |
 | show_plan | 64 | c | ? |
 | aggregate | 414 | v | 0, 1, -1 |
 | aggregate | 415 | n | ? |
-| dir_of | 1573 | cut | -1 |
-| analyze | 1324 | src | () |
-| base_of | 1545 | out | "" |
-| collect | 1200 | dir | ? |
+| dir_of | 1577 | cut | -1 |
+| version_gt | 53 | i | 0 |
+| version_gt | 55 | x | ? |
+| version_gt | 56 | y | ? |
+| analyze | 1328 | src | () |
+| base_of | 1549 | out | "" |
+| collect | 1204 | dir | ? |
 | family_ids | 118 | n | 1 |
 | sanitize | 461 | buf | ? |
+| version_gt | 51 | pa | () |
+| version_gt | 52 | pb | () |
 | apply_nosec | 319 | n | 0, 1, -1 |
-| dir_of | 1572 | chars | [], ["a", "b", "c"], [".", ".", "/", ".", ".", "/", "e", ... |
+| dir_of | 1576 | chars | [], ["a", "b", "c"], [".", ".", "/", ".", ".", "/", "e", ... |
 | family_ids | 120 | id | ""MSA-"()" |
 | mm_check | 298 | errs | [] |
 | stamp_utc | 138 | sec | ? |
 | by_rank | 437 | sorted | [], [0], [0, 1, -1], [1, 0] |
-| collect | 1195 | stack | ? |
+| collect | 1199 | stack | ? |
 | emit_file | 216 | head | ? |
 | emit_file | 227 | head | ? |
 | emit_file | 338 | head | ? |
@@ -988,9 +1086,10 @@ Every definition event is keyed by function, source line and variable, so a valu
 | lens_list | 426 | names | [] |
 | parse_nosec | 225 | out | ? |
 | pick_files | 152 | head | [] |
-| suffix_of | 1527 | tail | "" |
+| print_ssa_cost | 80 | _ | () |
+| suffix_of | 1531 | tail | "" |
 | apply_nosec | 300 | kept | ? |
-| collect | 1204 | entries | ? |
+| collect | 1208 | entries | ? |
 | count_by_shape | 265 | r | 0, 1, -1 |
 | count_by_shape | 266 | c | ? |
 | ctx_line | 620 | per_sig | "n/a (no signature was executed)" |
@@ -1006,11 +1105,12 @@ Every definition event is keyed by function, source line and variable, so a valu
 | notice_lines | 237 | out | ? |
 | profile_keeps | 149 | id | ? |
 | render_reports | 258 | r | 0, 1, -1 |
-| split_coord | 1146 | mod | "" |
-| split_coord | 1147 | ver | "" |
-| split_coord | 1161 | ver | "" |
+| split_coord | 1150 | mod | "" |
+| split_coord | 1151 | ver | "" |
+| split_coord | 1165 | ver | "" |
 | split_tokens | 264 | out | ? |
 | stamp_utc | 136 | day_ms | ? |
+| version_parts | 77 | cur | 0 |
 | aggregate | 407 | notices | 0 |
 | aggregate | 412 | n_calls | 0 |
 | aggregate | 419 | n_calls | ? |
@@ -1021,6 +1121,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | civil_from_days | 165 | d | ?, 31, 1, 2, 3 |
 | emit_file | 184 | defects | ? |
 | emit_file | 321 | dropped | ? |
+| measure_file | 122 | text | ? |
 | mermaid_states | 51 | out | ? |
 | metrics_lines | 517 | out | ? |
 | metrics_lines | 518 | pct | ? |
@@ -1033,32 +1134,41 @@ Every definition event is keyed by function, source line and variable, so a valu
 | civil_from_days | 164 | mp | ?, 9, 10 |
 | civil_from_days | 166 | mo | ? |
 | civil_from_days | 167 | yy | ? |
-| collect | 1196 | seen_dirs | 0 |
-| collect | 1198 | last_dirs | 0 |
-| collect | 1229 | seen_dirs | 1, 2, 3, 4, 5, 6 |
+| collect | 1200 | seen_dirs | 0 |
+| collect | 1202 | last_dirs | 0 |
+| collect | 1233 | seen_dirs | 1, 2, 3, 4, 5, 6 |
 | count_by_shape | 272 | out | ? |
+| measure_function | 148 | c | ? |
 | metrics_lines | 553 | n_hi | 0 |
 | metrics_lines | 554 | n_lo | 0 |
 | metrics_lines | 555 | n_un | 0 |
 | mm_parsed_with | 77 | fams | [(?, "local variable 'x' assigned but may n..."), (?, "ar... |
 | mm_parsed_with | 82 | reps | [] |
+| newest_version | 31 | best | "" |
+| newest_version | 32 | name | "", "x" |
+| newest_version | 34 | best | "", "x" |
 | path_segments | 308 | segs | [] |
+| print_ssa_cost | 81 | cost | () |
 | render_reports | 257 | buf | ? |
-| run_exit_code | 1636 | res | ? |
+| run_exit_code | 1640 | res | ? |
 | validate_profile | 81 | id | "", "x" |
+| version_parts | 76 | parts | ? |
+| version_parts | 78 | named | false |
 | aggregate | 413 | n_checked | 0 |
 | aggregate | 420 | n_checked | ? |
 | civil_from_days | 159 | era | ?, 4 |
 | civil_from_days | 160 | doe | ?, 135079, 135080, 135081, 135082 |
 | civil_from_days | 161 | yoe | ?, 369 |
 | civil_from_days | 163 | doy | ?, 305, 306, 307, 308 |
-| collect | 1197 | last_files | 0 |
+| collect | 1201 | last_files | 0 |
+| measure_function | 147 | ir | ? |
 | metrics_lines | 536 | other | ? |
 | metrics_lines | 541 | share | ? |
 | mm_after_last | 237 | parts | ? |
 | moonbit_version | 449 | res | ? |
 | parse_nosec | 226 | line_no | 0 |
 | primary_lens | 411 | sorted | () |
+| print_ssa_cost | 79 | files | ? |
 | aggregate | 406 | actionable | 0 |
 | aggregate | 408 | unreliable | 0 |
 | aggregate | 417 | unreliable | ? |
@@ -1067,16 +1177,18 @@ Every definition event is keyed by function, source line and variable, so a valu
 | mermaid_states | 74 | picked | (), ? |
 | moonbit_version | 444 | args | ? |
 | moonbit_version | 452 | text | ? |
-| split_coord | 1148 | seen_at | false |
-| suffix_of | 1528 | after_dot | false |
+| split_coord | 1152 | seen_at | false |
+| suffix_of | 1532 | after_dot | false |
 | aggregate | 411 | n_unchecked | 0 |
 | aggregate | 418 | n_unchecked | ? |
 | count_by_shape | 264 | counts | ? |
 | emit_file | 192 | parsed_note | ? |
-| filtered_reports | 1299 | all | ? |
-| is_module_coord | 1763 | base | ? |
+| filtered_reports | 1303 | all | ? |
+| is_module_coord | 1767 | base | ? |
 | locate | 1076 | _destructured | () |
-| method_segments | 1961 | segs | ? |
+| method_segments | 1965 | segs | ? |
+| ssa_cost_over_files | 106 | i | 0 |
+| ssa_cost_over_files | 114 | i | 1, 2, 3, 4, 5, 6 |
 | aggregate | 404 | parsed_files | 0 |
 | aggregate | 427 | parsed_files | 1, 2, 3 |
 | split_findings | 119 | printed | ? |
@@ -1085,50 +1197,52 @@ Every definition event is keyed by function, source line and variable, so a valu
 | aggregate | 429 | partial_files | 1, 2, 3 |
 | mm_state_id | 276 | after_close | false |
 | scan_artifact_name | 226 | stem | ? |
+| ssa_cost_over_files | 90 | cost | ? |
 | stamp_utc | 139 | _destructured | () |
 | tally_partial_reasons | 642 | v | 0, 1, -1 |
 | tally_partial_reasons | 644 | r | ? |
 | tally_partial_reasons | 645 | c | ? |
 | validate_profile | 92 | overlap | ? |
-| filtered_reports | 1294 | nosecs | ? |
-| filtered_reports | 1296 | nosecs | () |
+| filtered_reports | 1298 | nosecs | ? |
+| filtered_reports | 1300 | nosecs | () |
 | first_quoted_after | 110 | parts | ? |
 | parse_moon_version | 468 | parts | ? |
 | provenance_for | 381 | from_tree | () |
 | tally_partial_reasons | 650 | ex | ? |
 | validate_profile | 68 | warnings | ? |
-| collect_iface_symtabs | 1843 | ri | ? |
+| collect_iface_symtabs | 1847 | ri | ? |
 | emit_file | 240 | notices_dropped | 0 |
 | split_findings | 120 | aggregated | ? |
-| collect_iface_symtabs | 1841 | tab | ? |
-| collect_iface_symtabs | 1848 | dir | ? |
-| collect_private_symtabs | 1901 | f | "", "x" |
-| filtered_reports | 1293 | filtered | () |
-| collect_iface_symtabs | 1843 | root | ? |
-| parse_moon_mod_imports | 1697 | out | ? |
+| collect_iface_symtabs | 1845 | tab | ? |
+| collect_iface_symtabs | 1852 | dir | ? |
+| collect_private_symtabs | 1905 | f | "", "x" |
+| filtered_reports | 1297 | filtered | () |
+| collect_iface_symtabs | 1847 | root | ? |
+| parse_moon_mod_imports | 1701 | out | ? |
 | provenance_for | 382 | tree_version | ? |
-| collect_iface_symtabs | 1846 | stack | ? |
-| collect_private_symtabs | 1900 | out | ? |
-| fetch_moon_mod_imports | 1643 | text | () |
+| collect_iface_symtabs | 1850 | stack | ? |
+| collect_private_symtabs | 1904 | out | ? |
+| fetch_moon_mod_imports | 1647 | text | () |
 | target_version | 412 | _destructured | () |
 | tally_partial_reasons | 640 | reasons | ? |
-| collect_iface_symtabs | 1852 | entries | ? |
+| collect_iface_symtabs | 1856 | entries | ? |
 | tally_partial_reasons | 641 | examples | ? |
-| filtered_reports | 1298 | _destructured | (?, ?) |
-| fetch_moon_mod_imports | 1642 | mod_path | """"/moon.mod"", ""abc""/moon.mod"", ""../../etc/passwd""... |
-| collect_iface_symtabs | 1845 | user_named | ? |
-| parse_moon_mod_imports | 1698 | in_import | false |
-| collect_iface_symtabs | 1842 | skipped_dot | 0 |
+| filtered_reports | 1302 | _destructured | (?, ?) |
+| fetch_moon_mod_imports | 1646 | mod_path | """"/moon.mod"", ""abc""/moon.mod"", ""../../etc/passwd""... |
+| collect_iface_symtabs | 1849 | user_named | ? |
+| parse_moon_mod_imports | 1702 | in_import | false |
+| collect_iface_symtabs | 1846 | skipped_dot | 0 |
 
 ### 6.2 Function-level range union (L1)
 
 | Function | Variable | Min | Max | Samples | Observed values | First site |
 | --- | --- | --- | --- | --- | --- | --- |
-| dir_of | i | -1 | 63 | 87 | -1, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 | src/sa/main.mbt:1574:3 |
-| dir_of | cut | -1 | -1 | 4 | -1 | src/sa/main.mbt:1573:3 |
+| dir_of | i | -1 | 63 | 87 | -1, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 | src/sa/main.mbt:1578:3 |
+| dir_of | cut | -1 | -1 | 4 | -1 | src/sa/main.mbt:1577:3 |
 | aggregate | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:414:3-437:4 |
 | is_hiding | h | 0 | 1 | 3 | 0, 1 | src/sa/main.mbt:81:3-85:4 |
 | family_ids | n | 1 | 1 | 5 | 1 | src/sa/profile.mbt:118:3 |
+| version_gt | i | 0 | 0 | 4 | 0 | src/sa/version.mbt:53:3 |
 | apply_nosec | n | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:319:3-329:4 |
 | slug | last_dash | 0 | 0 | 20 | false | src/sa/provenance.mbt:325:3 |
 | aggregate | total | 0 | 0 | 4 | 0 | src/sa/main.mbt:410:3 |
@@ -1141,21 +1255,22 @@ Every definition event is keyed by function, source line and variable, so a valu
 | count_by_shape | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:265:3-271:4 |
 | mm_check | in_note | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:301:3 |
 | mm_state_id | seen | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:275:3 |
-| ok_segment | <ret> | 0 | 0 | 3 | false | src/sa/main.mbt:1807:1-1818:2 |
+| ok_segment | <ret> | 0 | 0 | 3 | false | src/sa/main.mbt:1811:1-1822:2 |
 | render_reports | r | -1 | 1 | 6 | 0, 1, -1 | src/report/report.mbt:258:3-260:4 |
 | aggregate | n_calls | 0 | 0 | 4 | 0 | src/sa/main.mbt:412:3 |
 | aggregate | notices | 0 | 0 | 4 | 0 | src/sa/main.mbt:407:3 |
 | civil_from_days | d | 1 | 31 | 4 | 31, 1, 2, 3 | src/sa/provenance.mbt:165:3 |
 | civil_from_days | y | 1969 | 1969 | 4 | 1969 | src/sa/provenance.mbt:162:3 |
 | civil_from_days | z | 719467 | 719470 | 4 | 719467, 719468, 719469, 719470 | src/sa/provenance.mbt:158:3 |
-| collect | last_dirs | 0 | 0 | 4 | 0 | src/sa/main.mbt:1198:3 |
-| collect | seen_dirs | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/main.mbt:1196:3 |
+| collect | last_dirs | 0 | 0 | 8 | 0 | src/sa/main.mbt:1202:3 |
+| collect | seen_dirs | 0 | 64 | 520 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/main.mbt:1200:3 |
 | mm_count_quotes | n | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:215:3 |
 | mm_valid_id | <ret> | 0 | 0 | 1 | false | src/sa/mermaid_test.mbt:195:1-211:2 |
 | mm_valid_id | first | 1 | 1 | 3 | true | src/sa/mermaid_test.mbt:199:3 |
+| version_parts | cur | 0 | 0 | 12 | 0 | src/sa/version.mbt:77:3 |
 | aggregate | withheld | 0 | 0 | 4 | 0 | src/sa/main.mbt:409:3 |
 | civil_from_days | mp | 9 | 10 | 4 | 9, 10 | src/sa/provenance.mbt:164:3 |
-| collect | last_files | 0 | 0 | 4 | 0 | src/sa/main.mbt:1197:3 |
+| collect | last_files | 0 | 0 | 8 | 0 | src/sa/main.mbt:1201:3 |
 | metrics_lines | n_hi | 0 | 0 | 4 | 0 | src/sa/main.mbt:553:3 |
 | metrics_lines | n_lo | 0 | 0 | 4 | 0 | src/sa/main.mbt:554:3 |
 | metrics_lines | n_un | 0 | 0 | 4 | 0 | src/sa/main.mbt:555:3 |
@@ -1166,20 +1281,22 @@ Every definition event is keyed by function, source line and variable, so a valu
 | civil_from_days | yoe | 369 | 369 | 4 | 369 | src/sa/provenance.mbt:161:3 |
 | parse_nosec | line_no | 0 | 0 | 8 | 0 | src/sa/profile.mbt:226:3 |
 | profile_keeps | <ret> | 0 | 0 | 1 | false | src/sa/profile.mbt:148:5-157:2 |
-| split_coord | seen_at | 0 | 0 | 16 | false | src/sa/main.mbt:1148:3 |
-| suffix_of | after_dot | 0 | 0 | 16 | false | src/sa/main.mbt:1528:3 |
+| split_coord | seen_at | 0 | 0 | 16 | false | src/sa/main.mbt:1152:3 |
+| suffix_of | after_dot | 0 | 0 | 16 | false | src/sa/main.mbt:1532:3 |
+| version_parts | named | 0 | 0 | 12 | false | src/sa/version.mbt:78:3 |
 | aggregate | actionable | 0 | 0 | 4 | 0 | src/sa/main.mbt:406:3 |
 | aggregate | unreliable | 0 | 0 | 4 | 0 | src/sa/main.mbt:408:3 |
 | aggregate | n_unchecked | 0 | 0 | 4 | 0 | src/sa/main.mbt:411:3 |
-| is_module_coord | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1758:5-1803:2 |
+| is_module_coord | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1762:5-1807:2 |
+| ssa_cost_over_files | i | 0 | 64 | 270 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/ssa_cost.mbt:106:3 |
 | aggregate | parsed_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:404:3 |
 | aggregate | partial_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:405:3 |
 | mm_state_id | after_close | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:276:3 |
 | tally_partial_reasons | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:642:3-659:4 |
 | emit_file | notices_dropped | 0 | 0 | 4 | 0 | src/sa/mermaid.mbt:240:3 |
 | Nosec | covers_family | 1 | 1 | 1 | true |  |
-| parse_moon_mod_imports | in_import | 0 | 0 | 4 | false | src/sa/main.mbt:1698:3 |
-| collect_iface_symtabs | skipped_dot | 0 | 0 | 4 | 0 | src/sa/main.mbt:1842:3 |
+| parse_moon_mod_imports | in_import | 0 | 0 | 4 | false | src/sa/main.mbt:1702:3 |
+| collect_iface_symtabs | skipped_dot | 0 | 0 | 4 | 0 | src/sa/main.mbt:1846:3 |
 
 ### 6.3 Abstract may-ranges (L2)
 
@@ -1192,7 +1309,6 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | pad3 | n | [-1000000, 1000000] | 1 |
 | pad4 | n | [-1000000, 1000000] | 1 |
 | dir_of | j | [-999999, 1000001] | 7 |
-| rep | line | [-1000000, 1000000] | 1 |
 | cap | limit | [-1000000, 1000000] | 1 |
 | file_id | i | [-1000000, 1000000] | 1 |
 | dir_of | cut | [-1, -1] | 1 |
@@ -1202,10 +1318,10 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | family_ids | n | [1, 5] | 5 |
 | mm_span | line | [-1000000, 1000000] | 1 |
 | stamp_utc | ms | [-1000000, 1000000] | 1 |
+| version_gt | i | [-999999, 1000001] | 6 |
 | ok_segment | to | [-1000000, 1000000] | 1 |
 | show_plan | cap | [-1000000, 1000000] | 1 |
-| mk_defect | line | [-1000000, 1000000] | 1 |
-| mk_notice | line | [-1000000, 1000000] | 1 |
+| measure_file | i | [-999999, 1000001] | 6 |
 | aggregate | total | [0, 0] | 1 |
 | count_notices | n | [0, 1] | 2 |
 | ok_segment | from | [-1000000, 1000000] | 1 |
@@ -1222,6 +1338,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | is_module_coord | i | [-999999, 1000001] | 6 |
 | mm_count_quotes | n | [0, 1] | 2 |
 | resolve_label | ups | [0, 1] | 2 |
+| version_parts | cur | [-1, 0] | 3 |
 | aggregate | withheld | [0, 0] | 1 |
 | civil_from_days | mp | [-122729, 122738] | 1 |
 | collect | last_files | [0, 70] | 7 |
@@ -1249,6 +1366,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | is_module_coord | start | [-999999, 1000001] | 6 |
 | metrics_lines | n_files | [-1000000, 1000000] | 1 |
 | mm_verdict | unreliable | [-1000000, 1000000] | 1 |
+| ssa_cost_over_files | i | [0, 0] | 1 |
 | aggregate | parsed_files | [0, 1] | 2 |
 | mm_verdict | region_line | [-1000000, 1000000] | 1 |
 | aggregate | partial_files | [0, 1] | 2 |
@@ -1289,7 +1407,7 @@ Deductive verification is WP-style: each contract becomes verification condition
 
 _No verification condition generated._
 
-Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `notice_lines (src/sa/main.mbt:231)`, `scan (src/sa/main.mbt:698)`, `suffix_of (src/sa/main.mbt:1526)`, `dir_of (src/sa/main.mbt:1571)`, `fetch_moon_mod_imports (src/sa/main.mbt:1641)`, `parse_moon_mod_imports (src/sa/main.mbt:1696)`, `ok_segment (src/sa/main.mbt:1807)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `pick_files (src/sa/mermaid.mbt:109)`, `emit_file (src/sa/mermaid.mbt:178)`, `cap (src/sa/mermaid.mbt:387)`, `pad3 (src/sa/profile.mbt:131)`, `parse_nosec (src/sa/profile.mbt:224)`, `apply_nosec (src/sa/profile.mbt:296)`, `stamp_utc (src/sa/provenance.mbt:130)`, `pad2 (src/sa/provenance.mbt:172)`, `pad4 (src/sa/provenance.mbt:181)`, `slug (src/sa/provenance.mbt:323)`, `first_line (src/sa/provenance.mbt:480)`, `mm_valid_id (src/sa/mermaid_test.mbt:195)`, `mm_after_last (src/sa/mermaid_test.mbt:236)`, `mm_state_id (src/sa/mermaid_test.mbt:274)`, `mm_check (src/sa/mermaid_test.mbt:297)`, `pad3 (src/report/report_0507_test.mbt:65)`
+Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `notice_lines (src/sa/main.mbt:231)`, `scan (src/sa/main.mbt:698)`, `suffix_of (src/sa/main.mbt:1530)`, `dir_of (src/sa/main.mbt:1575)`, `fetch_moon_mod_imports (src/sa/main.mbt:1645)`, `parse_moon_mod_imports (src/sa/main.mbt:1700)`, `ok_segment (src/sa/main.mbt:1811)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `pick_files (src/sa/mermaid.mbt:109)`, `emit_file (src/sa/mermaid.mbt:178)`, `cap (src/sa/mermaid.mbt:387)`, `pad3 (src/sa/profile.mbt:131)`, `parse_nosec (src/sa/profile.mbt:224)`, `apply_nosec (src/sa/profile.mbt:296)`, `version_gt (src/sa/version.mbt:50)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `stamp_utc (src/sa/provenance.mbt:130)`, `pad2 (src/sa/provenance.mbt:172)`, `pad4 (src/sa/provenance.mbt:181)`, `slug (src/sa/provenance.mbt:323)`, `first_line (src/sa/provenance.mbt:480)`, `mm_valid_id (src/sa/mermaid_test.mbt:195)`, `mm_after_last (src/sa/mermaid_test.mbt:236)`, `mm_state_id (src/sa/mermaid_test.mbt:274)`, `mm_check (src/sa/mermaid_test.mbt:297)`, `pad3 (src/report/report_0507_test.mbt:65)`
 
 ## 9. Method summary
 

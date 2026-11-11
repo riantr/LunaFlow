@@ -61,7 +61,10 @@ pub fn parse_spec_expr(text : String, file : String, line : Int32) -> Expr? {
   if t.trim().length() == 0 {
     return None
   }
-  let toks = lex(t)
+  // The clause is ONE line of the file, so the tokens have to carry that line.
+  // Lexing the clause text on its own put every token on line 1, and the
+  // expression then claimed to be on line 1 of the file.
+  let toks = lex_at(t, line)
   let p = P::new(file, toks)
   let e = parse_expr(p, 0)
   match e.kind {
@@ -76,8 +79,35 @@ pub fn parse_contract(
   file : String,
   line : Int32,
 ) -> Contract {
+  let lines : Array[Int32] = []
+  let mut i = 0
+  while i < raw.length() {
+    lines.push(line)
+    i = i + 1
+  }
+  parse_contract_at(raw, file, lines)
+}
+
+///|
+/// Parse the contract clauses, each with the source line it was written on.
+///
+/// The clauses of one contract are not all on the same line: a `//@` comment
+/// can carry several of them, and a contract can spread over several `//@`
+/// comments. Giving every clause the line of the function that follows it put
+/// the whole contract on the wrong line, so a reader who followed the pointer
+/// landed on the function instead of on the clause.
+fn parse_contract_at(
+  raw : Array[String],
+  file : String,
+  lines : Array[Int32],
+) -> Contract {
   let c = Contract::empty()
+  let mut idx = 0
   for item in raw {
+    let item_line = match lines.get(idx) {
+      Some(l) => l
+      None => 0
+    }
     c.raw.push(item)
     for clause in item.split(";") {
       let t = clause.trim().to_owned()
@@ -86,17 +116,17 @@ pub fn parse_contract(
       }
       let body = clause_text(t)
       if t.has_prefix("requires") {
-        match parse_spec_expr(body, file, line) {
+        match parse_spec_expr(body, file, item_line) {
           Some(e) => c.requires.push(e)
           None => c.errors.push("bad requires: " + body)
         }
       } else if t.has_prefix("ensures") {
-        match parse_spec_expr(body, file, line) {
+        match parse_spec_expr(body, file, item_line) {
           Some(e) => c.ensures.push(e)
           None => c.errors.push("bad ensures: " + body)
         }
       } else if t.has_prefix("invariant") {
-        match parse_spec_expr(body, file, line) {
+        match parse_spec_expr(body, file, item_line) {
           Some(e) => c.invariants.push(e)
           None => c.errors.push("bad invariant: " + body)
         }
@@ -113,6 +143,7 @@ pub fn parse_contract(
         c.errors.push("unsupported contract clause: " + t)
       }
     }
+    idx = idx + 1
   }
   c
 }
@@ -138,15 +169,18 @@ pub fn contract_above(
     }
   }
   let raw : Array[String] = []
+  let raw_lines : Array[Int32] = []
   let mut j = earliest
   while j <= start_line - 2 && j < lines.length() {
     let t = lines[j].trim().to_owned()
     if t.has_prefix("//@") {
       raw.push(t[3:].to_owned().trim().to_owned())
+      // `lines` is 0-based, so the source line of this clause is j + 1.
+      raw_lines.push(j + 1)
     }
     j = j + 1
   }
-  parse_contract(raw, file, start_line)
+  parse_contract_at(raw, file, raw_lines)
 }
 
 ///|
@@ -542,6 +576,21 @@ fn subst(e : Expr, state : Map[String, Expr]) -> Expr {
       Expr::new(e.span, EBin(op, subst(a, state), subst(b, state)))
     EUn(op, a) => Expr::new(e.span, EUn(op, subst(a, state)))
     EIndex(a, b) => Expr::new(e.span, EIndex(subst(a, state), subst(b, state)))
+    ESlice(a, s, en) =>
+      Expr::new(
+        e.span,
+        ESlice(
+          subst(a, state),
+          match s {
+            Some(x) => Some(subst(x, state))
+            None => None
+          },
+          match en {
+            Some(x) => Some(subst(x, state))
+            None => None
+          },
+        ),
+      )
     EMethod(a, m, args) => {
       let xs : Array[Expr] = []
       for x in args {
@@ -653,6 +702,19 @@ fn collect_expr_vcs(
       add_vc(vcs, fn_name, "index-bounds", file, line, goal, facts)
       collect_expr_vcs(base, state, facts, fn_name, file, line, vcs)
       collect_expr_vcs(idx, state, facts, fn_name, file, line, vcs)
+    }
+    ESlice(base, start, end) => {
+      // A slice is clamped by the runtime, so it has no bounds obligation to
+      // prove -- but an index inside it still does, so the parts are walked.
+      collect_expr_vcs(base, state, facts, fn_name, file, line, vcs)
+      match start {
+        Some(x) => collect_expr_vcs(x, state, facts, fn_name, file, line, vcs)
+        None => ()
+      }
+      match end {
+        Some(x) => collect_expr_vcs(x, state, facts, fn_name, file, line, vcs)
+        None => ()
+      }
     }
     EBin(op, a, b) => {
       if op == OpDiv || op == OpMod {

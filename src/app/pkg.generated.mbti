@@ -74,6 +74,8 @@ pub fn json_escape(String) -> String
 
 pub fn lex(String) -> Array[Tok]
 
+pub fn lex_at(String, Int32) -> Array[Tok]
+
 pub async fn load_module(String, String, String, Int32) -> (ModuleAst, ScanStats)
 
 pub fn md_escape(String) -> String
@@ -365,6 +367,7 @@ pub(all) enum ExprKind {
   EMethod(Expr, String, Array[Expr])
   EField(Expr, String)
   EIndex(Expr, Expr)
+  ESlice(Expr, Expr?, Expr?)
   EArray(Array[Expr])
   ETuple(Array[Expr])
   EUnknown(String)

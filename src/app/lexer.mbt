@@ -35,10 +35,21 @@ pub fn Tok::is_ident(self : Tok) -> Bool {
 
 ///|
 pub fn lex(src : String) -> Array[Tok] {
+  lex_at(src, 1)
+}
+
+///|
+/// Lex `src` as if it started on source line `base_line`.
+///
+/// A contract clause is parsed out of ONE line of a file, so its tokens have to
+/// carry the absolute line of that clause. Lexing the clause text on its own
+/// gave every token line 1, and every contract expression then claimed to be
+/// on line 1 of the file -- which is where a reader looked and did not find it.
+pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
   let toks : Array[Tok] = []
   let n = src.length()
   let mut i = 0
-  let mut line = 1
+  let mut line = base_line
   let mut col = 1
   while i < n {
     let c = src.get_char(i).unwrap_or(' ')

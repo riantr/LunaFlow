@@ -407,6 +407,62 @@ fn eval(p : Interp, env : Map[String, Val], e : Expr) -> Val {
         _ => Val::new(VUnknown, bv.tainted || iv.tainted)
       }
     }
+    ESlice(base, start, end) => {
+      let bv = eval(p, env, base)
+      let sv = match start {
+        Some(x) => eval(p, env, x)
+        None => clean(VInt(0))
+      }
+      let ev = match end {
+        Some(x) => Some(eval(p, env, x))
+        None => None
+      }
+      let tainted = bv.tainted ||
+        sv.tainted ||
+        (match ev {
+          Some(v) => v.tainted
+          None => false
+        })
+      // The bounds are used to build the value, not to raise a range
+      // violation: a slice out of range is clamped by the runtime, so it
+      // never reads out of bounds the way an index does.
+      match
+        (
+          bv.v,
+          sv.v.numeric(),
+          match ev {
+            Some(v) => v.v.numeric()
+            None => None
+          },
+        ) {
+        (VArr(xs), Some(sd), Some(ed)) => {
+          let lo = if sd.to_int() < 0 { 0 } else { sd.to_int() }
+          let hi = if ed.to_int() > xs.length() {
+            xs.length()
+          } else {
+            ed.to_int()
+          }
+          let sub : Array[Value] = []
+          let mut i = lo
+          while i < hi {
+            sub.push(xs[i])
+            i = i + 1
+          }
+          Val::new(VArr(sub), tainted)
+        }
+        (VArr(xs), Some(sd), None) => {
+          let lo = if sd.to_int() < 0 { 0 } else { sd.to_int() }
+          let sub : Array[Value] = []
+          let mut i = lo
+          while i < xs.length() {
+            sub.push(xs[i])
+            i = i + 1
+          }
+          Val::new(VArr(sub), tainted)
+        }
+        _ => Val::new(VUnknown, tainted)
+      }
+    }
     ECall(name, args) => eval_call(p, env, name, args, e.span)
     EMethod(recv, m, args) => eval_method(p, env, recv, m, args)
     EField(base, _) => {
@@ -970,7 +1026,11 @@ fn exec_stmt(
               Normal => ()
               Returned(v) => return Returned(v)
             }
-            if is_literal_true(cond) && iterations >= 64 {
+            if is_literal_true(cond) && iterations >= 64 && !has_gap(body) {
+              // The cap was reached, but only a body the model fully
+              // understands proves the loop is infinite. A body with an
+              // unmodelled construct in it may break out of the loop, and
+              // then the cap says nothing about the program.
               p.findings.push(
                 Finding::new(
                   FInfinite,

@@ -88,6 +88,30 @@ fn has_break_or_return(stmts : Array[Stmt]) -> Bool {
 }
 
 ///|
+/// True when the block contains a construct the parser did not model.
+///
+/// Such a construct may hold a `break` or a `return` that the CFG cannot
+/// see. A loop whose body holds one of them is therefore not proven infinite,
+/// and the code after it is not proven unreachable. The analyzer claims what
+/// it can support and discloses the gap instead of guessing -- the same rule
+/// the parser follows when it folds an unmodelled tail into its statement.
+fn has_gap(stmts : Array[Stmt]) -> Bool {
+  for s in stmts {
+    match s.kind {
+      SUnsupported(_) => return true
+      SIf(_, a, b) => if has_gap(a) || has_gap(b) { return true }
+      SWhile(_, body) | SForIn(_, _, body) => if has_gap(body) { return true }
+      SFor(_, _, _, _, body) | SBlock(body) | STry(body) =>
+        if has_gap(body) {
+          return true
+        }
+      _ => ()
+    }
+  }
+  false
+}
+
+///|
 fn is_infinite_loop(cond : Expr, body : Array[Stmt]) -> Bool {
   let t = literal_bool(cond)
   match t {
@@ -173,10 +197,13 @@ fn emit_stmts(
           let after = b.node(NMerge, "after-loop", s.span, s.id)
           match literal_bool(cond) {
             Some(true) =>
-              if !has_break_or_return(body) {
+              if !has_break_or_return(body) && !has_gap(body) {
                 dead = true
                 cur = -1
               } else {
+                // The body may hold a `break` the CFG cannot see -- inside a
+                // `match` arm, for instance, which the parser does not model.
+                // Then the loop may end, and the code after it is reachable.
                 b.edge(h, after, EFalse)
                 cur = after
               }

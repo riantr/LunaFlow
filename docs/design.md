@@ -117,7 +117,7 @@ Unsupported constructs are counted, not hidden: `match` arms, `impl` bodies, fun
 | Module | Statements understood | Unsupported | Coverage |
 | --- | --- | --- | --- |
 | doubleML 0.164.64 | 29,853 | 320 | **98.94 %** |
-| static_analysis 0.4.45 | 11,750 | 545 | **95.57 %** |
+| static_analysis 0.4.46 | 12,997 | 611 | **95.51 %** |
 
 The counts fell because the old ones were wrong: the parser shredded every construct it did not model into one statement per fragment, and a shredded fragment ate the closing brace of its function, so whole function bodies were truncated. The coverage number is *lower* than before because the analyzer now says what it does not understand instead of silently shredding it.
 
@@ -223,7 +223,7 @@ Rules:
 `build_cfg(func)` emits nodes for entry/exit, statements, branch heads, loop heads, merge points and dead statements. Edges are `seq`, `true`, `false`, `back`.
 
 - `if`: branch node with `true`/`false` edges to the first node of each arm; both arms converging produce a merge node; a `return` in both arms terminates the block and marks following statements dead.
-- `while`: loop head with `true` back into the body, body end `back` to the head, `false` to an after-loop merge. A constant-`true` condition without `break`/`return` produces **no exit edge**.
+- `while`: loop head with `true` back into the body, body end `back` to the head, `false` to an after-loop merge. A constant-`true` condition without `break`/`return` produces **no exit edge** — unless the body holds a construct the parser does not model, in which case a `break` may be hidden inside it and the loop is **not** proven infinite.
 - `for`: init → head → body → back to head; `for … in` is modelled as a head with a body.
 - `return`/`break`/`continue`: jump nodes; the block is terminated; subsequent statements are emitted as `dead` nodes.
 
@@ -269,8 +269,8 @@ Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, 1
 | --- | --- | --- | --- | --- |
 | Dead code | static | statements after an unconditional `return`/`break`/`continue` in the same block | 0.95 | a parser gap can end a block early |
 | Unreachable | static | CFG node with no incoming edge (excluding entry/exit) | 0.90 | merges created for constant-false conditions |
-| Infinite loop | static | loop head has a `back` edge and no `false` exit edge | 0.75 | a loop whose exit depends on an unmodelled call will be mislabelled |
-| Non-termination | dynamic | iteration cap reached on a constant-true loop | 0.70 | bounded budgets cannot prove divergence |
+| Infinite loop | static | loop head has a `back` edge and no `false` exit edge | 0.75 | a loop whose exit depends on an unmodelled call will be mislabelled — so a body with an unmodelled construct is **not** called infinite at all |
+| Non-termination | dynamic | iteration cap reached on a constant-true loop | 0.70 | bounded budgets cannot prove divergence; a body with an unmodelled construct is not reported |
 | Uncovered code | dynamic/coverage | line with zero hits in the imported suite | n/a (evidence) | not executing code is not proof it is dead |
 
 False positives/negatives are stated per rule rather than claimed away. The validation fixture pins the static rules: `unreachable_demo` yields exactly two dead statements and `spin` yields one infinite-loop finding (`src/app/cfg_test.mbt`).
@@ -299,7 +299,7 @@ Sinks:
 
 MoonBit has no raw pointer arithmetic; "pointer" sinks in the TrustInSoft sense are represented by array indexing and `Ref` values. `Ref` reads/writes currently degrade to unknown (documented limitation).
 
-Imprecision: field-insensitive, container-index-insensitive, no alias analysis, depth-6 call cutoff, unsupported `match` arms break propagation, and the conservative loop-counter rule can produce false positives. On the validation modules this yields 73 sinks (doubleML) and 4 (static_analysis) — the count is the number of distinct sites, since one site observed in many trials is one sink — high by design because every parameter is treated as hostile input; the report exposes the rule and the observed value for triage.
+Imprecision: field-insensitive, container-index-insensitive, no alias analysis, depth-6 call cutoff, unsupported `match` arms break propagation, and the conservative loop-counter rule can produce false positives. On the validation modules this yields 73 sinks (doubleML) and 6 (static_analysis) — the count is the number of distinct sites, since one site observed in many trials is one sink — high by design because every parameter is treated as hostile input; the report exposes the rule and the observed value for triage.
 
 ### 5.6 Value ranges
 
@@ -414,8 +414,8 @@ Outputs, all deterministic except `elapsed_ms`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.64 (120 fn) | 220 | 29,853 | 218,391 | 166 | 0 / 0 / 0 (no specs) | 0 | 73 | 3.9 s | 94 KB | 33.8 MB |
-| static_analysis 0.4.45 (200 fn) | 185 | 11,750 | 8,860 | 41 | 0 / 0 / 0 (no specs) | 0 | 4 | 1.0 s | 55 KB | 1.3 MB |
+| doubleML 0.164.64 (120 fn) | 220 | 29,853 | 218,391 | 166 | 0 / 0 / 0 (no specs) | 0 | 73 | 4.5 s | 94 KB | 33.8 MB |
+| static_analysis 0.4.46 (200 fn) | 199 | 12,997 | 14,296 | 43 | 0 / 0 / 0 (no specs) | 0 | 6 | 1.4 s | 62 KB | 4.5 MB |
 | fixtures/vuln_demo | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms | 21 KB | 79 KB |
 
 The statement counts fell and the dead-code column emptied because the old
@@ -541,7 +541,7 @@ A6/A7 are pinned by unit tests rather than by the report, so they remain valid e
 
 **Re-measurement note (2026-11-10 deep QA).** The "Measured" column records the
 committed artefacts, generated when `@latest` resolved to 0.164.62 / 0.4.43.
-Today it resolves to 0.164.64 / 0.4.45, so A3/A4/A11/A12 are re-measured
+Today it resolves to 0.164.64 / 0.4.46, so A3/A4/A11/A12 are re-measured
 separately by `scripts/qa/e2e.mjs` (fresh runs) and `scripts/verify.mjs` (committed
 artefacts, pinned by file name). Current fresh-run values: A2 = 33/33, A4 =
 99.87 % / 97.28 %, A10 = 4 / 3 nodes, A11 = 5.7 s / 1.0 s, A12 = 141.7 KB + 56.5

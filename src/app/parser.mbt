@@ -450,6 +450,31 @@ fn parse_postfix(p : P) -> Expr {
       let idx = parse_expr(p, 0)
       p.paren = p.paren - 1
       p.skip_all_newlines()
+      // A SLICE `a[i:j]` is not an index. Leaving the `:j]` behind shredded
+      // the statement it belonged to -- `return line[i + 1:j].to_string()`
+      // became a return with an unmodelled expression plus three fragments --
+      // and the fragments that followed an exit were then reported as
+      // unreachable code.
+      let mut is_slice = false
+      let mut slice_end : Expr? = None
+      if p.at_op(":") {
+        is_slice = true
+        ignore(p.bump())
+        p.skip_all_newlines()
+        if !p.at_op("]") {
+          slice_end = Some(parse_expr(p, 0))
+          p.skip_all_newlines()
+        }
+        // A step `a[i:j:k]` is accepted; the step is not modelled.
+        if p.at_op(":") {
+          ignore(p.bump())
+          p.skip_all_newlines()
+          if !p.at_op("]") {
+            ignore(parse_expr(p, 0))
+            p.skip_all_newlines()
+          }
+        }
+      }
       if p.at_op("]") {
         ignore(p.bump())
       }
@@ -460,7 +485,11 @@ fn parse_postfix(p : P) -> Expr {
         p.last_tok().line,
         p.last_tok().col,
       )
-      e = Expr::new(span, EIndex(e, idx))
+      if is_slice {
+        e = Expr::new(span, ESlice(e, Some(idx), slice_end))
+      } else {
+        e = Expr::new(span, EIndex(e, idx))
+      }
     } else if is_op(t, ".") {
       ignore(p.bump())
       p.skip_all_newlines()
@@ -605,10 +634,14 @@ fn parse_primary(p : P) -> Expr {
         // and the assignment it belonged to into an unknown value.
         ignore(p.bump())
         p.skip_all_newlines()
-        let cond = parse_expr(p, 0)
+        // The condition and the branches are read, not interpreted: the `if`
+        // is one expression whose value is unknown. The calls are made for
+        // their effect on the parser -- they consume the condition and the
+        // then-block -- and their results are deliberately discarded.
+        ignore(parse_expr(p, 0))
         ignore(p.swallow_expr_tail(true))
         p.skip_all_newlines()
-        let then_body = parse_block(p)
+        ignore(parse_block(p))
         p.skip_all_newlines()
         if p.at("else") {
           ignore(p.bump())

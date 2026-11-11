@@ -128,6 +128,7 @@ pub(all) enum ExprKind {
   EMethod(Expr, String, Array[Expr])
   EField(Expr, String)
   EIndex(Expr, Expr)
+  ESlice(Expr, Expr?, Expr?)
   EArray(Array[Expr])
   ETuple(Array[Expr])
   EUnknown(String)
@@ -165,6 +166,17 @@ pub fn Expr::render(self : Expr) -> String {
     EMethod(e, m, args) => e.render() + "." + m + "(" + render_args(args) + ")"
     EField(e, f) => e.render() + "." + f
     EIndex(e, i) => e.render() + "[" + i.render() + "]"
+    ESlice(e, s, en) => {
+      let lo = match s {
+        Some(x) => x.render()
+        None => ""
+      }
+      let hi = match en {
+        Some(x) => x.render()
+        None => ""
+      }
+      e.render() + "[" + lo + ":" + hi + "]"
+    }
     EArray(xs) => "[" + render_args(xs) + "]"
     ETuple(xs) => "(" + render_args(xs) + ")"
     EUnknown(t) => t

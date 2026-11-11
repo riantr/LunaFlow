@@ -526,6 +526,17 @@ fn count_expr_calls(e : Expr, r : Ref[Int32]) -> Unit {
       count_expr_calls(a, r)
       count_expr_calls(b, r)
     }
+    ESlice(a, s, en) => {
+      count_expr_calls(a, r)
+      match s {
+        Some(x) => count_expr_calls(x, r)
+        None => ()
+      }
+      match en {
+        Some(x) => count_expr_calls(x, r)
+        None => ()
+      }
+    }
     EField(a, _) => count_expr_calls(a, r)
     EArray(xs) | ETuple(xs) =>
       for a in xs {

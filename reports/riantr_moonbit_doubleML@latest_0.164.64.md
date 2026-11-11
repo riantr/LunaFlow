@@ -27,7 +27,7 @@
 | Trace events | 218391 |
 | Interpreted steps | 42818 |
 | Observed functions | 120 |
-| Wall time (analyzer) | 3891 ms |
+| Wall time (analyzer) | 4452 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel

@@ -606,6 +606,21 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
       }
       AbsCell::new(ATop, cb.t.join(ci.t))
     }
+    ESlice(base, start, end) => {
+      let cb = abs_eval(ctx, st, base)
+      let cs = match start {
+        Some(x) => abs_eval(ctx, st, x)
+        None => AbsCell::new(AInt(0, 0), TClean)
+      }
+      let ce = match end {
+        Some(x) => abs_eval(ctx, st, x)
+        None => AbsCell::new(AInt(0, 0), TClean)
+      }
+      // A slice is clamped by the runtime, so there is no out-of-bounds claim
+      // here the way there is for an index. The slice carries the taint of
+      // its parts, and that is all that is claimed.
+      AbsCell::new(ATop, cb.t.join(cs.t).join(ce.t))
+    }
     ECall(f, args) => {
       let cells : Array[AbsCell] = []
       let mut t = TClean
@@ -983,6 +998,17 @@ fn collect_names(e : Expr, out : Array[String]) -> Unit {
     EIndex(a, b) => {
       collect_names(a, out)
       collect_names(b, out)
+    }
+    ESlice(a, s, en) => {
+      collect_names(a, out)
+      match s {
+        Some(x) => collect_names(x, out)
+        None => ()
+      }
+      match en {
+        Some(x) => collect_names(x, out)
+        None => ()
+      }
     }
     EMethod(a, _, args) => {
       collect_names(a, out)

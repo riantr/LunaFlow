@@ -401,6 +401,51 @@ truncated function bodies. The full adjudication, including the one place the
 peer report's own attribution was wrong, is in
 [The cross-check against another analyzer's module](#the-cross-check-against-another-analyzers-module).
 
+### What changed after 0.1.5 (unreleased)
+
+**This revision is what the peer analyzer found when it was pointed at this module.**
+
+`moonx riantr/moonbit_static_analysis@latest riantr/LunaFlow@latest` scans
+LunaFlow's own source. On 0.4.45 — and unchanged on 0.4.46 — it reported **3
+actionable findings** against 229 rows: an unused parameter and two unused
+locals. **All three were true**, and the MoonBit compiler's own `unused_value`
+warning confirmed every one of them.
+
+- **A contract clause carried the wrong line.** `parse_spec_expr` took a `line`
+  and never used it. A clause is parsed out of ONE line of a file, so every
+  contract expression claimed to be on line 1 of the file — and a reader who
+  followed the pointer landed on the top of the file. The lexer now takes the
+  base line (`lex_at`), and each clause of a contract carries the line it was
+  actually written on.
+- **Two unread bindings.** The `if` expression read its condition and its
+  then-block into two locals it never used. They are discarded explicitly now;
+  the parse is unchanged.
+
+**Running our own analyzer over our own source then found five more false
+positives**, and the MoonBit compiler contradicted every one of them: it
+reports unreachable code in the fixture and nowhere else. Two causes, both
+fixed:
+
+- **A slice `a[i:j]` was not modelled.** `return line[i + 1:j].to_string()`
+  became a return with an unmodelled expression plus three shredded fragments,
+  and the fragments that followed the exit inherited its deadness. Slices are
+  modelled now (`ESlice`), and because a slice is clamped by the runtime it
+  carries the taint of its parts but raises no out-of-bounds claim.
+- **A `while true` whose body holds a construct the parser does not model was
+  called infinite.** The `break` inside such a construct is invisible to the
+  CFG, so the loop looked non-terminating and the code after it looked dead.
+  The analyzer now claims only what it can support: a loop with an unmodelled
+  construct in its body is **not** proven infinite, and the code after it is
+  **not** proven unreachable. A fully modelled `while true` is still reported —
+  refusing to guess must not cost the real finding.
+
+Measured on this module's own source: dead-code findings **8 → 3**, unreachable
+**2 → 1**, infinite loops **2 → 1** — and the 3 / 1 / 1 that remain are the
+vulnerability fixture's, which exists to be found. On doubleML and on the peer
+module every number is unchanged, and the committed doubleML artefact is
+byte-identical apart from the wall clock. The test suite is **66 tests**, up
+from 59.
+
 ### What changed in 0.1.4
 
 **This release moves the runtime to the toolchain and makes the module runnable
@@ -566,7 +611,7 @@ main.mbt                    the root entrypoint, a forwarder to src/command
 src/app/                   14 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, report renderer
-src/app/*_test.mbt         59 tests in 9 files
+src/app/*_test.mbt         66 tests in 10 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -587,7 +632,9 @@ frontend is a structural parser for the MoonBit subset the analyses need;
 `match` arms, `impl` bodies and functional `for` are counted as gaps, not
 silently dropped. A construct the parser has no rule for at all is folded into
 the statement it belongs to and counted as unsupported, so it cannot shred
-itself into statements of its own.
+itself into statements of its own. A slice `a[i:j]` is modelled — it is one
+expression, and because the runtime clamps it, it raises no out-of-bounds
+claim.
 
 ## Verification
 
@@ -596,10 +643,10 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 134 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 134 warnings, 0 errors |
-| `moon test src/app --target native` | **59 passed, 0 failed** |
-| `moon test src/app --target wasm` | **59 passed, 0 failed** |
+| `moon check --target native` | exit 0, 131 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 131 warnings, 0 errors |
+| `moon test src/app --target native` | **66 passed, 0 failed** |
+| `moon test src/app --target wasm` | **66 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
@@ -619,10 +666,10 @@ measured runs committed with the reports:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 3.9 s |
-| `riantr/moonbit_static_analysis@latest` → 0.4.45 | 185 | 11,750 | 8,860 | 41 | 0 (no specs) | 0 | 4 | 1.0 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.5 s |
+| `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,997 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.4 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 27 | 3,322 | 12,211 | 22 | 2 / 1 / 3 | 8 | 1 | 0.17 s |
+| `LunaFlow` itself (`--dir .`) | 28 | 3,346 | 12,492 | 20 | 2 / 1 / 3 | 3 | 1 | 0.17 s |
 
 **Reproduction status (2026-11-11).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -637,6 +684,26 @@ and the analyzer says so.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.
+
+The artefacts are regenerated with this recipe, and the slice criterion has to
+be spelled **exactly** — a criterion that names no function yields an empty
+slice *and* one fewer function run, so every number in the report moves while
+nothing looks broken:
+
+```sh
+moon run src/cli --target native -- analyze --dir fixtures/vuln_demo \
+  --out reports --funnel --trials 4 --max-functions 120 --slice "i@copy_prefix"
+moon run src/cli --target native -- analyze riantr/moonbit_static_analysis@latest \
+  --out reports --funnel --trials 4 --max-functions 120 --slice "buf@render_reports"
+moon run src/cli --target native -- analyze riantr/moonbit_doubleML@latest \
+  --out reports --funnel --trials 4 --max-functions 120 --slice "theta_hat@aggregate_coef_se"
+```
+
+The module version is part of the artefact's file name, so a new release of a
+validation module means a new file and a new pin in `scripts/verify.mjs`. One
+more trap: a run that starts while `moon fetch` is still extracting the module
+measures a partial tree, so the numbers are re-measured after the fetch
+settles.
 
 `scripts/qa/` also carries the rest of the deep-QA tooling: `warn_census.mjs`
 (warning triage), `metrics.mjs` (size/complexity plus line coverage from the
@@ -752,6 +819,20 @@ explored. Nested function declarations are consumed as one unit and are not
 analysed on their own. And the peer's own attribution of the 16 parser rows
 was wrong in a way that would have sent the next fix in the wrong direction —
 which is why the correction belongs here and not only in the fix.
+
+**And the other direction: the peer, pointed at this module.** The same
+command with the arguments the other way round —
+`moonx riantr/moonbit_static_analysis@latest riantr/LunaFlow@latest` — asks
+the peer to scan *this* source. It reports 3 actionable findings against 229
+rows: an unused parameter and two unused locals, all three real, all three
+confirmed by the MoonBit compiler. They are fixed in the revision above, and
+0.4.46 reports them exactly as 0.4.45 did. The remaining 215 rows are the
+peer's own scope notes, not defects: 215 of them say that an `if` expression,
+a `match` arm, a struct, an enum or a test declaration is outside the subset
+the peer analyses — and the `if` expression is a construct **this** module
+models and the peer does not. The peer also cannot parse one file of this
+module (`src/command/command.mbt`, a `#| |#` block comment), and it says so
+rather than guessing.
 
 ## What this is not
 
