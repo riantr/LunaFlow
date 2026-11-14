@@ -48,6 +48,27 @@ pub fn family_roster() -> Array[FindingKind] {
     FPointerArithmetic,
     FMemoryLeak,
     FFormatString,
+    FFfiSignatureConflict,
+    FFfiUnannotatedOwnership,
+    FFfiUseAfterMove,
+    FFfiTargetMismatch,
+    FFfiAddressUnknown,
+    FFfiAddressConflict,
+  ]
+}
+
+///|
+/// The families the FOREIGN ADDRESS SPACE analysis produces.
+///
+/// A family is in this list when the analysis has a check behind it.
+pub fn ffi_families() -> Array[FindingKind] {
+  [
+    FFfiSignatureConflict,
+    FFfiUnannotatedOwnership,
+    FFfiUseAfterMove,
+    FFfiTargetMismatch,
+    FFfiAddressUnknown,
+    FFfiAddressConflict,
   ]
 }
 
@@ -96,6 +117,12 @@ pub fn family_title(kind : FindingKind) -> String {
     FPointerArithmetic => "PointerArithmetic"
     FMemoryLeak => "MemoryLeak"
     FFormatString => "FormatString"
+    FFfiSignatureConflict => "FfiSignatureConflict"
+    FFfiUnannotatedOwnership => "FfiUnannotatedOwnership"
+    FFfiUseAfterMove => "FfiUseAfterMove"
+    FFfiTargetMismatch => "FfiTargetMismatch"
+    FFfiAddressUnknown => "FfiAddressUnknown"
+    FFfiAddressConflict => "FfiAddressConflict"
   }
 }
 
@@ -138,6 +165,18 @@ pub fn family_property(kind : FindingKind) -> String {
     FMemoryLeak => "storage may be allocated and never released"
     FFormatString =>
       "an attacker-controlled string may be interpreted as a format string"
+    FFfiSignatureConflict =>
+      "one C symbol is declared with two different MoonBit signatures, so the C function cannot have both"
+    FFfiUnannotatedOwnership =>
+      "a pointer parameter of a C function has no ownership annotation, so the calling convention relies on a default the toolchain says will change"
+    FFfiUseAfterMove =>
+      "an object given to a C function as #owned is used afterwards, although the C side owns it from the call on"
+    FFfiTargetMismatch =>
+      "the module declares a foreign function the published target cannot build"
+    FFfiAddressUnknown =>
+      "an argument of a C call cannot be named, so the region the call touches is unknown"
+    FFfiAddressConflict =>
+      "the same constant reaches two different C symbols, so what the C side does with it depends on which call ran last"
   }
 }
 
@@ -185,6 +224,18 @@ pub fn family_assumption(kind : FindingKind) -> String {
       "NOT APPLICABLE IN MOONBIT: the collector reclaims unreachable storage and there is no manual free, so storage cannot leak"
     FFormatString =>
       "NOT APPLICABLE IN MOONBIT: there are no format strings. The language interpolates with a typed syntax and the core has no printf-style formatting, so no string is ever interpreted as a format"
+    FFfiSignatureConflict =>
+      "the two declarations are in the same module and name the same C symbol, and the C function has ONE prototype -- so at least one of the two MoonBit claims is wrong"
+    FFfiUnannotatedOwnership =>
+      "the declared type of the parameter has a heap representation, which is exactly the set of types the toolchain's own E0055 requires an annotation for"
+    FFfiUseAfterMove =>
+      "the #owned annotation was on the parameter, and the use is after the call in the same function -- the toolchain does NOT enforce this, so it is the analyzer's own check"
+    FFfiTargetMismatch =>
+      "the module's preferred target was read from its manifest, and the toolchain rejects this form of declaration on that target (E4156)"
+    FFfiAddressUnknown =>
+      "the module passes a constant in the same slot of the same symbol at another call site, so the slot is one the module treats as sometimes-fixed; whether it carries an address is an ASSUMPTION"
+    FFfiAddressConflict =>
+      "the same constant reaches two symbols in the same module; whether it is an address at all is an ASSUMPTION, so the finding states the fact and not a verdict"
   }
 }
 
@@ -231,6 +282,18 @@ pub fn family_excluded(kind : FindingKind) -> String {
       "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect. The nearest real exhaustion is unbounded growth in a collection, which this analyzer does not measure"
     FFormatString =>
       "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect"
+    FFfiSignatureConflict =>
+      "a symbol declared in ANOTHER module: the analyzer sees one module at a time, so a conflict across modules is out of reach"
+    FFfiUnannotatedOwnership =>
+      "a parameter whose declared type the analyzer could not classify -- a user type it did not see the declaration of"
+    FFfiUseAfterMove =>
+      "a use in ANOTHER function: the analyzer follows the call graph one function at a time, so a use after the call in a different function is not seen"
+    FFfiTargetMismatch =>
+      "a module that supports several targets: the analyzer checks the PREFERRED target, because that is the one the registry publishes"
+    FFfiAddressUnknown =>
+      "a slot that is computed at EVERY call site of the symbol: the module never pins it down, so the analyzer has nothing to compare it against"
+    FFfiAddressConflict =>
+      "a constant that reaches two symbols in DIFFERENT modules: the analyzer sees one module at a time"
   }
 }
 

@@ -113,6 +113,24 @@ One analyzer · three evidence strengths · one Markdown report.
   findings depend on the sample** — the abstract ones do not, and the observed
   ones do, and the report says so instead of letting a reader assume otherwise.
 
+* A foreign address space, and the isolation between the two
+
+  The C boundary is where an address appears, and it appears on the **other**
+  side of it: MoonBit has no pointer type, so the foreign address space is not
+  something the language has. The analyzer therefore models **two** spaces —
+  the MoonBit one and the foreign one — and says, per parameter and per return
+  value, which side it lands on: a **value** is copied, a **heap pointer** is
+  the address of a MoonBit object, and an **`#external` type** is an address the
+  C side owns. The set of pointer types is not guessed; it is the set the
+  toolchain's own ownership diagnostic fires for, measured one type at a time.
+  Six families then report what the boundary costs — a C symbol declared with
+  two signatures, an object given away and then used, a calling convention that
+  relies on a default the toolchain says will change, a declaration the
+  published target cannot build, an address that cannot be named, and a
+  constant that reaches two different C symbols. The first two are defects
+  **the compiler does not catch**, and both were confirmed against the real
+  toolchain.
+
 * Markdown is the UI
 
   Reports use `flowchart TD` for CFGs and slices, `flowchart LR` for taint and
@@ -173,7 +191,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.12
+moon add riantr/LunaFlow@0.1.13
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -181,7 +199,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.12",
+  "riantr/LunaFlow@0.1.13",
 }
 ```
 
@@ -232,7 +250,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.12](https://mooncakes.io/docs/riantr/LunaFlow@0.1.12).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.13](https://mooncakes.io/docs/riantr/LunaFlow@0.1.13).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -426,6 +444,93 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.13
+
+**The foreign address space: the C boundary, modelled as a second address
+space — and the isolation between the two.**
+
+This is the second half of the memory-model work. 0.1.12 modelled the MoonBit
+side (the global region, the allocation classes, the layout-stability
+self-check); this release models the **other** side: the address space the C
+code lives in, and what may cross the boundary.
+
+**MoonBit has no addresses at all** — no pointer type, no address arithmetic,
+no address space. So the foreign address space does not live in the language;
+it lives on the other side of the C boundary, and everything the analyzer
+knows about it has to be *measured*, not assumed:
+
+| The question | What the toolchain says |
+|---|---|
+| What is the C form? | `extern "C" fn name(args) -> Ret = "c_symbol"` — and the `= "c_symbol"` part is **required** (E4140/E3002 without it). |
+| Which targets accept it? | **native only.** The wasm backend rejects `extern "C"` (E4156); native rejects a *module import* (`fn f() = "pkg" "path"`) with the same code. The two forms are not interchangeable. |
+| What is `#external type T`? | An **opaque** type. Natively it is a GC-managed external object — the toolchain's own `moonbit.h` builds one with `moonbit_make_external_object(finalize, payload_size)` — so the **payload belongs to the C side**. |
+| How does a `String` cross? | As `uint16_t *` (`moonbit_string_t`): the C side receives the **address** of a MoonBit heap object. A `Bytes` crosses as `uint8_t *`. |
+| How do the scalars cross? | By value. `Int` arrives as a 32-bit signed integer, `Int64` as a 64-bit one, `Double` as a C `double` in a **floating-point register** — read through an `int64_t` prototype it arrives as garbage, which is exactly what a wrong C prototype does to a value. |
+| Is there an 8-bit integer? | **No.** `Int8`/`UInt8` do not exist; `Int16`/`UInt16` do. |
+| Who owns a pointer parameter? | The toolchain **refuses** one without `#borrow(x)`/`#owned(x)` (E0055) and says the current default — `#owned` — "will be changed in the future". |
+| Does the compiler enforce it? | **No.** Using an `#owned` argument *after* the call compiles clean. |
+| Does the compiler catch two claims about one C symbol? | **No.** Two declarations of the same symbol with different signatures compile clean — and the C function has ONE prototype. |
+
+**1. Two spaces, and a table for each.** The model has the **MoonBit** space
+(reference-counted heap, global region, frame) and the **foreign** space (what
+the C code owns, plus the payload of an `#external` object). A C call is where
+a value crosses from one to the other, and the **declared type** says which
+side it lands on — so the analyzer classifies every parameter and every return
+value:
+
+| Declared type | Space | Why |
+|---|---|---|
+| `Int`, `Int32`, `Int64`, `UInt`, `Double`, `Bool`, `Char` | **value** | copied by value; the C side receives the bits |
+| `String`, `Bytes`, `Array`, `Option`, `Result`, `Map`, a `struct` | **heap pointer** | the C side receives the **address** of a MoonBit object — and this is the case that needs an ownership annotation |
+| `#external type T` | **foreign address** | the payload belongs to the C side |
+| a plain `type T` | **heap pointer** | opaque, but a MoonBit value |
+| a fieldless `enum` | **value** | no heap representation |
+
+The pointer set is not guessed: it is the set the toolchain's own E0055 fires
+for, measured one type at a time — `String`, `StringView`, `Bytes`, `Array`,
+`FixedArray`, `Option`, `Result`, `Map`, a user's `struct`, an `enum` that
+carries a field, and a plain opaque `type`; and *not* the scalars, *not* a
+tuple, and *not* an `#external` type.
+
+**2. Six new finding families, in their own section and their own method.**
+Report **§5.7 The foreign address space** carries the declarations, the named
+addresses, the calls, and the findings, all filed under the method `L2-FFI`
+so they are never mixed into the classic abstract findings:
+
+| Code | What it asserts |
+|---|---|
+| `FFI-SIGNATURE-CONFLICT` | one C symbol is declared with two different MoonBit signatures — so one of the two claims is wrong. **The toolchain does not notice this.** |
+| `FFI-USE-AFTER-MOVE` | an object given to C as `#owned` is used afterwards, although the C side owns it from the call on. **The toolchain does not enforce this either.** |
+| `FFI-UNANNOTATED-OWNERSHIP` | a pointer parameter relies on the toolchain's current default, which the toolchain says will change. |
+| `FFI-TARGET-MISMATCH` | the module declares a foreign function its **published** target cannot build — and a `#cfg(target = "native")` guard is respected, so a guarded declaration is not a false positive. |
+| `FFI-ADDRESS-UNKNOWN` | a slot the module fills with a constant at one call site and computes at another: if it carries an address, the region cannot be named. |
+| `FFI-ADDRESS-CONFLICT` | the same constant reaches two different C symbols: if it is an address, at most one of them can own it. |
+
+**3. The named addresses.** The analyzer does **not** claim that an integer
+argument to a C function is an address — it may be an address, a length or a
+plain value, and nothing in the MoonBit source says which. What it does is
+collect every fixed number that crosses the boundary, with the symbols it
+reaches and the other fixed numbers it travels with:
+
+| Constant | C symbols | Along with | Sites |
+|---|---|---|---|
+| `0x40000000` | `map_page`, `poke` | `0x1000`, `0x7` | `map_page@lib.mbt:47`, `poke@lib.mbt:60` |
+
+**4. A value from C is a FOREIGN value.** A C call used to be an *unknown*
+function to the interpreter, so its result was `?`. It is now a distinct
+value — `foreign(read_reg)` — that says where it came from, and the report
+shows it in the value tables.
+
+**5. What the boundary does NOT cost.** A `#borrow` cannot be checked: the C
+side is invisible to the analyzer, and the compiler does not enforce it
+either. The report says so in those words rather than implying a check that
+is not there.
+
+**The numbers.** Tests 107 → **131**; the gate's CLI-surface checks 51 → **66**;
+the library is 18 files and the test suite 14 files; the finding roster is 26
+families. The self-scan row moved because the analyzer is one of the modules
+it analyses — and because the new fixture is one of the files it reads.
 
 ### What changed in 0.1.12
 
@@ -1262,11 +1367,12 @@ LICENSE                    MIT
 moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
-src/app/                   17 library files: parser, CFG, L1 interpreter,
+src/app/                   18 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, family roster, evolved value
-                           analysis, memory layout model, report renderer
-src/app/*_test.mbt         107 tests in 13 files
+                           analysis, memory layout model, foreign address
+                           space model, report renderer
+src/app/*_test.mbt         131 tests in 14 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -1274,6 +1380,8 @@ fixtures/eva_demo/         the evolved value analysis fixture: the defect
                            classes and the ordinary shapes next to them
 fixtures/memory_demo/      the memory layout fixture: the global region, the
                            allocation classes and the tail value
+fixtures/ffi_demo/         the foreign address space fixture: the C boundary,
+                           the ownership contract and the named addresses
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
 docs/qa/REPORT.md          deep QA report (security, coverage, metrics)
@@ -1302,12 +1410,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 142 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 142 warnings, 0 errors |
-| `moon check --target js` | exit 0, 167 warnings, 0 errors |
-| `moon test src/app --target native` | **93 passed, 0 failed** |
-| `moon test src/app --target wasm` | **93 passed, 0 failed** |
-| `moon test src/app --target js` | **93 passed, 0 failed** |
+| `moon check --target native` | exit 0, 149 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 149 warnings, 0 errors |
+| `moon check --target js` | exit 0, 174 warnings, 0 errors |
+| `moon test src/app --target native` | **131 passed, 0 failed** |
+| `moon test src/app --target wasm` | **131 passed, 0 failed** |
+| `moon test src/app --target js` | **131 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1320,7 +1428,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **41 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **66 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
 | `node scripts/qa/verify_published.mjs 0.1.11` | **4 passed, 0 failed** |
@@ -1332,7 +1440,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 33 | 3,706 | 12,739 | 31 | 2 / 1 / 3 | 3 | 3 | 0.17 s |
+| `LunaFlow` itself (`--dir .`) | 39 | 4,574 | 16,634 | 32 | 2 / 1 / 3 | 3 | 4 | 0.24 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -1359,10 +1467,14 @@ evolved value engine; the two extra findings are the analyzer reporting its own
 new branches as unreachable for the abstract input. The 0.1.12 release moved it
 again, to 4,076 statements and 13,295 events, because the memory-layout model
 is new source and because the tail-value fix changed what the analyzer
-understands. The evolved value analysis now reports **exactly one** finding on
-LunaFlow's own tree, and it is the deliberate overflow in the memory fixture's
-global initializer — the library's own source has none. The other three rows
-have not moved at all.
+understands. The 0.1.13 release moved it again, to 4,574 statements and 16,634
+events, because the foreign-address-space model is new source, because the
+fixture that exercises the C boundary is a new file, and because the analyzer
+now understands the FFI declarations it used to count as parse issues. The
+evolved value analysis now reports **exactly one** finding on LunaFlow's own
+tree, and it is the deliberate overflow in the memory fixture's global
+initializer — the library's own source has none. The other three rows have not
+moved at all.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

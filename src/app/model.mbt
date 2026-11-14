@@ -272,6 +272,14 @@ pub struct SourceFile {
   /// The module's GLOBAL REGION: the top-level bindings, which live for the
   /// whole module rather than in a frame.
   globals : Array[Global]
+  /// The FOREIGN declarations: the C functions and the module imports the
+  /// module depends on. See `ffi.mbt`.
+  ffi_decls : Array[FfiDecl]
+  /// The `#external` types: opaque types whose payload the C side owns.
+  external_types : Array[ExternalType]
+  /// The module's own type declarations, so the analyzer can tell a type
+  /// with a heap representation from a value type.
+  types : Array[TypeDecl]
   mut parsed_stmts : Int32
   mut unsupported_stmts : Int32
 }
@@ -284,6 +292,9 @@ pub fn SourceFile::new(path : String, text : String) -> SourceFile {
     funcs: [],
     issues: [],
     globals: [],
+    ffi_decls: [],
+    external_types: [],
+    types: [],
     parsed_stmts: 0,
     unsupported_stmts: 0,
   }
@@ -417,6 +428,14 @@ pub(all) enum FindingKind {
   FPointerArithmetic
   FMemoryLeak
   FFormatString
+  // The FOREIGN ADDRESS SPACE families. See `ffi.mbt` for the model and the
+  // measurements every one of them rests on.
+  FFfiSignatureConflict
+  FFfiUnannotatedOwnership
+  FFfiUseAfterMove
+  FFfiTargetMismatch
+  FFfiAddressUnknown
+  FFfiAddressConflict
 }
 
 ///|
@@ -445,6 +464,12 @@ pub fn FindingKind::code(self : FindingKind) -> String {
     FPointerArithmetic => "POINTER-ARITHMETIC"
     FMemoryLeak => "MEMORY-LEAK"
     FFormatString => "FORMAT-STRING"
+    FFfiSignatureConflict => "FFI-SIGNATURE-CONFLICT"
+    FFfiUnannotatedOwnership => "FFI-UNANNOTATED-OWNERSHIP"
+    FFfiUseAfterMove => "FFI-USE-AFTER-MOVE"
+    FFfiTargetMismatch => "FFI-TARGET-MISMATCH"
+    FFfiAddressUnknown => "FFI-ADDRESS-UNKNOWN"
+    FFfiAddressConflict => "FFI-ADDRESS-CONFLICT"
   }
 }
 
@@ -465,6 +490,18 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     // Reserved: never produced.
     FUseAfterFree | FPointerArithmetic | FMemoryLeak | FFormatString =>
       "warning"
+    // The FOREIGN ADDRESS SPACE families.
+    //
+    // Two C declarations that cannot both be true, an object the C side owns
+    // and the MoonBit side still uses, a declaration the published target
+    // cannot build: these are errors.
+    FFfiSignatureConflict | FFfiUseAfterMove | FFfiTargetMismatch => "error"
+    // A contract the toolchain leaves to the default, and an address whose
+    // owner is ambiguous.
+    FFfiUnannotatedOwnership | FFfiAddressConflict => "warning"
+    // An address the analyzer cannot name: a limit of the analysis, not a
+    // defect.
+    FFfiAddressUnknown => "info"
   }
 }
 

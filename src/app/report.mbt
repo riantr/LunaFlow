@@ -696,6 +696,203 @@ pub fn proof_counts(vcs : Array[VC]) -> (Int32, Int32, Int32) {
 }
 
 ///|
+/// §5.7 THE FOREIGN ADDRESS SPACE.
+///
+/// MoonBit has no pointer type, no address arithmetic and no address space:
+/// nothing in the language IS an address. The C boundary is where an address
+/// appears, and it appears on the OTHER side of it. So there are two spaces
+/// here, and the analysis is about the boundary between them:
+///
+///   - the MOONBIT space: the reference-counted heap, the global region and
+///     the frame;
+///   - the FOREIGN space: what the C code owns, plus the payload of an
+///     `#external` object.
+///
+/// Every claim in this section rests on a measurement against the toolchain,
+/// not on a reading of a document:
+///
+///   - `extern "C" fn name(args) -> Ret = "c_symbol"` is the only C form,
+///     and the `= "c_symbol"` part is required.
+///   - The wasm backend REJECTS `extern "C"` (E4156), and native REJECTS a
+///     module import -- the two forms are not interchangeable, and a module
+///     that mixes them with its published target cannot be built.
+///   - A `String` crosses as `uint16_t *` and a `Bytes` as `uint8_t *`: the
+///     C side receives the ADDRESS of a MoonBit heap object. The scalars
+///     cross by value.
+///   - The toolchain refuses a pointer-typed parameter without an ownership
+///     annotation (E0055) and says the current default will change.
+///   - The toolchain does NOT enforce the annotation, and does NOT notice
+///     two declarations claiming the same C symbol with different
+///     signatures. Those two are this analyzer's own checks.
+fn ffi_section(model : FfiModel?) -> String {
+  let out = StringBuilder::new()
+  out.write_string("\n### 5.7 The foreign address space\n\n")
+  match model {
+    None =>
+      out.write_string("_The foreign address space was not analysed._\n\n")
+    Some(m) => {
+      out.write_string(
+        "MoonBit has no pointer type, no address arithmetic and no address space: nothing in the language IS an address. The C boundary is where an address appears, and it appears on the **other** side of it. There are two spaces here, and the analysis is about the boundary between them: the **MoonBit** space (the reference-counted heap, the global region, the frame) and the **foreign** space (what the C code owns, plus the payload of an `#external` object).\n\nEvery claim below rests on a measurement against the toolchain, not on a reading of a document. `extern \"C\" fn name(args) -> Ret = \"c_symbol\"` is the only C form and the `= \"c_symbol\"` part is required; the wasm backend REJECTS `extern \"C\"` (E4156) and native REJECTS a module import, so the two forms are not interchangeable; a `String` crosses as `uint16_t *` and a `Bytes` as `uint8_t *`, so the C side receives the ADDRESS of a MoonBit heap object while the scalars cross by value; the toolchain refuses a pointer-typed parameter without an ownership annotation (E0055) and says the current default will change; and the toolchain does NOT enforce that annotation and does NOT notice two declarations claiming the same C symbol with different signatures -- those last two are this analyzer's own checks.\n\n",
+      )
+      if m.decls.length() == 0 && m.external_types.length() == 0 {
+        out.write_string(
+          "_This module declares no foreign function._ There is no C boundary to model, and no address space on the other side of it.\n\n",
+        )
+      } else {
+        out.write_string("#### 5.7.1 The foreign declarations\n\n")
+        out.write_string(ffi_decl_table(m))
+        out.write_string("\n#### 5.7.2 The named addresses\n\n")
+        out.write_string(ffi_register_table(m))
+        out.write_string("\n#### 5.7.3 The calls across the boundary\n\n")
+        out.write_string(ffi_call_table(m))
+        out.write_string("\n#### 5.7.4 What the boundary costs\n\n")
+        out.write_string(
+          "A `#borrow` cannot be checked: the C side is invisible to the analyzer, and the compiler does not enforce it either -- what the analyzer CAN see is the MoonBit side of the contract, which is where the two checks above live. A `#owned` argument that is used after the call is a use of memory the C side now owns, and that is a defect the toolchain lets through.\n\n",
+        )
+        out.write_string(findings_table(m.findings))
+      }
+    }
+  }
+  out.to_string()
+}
+
+///|
+/// The foreign declarations: what the module depends on, and in which
+/// space each value lands.
+fn ffi_decl_table(m : FfiModel) -> String {
+  let out = StringBuilder::new()
+  if m.decls.length() == 0 {
+    out.write_string("_No foreign declaration._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| Declaration | Kind | C symbol | Parameters | Returns | Location |\n| --- | --- | --- | --- | --- | --- |\n",
+  )
+  for d in m.decls {
+    let params : Array[String] = []
+    for p in d.params {
+      params.push(
+        p.name +
+        " : " +
+        p.ty +
+        " (" +
+        p.space.label() +
+        ", " +
+        p.ownership.label() +
+        ")",
+      )
+    }
+    out.write_string(
+      "| `" +
+      d.name +
+      "` | " +
+      (if d.is_c { "C extern" } else { "module import" }) +
+      " | `" +
+      d.symbol +
+      "` | " +
+      (if params.length() == 0 { "none" } else { params.join("; ") }) +
+      " | " +
+      d.ret_ty +
+      " | " +
+      d.file +
+      ":" +
+      d.line.to_string() +
+      " |\n",
+    )
+  }
+  if m.external_types.length() > 0 {
+    out.write_string(
+      "\nThe `#external` types -- opaque types whose payload the C side owns:\n\n",
+    )
+    out.write_string("| Type | Location |\n| --- | --- |\n")
+    for t in m.external_types {
+      out.write_string(
+        "| `" + t.name + "` | " + t.file + ":" + t.line.to_string() + " |\n",
+      )
+    }
+  }
+  out.to_string()
+}
+
+///|
+/// The constants the module hands to C.
+///
+/// The analyzer does not claim that a constant IS an address: an integer
+/// argument to a C function may be an address, a length or a plain value,
+/// and nothing in the MoonBit source says which. What the table gives is
+/// every fixed number that crosses the boundary, and the other fixed
+/// numbers it travels with.
+fn ffi_register_table(m : FfiModel) -> String {
+  let out = StringBuilder::new()
+  if m.registers.length() == 0 {
+    out.write_string(
+      "_No constant crosses the boundary._ Every integer the module hands to C is computed at the call site, so there is no fixed address to name.\n",
+    )
+    return out.to_string()
+  }
+  out.write_string(
+    "| Constant | C symbols | Along with | Sites |\n| --- | --- | --- | --- |\n",
+  )
+  for r in m.registers {
+    let values : Array[String] = []
+    for v in r.values {
+      values.push(hex_of(v))
+    }
+    out.write_string(
+      "| " +
+      r.text +
+      " | " +
+      r.symbols.join(", ") +
+      " | " +
+      (if values.length() == 0 { "—" } else { values.join(", ") }) +
+      " | " +
+      r.sites.join(", ") +
+      " |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
+/// The calls that cross the boundary.
+fn ffi_call_table(m : FfiModel) -> String {
+  let out = StringBuilder::new()
+  if m.calls.length() == 0 {
+    out.write_string("_No call crosses the boundary._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| Call | C symbol | Arguments | Location |\n| --- | --- | --- | --- |\n",
+  )
+  for c in m.calls {
+    let args : Array[String] = []
+    for a in c.args {
+      let mut text = "`" + a.text + "`"
+      if a.region != "" {
+        text = text + " (" + a.region + " region)"
+      }
+      args.push(text)
+    }
+    out.write_string(
+      "| `" +
+      c.decl_name +
+      "` | `" +
+      c.symbol +
+      "` | " +
+      (if args.length() == 0 { "none" } else { args.join(", ") }) +
+      " | " +
+      c.file +
+      ":" +
+      c.line.to_string() +
+      " in " +
+      c.fn_name +
+      " |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
 /// Render the report.
 ///
 /// `per_function` says that every function was entered as an entry point, so
@@ -715,6 +912,7 @@ pub fn render_report(
   allocs~ : Array[AllocSite] = [],
   stability~ : StabilityResult? = None,
   issues~ : Array[ParseIssue] = [],
+  ffi~ : FfiModel? = None,
 ) -> String {
   let out = StringBuilder::new()
   let md = "docs/design.md"
@@ -1141,6 +1339,7 @@ pub fn render_report(
         "_The stability self-check was not run._ Pass `--stability` to re-sample the analysis and compare the findings.\n\n",
       )
   }
+  out.write_string(ffi_section(ffi))
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",

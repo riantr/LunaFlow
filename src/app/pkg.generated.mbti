@@ -6,6 +6,8 @@ pub fn alloc_tally(Array[AllocSite]) -> Map[String, Int32]
 
 pub fn analyze_allocations(ModuleAst) -> Array[AllocSite]
 
+pub fn analyze_ffi(ModuleAst) -> FfiModel
+
 pub fn array_candidates(String) -> Array[Value]
 
 pub fn basename(String) -> String
@@ -19,6 +21,8 @@ pub fn build_funnel(Array[Finding], AbsResult, ProofResult, Array[String]) -> Fu
 pub fn build_taint(Array[TraceEvent], Array[Finding]) -> TaintGraph
 
 pub fn candidates_for(String) -> Array[Value]
+
+pub fn cfg_allows(String, String) -> Bool
 
 pub fn cfg_coverage(Int32, Int32) -> String
 
@@ -37,6 +41,8 @@ pub fn code_span(String) -> String
 pub fn compare_runs(Array[Int32], Array[Array[Finding]], constant? : Array[Finding]) -> StabilityResult
 
 pub fn compare_versions(String, String) -> Int32
+
+pub fn const_of_expr(Expr) -> Int64?
 
 pub fn contract_above(String, String, Int32) -> Contract
 
@@ -58,6 +64,8 @@ pub fn explain_family(String) -> String
 
 pub fn explain_roster() -> String
 
+pub fn external_types_of(ModuleAst) -> Array[ExternalType]
+
 pub fn family_assumption(FindingKind) -> String
 
 pub fn family_by_code(String) -> FindingKind?
@@ -73,6 +81,16 @@ pub fn family_roster() -> Array[FindingKind]
 pub fn family_title(FindingKind) -> String
 
 pub async fn fetch_module(Coord, String) -> FetchResult
+
+pub fn ffi_decls_of(ModuleAst) -> Array[FfiDecl]
+
+pub fn ffi_families() -> Array[FindingKind]
+
+pub fn ffi_lookup(Map[String, FfiDecl], String) -> FfiDecl?
+
+pub fn ffi_map(ModuleAst) -> Map[String, FfiDecl]
+
+pub fn ffi_signature(FfiDecl) -> String
 
 pub fn filter_findings(Array[Finding], Array[String], Array[String]) -> Array[Finding]
 
@@ -96,6 +114,8 @@ pub fn globals_of(ModuleAst) -> Map[String, Global]
 
 pub fn hex4(Int32) -> String
 
+pub fn hex_of(Int64) -> String
+
 pub fn int_candidates() -> Array[Value]
 
 pub fn is_array_type(String) -> Bool
@@ -106,7 +126,13 @@ pub fn is_ident_char(Char) -> Bool
 
 pub fn is_ident_start(Char) -> Bool
 
+pub fn is_integer_type(String) -> Bool
+
 pub fn is_numeric_type(String) -> Bool
+
+pub fn is_pointer_type(String, Array[ExternalType], Array[TypeDecl]) -> Bool
+
+pub fn is_scalar_type(String) -> Bool
 
 pub fn is_space(Char) -> Bool
 
@@ -162,11 +188,11 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue]) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
-pub fn run_function(Func, Map[String, Func], RunOptions, Int32, global_values? : Map[String, Val]) -> RunResult
+pub fn run_function(Func, Map[String, Func], RunOptions, Int32, global_values? : Map[String, Val], ffi? : Map[String, FfiDecl]) -> RunResult
 
 pub fn run_function_by_name(ModuleAst, String, RunOptions) -> RunResult
 
@@ -179,6 +205,8 @@ pub fn slice_graph(DepGraph, ModuleAst, String, SliceDirection, Int32) -> SliceR
 pub fn slice_mermaid(SliceResult, Int32) -> String
 
 pub fn sort_strings(Array[String]) -> Array[String]
+
+pub fn space_of_type(String, Array[ExternalType], Array[TypeDecl]) -> FfiSpace
 
 pub fn split_codes(String) -> Array[String]
 
@@ -199,6 +227,8 @@ pub fn taint_mermaid(TaintGraph, Int32) -> String
 pub fn tainted_value(Value) -> Val
 
 pub fn truncate(String, Int32) -> String
+
+pub fn type_decls_of(ModuleAst) -> Array[TypeDecl]
 
 pub fn unique_findings(Array[Finding]) -> Array[Finding]
 
@@ -279,6 +309,13 @@ pub struct AllocSite {
   mut reason : String
 }
 pub fn AllocSite::new(String, Int32, String, String, AllocClass, String) -> Self
+
+pub struct Attr {
+  name : String
+  arg : String
+  text : String
+  line : Int32
+}
 
 #derive(Eq)
 pub(all) enum BinOp {
@@ -446,12 +483,97 @@ pub(all) enum ExprKind {
   EUnknown(String)
 }
 
+pub struct ExternalType {
+  name : String
+  file : String
+  line : Int32
+}
+
 pub struct FetchResult {
   root : String
   version : String
   ok : Bool
   note : String
 }
+
+pub struct FfiArg {
+  text : String
+  const_value : Int64?
+  is_int_slot : Bool
+  is_external_slot : Bool
+  region : String
+}
+
+pub struct FfiCall {
+  decl_name : String
+  symbol : String
+  file : String
+  line : Int32
+  fn_name : String
+  args : Array[FfiArg]
+}
+
+pub struct FfiDecl {
+  name : String
+  symbol : String
+  is_c : Bool
+  params : Array[FfiParam]
+  ret_ty : String
+  ret_space : FfiSpace
+  file : String
+  line : Int32
+  cfg : String
+}
+
+pub struct FfiModel {
+  decls : Array[FfiDecl]
+  external_types : Array[ExternalType]
+  types : Array[TypeDecl]
+  calls : Array[FfiCall]
+  registers : Array[FfiRegister]
+  findings : Array[Finding]
+}
+
+#derive(Eq)
+pub(all) enum FfiOwnership {
+  OUnannotated
+  OBorrow
+  OOwned
+}
+pub fn FfiOwnership::equal(Self, Self) -> Bool
+pub fn FfiOwnership::label(Self) -> String
+pub fn FfiOwnership::not_equal(Self, Self) -> Bool
+
+pub struct FfiParam {
+  name : String
+  ty : String
+  space : FfiSpace
+  ownership : FfiOwnership
+  optional : Bool
+}
+
+pub struct FfiRegister {
+  address : Int64
+  text : String
+  symbols : Array[String]
+  sites : Array[String]
+  file : String
+  line : Int32
+  fn_name : String
+  values : Array[Int64]
+}
+
+#derive(Eq)
+pub(all) enum FfiSpace {
+  SUnclassified
+  SScalar
+  SHeapPointer
+  SExternal
+  SForeign
+}
+pub fn FfiSpace::equal(Self, Self) -> Bool
+pub fn FfiSpace::label(Self) -> String
+pub fn FfiSpace::not_equal(Self, Self) -> Bool
 
 #derive(Eq)
 pub struct Finding {
@@ -490,6 +612,12 @@ pub(all) enum FindingKind {
   FPointerArithmetic
   FMemoryLeak
   FFormatString
+  FFfiSignatureConflict
+  FFfiUnannotatedOwnership
+  FFfiUseAfterMove
+  FFfiTargetMismatch
+  FFfiAddressUnknown
+  FFfiAddressConflict
 }
 pub fn FindingKind::code(Self) -> String
 pub fn FindingKind::equal(Self, Self) -> Bool
@@ -742,6 +870,9 @@ pub struct SourceFile {
   funcs : Array[Func]
   issues : Array[ParseIssue]
   globals : Array[Global]
+  ffi_decls : Array[FfiDecl]
+  external_types : Array[ExternalType]
+  types : Array[TypeDecl]
   mut parsed_stmts : Int32
   mut unsupported_stmts : Int32
 }
@@ -891,6 +1022,13 @@ pub(all) enum Tri {
   TriUnknown
 }
 
+pub struct TypeDecl {
+  name : String
+  is_pointer : Bool
+  file : String
+  line : Int32
+}
+
 #derive(Eq)
 pub(all) enum UnOp {
   UnNeg
@@ -935,6 +1073,7 @@ pub(all) enum Value {
   VArr(Array[Value])
   VTuple(Array[Value])
   VUnknown
+  VForeign(String)
 }
 pub fn Value::bool_of(Self) -> Bool?
 pub fn Value::len_of(Self) -> Int32?

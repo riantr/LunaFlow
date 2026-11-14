@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/fixtures/ffi_demo"
+
+// Values
+
+// Errors
+
+// Types and methods
+#external
+pub type Reg
+
+// Type aliases
+
+// Traits

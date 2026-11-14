@@ -29,6 +29,8 @@ pub(all) enum Signal {
 ///|
 struct Interp {
   funcs : Map[String, Func]
+  /// The FOREIGN declarations: the calls that cross the C boundary.
+  ffi : Map[String, FfiDecl]
   events : Array[TraceEvent]
   findings : Array[Finding]
   ranges : Ranges
@@ -52,9 +54,11 @@ fn Interp::new(
   funcs : Map[String, Func],
   opts : RunOptions,
   trial : Int32,
+  ffi : Map[String, FfiDecl],
 ) -> Interp {
   {
     funcs,
+    ffi,
     events: [],
     findings: [],
     ranges: Ranges::new(),
@@ -94,7 +98,7 @@ pub fn eval_globals(
   let mutated = globals_mutated(ast)
   let values : Map[String, Val] = Map([])
   let events : Array[TraceEvent] = []
-  let p = Interp::new(funcs, opts, 0)
+  let p = Interp::new(funcs, opts, 0, ffi_map(ast))
   p.func_name = "<global>"
   for name in order {
     match table.get(name) {
@@ -839,7 +843,14 @@ fn eval_call(
         } else {
           Val::new(VUnknown, t)
         }
-      None => Val::new(VUnknown, t)
+      None =>
+        // A call that crosses the C boundary. The value it returns is a
+        // FOREIGN value: it lives in the other address space, and the
+        // analyzer knows only which symbol produced it.
+        match ffi_lookup(p.ffi, name) {
+          Some(d) => Val::new(VForeign(d.symbol), t)
+          None => Val::new(VUnknown, t)
+        }
     }
   }
 }
@@ -1257,8 +1268,9 @@ pub fn run_function(
   opts : RunOptions,
   trial : Int32,
   global_values~ : Map[String, Val] = Map([]),
+  ffi~ : Map[String, FfiDecl] = Map([]),
 ) -> RunResult {
-  let p = Interp::new(funcs, opts, trial)
+  let p = Interp::new(funcs, opts, trial, ffi)
   p.func_name = fn_name.name
   p.file = fn_name.file
   p.global_values = global_values
@@ -1355,7 +1367,7 @@ pub fn run_function_by_name(
   match funcs.get(name) {
     Some(f) => {
       let (global_values, _) = eval_globals(funcs, opts, ast)
-      run_function(f, funcs, opts, 0, global_values~)
+      run_function(f, funcs, opts, 0, global_values~, ffi=ffi_map(ast))
     }
     None =>
       {
@@ -1417,7 +1429,14 @@ pub fn run_module(
       skipped.push(f.name)
       continue
     }
-    let r = run_function(f, funcs, opts, count, global_values~)
+    let r = run_function(
+      f,
+      funcs,
+      opts,
+      count,
+      global_values~,
+      ffi=ffi_map(ast),
+    )
     count = count + 1
     total_steps = total_steps + r.steps
     for e in r.events {

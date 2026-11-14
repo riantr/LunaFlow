@@ -1,0 +1,4 @@
+// The FOREIGN ADDRESS SPACE fixture: the C boundary, exercised.
+//
+// The C declarations are behind `#cfg(target = "native")` in the source,
+// because the wasm backend rejects `extern "C"` (E4156).

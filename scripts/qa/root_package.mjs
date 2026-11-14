@@ -619,5 +619,90 @@ if (existsSync(join(ROOT, 'fixtures', 'memory_demo', 'lib.mbt'))) {
   );
 }
 
+// The FOREIGN ADDRESS SPACE model: the C boundary, the two address spaces and
+// the ownership contract.
+//
+// The fixture carries a C symbol declared TWICE with two different
+// signatures, an `#owned` argument that is used after the call, a constant
+// address handed to two different symbols, and a slot that is constant at one
+// call site and computed at another. Every claim about it was settled by
+// running the toolchain.
+if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
+  const ffiRun = run([
+    'analyze',
+    '--dir',
+    'fixtures/ffi_demo',
+    '--out',
+    join(OUT, 'ffi'),
+    '--funnel',
+    '--trials',
+    '4',
+  ]);
+  const ffiReport = join(OUT, 'ffi', 'local_module_0.0.0.md');
+  const ffiText = existsSync(ffiReport) ? readFileSync(ffiReport, 'utf8') : '';
+  check('the foreign address space is analysed', ffiRun.status === 0);
+  check(
+    'the report has the foreign address space section',
+    ffiText.includes('### 5.7 The foreign address space'),
+  );
+  check(
+    'the report lists the foreign declarations',
+    ffiText.includes('#### 5.7.1 The foreign declarations'),
+  );
+  check(
+    'the report lists the named addresses',
+    ffiText.includes('#### 5.7.2 The named addresses'),
+  );
+  check(
+    'the report lists the calls across the boundary',
+    ffiText.includes('#### 5.7.3 The calls across the boundary'),
+  );
+  // The SPACES: the declared type says which side of the boundary a value
+  // lands on. A `Bytes` is an address of a MoonBit heap object, an `#external`
+  // type is an address the C side owns, and a `UInt64` is copied by value.
+  check(
+    'a pointer parameter is a heap pointer at the boundary',
+    /buffer : Bytes \(heap pointer, owned\)/.test(ffiText),
+  );
+  check(
+    'an #external parameter is a foreign address',
+    /name : Reg \(foreign address/.test(ffiText),
+  );
+  check(
+    'a scalar parameter is copied by value',
+    /base : UInt64 \(value/.test(ffiText),
+  );
+  // The findings. The signature conflict is reported at BOTH declarations,
+  // because either of them may be the wrong one.
+  check(
+    'one C symbol with two signatures is reported at both declarations',
+    (ffiText.match(/FFI-SIGNATURE-CONFLICT/g) || []).length === 2,
+  );
+  check(
+    'an #owned argument used after the call is reported',
+    ffiText.includes('FFI-USE-AFTER-MOVE'),
+  );
+  check(
+    'the constant address is in the named address table',
+    ffiText.includes('0x40000000'),
+  );
+  check(
+    'a slot that is computed where it is constant elsewhere is reported',
+    ffiText.includes('FFI-ADDRESS-UNKNOWN'),
+  );
+  check(
+    'a constant that reaches two C symbols is reported',
+    ffiText.includes('FFI-ADDRESS-CONFLICT'),
+  );
+  check(
+    'the FFI findings are filed under their own method',
+    ffiText.includes('L2-FFI'),
+  );
+  check(
+    'the FFI findings are NOT filed as the classic abstract findings',
+    !ffiText.includes('| L2-abstract |'),
+  );
+}
+
 console.log(`\nRESULT: ${failures.length === 0 ? 'PASS' : 'FAIL'} (${passes.length} passed, ${failures.length} failure(s))`);
 process.exit(failures.length === 0 ? 0 : 1);

@@ -9,6 +9,10 @@ pub(all) enum Value {
   VArr(Array[Value])
   VTuple(Array[Value])
   VUnknown
+  /// A value that came from the C side: the symbol that produced it. It
+  /// lives in the FOREIGN address space, and the analyzer cannot know what
+  /// it holds -- only where it came from.
+  VForeign(String)
 }
 
 ///|
@@ -35,6 +39,7 @@ pub fn Value::repr(self : Value) -> String {
       "(" + parts.join(", ") + ")"
     }
     VUnknown => "?"
+    VForeign(sym) => "foreign(" + sym + ")"
   }
 }
 

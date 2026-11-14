@@ -666,6 +666,9 @@ async fn analyze(opts : Opts) -> Unit {
     @app.global_values_from_events(run.events),
   )
   let allocs = @app.analyze_allocations(ast)
+  // The FOREIGN ADDRESS SPACE: the C boundary, computed from the AST, so it
+  // is a property of the module and not of the run.
+  let ffi_model = @app.analyze_ffi(ast)
   // The parse issues, so the report can LIST them and not only count them.
   let parse_issues : Array[@app.ParseIssue] = []
   for f in ast.files {
@@ -863,6 +866,7 @@ async fn analyze(opts : Opts) -> Unit {
     allocs~,
     stability~,
     issues=parse_issues,
+    ffi=Some(ffi_model),
   )
   let _ = write_text(report_path, md) catch { _ => false }
   let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {

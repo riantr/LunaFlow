@@ -515,6 +515,72 @@ Cost: the global region is one pass over the globals, the allocation classes
 are a static pass over the AST, and the stability check costs one extra
 interpreter run per sample size — which is why it is opt-in.
 
+### 5.11 The foreign address space
+
+§5.10 modelled the MoonBit side of the memory story. This section models the
+**other** side: the address space the C code lives in, and the isolation
+between it and the MoonBit value space.
+
+MoonBit has **no addresses at all** — no pointer type, no address arithmetic,
+no address space. So the foreign address space is not something the language
+has; it is something that exists on the other side of the C boundary. Every
+property of it was MEASURED against the toolchain:
+
+| The question | What the toolchain says |
+|---|---|
+| The C form? | `extern "C" fn name(args) -> Ret = "c_symbol"`, and the `= "c_symbol"` part is **required** (E4140/E3002 without it). |
+| Which targets take it? | **native only**: the wasm backend rejects `extern "C"` (E4156), and native rejects a *module import* (`fn f() = "pkg" "path"`) with the same code. |
+| `#external type T`? | An **opaque** type; natively a GC-managed external object (`moonbit_make_external_object(finalize, payload_size)` in the toolchain's `moonbit.h`), so the **payload belongs to the C side**. |
+| How a `String` crosses? | As `uint16_t *` (`moonbit_string_t`) — the C side receives the **address** of a MoonBit heap object. A `Bytes` crosses as `uint8_t *`. |
+| How the scalars cross? | By value: `Int` as a 32-bit signed integer, `Int64` as 64 bits, `Double` as a C `double` in a **floating-point register**. |
+| An 8-bit integer? | **No.** `Int8`/`UInt8` do not exist; `Int16`/`UInt16` do. |
+| Who owns a pointer parameter? | The toolchain **refuses** one without `#borrow(x)`/`#owned(x)` (E0055) and says the current default — `#owned` — "will be changed in the future". |
+| Is the annotation enforced? | **No.** Using an `#owned` argument after the call compiles clean. |
+| Are two claims about one C symbol caught? | **No.** The C function has ONE prototype, and two declarations of the same symbol with different signatures compile clean. |
+
+**The model.** Two spaces: the **MoonBit** one (the reference-counted heap,
+the global region, the frame) and the **foreign** one (what the C code owns,
+plus the payload of an external object). The **declared type** decides which
+side a value lands on:
+
+| Declared type | Space |
+|---|---|
+| `Int`, `Int32`, `Int64`, `UInt`, `UInt16`, `UInt32`, `UInt64`, `Double`, `Float`, `Bool`, `Char` | **value** — copied by value |
+| `String`, `StringView`, `Bytes`, `Array`, `FixedArray`, `Option`, `Result`, `Map`, a user's `struct`, an `enum` that carries a field, a plain opaque `type` | **heap pointer** — the address of a MoonBit object |
+| `#external type T` | **foreign address** — the payload belongs to the C side |
+| a fieldless `enum`, a tuple | **value** |
+
+The pointer set is not guessed: it is exactly the set the toolchain's own
+E0055 fires for, measured one type at a time.
+
+**The findings** are filed under their own method, `L2-FFI`, in report §5.7,
+and each family states its own limits:
+
+| Code | What it asserts | What the toolchain does |
+|---|---|---|
+| `FFI-SIGNATURE-CONFLICT` | one C symbol, two MoonBit signatures | **does not notice** |
+| `FFI-USE-AFTER-MOVE` | an `#owned` argument used after the call | **does not enforce** |
+| `FFI-UNANNOTATED-OWNERSHIP` | a pointer parameter relies on the current default | errors (E0055) |
+| `FFI-TARGET-MISMATCH` | the published target cannot build the declaration | errors (E4156) |
+| `FFI-ADDRESS-UNKNOWN` | a slot the module pins at one site and computes at another | — |
+| `FFI-ADDRESS-CONFLICT` | one constant reaches two C symbols | — |
+
+A `#cfg(target = "native")` guard is respected, so a module that declares a C
+extern behind one and publishes for wasm is **not** reported: the declaration
+is not part of that build.
+
+**What the model does not claim.** The analyzer does not claim that an integer
+argument to a C function is an address — it may be an address, a length or a
+plain value, and nothing in the MoonBit source says which. The named-address
+table therefore reports the *constants* that cross the boundary, with the
+symbols they reach and the other constants they travel with, and the two
+address families state their assumption in the finding text. A `#borrow`
+cannot be checked at all: the C side is invisible to the analyzer, and the
+compiler does not enforce it either.
+
+Cost: one static pass over the AST, plus one classification pass over the
+declarations.
+
 ---
 
 ## 6. Visualization
@@ -531,7 +597,8 @@ interpreter run per sample size — which is why it is opt-in.
 8. Reproduction commands
 
 The report also carries the evolved value analysis (5.3), the global region
-(5.4), the allocation classes (5.5) and the layout-stability self-check (5.6).
+(5.4), the allocation classes (5.5), the layout-stability self-check (5.6) and
+the foreign address space (5.7).
 
 ### 6.2 Mermaid conventions
 

@@ -157,6 +157,21 @@ fn P::skip_all_newlines(self : P) -> Unit {
 }
 
 ///|
+/// Skip the rest of the current LINE. A declaration the analyzer cannot
+/// read is consumed up to the end of its line, so the declarations after it
+/// are still read.
+fn P::skip_to_line_end(self : P) -> Unit {
+  while !self.eof() {
+    let t = self.peek()
+    if t.kind == TNewline {
+      ignore(self.bump())
+      return
+    }
+    ignore(self.bump())
+  }
+}
+
+///|
 fn P::next_stmt_id(self : P) -> Int32 {
   let id = self.next_id
   self.next_id = self.next_id + 1
@@ -1351,8 +1366,18 @@ fn parse_params(p : P) -> Array[Param] {
 }
 
 ///|
-fn parse_fn(p : P, is_test : Bool, test_name : String) -> Func? {
-  let start = p.peek()
+/// The HEAD of a function declaration: its name, its parameters and its
+/// return type.
+///
+/// The body parser and the FOREIGN parser share it, so both read the same
+/// declaration the same way: the name may be qualified (`Buffer::blit`),
+/// the parameters may be optional (`x~`) and may carry defaults, and the
+/// return type may be a qualified path.
+fn parse_fn_head(
+  p : P,
+  is_test : Bool,
+  test_name : String,
+) -> (String, Array[Param], String)? {
   if p.at("fn") {
     ignore(p.bump())
   }
@@ -1383,6 +1408,19 @@ fn parse_fn(p : P, is_test : Bool, test_name : String) -> Func? {
     ignore(p.bump())
     ret_ty = collect_type(p, false)
   }
+  Some((name, params, ret_ty))
+}
+
+///|
+/// The BODY of a function declaration, with the function it belongs to.
+fn parse_fn_body(
+  p : P,
+  start : Tok,
+  name : String,
+  params : Array[Param],
+  ret_ty : String,
+  is_test : Bool,
+) -> Func? {
   p.skip_all_newlines()
   if !p.at_op("{") {
     p.issues.push({
@@ -1407,6 +1445,266 @@ fn parse_fn(p : P, is_test : Bool, test_name : String) -> Func? {
     end_line: stop.line,
     contract: Contract::empty(),
   })
+}
+
+///|
+fn parse_fn(p : P, is_test : Bool, test_name : String) -> Func? {
+  let start = p.peek()
+  match parse_fn_head(p, is_test, test_name) {
+    None => None
+    Some((name, params, ret_ty)) =>
+      parse_fn_body(p, start, name, params, ret_ty, is_test)
+  }
+}
+
+///|
+/// Parse one ATTRIBUTE: `#name` or `#name(args)`.
+///
+/// The attributes the analyzer has to understand are `#external` (the
+/// declaration is an opaque foreign type), `#borrow(x)` / `#owned(x)` (the
+/// ownership of a pointer parameter) and `#cfg(...)` (the target scope).
+/// Anything else is recorded and ignored: the analyzer does not need to
+/// understand every attribute to model the boundary.
+fn parse_attr(p : P) -> Attr? {
+  let hash = p.bump()
+  let name_tok = p.peek()
+  if name_tok.kind != TIdent {
+    p.skip_to_line_end()
+    return None
+  }
+  ignore(p.bump())
+  let mut arg = ""
+  let mut text = ""
+  if p.at_op("(") {
+    let start = p.i
+    skip_balanced(p, "(", ")")
+    text = render_tokens(p.toks, start, p.i)
+    arg = first_ident_of(text)
+  }
+  Some({ name: name_tok.text, arg, text, line: hash.line, })
+}
+
+///|
+/// The first identifier inside a piece of text: the parameter an ownership
+/// annotation names.
+fn first_ident_of(text : String) -> String {
+  let mut i = 0
+  while i < text.length() {
+    let c = text.get_char(i).unwrap_or(' ')
+    if is_ident_start(c) {
+      let start = i
+      while i < text.length() {
+        let d = text.get_char(i).unwrap_or(' ')
+        if is_ident_char(d) {
+          i = i + 1
+        } else {
+          break
+        }
+      }
+      return text[start:i].to_string()
+    }
+    i = i + 1
+  }
+  ""
+}
+
+///|
+/// Parse a FOREIGN declaration.
+///
+/// There are two forms, and the difference is the address space:
+///
+///   - `extern "C" fn name(args) -> Ret = "c_symbol"` -- a C function. The
+///     C side gets the values, and the `= "c_symbol"` part is REQUIRED.
+///   - `fn name(args) -> Ret = "pkg" "path"` -- a MODULE import. It lives in
+///     the same value space as the MoonBit code, so it is not a foreign
+///     call at all.
+///
+/// The toolchain rejects the first on wasm and the second on native, so the
+/// two forms are not interchangeable.
+fn parse_ffi_decl(p : P, attrs : Array[Attr]) -> FfiDecl? {
+  let start = p.peek()
+  let is_extern = start.text == "extern"
+  ignore(p.bump())
+  let mut abi = ""
+  if is_extern {
+    if p.peek().kind != TString {
+      p.skip_to_line_end()
+      return None
+    }
+    abi = p.bump().text
+    p.skip_all_newlines()
+  }
+  // The C calling convention is spelled "C". Another ABI is still a foreign
+  // declaration, but it is not the C boundary this model describes.
+  let is_c = is_extern && abi == "C"
+  if !p.at("fn") {
+    p.skip_to_line_end()
+    return None
+  }
+  match parse_fn_head(p, false, "") {
+    None => {
+      p.skip_to_line_end()
+      return None
+    }
+    Some((name, params, ret_ty)) => {
+      p.skip_all_newlines()
+      if !p.at_op("=") {
+        p.skip_to_line_end()
+        return None
+      }
+      ignore(p.bump())
+      p.skip_all_newlines()
+      // The C symbol, or the package of a module import.
+      if p.peek().kind != TString {
+        p.skip_to_line_end()
+        return None
+      }
+      let symbol = p.bump().text
+      // A module import carries a second string: the path inside the
+      // package. A C extern does not.
+      if !is_extern {
+        p.skip_all_newlines()
+        if p.peek().kind == TString {
+          ignore(p.bump())
+        }
+      }
+      let params = ffi_params_of(params, attrs)
+      let mut cfg = ""
+      for a in attrs {
+        if a.name == "cfg" {
+          cfg = a.text
+        }
+      }
+      Some({
+        name,
+        symbol,
+        is_c,
+        params,
+        ret_ty,
+        ret_space: SScalar,
+        file: p.file,
+        line: start.line,
+        cfg,
+      })
+    }
+  }
+}
+
+///|
+/// The parameters of a foreign declaration, with their ownership.
+///
+/// `#borrow(x)` and `#owned(x)` name the parameter they annotate. An
+/// annotation that names a parameter the declaration does not have is
+/// dropped -- the toolchain reports it as an unbound identifier (E4021) and
+/// then treats the parameter as unannotated.
+fn ffi_params_of(params : Array[Param], attrs : Array[Attr]) -> Array[FfiParam] {
+  let out : Array[FfiParam] = []
+  for p in params {
+    let mut ownership = OUnannotated
+    for a in attrs {
+      if a.arg != p.name {
+        continue
+      }
+      if a.name == "borrow" {
+        ownership = OBorrow
+      } else if a.name == "owned" {
+        ownership = OOwned
+      }
+    }
+    out.push({
+      name: p.name,
+      ty: p.ty,
+      space: SUnclassified,
+      ownership,
+      optional: false,
+    })
+  }
+  out
+}
+
+///|
+/// Parse the tail of a MODULE IMPORT: `= "pkg" "path"`.
+///
+/// A module import is not a C call: the imported function lives in the same
+/// value space as the MoonBit code, so no value crosses an address-space
+/// boundary. The toolchain still separates the two forms -- it rejects a
+/// module import on native and a C extern on wasm -- so the analyzer keeps
+/// them apart.
+fn parse_import_tail(
+  p : P,
+  name : String,
+  params : Array[Param],
+  ret_ty : String,
+  attrs : Array[Attr],
+  start : Tok,
+) -> FfiDecl? {
+  ignore(p.bump())
+  p.skip_all_newlines()
+  if p.peek().kind != TString {
+    p.skip_to_line_end()
+    return None
+  }
+  let symbol = p.bump().text
+  p.skip_all_newlines()
+  if p.peek().kind == TString {
+    ignore(p.bump())
+  }
+  let mut cfg = ""
+  for a in attrs {
+    if a.name == "cfg" {
+      cfg = a.text
+    }
+  }
+  Some({
+    name,
+    symbol,
+    is_c: false,
+    params: ffi_params_of(params, attrs),
+    ret_ty,
+    ret_space: SScalar,
+    file: p.file,
+    line: start.line,
+    cfg,
+  })
+}
+
+///|
+/// Parse a TYPE DECLARATION: `struct Name { ... }` or `enum Name { ... }`.
+///
+/// The analyzer needs to know whether a user type has a heap
+/// representation, because that decides whether it is a POINTER at the C
+/// boundary -- and the toolchain demands an ownership annotation for a
+/// pointer parameter. Measured: a `struct` always has one, an `enum` has
+/// one when a constructor carries a field, and a fieldless `enum` is a
+/// value.
+fn parse_type_decl(p : P) -> TypeDecl? {
+  let start = p.peek()
+  let kind = start.text
+  ignore(p.bump())
+  if p.peek().kind != TIdent {
+    return None
+  }
+  let name = p.bump().text
+  p.skip_all_newlines()
+  let mut is_pointer = kind == "struct"
+  if p.at_op("{") {
+    let body_start = p.i
+    skip_balanced_braces(p)
+    if kind == "enum" {
+      // A constructor with a field is a `(` in the body.
+      let mut j = body_start + 1
+      let end = if p.i > 0 { p.i - 1 } else { 0 }
+      while j < end {
+        let t = p.toks[j]
+        if t.kind == TOp && t.text == "(" {
+          is_pointer = true
+          break
+        }
+        j = j + 1
+      }
+    }
+  }
+  Some({ name, is_pointer, file: p.file, line: start.line, })
 }
 
 ///|
@@ -1476,6 +1774,12 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
   let p = P::new(path, toks)
   let funcs : Array[Func] = []
   let globals : Array[Global] = []
+  let ffi_decls : Array[FfiDecl] = []
+  let external_types : Array[ExternalType] = []
+  let types : Array[TypeDecl] = []
+  // The attributes seen since the last declaration. They belong to the
+  // declaration that FOLLOWS them.
+  let mut attrs : Array[Attr] = []
   let mut depth = 0
   while !p.eof() {
     let t = p.peek()
@@ -1487,15 +1791,78 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
         depth = depth - 1
       }
       ignore(p.bump())
-    } else if depth == 0 && t.kind == TIdent && t.text == "fn" {
-      p.skip_all_newlines()
-      match parse_fn(p, false, "") {
-        Some(f) => {
-          f.contract = contract_above(text, path, f.start_line)
-          funcs.push(f)
-        }
+    } else if depth == 0 && t.kind == TOp && t.text == "#" {
+      // An ATTRIBUTE: `#external`, `#borrow(x)`, `#owned(x)`, `#cfg(...)`.
+      match parse_attr(p) {
+        Some(a) => attrs.push(a)
+        None => ()
+      }
+    } else if depth == 0 && t.kind == TIdent && t.text == "extern" {
+      // A C EXTERN: `extern "C" fn name(...) = "symbol"`.
+      match parse_ffi_decl(p, attrs) {
+        Some(d) => ffi_decls.push(d)
         None => ignore(p.bump())
       }
+      attrs = []
+    } else if depth == 0 &&
+      t.kind == TIdent &&
+      (t.text == "struct" || t.text == "enum") {
+      // A TYPE DECLARATION: the analyzer needs to know whether the type has
+      // a heap representation.
+      match parse_type_decl(p) {
+        Some(td) => types.push(td)
+        None => ignore(p.bump())
+      }
+      attrs = []
+    } else if depth == 0 && t.kind == TIdent && t.text == "type" {
+      // An OPAQUE type. With `#external` it is a FOREIGN type: its payload
+      // belongs to the C side.
+      let start = p.peek()
+      ignore(p.bump())
+      if p.peek().kind == TIdent {
+        let name = p.bump().text
+        let mut is_external = false
+        for a in attrs {
+          if a.name == "external" {
+            is_external = true
+          }
+        }
+        if is_external {
+          external_types.push({ name, file: p.file, line: start.line, })
+        } else {
+          // A plain opaque type is a MoonBit value with a heap
+          // representation: the C side receives an address of it.
+          types.push({ name, is_pointer: true, file: p.file, line: start.line, })
+        }
+      }
+      attrs = []
+    } else if depth == 0 && t.kind == TIdent && t.text == "fn" {
+      p.skip_all_newlines()
+      let start = p.peek()
+      match parse_fn_head(p, false, "") {
+        None => ignore(p.bump())
+        Some((name, params, ret_ty)) => {
+          p.skip_all_newlines()
+          if p.at_op("=") {
+            // A MODULE IMPORT: `fn name(args) -> Ret = "pkg" "path"`. It
+            // lives in the same value space as the MoonBit code, so it is
+            // not a foreign call -- but the toolchain rejects it on native.
+            match parse_import_tail(p, name, params, ret_ty, attrs, start) {
+              Some(d) => ffi_decls.push(d)
+              None => ignore(p.bump())
+            }
+          } else {
+            match parse_fn_body(p, start, name, params, ret_ty, false) {
+              Some(f) => {
+                f.contract = contract_above(text, path, f.start_line)
+                funcs.push(f)
+              }
+              None => ignore(p.bump())
+            }
+          }
+        }
+      }
+      attrs = []
     } else if depth == 0 && t.kind == TIdent && t.text == "test" {
       ignore(p.bump())
       p.skip_all_newlines()
@@ -1533,6 +1900,15 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
   }
   for g in globals {
     f.globals.push(g)
+  }
+  for d in ffi_decls {
+    f.ffi_decls.push(d)
+  }
+  for t in external_types {
+    f.external_types.push(t)
+  }
+  for td in types {
+    f.types.push(td)
   }
   for issue in issues {
     f.issues.push(issue)
