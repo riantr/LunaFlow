@@ -17,6 +17,19 @@ struct Opts {
   mut list_functions : Bool
   mut level : String
   mut funnel : Bool
+  /// Directory NAMES to skip during the walk. Repeatable.
+  excludes : Array[String]
+  /// The family profile: which finding codes are reported.
+  family_include : Array[String]
+  family_exclude : Array[String]
+  /// A CONTRACT REQUEST, not a scan: `--explain <code>` prints one family's
+  /// contract and stops, `--explain-all` prints the roster and stops.
+  mut explain_code : String
+  mut explain_all : Bool
+  /// Print the ADEQUACY block.
+  mut metrics : Bool
+  /// Enter EVERY function as an entry point, with no `--max-functions` cap.
+  mut per_function : Bool
 }
 
 ///|
@@ -39,6 +52,13 @@ fn Opts::default() -> Opts {
     list_functions: false,
     level: "1",
     funnel: false,
+    excludes: [],
+    family_include: [],
+    family_exclude: [],
+    explain_code: "",
+    explain_all: false,
+    metrics: false,
+    per_function: false,
   }
 }
 
@@ -78,6 +98,15 @@ fn usage() -> String {
     #|                      functions the CFG pass covers (default: 600; the
     #|                      FIRST ones in file order, so a larger module
     #|                      leaves the rest with no CFG and no CFG finding)
+    #|  --exclude <name>    a directory name to skip, repeatable
+    #|  --families <codes>  report ONLY these finding codes (comma or space
+    #|                      separated); --exclude-families drops them instead
+    #|  --explain <code>    print one family's contract and STOP -- no scan
+    #|  --explain-all       print the family roster and STOP -- no scan
+    #|  --metrics           print the ADEQUACY block: what was read, what was
+    #|                      understood, what was entered, what was found
+    #|  --per-function      enter EVERY function as an entry point, with the
+    #|                      --max-functions cap lifted
     #|  --quiet             only print the report path
   )
 }
@@ -240,6 +269,55 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
       o.funnel = true
       o.level = "3"
       i = i + 1
+    } else if a == "--exclude" {
+      // A DIRECTORY NAME to skip. Repeatable.
+      let v = arg_value(args, i)
+      if v == "" {
+        println("ERROR\t--exclude needs a directory name")
+        return None
+      }
+      o.excludes.push(v)
+      i = i + 2
+    } else if a == "--families" {
+      // The family PROFILE: report ONLY these finding codes.
+      let v = arg_value(args, i)
+      if v == "" {
+        println("ERROR\t--families needs a list of family codes")
+        return None
+      }
+      for c in @app.split_codes(v) {
+        o.family_include.push(c)
+      }
+      i = i + 2
+    } else if a == "--exclude-families" {
+      // Report everything EXCEPT these finding codes.
+      let v = arg_value(args, i)
+      if v == "" {
+        println("ERROR\t--exclude-families needs a list of family codes")
+        return None
+      }
+      for c in @app.split_codes(v) {
+        o.family_exclude.push(c)
+      }
+      i = i + 2
+    } else if a == "--explain" {
+      o.explain_code = arg_value(args, i)
+      if o.explain_code == "" {
+        println(
+          "ERROR\t--explain needs a family code; --explain-all lists them",
+        )
+        return None
+      }
+      i = i + 2
+    } else if a == "--explain-all" {
+      o.explain_all = true
+      i = i + 1
+    } else if a == "--metrics" {
+      o.metrics = true
+      i = i + 1
+    } else if a == "--per-function" {
+      o.per_function = true
+      i = i + 1
     } else if a.has_prefix("--") {
       i = i + 1
     } else {
@@ -400,6 +478,27 @@ async fn analyze(opts : Opts) -> Unit {
   // `moonx riantr/moonbit_static_analysis@latest` do the same thing.
   let default_target = opts.coord == "" && opts.dir == ""
   let dir = if default_target { "." } else { opts.dir }
+  // THE PROFILE IS VALIDATED BEFORE THE SCAN RUNS, and the two rules are
+  // different on purpose:
+  //
+  //   * a code that names NO family is a WARNING, and the scan still runs. A
+  //     family added in a later release must not make an older analyzer's
+  //     profile unusable, and a typo must be loud rather than fatal.
+  //   * a code that is BOTH included and excluded is an ERROR, and the scan
+  //     does not run at all. The two rules contradict each other, so there is
+  //     no reading of the profile that satisfies both, and which one won
+  //     would be decided by the order of two `if`s inside the scanner.
+  let (profile_warnings, profile_error) = @app.validate_profile(
+    opts.family_include,
+    opts.family_exclude,
+  )
+  for w in profile_warnings {
+    println("WARNING\t" + w)
+  }
+  if profile_error != "" {
+    println("ERROR\t" + profile_error)
+    return
+  }
   let t0 = @async.now()
   let mut coord = opts.coord
   let mut version = ""
@@ -468,7 +567,13 @@ async fn analyze(opts : Opts) -> Unit {
       }
     }
   }
-  let (ast, stats) = @app.load_module(root, coord, version, 2000) catch {
+  let (ast, stats) = @app.load_module(
+    root,
+    coord,
+    version,
+    2000,
+    excludes=opts.excludes,
+  ) catch {
     _ => {
       println("ERROR\tfailed to read module sources at " + root)
       return
@@ -501,7 +606,7 @@ async fn analyze(opts : Opts) -> Unit {
     max_functions: opts.max_functions,
     entry_filter: opts.function_name,
   }
-  let run = @app.run_module(ast, run_opts)
+  let run = @app.run_module(ast, run_opts, per_function=opts.per_function)
   if opts.slice != "" {
     match opts.slice.find("@") {
       Some(i) => {
@@ -518,12 +623,49 @@ async fn analyze(opts : Opts) -> Unit {
       None => ()
     }
   }
+  // THE FAMILY PROFILE IS APPLIED TO THE FINDINGS THEMSELVES, and it is
+  // applied at ONE point: after every finding has been collected (the slice
+  // pass adds its own) and before the taint graph is built, so the graph's
+  // sinks and the report's counts describe the SAME set of findings the
+  // reader can see.
+  let kept_run_findings = @app.filter_findings(
+    run.findings,
+    opts.family_include,
+    opts.family_exclude,
+  )
+  run.findings.clear()
+  for f in kept_run_findings {
+    run.findings.push(f)
+  }
+  let kept_cfg_findings = @app.filter_findings(
+    cfg_findings,
+    opts.family_include,
+    opts.family_exclude,
+  )
+  cfg_findings.clear()
+  for f in kept_cfg_findings {
+    cfg_findings.push(f)
+  }
   let taint = @app.build_taint(run.events, run.findings)
   let level = @app.parse_int(opts.level, 1)
   let abs_result : @app.AbsResult? = if opts.funnel || level >= 2 {
     Some(@app.run_abstract(ast, opts.max_functions, 200000))
   } else {
     None
+  }
+  match abs_result {
+    Some(a) => {
+      let kept_abs = @app.filter_findings(
+        a.findings,
+        opts.family_include,
+        opts.family_exclude,
+      )
+      a.findings.clear()
+      for f in kept_abs {
+        a.findings.push(f)
+      }
+    }
+    None => ()
   }
   let critical = @app.critical_functions(run.findings)
   match abs_result {
@@ -621,13 +763,18 @@ async fn analyze(opts : Opts) -> Unit {
   let report_path = @app.path_join(opts.out, stem + ".md")
   let trace_path = @app.path_join(opts.out, stem + "_trace.jsonl")
   let summary_path = @app.path_join(opts.out, stem + "_summary.json")
-  let md = @app.render_report(input)
+  let md = @app.render_report(input, per_function=opts.per_function)
   let _ = write_text(report_path, md) catch { _ => false }
   let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {
     _ => false
   }
   let _ = write_text(summary_path, summary_json(input, report_path)) catch {
     _ => false
+  }
+  if opts.metrics {
+    for line in metrics_lines(input, ast) {
+      println(line)
+    }
   }
   if opts.quiet {
     println("REPORT\t" + report_path)
@@ -670,6 +817,110 @@ async fn analyze(opts : Opts) -> Unit {
 }
 
 ///|
+/// The ADEQUACY block: how much of the target was actually understood.
+///
+/// The shape is the peer's: TAB-separated `METRICS` lines, one per lens, and
+/// every line carries its own coverage — a number without its coverage is
+/// half a number.
+fn metrics_lines(
+  input : @app.ReportInput,
+  ast : @app.ModuleAst,
+) -> Array[String] {
+  let out : Array[String] = []
+  // READ: how many files were read, and how many of them were understood.
+  let mut partial = 0
+  for f in ast.files {
+    if f.issues.length() > 0 {
+      partial = partial + 1
+    }
+  }
+  let read = ast.files.length()
+  let parsed = read - partial
+  out.push(
+    "METRICS\tread\tfiles=" +
+    read.to_string() +
+    "\tparsed=" +
+    parsed.to_string() +
+    "\tpartial=" +
+    partial.to_string() +
+    "\tunderstood=" +
+    @app.pct(parsed, read),
+  )
+  // STATEMENTS: the frontend's coverage, which is the number the report's
+  // ingestion table is built on.
+  out.push(
+    "METRICS\tstmts\tstatements=" +
+    (input.stmts + input.unsupported).to_string() +
+    "\tunderstood=" +
+    input.stmts.to_string() +
+    "\tunsupported=" +
+    input.unsupported.to_string() +
+    "\tunderstood-share=" +
+    @app.pct(input.stmts, input.stmts + input.unsupported),
+  )
+  // FUNCTIONS: how many were extracted, and how many the interpreter
+  // actually entered. The difference is the `--max-functions` cap.
+  let entered = input.run.functions_run
+  let skipped = input.run.functions_skipped.length()
+  out.push(
+    "METRICS\tfuncs\tfunctions=" +
+    input.funcs.to_string() +
+    "\tentered=" +
+    entered.to_string() +
+    "\tskipped=" +
+    skipped.to_string() +
+    "\tentered-share=" +
+    @app.pct(entered, input.funcs),
+  )
+  // FINDINGS: the total, split by severity, over the SAME set the report
+  // shows. The reportable set is the CFG findings, the dynamic infinite-loop
+  // and budget findings, the taint sinks (already deduped by site) and the
+  // abstract findings -- NOT the raw observation list, which holds one entry
+  // per trial and per loop iteration and would say 83 findings where the
+  // report shows 12.
+  let reportable : Array[@app.Finding] = []
+  for f in input.cfg_findings {
+    reportable.push(f)
+  }
+  for f in input.run.findings {
+    if f.kind == @app.FInfinite || f.kind == @app.FBudget {
+      reportable.push(f)
+    }
+  }
+  for f in input.taint.sinks {
+    reportable.push(f)
+  }
+  match input.abstract {
+    Some(a) =>
+      for f in a.findings {
+        reportable.push(f)
+      }
+    None => ()
+  }
+  let mut errors = 0
+  let mut warnings = 0
+  let mut infos = 0
+  for f in reportable {
+    match f.kind.severity() {
+      "error" => errors = errors + 1
+      "warning" => warnings = warnings + 1
+      _ => infos = infos + 1
+    }
+  }
+  out.push(
+    "METRICS\tfindings\ttotal=" +
+    reportable.length().to_string() +
+    "\terror=" +
+    errors.to_string() +
+    "\twarning=" +
+    warnings.to_string() +
+    "\tinfo=" +
+    infos.to_string(),
+  )
+  out
+}
+
+///|
 /// The command line, normalized per backend.
 ///
 /// On Node, `env.args()` is `process.argv`: the node executable AND the
@@ -708,10 +959,19 @@ fn cli_args(args : Array[String]) -> Array[String] {
 pub async fn run(raw_args : Array[String]) -> Unit {
   let args = cli_args(raw_args)
   match parse_args(args) {
-    None => println(usage())
+    // A BAD ARGUMENT IS ALREADY REPORTED. The parser prints the ERROR line
+    // itself, so the usage text is not repeated on top of it.
+    None => ()
     Some((cmd, opts)) =>
       if cmd == "help" {
         println(usage())
+      } else if opts.explain_all {
+        // A CONTRACT REQUEST IS NOT A SCAN. It answers before the profile is
+        // validated and before any file is read, so `--explain` cannot be
+        // broken by the tree it is run in.
+        println(@app.explain_roster())
+      } else if opts.explain_code != "" {
+        println(@app.explain_family(opts.explain_code))
       } else {
         analyze(opts)
       }

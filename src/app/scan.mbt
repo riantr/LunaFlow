@@ -294,6 +294,7 @@ async fn walk_dir(
   st : WalkState,
   limit : Int32,
   depth : Int32,
+  excludes : Array[String],
 ) -> Unit {
   if st.files.length() >= limit || depth > 24 {
     st.truncated = true
@@ -312,19 +313,24 @@ async fn walk_dir(
     // dependencies of this one: a `--dir .` scan of a workspace that has them
     // would otherwise ingest a third party's source (measured: 362 of the 384
     // files in LunaFlow's own self-scan came from `moonbitlang/async`).
+    //
+    // The built-in list cannot catch everything: a project may keep a copy of
+    // somebody else's code under an ordinary name, and `excludes` is the
+    // caller's way to name those. The peer's rule is the same one.
     if name == "_build" ||
       name == ".git" ||
       name == ".mooncakes" ||
       name == ".repos" ||
       name == "target" ||
-      name == "node_modules" {
+      name == "node_modules" ||
+      excludes.contains(name) {
       continue
     }
     let full = path_join(dir, name)
     let rel_path = if rel == "" { name } else { rel + "/" + name }
     let kind = @fs.kind(full) catch { _ => @fs.Unknown }
     if kind == @fs.Directory {
-      walk_dir(full, rel_path, st, limit, depth + 1)
+      walk_dir(full, rel_path, st, limit, depth + 1, excludes)
     } else if kind == @fs.Regular && name.has_suffix(".mbt") {
       st.files.push(rel_path)
     }
@@ -332,15 +338,21 @@ async fn walk_dir(
 }
 
 ///|
+/// Read a module's sources from a tree.
+///
+/// `excludes` names DIRECTORY ENTRIES to skip. It is an optional argument, so
+/// the published signature of this function is unchanged for a caller that
+/// does not use it.
 #cfg(any(target="native", target="wasm"))
 pub async fn load_module(
   root : String,
   coord : String,
   version : String,
   file_limit : Int32,
+  excludes~ : Array[String] = [],
 ) -> (ModuleAst, ScanStats) {
   let st : WalkState = { files: [], truncated: false, }
-  walk_dir(root, "", st, file_limit, 0)
+  walk_dir(root, "", st, file_limit, 0, excludes)
   let files : Array[SourceFile] = []
   let stats = ScanStats::new()
   for rel in st.files {
@@ -416,6 +428,7 @@ pub async fn load_module(
   coord : String,
   version : String,
   file_limit : Int32,
+  excludes~ : Array[String] = [],
 ) -> (ModuleAst, ScanStats) {
   let ast : ModuleAst = {
     coord,

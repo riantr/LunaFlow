@@ -213,6 +213,185 @@ if (existsSync(exe)) {
     'the usage text names the default target',
     help.stdout.includes('CURRENT DIRECTORY'),
   );
+
+  // ---------------------------------------------------- the peer's options
+  //
+  // These five are the options the peer analyzer has and this one did not:
+  // --exclude, --families, --explain, --metrics and --per-function. Each one
+  // is checked by what it DOES, not by whether it is accepted.
+
+  const run = (args, timeout = 180000) =>
+    spawnSync(exe, args, {
+      cwd: ROOT,
+      encoding: 'utf8',
+      shell: process.platform === 'win32',
+      timeout,
+    });
+
+  // --explain and --explain-all are CONTRACT REQUESTS, not scans: they answer
+  // and stop, before any file is read.
+  const roster = run(['--explain-all']);
+  check(
+    '--explain-all prints the family roster',
+    roster.status === 0 &&
+      roster.stdout.includes('DEAD-CODE') &&
+      roster.stdout.includes('TAINT-INDEX') &&
+      !roster.stdout.includes('REPORT'),
+    `exit=${roster.status}`,
+  );
+  const one = run(['--explain', 'DEAD-CODE']);
+  check(
+    '--explain prints one family contract',
+    one.status === 0 &&
+      one.stdout.includes('property') &&
+      one.stdout.includes('assumption') &&
+      one.stdout.includes('excluded') &&
+      !one.stdout.includes('REPORT'),
+    `exit=${one.status}`,
+  );
+  const unknown = run(['--explain', 'NO-SUCH-CODE']);
+  check(
+    '--explain refuses a code that names no family',
+    unknown.status === 0 && unknown.stdout.includes('ERROR'),
+    `exit=${unknown.status}`,
+  );
+
+  // --families is a PROFILE, and it is validated before the scan runs: an
+  // unknown code is a WARNING and the scan still runs, and a code that is
+  // both included and excluded is an ERROR and the scan does not run at all.
+  const profile = run([
+    'analyze',
+    '--dir',
+    'fixtures/vuln_demo',
+    '--out',
+    join(OUT, 'profile'),
+    '--families',
+    'DEAD-CODE',
+    '--quiet',
+  ]);
+  check(
+    '--families accepts a profile',
+    profile.status === 0 && profile.stdout.includes('REPORT'),
+    `exit=${profile.status}`,
+  );
+  const warned = run([
+    'analyze',
+    '--dir',
+    'fixtures/vuln_demo',
+    '--out',
+    join(OUT, 'warned'),
+    '--families',
+    'NO-SUCH-CODE',
+    '--quiet',
+  ]);
+  check(
+    'an unknown family code warns and the scan still runs',
+    warned.status === 0 &&
+      warned.stdout.includes('WARNING') &&
+      warned.stdout.includes('REPORT'),
+    `exit=${warned.status}`,
+  );
+  const conflicted = run([
+    'analyze',
+    '--dir',
+    'fixtures/vuln_demo',
+    '--out',
+    join(OUT, 'conflicted'),
+    '--families',
+    'DEAD-CODE',
+    '--exclude-families',
+    'DEAD-CODE',
+    '--quiet',
+  ]);
+  check(
+    'a code that is both included and excluded stops the scan',
+    conflicted.status === 0 &&
+      conflicted.stdout.includes('ERROR') &&
+      !conflicted.stdout.includes('REPORT'),
+    `exit=${conflicted.status}`,
+  );
+
+  // --exclude names a directory to skip. The check is that the excluded tree
+  // is GONE and that it was there before: an exclusion that matched nothing
+  // would pass the first half on its own.
+  const all = run(['analyze', '--dir', '.', '--out', join(OUT, 'ex_all'), '--list-functions']);
+  // `--list-functions` prints `FUNCTION<TAB>FILE<TAB>STATEMENTS` as a HEADER
+  // and then one row per function, whose first field is the function NAME.
+  const withoutSrc = (out) =>
+    (out || '')
+      .split('\n')
+      .map((l) => l.split('\t'))
+      .filter((f) => f.length >= 3 && f[0] !== 'FUNCTION')
+      .some((f) => f[1].startsWith('src/'));
+  check('the excluded tree is present without --exclude', withoutSrc(all.stdout));
+  const excluded = run([
+    'analyze',
+    '--dir',
+    '.',
+    '--out',
+    join(OUT, 'ex_some'),
+    '--exclude',
+    'src',
+    '--list-functions',
+  ]);
+  check(
+    '--exclude skips the named directory',
+    excluded.status === 0 && !withoutSrc(excluded.stdout),
+    `exit=${excluded.status}`,
+  );
+
+  // --metrics prints the ADEQUACY block: what was read, what was understood,
+  // what was entered, what was found.
+  const metrics = run([
+    'analyze',
+    '--dir',
+    'fixtures/vuln_demo',
+    '--out',
+    join(OUT, 'metrics'),
+    '--metrics',
+  ]);
+  check(
+    '--metrics prints the adequacy block',
+    metrics.status === 0 &&
+      metrics.stdout.includes('METRICS\tread\t') &&
+      metrics.stdout.includes('METRICS\tstmts\t') &&
+      metrics.stdout.includes('METRICS\tfuncs\t') &&
+      metrics.stdout.includes('METRICS\tfindings\t'),
+    `exit=${metrics.status}`,
+  );
+
+  // --per-function lifts the --max-functions cap, so more functions are
+  // entered than the cap allows.
+  const enteredOf = (out) => {
+    const m = (out || '').match(/METRICS\tfuncs\t[^\n]*entered=(\d+)/);
+    return m ? Number(m[1]) : -1;
+  };
+  const capped = run([
+    'analyze',
+    '--dir',
+    '.',
+    '--out',
+    join(OUT, 'pf_capped'),
+    '--max-functions',
+    '5',
+    '--metrics',
+  ]);
+  const perFn = run([
+    'analyze',
+    '--dir',
+    '.',
+    '--out',
+    join(OUT, 'pf_all'),
+    '--max-functions',
+    '5',
+    '--per-function',
+    '--metrics',
+  ]);
+  check(
+    '--per-function enters more functions than the cap allows',
+    enteredOf(capped.stdout) === 5 && enteredOf(perFn.stdout) > 5,
+    `capped=${enteredOf(capped.stdout)} per-function=${enteredOf(perFn.stdout)}`,
+  );
 }
 
 console.log(`\nRESULT: ${failures.length === 0 ? 'PASS' : 'FAIL'} (${passes.length} passed, ${failures.length} failure(s))`);

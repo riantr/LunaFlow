@@ -683,7 +683,16 @@ pub fn proof_counts(vcs : Array[VC]) -> (Int32, Int32, Int32) {
 }
 
 ///|
-pub fn render_report(input : ReportInput) -> String {
+/// Render the report.
+///
+/// `per_function` says that every function was entered as an entry point, so
+/// the reader can tell a full sweep from a capped one. It is an optional
+/// argument, so the published signature of this function is unchanged for a
+/// caller that does not use it.
+pub fn render_report(
+  input : ReportInput,
+  per_function~ : Bool = false,
+) -> String {
   let out = StringBuilder::new()
   let md = "docs/design.md"
   out.write_string(
@@ -743,6 +752,17 @@ pub fn render_report(input : ReportInput) -> String {
   )
   out.write_string(
     "| Observed functions | " + input.run.functions_run.to_string() + " |\n",
+  )
+  out.write_string(
+    "| Entry selection | " +
+    (if per_function {
+      "every function (the `--max-functions` cap was lifted)"
+    } else {
+      "the first " +
+      input.run.functions_run.to_string() +
+      " functions in file order (the `--max-functions` cap applies)"
+    }) +
+    " |\n",
   )
   out.write_string(
     "| Wall time (analyzer) | " + input.elapsed_ms.to_string() + " ms |\n",

@@ -76,6 +76,16 @@ One analyzer · three evidence strengths · one Markdown report.
   `failed` or `unknown`; `unknown` is an honest third state, not a failure.
   This is a three-state interval prover, not an SMT-backed WP.
 
+* Finding families that state their own limits
+
+  Every finding kind has a **code** (`DEAD-CODE`, `TAINT-INDEX`, …) and a
+  **contract**: the property it asserts, the assumption under which that is
+  sound, and what it does *not* cover. `--explain-all` prints the roster,
+  `--explain <code>` prints one contract, and `--families` / `--exclude-families`
+  select by code. `--metrics` prints the ADEQUACY block — what was read, what was
+  understood, what was entered, what was found — and every line in it carries
+  its own coverage.
+
 * Markdown is the UI
 
   Reports use `flowchart TD` for CFGs and slices, `flowchart LR` for taint and
@@ -108,6 +118,13 @@ The module is a library plus an executable, so "what you get" is a set of
 | `LunaFlow analyze --coverage cov.xml` | compiled-suite coverage mapped onto CFG nodes | report §4.4 |
 | `LunaFlow analyze --list-functions` | function, file, statement count | `FUNCTION<TAB>FILE<TAB>STATEMENTS` |
 | `LunaFlow analyze --max-cfg-functions <n>` | how many functions the CFG pass covers (default 600) | report §2 states what was not covered |
+| `LunaFlow analyze --families <codes>` | only the finding families named, by code | the same report, filtered |
+| `LunaFlow analyze --exclude-families <codes>` | everything *except* the families named | the same report, filtered |
+| `LunaFlow analyze --exclude <name>` | skip a directory name while walking (repeatable) | the same report |
+| `LunaFlow analyze --metrics` | the ADEQUACY block: read, understood, entered, found | four `METRICS` lines |
+| `LunaFlow analyze --per-function` | every function entered as an entry point, the `--max-functions` cap lifted | the same report, more of the module |
+| `LunaFlow --explain <code>` | one family's contract — property, assumption, exclusions | three clauses, no scan |
+| `LunaFlow --explain-all` | the roster of every family and the property it asserts | one block, no scan |
 | `@app.load_module(root, coord, version, limit)` | the parsed module and its ingestion statistics | `(ModuleAst, ScanStats)` |
 | `@app.check_contracts(ast, ["f"])` | the verification conditions of a function | `ProofResult` |
 | `@app.run_abstract(ast, max_functions, max_steps)` | the L2 findings of a module | `AbsResult` |
@@ -127,7 +144,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.8
+moon add riantr/LunaFlow@0.1.9
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -135,7 +152,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.8",
+  "riantr/LunaFlow@0.1.9",
 }
 ```
 
@@ -186,7 +203,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.8](https://mooncakes.io/docs/riantr/LunaFlow@0.1.8).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.9](https://mooncakes.io/docs/riantr/LunaFlow@0.1.9).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -233,11 +250,12 @@ local path needs the `./`.
 
 ### What the release was checked on
 
-`moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715` — the toolchain every
-number in this file was measured on — **and** `moon 0.1.20261104`, carrying
-`moonc v0.10.20+65efd5b93`, which is what the CI runner installs. Both build
-this module, and the reason that is checked rather than hoped for is under
-[The core compatibility contract](#the-core-compatibility-contract).
+`moon 0.1.20261104`, carrying `moonc v0.10.20+65efd5b93` — the toolchain every
+number in this file was measured on, and the one the CI runner installs. The
+older `moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715`, is still
+supported and is what the core-compatibility contract is measured against, so
+both build this module. The reason that is checked rather than hoped for is
+under [The core compatibility contract](#the-core-compatibility-contract).
 
 The module is **native, wasm and js**. The analyzer reaches the filesystem and
 spawns `moon fetch`, and the async runtime implements both on native and wasm
@@ -379,6 +397,148 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.9
+
+**The five options the peer analyzer has and this one did not: `--exclude`,
+`--families`, `--explain`, `--metrics`, `--per-function`.**
+
+0.1.8 aligned the *input* surface with `riantr/moonbit_static_analysis`. This
+release finishes the alignment by closing the *option* surface. The peer could
+be told which directories to skip, which finding families to report, what a
+family actually means, how much of the target it really understood, and it
+could be pushed into every function instead of the first few. Now this one can
+do the same, under the same rules.
+
+**The families are the codes the report already shows.** There is no second
+vocabulary to learn: a family is addressed by the code that appears on the
+finding's own row.
+
+```sh
+moonx riantr/LunaFlow@latest --explain-all
+```
+
+```text
+families: code, title, and the property each one asserts
+
+  DEAD-CODE  DeadCode  --  a statement is unreachable after an unconditional exit
+  UNREACHABLE  Unreachable  --  no execution reaches this statement: the flow arriving at it has already left the block
+  INFINITE-LOOP  InfiniteLoop  --  the loop cannot terminate: its condition holds for every input and it has no break
+  TAINT-INDEX  TaintedIndex  --  a tainted value may reach an array index or a buffer offset
+  TAINT-INDEX-RANGE  TaintedIndexInRange  --  a tainted value reaches an index that is in range on every observed path
+  TAINT-ALLOC  TaintedAllocation  --  a tainted value may control an allocation size
+  RANGE-VIOLATION  RangeViolation  --  a value's range may be violated: an assertion may fail, or a size may be negative
+  PARSE-GAP  ParseGap  --  a construct the frontend could not model, folded into the statement it belongs to
+  BUDGET-EXCEEDED  BudgetExceeded  --  an analysis budget was exhausted, so the rest of the function was not analysed
+  UNSUPPORTED  UnsupportedSink  --  a tainted value may reach abort/panic
+```
+
+The peer addresses its families by an `MSA-NNN` id; this one uses the finding's
+own code. The **stability rule the peer wants is kept either way** — a code is
+never renamed, because the code is what a reader sees in the report and what a
+CI gate matches on.
+
+**Each family carries a contract, and the contract is what `--explain` prints.**
+Three clauses, and the third one is the interesting one: it says what the
+finding does *not* cover.
+
+```sh
+moonx riantr/LunaFlow@latest --explain TAINT-INDEX
+```
+
+```text
+TAINT-INDEX  TaintedIndex
+
+  property    a tainted value may reach an array index or a buffer offset
+
+  assumption  the taint source set was complete, and the sink was reached on an observed path
+
+  excluded    an index the runtime clamps, and a value the source model did not mark tainted
+```
+
+`PARSE-GAP` is declared and never produced: the frontend folds an unmodelled
+construct into the statement it belongs to and counts it as *unsupported*
+instead, and the contract says so rather than pretending the family fires.
+
+**Two profile rules, and they are the peer's.** A code the roster does not know
+is a **WARNING** and the scan still runs — a typo in a filter must not silently
+produce an empty report:
+
+```text
+WARNING	unknown family code in --exclude-families: TAINT-* (the roster is DEAD-CODE, UNREACHABLE, ...)
+```
+
+A code in **both** the include and the exclude set is an **ERROR** and the scan
+does not run at all — the two rules contradict each other, and which one won
+would otherwise be an accident of the order of two `if`s:
+
+```text
+ERROR	the profile includes and excludes the same family code: DEAD-CODE
+```
+
+Neither the peer nor this one supports a glob in a family list, and the peer
+rejects `TAINT-*` in exactly the same way. The codes are literal.
+
+**A CONTRACT REQUEST IS NOT A SCAN.** `--explain` and `--explain-all` answer
+and stop *before* the profile is validated and before a single file is read, so
+a contract request cannot be broken by the tree it is run in — and it needs no
+target at all.
+
+**`--metrics` prints the ADEQUACY block: how much of the target was really
+understood.** Four TAB-separated lines, and every one of them carries its own
+coverage — a number without its coverage is half a number.
+
+```text
+METRICS	read	files=1	parsed=1	partial=0	understood=100.0%
+METRICS	stmts	statements=32	understood=32	unsupported=0	understood-share=100.0%
+METRICS	funcs	functions=12	entered=12	skipped=0	entered-share=100.0%
+METRICS	findings	total=12	error=6	warning=2	info=4
+```
+
+The `findings` total counts the **deduped reportable set** — the CFG findings,
+the dynamic infinite-loop and budget findings, the taint sinks (already deduped
+by site) and the abstract findings. It is not the raw observation list, which
+holds one entry per trial and per loop iteration and would report dozens of
+findings where the report shows twelve.
+
+**`--per-function` lifts the `--max-functions` cap.** The peer's `--per-function`
+switches the behavioural lens from the module to each function. LunaFlow's L1
+already enters functions rather than executing module-level statements, so
+there is no module-mode to toggle — the counterpart is the cap, and the option
+lifts it: every function becomes an entry point. Measured on this module's own
+source at `--trials 4`:
+
+| | entered (of 428 extracted) | trace events | wall |
+|---|---:|---:|---:|
+| capped (default 150) | 150 (35.0 %) | 13,195 | 0.15 s |
+| `--per-function` | **353 (82.4 %)** | **74,645** | 0.23 s |
+
+The cost is real and it was measured on a module that is not this one: on
+`riantr/moonbit_doubleML@0.164.64` (2,520 functions) the capped run takes
+**4.1 s** and the uncapped one **65 s**, with 2,150,934 trace events instead
+of 218,391. The cap is what keeps a large module bounded, so this stays
+opt-in.
+
+**`--exclude` skips a directory name**, and it is repeatable. It is the same
+built-in skip list plus yours: `_build`, `.git`, `.mooncakes`, `.repos`,
+`target` and `node_modules` are always skipped, and `--exclude vendor` adds a
+name of your own. Measured on a two-directory tree, the files read went **2 →
+1** and the functions extracted **2 → 1**.
+
+**The public API grew by optional parameters and new functions only.** The
+published signatures are unchanged for a caller that does not use the new
+arguments: `load_module` takes an optional exclude list, `run_module` an
+optional `per_function` flag, `render_report` an optional `per_function` flag.
+No field was added to a published struct, so nothing that already compiles
+against this module stops compiling.
+
+**The gate moved with it.** `scripts/qa/root_package.mjs` grew from 21 checks
+to **31**: the roster and one contract, an unknown code, families accepted,
+an unknown code in a family list, the both-sets error, an excluded directory
+present before and gone after, the metrics block, and `--per-function` entering
+more functions than the cap allows. The analyser itself did not change
+behaviourally — the same 73 tests pass, the wasm artifact is unchanged, and the
+host contract is still **108 imports, 107 covered**.
 
 ### What changed in 0.1.8
 
@@ -556,8 +716,9 @@ Measured after it: on this module's own source the statements understood went
 **3,346 → 3,093**, the unsupported statements **195 → 175**, and the functions
 extracted **395 → 396** — the `usage()` function is a function again. (The
 measured-runs table above re-measures the tree after this release's own test
-file was added, and again after the 0.1.7 backend guards and the 0.1.8
-argument parser, so it reads 29 files and 3,150 statements.) On the peer module,
+file was added, and again after the 0.1.7 backend guards, the 0.1.8 argument
+parser and the 0.1.9 family roster, so it reads 30 files and 3,283
+statements.) On the peer module,
 which writes its own block strings, the statements understood went
 **12,997 → 12,970** and the unsupported statements **611 → 595**; on doubleML
 every number is unchanged, and the committed doubleML artefact is byte-identical
@@ -792,9 +953,9 @@ LICENSE                    MIT
 moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
-src/app/                   14 library files: parser, CFG, L1 interpreter,
+src/app/                   15 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
-                           taint/slice, report renderer
+                           taint/slice, family roster, report renderer
 src/app/*_test.mbt         73 tests in 11 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
@@ -827,9 +988,9 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 131 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 131 warnings, 0 errors |
-| `moon check --target js` | exit 0, 155 warnings, 0 errors |
+| `moon check --target native` | exit 0, 133 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 133 warnings, 0 errors |
+| `moon check --target js` | exit 0, 158 warnings, 0 errors |
 | `moon test src/app --target native` | **73 passed, 0 failed** |
 | `moon test src/app --target wasm` | **73 passed, 0 failed** |
 | `moon test src/app --target js` | **73 passed, 0 failed** |
@@ -845,11 +1006,11 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **14 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **31 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
 | `node scripts/qa/verify_published.mjs 0.1.3` | **4 passed, 0 failed** |
-`moon 0.1.20261102`, native backend, Windows 11, warm `.repos` cache. The
+`moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
@@ -857,7 +1018,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 29 | 3,150 | 12,552 | 22 | 2 / 1 / 3 | 3 | 1 | 0.14 s |
+| `LunaFlow` itself (`--dir .`) | 30 | 3,283 | 12,564 | 22 | 2 / 1 / 3 | 3 | 1 | 0.15 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -872,10 +1033,12 @@ and the analyzer says so.
 
 Only LunaFlow's OWN row has moved since then, and only because the analyzer is
 one of the modules it analyses: 0.1.7 moved the statement count, 3,126 →
-3,145, when the `#cfg` guards and the stubs behind them became statements, and
-this release moved it again to 3,150 and the L1 events from 12,560 to 12,552,
+3,145, when the `#cfg` guards and the stubs behind them became statements, the
+0.1.8 release moved it again to 3,150 and the L1 events from 12,560 to 12,552,
 because the analyzer now reads its own source through the rewritten argument
-parser. The other three rows have not moved at all.
+parser, and this release moved it once more — to 3,283 statements and 12,564
+events — because the family roster is a new source file and the option
+handling grew. The other three rows have not moved at all.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

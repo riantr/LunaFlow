@@ -44,7 +44,27 @@ pub fn dirname(String) -> String
 
 pub fn double_candidates() -> Array[Value]
 
+pub fn explain_family(String) -> String
+
+pub fn explain_roster() -> String
+
+pub fn family_assumption(FindingKind) -> String
+
+pub fn family_by_code(String) -> FindingKind?
+
+pub fn family_codes() -> Array[String]
+
+pub fn family_excluded(FindingKind) -> String
+
+pub fn family_property(FindingKind) -> String
+
+pub fn family_roster() -> Array[FindingKind]
+
+pub fn family_title(FindingKind) -> String
+
 pub async fn fetch_module(Coord, String) -> FetchResult
+
+pub fn filter_findings(Array[Finding], Array[String], Array[String]) -> Array[Finding]
 
 pub fn find_func(ModuleAst, String) -> Func?
 
@@ -76,7 +96,7 @@ pub fn lex(String) -> Array[Tok]
 
 pub fn lex_at(String, Int32) -> Array[Tok]
 
-pub async fn load_module(String, String, String, Int32) -> (ModuleAst, ScanStats)
+pub async fn load_module(String, String, String, Int32, excludes? : Array[String]) -> (ModuleAst, ScanStats)
 
 pub fn md_escape(String) -> String
 
@@ -112,13 +132,15 @@ pub fn pct(Int32, Int32) -> String
 
 pub fn pin_version(Array[String]) -> String
 
+pub fn profile_keeps(FindingKind, Array[String], Array[String]) -> Bool
+
 pub fn proof_counts(Array[VC]) -> (Int32, Int32, Int32)
 
 pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput) -> String
+pub fn render_report(ReportInput, per_function? : Bool) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
@@ -126,7 +148,7 @@ pub fn run_function(Func, Map[String, Func], RunOptions, Int32) -> RunResult
 
 pub fn run_function_by_name(ModuleAst, String, RunOptions) -> RunResult
 
-pub fn run_module(ModuleAst, RunOptions) -> RunResult
+pub fn run_module(ModuleAst, RunOptions, per_function? : Bool) -> RunResult
 
 pub fn safe_stem(String) -> String
 
@@ -135,6 +157,8 @@ pub fn slice_graph(DepGraph, ModuleAst, String, SliceDirection, Int32) -> SliceR
 pub fn slice_mermaid(SliceResult, Int32) -> String
 
 pub fn sort_strings(Array[String]) -> Array[String]
+
+pub fn split_codes(String) -> Array[String]
 
 pub fn split_commas(String) -> Array[String]
 
@@ -157,6 +181,8 @@ pub fn truncate(String, Int32) -> String
 pub fn unique_findings(Array[Finding]) -> Array[Finding]
 
 pub fn validate_mermaid(String) -> Array[String]
+
+pub fn validate_profile(Array[String], Array[String]) -> (Array[String], String)
 
 pub fn version_parts(String) -> Array[Int32]
 

@@ -441,6 +441,8 @@ LunaFlow [analyze] [<target>]
   [--function <fn>] [--slice <crit>] [--forward|--backward]
   [--coverage <cobertura.xml>] [--max-cfg <n>] [--max-taint <n>]
   [--max-slice <n>] [--list-functions] [--quiet]
+  [--exclude <name>]... [--families <codes>] [--exclude-families <codes>]
+  [--explain <code>] [--explain-all] [--metrics] [--per-function]
 ```
 
 The **target slot** follows the peer analyzer's rule, so the two tools take the
@@ -456,6 +458,41 @@ same invocation:
 subcommand; both are kept because they are in the published documentation and
 in every QA harness. A target that LOOKS like a coordinate (`fixtures/x`) is
 resolved as one, which is the peer's rule too — a local path needs the `./`.
+
+The **option surface** now matches the peer's as well. The five options below
+were added in 0.1.9, and each of them follows the peer's semantics:
+
+| Option | What it does |
+| --- | --- |
+| `--exclude <name>` | skip a directory NAME while walking; repeatable. The built-in skip list (`_build`, `.git`, `.mooncakes`, `.repos`, `target`, `node_modules`) always applies |
+| `--families <codes>` | report ONLY these finding families, by the CODE the report shows (`DEAD-CODE`, `TAINT-INDEX`, …) |
+| `--exclude-families <codes>` | report everything EXCEPT these families; same code vocabulary, same rules |
+| `--explain <code>` | print one family's contract — property, assumption, exclusions — and STOP |
+| `--explain-all` | print the roster of every family and STOP |
+| `--metrics` | print the ADEQUACY block: what was read, understood, entered and found, each with its own coverage |
+| `--per-function` | enter EVERY function as an entry point, with the `--max-functions` cap lifted |
+
+**A CONTRACT REQUEST IS NOT A SCAN.** `--explain` and `--explain-all` answer
+before the profile is validated and before any file is read, so they need no
+target and cannot be broken by the tree they are run in.
+
+**Two profile rules, and they are the peer's.** A code the roster does not know
+is a WARNING and the scan still runs; a code in both the include and the
+exclude set is an ERROR and the scan does not run at all — the two rules
+contradict each other, and which one won would otherwise be an accident of the
+order of two `if`s.
+
+The families are addressed by the finding's own report code rather than by a
+second identifier layer. The peer's ids are `MSA-NNN`; the stability rule is
+the same either way — a code is never renamed — but a code the reader already
+sees on the finding's row is one less thing to look up.
+
+`--per-function` has no module-mode counterpart here: LunaFlow's L1 already
+enters functions rather than executing module-level statements, so the
+counterpart of the peer's toggle is the `--max-functions` cap, and the option
+lifts it. The cost is real — measured on `riantr/moonbit_doubleML@0.164.64`
+(2,520 functions), 4.1 s capped against 65 s uncapped, 218,391 trace events
+against 2,150,934 — so it stays opt-in.
 
 Outputs, all deterministic except `elapsed_ms`:
 
