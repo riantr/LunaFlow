@@ -46,6 +46,8 @@ pub fn const_of_expr(Expr) -> Int64?
 
 pub fn contract_above(String, String, Int32) -> Contract
 
+pub fn coord_without_version(String) -> String
+
 pub fn count_calls(Func) -> Int32
 
 pub fn count_occurrences(String, String) -> Int32

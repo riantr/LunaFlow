@@ -264,3 +264,107 @@ test "a return inside a match arm is not dead code" {
   )
   inspect(dead, content="0")
 }
+
+///|
+/// The report's own REPRODUCTION command has to be runnable.
+///
+/// The defect: the coordinate a run was asked for may already carry a version
+/// marker -- `riantr/LunaFlow@latest` -- and the report appended `@latest` to
+/// it unconditionally. The printed command was therefore
+/// `riantr/LunaFlow@latest@latest`, which the registry refuses with "must
+/// contain a single version marker". It was found by running the PUBLISHED
+/// 0.1.13 over the published coordinate and then running the command the
+/// report printed: a report that prints a command which does not work is
+/// worse than one that prints none.
+fn report_for(coord : String) -> String {
+  let ast : @app.ModuleAst = {
+    coord: "demo/x",
+    version: "1.0.0",
+    root: ".",
+    files: [
+      @app.parse_file("c.mbt", "pub fn f(x : Int) -> Int {\n  x + 1\n}\n"),
+    ],
+    manifest_deps: [],
+    manifest_target: "native",
+  }
+  let opts : @app.RunOptions = @app.RunOptions::default()
+  let run = @app.run_module(ast, opts)
+  let input : @app.ReportInput = {
+    coord,
+    version: "0.1.13",
+    pinning: "none",
+    root: ".",
+    target: "native",
+    deps: [],
+    files: 1,
+    funcs: 1,
+    stmts: 1,
+    unsupported: 0,
+    issues: 0,
+    cfgs: [],
+    cfg_findings: [],
+    run,
+    taint: @app.TaintGraph::new(),
+    slices: [],
+    coverage: None,
+    opts: @app.ReportOptions::default(),
+    elapsed_ms: 0,
+    level: 1,
+    funnel: None,
+    abstract: None,
+    proof: None,
+  }
+  @app.render_report(input)
+}
+
+///|
+test "a coordinate with a version marker loses exactly that marker" {
+  inspect(
+    @app.coord_without_version("riantr/LunaFlow@latest"),
+    content="riantr/LunaFlow",
+  )
+  inspect(
+    @app.coord_without_version("riantr/LunaFlow@0.1.13"),
+    content="riantr/LunaFlow",
+  )
+  inspect(
+    @app.coord_without_version("riantr/LunaFlow"),
+    content="riantr/LunaFlow",
+  )
+  inspect(@app.coord_without_version(""), content="")
+}
+
+///|
+test "the reproduction command is a coordinate that resolves" {
+  // The coordinate the reader was asked for, carrying a version marker.
+  let md = report_for("riantr/LunaFlow@latest")
+  inspect(
+    md.contains(
+      "LunaFlow analyze riantr/LunaFlow@latest --out reports/ --funnel",
+    ),
+    content="true",
+  )
+  // The doubled marker is the defect: a coordinate may carry only ONE.
+  inspect(md.contains("@latest@latest"), content="false")
+  // The title is a coordinate too, and it used to carry two markers.
+  inspect(
+    md.contains("# LunaFlow analysis report — riantr/LunaFlow@0.1.13"),
+    content="true",
+  )
+}
+
+///|
+test "a coordinate without a version marker still gets one" {
+  let md = report_for("riantr/LunaFlow")
+  inspect(
+    md.contains(
+      "LunaFlow analyze riantr/LunaFlow@latest --out reports/ --funnel",
+    ),
+    content="true",
+  )
+  inspect(md.contains("@latest@latest"), content="false")
+  inspect(
+    md.contains("# LunaFlow analysis report — riantr/LunaFlow@0.1.13"),
+    content="true",
+  )
+}

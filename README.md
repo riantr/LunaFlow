@@ -191,7 +191,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.13
+moon add riantr/LunaFlow@0.1.14
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -199,7 +199,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.13",
+  "riantr/LunaFlow@0.1.14",
 }
 ```
 
@@ -250,7 +250,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.13](https://mooncakes.io/docs/riantr/LunaFlow@0.1.13).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.14](https://mooncakes.io/docs/riantr/LunaFlow@0.1.14).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -444,6 +444,61 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.14
+
+**The report's own reproduction command now resolves.**
+
+This release is one defect, found by running the **published 0.1.13** over the
+published coordinate with `moonx` and then running the command the report
+printed.
+
+**The defect.** The report's §10 *Reproduction* section prints the command that
+reproduces the analysis. The coordinate a run was asked for may already carry a
+version marker — `riantr/LunaFlow@latest` — and the report appended `@latest`
+to it unconditionally. The printed command was therefore:
+
+```text
+LunaFlow analyze riantr/LunaFlow@latest@latest --out reports/ --funnel
+```
+
+and the registry refuses it:
+
+```text
+Error: Invalid package coordinate `riantr/LunaFlow@latest@latest`
+Caused by:
+    must contain a single version marker
+```
+
+A coordinate may carry **only one** version marker. A report that prints a
+command which does not work is worse than one that prints none, and this was
+reachable from the documented self-check path — the same `moonx` invocation
+that found it is the one whose report carried the broken line.
+
+**The fix.** The version marker is stripped from the coordinate before anything
+is composed with it, so the reproduction line is the coordinate the reader was
+asked for, and the report title carries the **resolved** version rather than
+both:
+
+| | 0.1.13 printed | 0.1.14 prints |
+|---|---|---|
+| §10 Reproduction | `riantr/LunaFlow@latest@latest` | `riantr/LunaFlow@latest` |
+| Report title | `riantr/LunaFlow@latest@0.1.13` | `riantr/LunaFlow@0.1.14` |
+
+Both forms now name a coordinate that resolves. §1 still shows the coordinate
+**as requested** and the resolved version separately, which is where the
+difference between the two belongs.
+
+Three tests pin it: the helper strips exactly one marker, the rendered report
+carries no doubled marker, and the reproduction line is the coordinate that
+resolves.
+
+**The numbers.** Tests 131 → **134**; the gate's CLI-surface checks stay at
+**66**; the library is 18 files and the test suite 14 files; the finding
+roster stays at 26 families. The warning count moves 149 → **150** on native
+and wasm and 174 → **175** on js: the one extra notice is the pre-existing
+`reserved_keyword` notice on `ReportInput.abstract`, now hit a second time
+because the new test builds a report input of its own.
 
 ### What changed in 0.1.13
 
@@ -1372,7 +1427,7 @@ src/app/                   18 library files: parser, CFG, L1 interpreter,
                            taint/slice, family roster, evolved value
                            analysis, memory layout model, foreign address
                            space model, report renderer
-src/app/*_test.mbt         131 tests in 14 files
+src/app/*_test.mbt         134 tests in 14 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -1410,12 +1465,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 149 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 149 warnings, 0 errors |
-| `moon check --target js` | exit 0, 174 warnings, 0 errors |
-| `moon test src/app --target native` | **131 passed, 0 failed** |
-| `moon test src/app --target wasm` | **131 passed, 0 failed** |
-| `moon test src/app --target js` | **131 passed, 0 failed** |
+| `moon check --target native` | exit 0, 150 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 150 warnings, 0 errors |
+| `moon check --target js` | exit 0, 175 warnings, 0 errors |
+| `moon test src/app --target native` | **134 passed, 0 failed** |
+| `moon test src/app --target wasm` | **134 passed, 0 failed** |
+| `moon test src/app --target js` | **134 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1440,7 +1495,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 39 | 4,574 | 16,634 | 32 | 2 / 1 / 3 | 3 | 4 | 0.24 s |
+| `LunaFlow` itself (`--dir .`) | 39 | 4,601 | 16,674 | 32 | 2 / 1 / 3 | 3 | 4 | 0.24 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -1471,6 +1526,8 @@ understands. The 0.1.13 release moved it again, to 4,574 statements and 16,634
 events, because the foreign-address-space model is new source, because the
 fixture that exercises the C boundary is a new file, and because the analyzer
 now understands the FFI declarations it used to count as parse issues. The
+0.1.14 patch moved it once more, to 4,601 statements and 16,674 events, because
+the coordinate fix and its three tests are new source. The
 evolved value analysis now reports **exactly one** finding on LunaFlow's own
 tree, and it is the deliberate overflow in the memory fixture's global
 initializer — the library's own source has none. The other three rows have not

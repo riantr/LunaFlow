@@ -394,3 +394,30 @@ pub fn sort_strings(xs : Array[String]) -> Array[String] {
   out.sort()
   out
 }
+
+///|
+/// The coordinate WITHOUT its version marker: `riantr/LunaFlow@latest`
+/// becomes `riantr/LunaFlow`.
+///
+/// A coordinate may arrive carrying a version marker, and a coordinate may
+/// carry only ONE. Composing `coord + "@" + version` on a coordinate that
+/// already has one produces `riantr/LunaFlow@latest@0.1.13`, which does not
+/// resolve -- so the marker is stripped before anything is composed with it.
+///
+/// The scan is by CHARACTER rather than by `find` + slice: the two agree on
+/// ASCII, and a coordinate is ASCII by construction, but the character walk
+/// does not depend on that being true.
+pub fn coord_without_version(coord : String) -> String {
+  let mut out = ""
+  let mut i = 0
+  let n = coord.length()
+  while i < n {
+    let c = coord.get_char(i)
+    if c == Some('@') {
+      return out
+    }
+    out = out + c.unwrap_or(' ').to_string()
+    i = i + 1
+  }
+  out
+}

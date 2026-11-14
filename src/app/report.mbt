@@ -918,7 +918,7 @@ pub fn render_report(
   let md = "docs/design.md"
   out.write_string(
     "# LunaFlow analysis report — " +
-    input.coord +
+    coord_without_version(input.coord) +
     "@" +
     input.version +
     "\n\n",
@@ -1443,9 +1443,16 @@ pub fn render_report(
     "| Slicing | dynamic dependence graph | exact for the recorded trace; not a static closure |\n\n",
   )
   out.write_string("## 10. Reproduction\n\n")
+  // The reproduction line has to be RUNNABLE, and a coordinate may carry only
+  // ONE version marker. The coordinate the reader was asked for may already
+  // carry one -- `riantr/LunaFlow@latest` -- so the marker is stripped before
+  // `@latest` is added back. Appending blindly produced
+  // `riantr/LunaFlow@latest@latest`, which the registry refuses with
+  // "must contain a single version marker": a report that prints a command
+  // which does not work is worse than one that prints none.
   out.write_string(
     "```text\nLunaFlow analyze " +
-    input.coord +
+    coord_without_version(input.coord) +
     "@latest --out reports/ --funnel\n",
   )
   out.write_string("```\n\n")
