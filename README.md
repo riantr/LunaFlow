@@ -86,6 +86,20 @@ One analyzer · three evidence strengths · one Markdown report.
   understood, what was entered, what was found — and every line in it carries
   its own coverage.
 
+* An evolved value analysis, and the memory-safety classes it reaches
+
+  The value analysis asks what a value's **range** is; the evolved value
+  analysis asks what happens when the value is **used**. It finds the index
+  that escapes its array, the divisor that may be zero, the integer operation
+  that leaves its type's range, the `Option` that may be `None` where it is
+  unwrapped, the element read before it was written, and the conversion that
+  saturates silently. Each class was mapped onto what MoonBit actually does by
+  running the real toolchain — and MoonBit's integer arithmetic **wraps
+  instead of trapping**, so an overflow there is a silent wrong value rather
+  than a crash. The classes MoonBit's type system makes impossible — use after
+  free, pointer arithmetic, memory leaks, format strings — are in the roster as
+  RESERVED families whose contracts say why they never fire.
+
 * Markdown is the UI
 
   Reports use `flowchart TD` for CFGs and slices, `flowchart LR` for taint and
@@ -123,6 +137,7 @@ The module is a library plus an executable, so "what you get" is a set of
 | `LunaFlow analyze --exclude <name>` | skip a directory name while walking (repeatable) | the same report |
 | `LunaFlow analyze --metrics` | the ADEQUACY block: read, understood, entered, found | four `METRICS` lines |
 | `LunaFlow analyze --per-function` | every function entered as an entry point, the `--max-functions` cap lifted | the same report, more of the module |
+| `LunaFlow analyze --level 2` + the EVA | the memory-safety and undefined-behaviour classes | report §5.3 |
 | `LunaFlow --explain <code>` | one family's contract — property, assumption, exclusions | three clauses, no scan |
 | `LunaFlow --explain-all` | the roster of every family and the property it asserts | one block, no scan |
 | `@app.load_module(root, coord, version, limit)` | the parsed module and its ingestion statistics | `(ModuleAst, ScanStats)` |
@@ -144,7 +159,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.9
+moon add riantr/LunaFlow@0.1.10
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -152,7 +167,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.9",
+  "riantr/LunaFlow@0.1.10",
 }
 ```
 
@@ -203,7 +218,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.9](https://mooncakes.io/docs/riantr/LunaFlow@0.1.9).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.10](https://mooncakes.io/docs/riantr/LunaFlow@0.1.10).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -397,6 +412,133 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.10
+
+**The capability boundary now reaches the EVOLVED VALUE ANALYSIS: the
+memory-safety and undefined-behaviour classes, mapped onto what MoonBit
+actually does.**
+
+The value analysis that existed before this one asked ONE question about a
+value: *what is its range?* The evolved value analysis — EVA — asks the second
+question, which is the one a defect actually turns on: **what happens when this
+value is USED?** An index that escapes its array, a divisor that may be zero,
+an integer operation that leaves its type's range, an `Option` that may be
+`None` where it is unwrapped, an element read before it was written, a
+conversion that saturates — every one of those is decidable from the ranges the
+abstract interpreter already computes, so EVA is not a second engine: it rides
+on the L2 fixpoint and asks the extra questions where the values are computed.
+
+**Every class was mapped by RUNNING the real toolchain, not by reading it.**
+The list you asked for is the classic C memory-safety taxonomy, and MoonBit is
+not a C-like language, so each class had to be settled against what MoonBit
+really does:
+
+| The class | What MoonBit does — MEASURED | The family |
+|---|---|---|
+| buffer overflow | `Buffer` GROWS, so there is no fixed capacity to overflow; a fixed-size array's bounds are checked | `INDEX-OOB` |
+| out-of-bounds read/write | `a[5]` on a three-element array is `RuntimeError: unreachable` at `Array::at`; so is `a[-1]` | `INDEX-OOB` |
+| integer overflow | integer arithmetic **WRAPS silently** — `Int::MAX_VALUE + 1` is `Int::MIN_VALUE`, with no panic and no diagnostic | `INTEGER-OVERFLOW` |
+| division by zero | `100 / 0` is `RuntimeError: divide by zero`, and `100 % 0` is `RuntimeError: remainder by zero` | `DIVISION-BY-ZERO` |
+| null pointer dereference | there are no null pointers; `None.unwrap()` is `RuntimeError: unreachable` at `Option::unwrap` | `NONE-DEREF` |
+| uninitialized memory read | `UninitializedArray::make(3)` read before `set` returns an **indeterminate value** and does NOT panic | `UNINITIALIZED-READ` |
+| use-after-free | no raw pointers, the collector owns the storage, values are immutable | RESERVED |
+| illegal pointer arithmetic | no pointer type in safe MoonBit | RESERVED |
+| memory leak | the collector reclaims unreachable storage; there is no manual free | RESERVED |
+| format string | there are **no format strings**: the language interpolates with a typed syntax and the core has no printf-style formatting | RESERVED |
+| invalid type cast | `as` is a trait-object downcast and nothing else — a numeric `as` is a compile error; `Double::to_int` **saturates** silently | `INVALID-CAST` |
+
+**The four RESERVED families are in the roster on purpose.** A roster that
+silently omitted them would read as "this tool does not look for that", which
+is a different claim from "that cannot happen here". So `--explain
+USE-AFTER-FREE` answers, and its contract says why it never fires:
+
+```text
+USE-AFTER-FREE  UseAfterFree
+
+  property    a value may be used after the storage it referred to was released
+
+  assumption  NOT APPLICABLE IN MOONBIT: safe MoonBit has no raw pointers, the
+              collector owns the storage, and values are immutable -- there is
+              nothing to free and nothing to dangle
+
+  excluded    nothing -- and note the kind is RESERVED: safe MoonBit cannot
+              express the defect
+```
+
+The roster went from ten families to **twenty**, and every one of them has a
+contract.
+
+**The one that is worth more here than elsewhere.** `INTEGER-OVERFLOW` is the
+class MoonBit makes WORSE than a trapping language. `Int::MAX_VALUE + 1` is
+`Int::MIN_VALUE` in MoonBit, silently: the program keeps running with a value
+the author did not intend. In a language that traps, the bug is a crash; here it
+is silent corruption, which is exactly the kind of defect an analyzer is for.
+MoonBit's `Int` is a **32-bit** signed integer — measured, not assumed:
+`Int::MAX_VALUE + 1` is `-2147483648` — and `Int64` is 64-bit.
+
+**The fixture carries the defects AND the ordinary shapes next to them.**
+`fixtures/eva_demo/` has a positive half and a negative half, and it compiles
+and runs under the real toolchain: every claim below was executed, not
+inferred.
+
+| The fixture's function | What the real runtime did | What the analyzer said |
+|---|---|---|
+| `overflow_literal` | returned `-2147483648` | `INTEGER-OVERFLOW`, confidence 0.95 |
+| `divide_by_zero` | `RuntimeError: divide by zero` | `DIVISION-BY-ZERO`, confidence 0.95 |
+| `index_past_end` | `RuntimeError: unreachable` at `Array::at` | `INDEX-OOB`, confidence 0.95 |
+| `unwrap_none` | `RuntimeError: unreachable` at `Option::unwrap` | `NONE-DEREF` |
+| `read_uninitialized` | returned **13036** — the garbage in the slot, silently | `UNINITIALIZED-READ` |
+| `saturating_cast` | returned `2147483647` | `INVALID-CAST` |
+| `safe_sum`, `safe_divisor`, `safe_index`, `safe_some`, `safe_some_on_both_branches`, `safe_initialized`, `safe_cast` | all ran and returned the right answer | **nothing reported** |
+
+The negative half is the half that matters: a check that fires on
+`safe_some_on_both_branches` is a false positive, and a check that does not
+fire on `read_uninitialized` is a check that does not work.
+
+**The facts are FLOW-SENSITIVE, and that was a bug first.** The idiomatic
+mutable Option is
+
+```moonbit
+let mut x : Int32? = None
+if flag { x = Some(1) } else { x = Some(2) }
+x.unwrap()
+```
+
+A monotone accumulation reports that as a None dereference, because `None` went
+in. It is not one: `x` is `Some` on both paths out. So the EVA facts are
+joined with the abstract state, branch by branch, and the join is of the two
+BRANCHES and not of the branches and the state before them.
+
+**And the EVA work uncovered a real frontend bug.** The type annotation used to
+run on through the initializer: `let x : Int32 = 5` recorded the type as
+`"Int32 = 5"` and **the initializer was dropped**. Every `let` with a type
+annotation therefore bound an *unknown* value — and an unknown value makes the
+interpreter explore every branch, so the trace was full of paths that could not
+happen. Measured on one identical tree:
+
+| | before | after |
+|---|---:|---:|
+| statements understood | 3,283 | **3,341** |
+| statements unsupported | 183 | **171** |
+| frontend coverage | 94.7 % | **95.1 %** |
+| trace events | 15,656 | 11,865 |
+
+The coverage went UP and the event count went DOWN, and both directions are
+right: the analyzer now understands more of the tree, and it stops inventing
+paths through values it could not see.
+
+**There is one published-signature change, and it is unavoidable.**
+`FindingKind` gained ten variants, so a consumer that matches on it
+*exhaustively* must add a case. There is no way to add a finding family
+without a new kind — the kind IS the code the family is addressed by. Every
+other published shape is unchanged: `load_module`, `run_module` and
+`render_report` grew optional arguments, and no published struct gained a
+field.
+
+The EVA findings carry their own mode, `L2-EVA`, so report §5.3 lists them
+apart from the classic abstract findings. The test suite is **92 tests**, up
+from 73, and the gate's CLI-surface checks are **39**, up from 31.
 
 ### What changed in 0.1.9
 
@@ -953,13 +1095,16 @@ LICENSE                    MIT
 moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
-src/app/                   15 library files: parser, CFG, L1 interpreter,
+src/app/                   16 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
-                           taint/slice, family roster, report renderer
-src/app/*_test.mbt         73 tests in 11 files
+                           taint/slice, family roster, evolved value
+                           analysis, report renderer
+src/app/*_test.mbt         92 tests in 12 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
+fixtures/eva_demo/         the evolved value analysis fixture: the defect
+                           classes and the ordinary shapes next to them
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
 docs/qa/REPORT.md          deep QA report (security, coverage, metrics)
@@ -988,12 +1133,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 133 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 133 warnings, 0 errors |
-| `moon check --target js` | exit 0, 158 warnings, 0 errors |
-| `moon test src/app --target native` | **73 passed, 0 failed** |
-| `moon test src/app --target wasm` | **73 passed, 0 failed** |
-| `moon test src/app --target js` | **73 passed, 0 failed** |
+| `moon check --target native` | exit 0, 142 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 142 warnings, 0 errors |
+| `moon check --target js` | exit 0, 167 warnings, 0 errors |
+| `moon test src/app --target native` | **92 passed, 0 failed** |
+| `moon test src/app --target wasm` | **92 passed, 0 failed** |
+| `moon test src/app --target js` | **92 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1006,7 +1151,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **31 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **39 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
 | `node scripts/qa/verify_published.mjs 0.1.3` | **4 passed, 0 failed** |
@@ -1018,7 +1163,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 30 | 3,283 | 12,564 | 22 | 2 / 1 / 3 | 3 | 1 | 0.15 s |
+| `LunaFlow` itself (`--dir .`) | 33 | 3,687 | 12,651 | 29 | 2 / 1 / 3 | 3 | 3 | 0.17 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -1036,9 +1181,10 @@ one of the modules it analyses: 0.1.7 moved the statement count, 3,126 →
 3,145, when the `#cfg` guards and the stubs behind them became statements, the
 0.1.8 release moved it again to 3,150 and the L1 events from 12,560 to 12,552,
 because the analyzer now reads its own source through the rewritten argument
-parser, and this release moved it once more — to 3,283 statements and 12,564
-events — because the family roster is a new source file and the option
-handling grew. The other three rows have not moved at all.
+parser, and 0.1.10 moved it once more — to 3,687 statements and 12,651 events
+— because the family roster and the evolved value analysis are new source, and
+because the type-annotation fix in the frontend recovered 58 statements that
+the parser had been dropping. The other three rows have not moved at all.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

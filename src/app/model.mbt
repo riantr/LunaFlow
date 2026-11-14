@@ -398,6 +398,21 @@ pub(all) enum FindingKind {
   FParseGap
   FBudget
   FUnsupported
+  // The EVOLVED VALUE ANALYSIS families. See `eva.mbt` for the engine and
+  // `family.mbt` for each family's contract.
+  FIntOverflow
+  FDivZero
+  FIndexOob
+  FNoneDeref
+  FUninitRead
+  FInvalidCast
+  // The RESERVED families: the defect classes MoonBit's type system makes
+  // impossible in safe code. They are in the roster so that `--explain` can
+  // answer for them, and their contracts say why they never fire.
+  FUseAfterFree
+  FPointerArithmetic
+  FMemoryLeak
+  FFormatString
 }
 
 ///|
@@ -416,6 +431,16 @@ pub fn FindingKind::code(self : FindingKind) -> String {
     FParseGap => "PARSE-GAP"
     FBudget => "BUDGET-EXCEEDED"
     FUnsupported => "UNSUPPORTED"
+    FIntOverflow => "INTEGER-OVERFLOW"
+    FDivZero => "DIVISION-BY-ZERO"
+    FIndexOob => "INDEX-OOB"
+    FNoneDeref => "NONE-DEREF"
+    FUninitRead => "UNINITIALIZED-READ"
+    FInvalidCast => "INVALID-CAST"
+    FUseAfterFree => "USE-AFTER-FREE"
+    FPointerArithmetic => "POINTER-ARITHMETIC"
+    FMemoryLeak => "MEMORY-LEAK"
+    FFormatString => "FORMAT-STRING"
   }
 }
 
@@ -427,6 +452,15 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     FTaintIndex | FTaintAlloc => "error"
     FTaintIndexRange => "warning"
     FUnsupported => "info"
+    // A runtime panic in the analysed program is an error, whether the
+    // analyzer can PROVE it happens or only that it MAY happen.
+    FIntOverflow | FDivZero | FIndexOob | FNoneDeref | FUninitRead => "error"
+    // A silent wrong value, not a crash: the program keeps running with a
+    // value the author did not intend.
+    FInvalidCast => "warning"
+    // Reserved: never produced.
+    FUseAfterFree | FPointerArithmetic | FMemoryLeak | FFormatString =>
+      "warning"
   }
 }
 

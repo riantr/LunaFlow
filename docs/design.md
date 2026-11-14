@@ -130,7 +130,7 @@ The version directory is the pin. Every reported location is relative to that di
 - The resolved version is recorded in report §1 and in the file name (`<author>_<module>_<version>.md`).
 - If the caller passes an explicit version, no resolution happens; the report says so.
 - The local registry index (`~/.moon/registry/index/user/<author>/<module>.index`) is the source of truth for what "latest" means on this machine. It is refreshed by `moon update`; the report never silently re-resolves during a run.
-- The analyzer does **not** resolve the module's transitive dependencies, because it does not compile the target. This is why doubleML (which depends on `sqlite3` and `async`) can be analyzed without a native build. The optional coverage bridge (§5.7) is the only path that needs a working target build.
+- The analyzer does **not** resolve the module's transitive dependencies, because it does not compile the target. This is why doubleML (which depends on `sqlite3` and `async`) can be analyzed without a native build. The optional coverage bridge (§5.8) is the only path that needs a working target build.
 
 ### 3.3 Extension to arbitrary modules
 
@@ -302,7 +302,7 @@ Every parameter is a **taint source** at entry (`EvSource`). Each executed state
 
 Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, 120 interpreted functions by default. A budget hit is reported with `BUDGET-EXCEEDED`, not as a proof of non-termination.
 
-**Implicit flows.** When a loop condition is tainted, numeric variables read by that condition are marked tainted (control dependence). This is what lets `while i < len { buffer[i] }` report a tainted index even though `i` is initialized to `0`. It is deliberately conservative; see §5.8 for the precision cost.
+**Implicit flows.** When a loop condition is tainted, numeric variables read by that condition are marked tainted (control dependence). This is what lets `while i < len { buffer[i] }` report a tainted index even though `i` is initialized to `0`. It is deliberately conservative; see §5.5 for the precision cost.
 
 ### 5.4 Dead code, unreachable code and infinite loops
 
@@ -354,7 +354,73 @@ Theory: this is **runtime sampling**, not abstract interpretation. An interval-d
 
 Cost: linear in events; negligible compared to execution (see §8).
 
-### 5.7 Optional compiled-coverage bridge
+### 5.7 The evolved value analysis (EVA)
+
+The value analysis above asks ONE question about a value: *what is its range?*
+The **evolved value analysis** asks the second question, and it is the one a
+defect actually turns on: **what happens when this value is USED?**
+
+It is not a separate engine. EVA rides on the L2 fixpoint and asks the extra
+questions in the same places the values are computed, so it costs one pass,
+not two. The facts it keeps are per-name and flow-sensitive:
+
+| Fact | What it is | Why it is needed |
+|---|---|---|
+| `none` | the name's value may be `None` | `None.unwrap()` is MoonBit's null dereference |
+| `width` | the name's integer type: the bit count, negative for unsigned | MoonBit's `Int` is **32-bit** and `Int64` is 64-bit, so the overflow bound is the TYPE's bound |
+| `uninit_len` / `uninit_set` | an `UninitializedArray`'s slot count and the indices written into it | a read before the write is an indeterminate value |
+| `loop_depth` | how deep the analysis is inside a loop | a write inside a loop makes the written set unbounded, so a later read cannot be called uninitialized |
+
+The facts are JOINED with the abstract state, branch by branch. That is not a
+detail: the idiomatic mutable Option is
+
+```moonbit
+let mut x : Int32? = None
+if flag { x = Some(1) } else { x = Some(2) }
+x.unwrap()
+```
+
+and a monotone accumulation reports it as a None dereference, because `None`
+went in. It is not one: `x` is `Some` on both paths out. The join is of the
+two BRANCHES and not of the branches and the state before them, so a fact that
+was true before the `if` and false on both branches is false after it.
+
+**The classes, and what MoonBit actually does.** The request that motivated
+this was the classic C memory-safety taxonomy, and MoonBit is not a C-like
+language, so every class had to be mapped against the real toolchain rather
+than assumed. Every row below was settled by RUNNING it:
+
+| The class | What MoonBit does | The family | Engine |
+|---|---|---|---|
+| buffer overflow | `Buffer` grows, so there is no fixed capacity to overflow | `INDEX-OOB` | L2 |
+| out-of-bounds read/write | `a[5]` on three elements is `RuntimeError: unreachable` at `Array::at`; so is `a[-1]` | `INDEX-OOB` | L2 |
+| integer overflow | arithmetic **WRAPS silently**: `Int::MAX_VALUE + 1` is `Int::MIN_VALUE` | `INTEGER-OVERFLOW` | EVA |
+| division by zero | `100 / 0` is `RuntimeError: divide by zero`; `100 % 0` is `remainder by zero` | `DIVISION-BY-ZERO` | EVA |
+| null pointer dereference | no null pointers; `None.unwrap()` is `RuntimeError: unreachable` | `NONE-DEREF` | EVA |
+| uninitialized memory read | an `UninitializedArray` element read before `set` is indeterminate, and does NOT panic | `UNINITIALIZED-READ` | EVA |
+| use-after-free | no raw pointers; the collector owns the storage; values are immutable | RESERVED | — |
+| illegal pointer arithmetic | no pointer type in safe MoonBit | RESERVED | — |
+| memory leak | the collector reclaims unreachable storage; there is no manual free | RESERVED | — |
+| format string | no format strings exist; the language interpolates with a typed syntax and the core has no printf | RESERVED | — |
+| invalid type cast | `as` is a trait-object downcast only; `Double::to_int` **saturates** silently | `INVALID-CAST` | EVA |
+
+The RESERVED families are in the roster so that `--explain` can answer for
+them, and their contracts say why they never fire. Omitting them would read
+as "this tool does not look for that", which is a different claim from "that
+cannot happen here".
+
+**The domain's interval arithmetic had to change to make the overflow check
+sound.** The abstract domain's integer interval is 32 bits wide, and MoonBit's
+own arithmetic wraps — so an interval computed in the domain wrapped to a
+WRONG bound, and a wrong bound downstream is a false finding somewhere else.
+The domain now computes in 64 bits and CLAMPS to the type's range, and the
+overflow check reports the overflow that caused it.
+
+**What it costs.** One pass, no new engine: the EVA checks are six
+expressions in the existing evaluation. The measured cost on LunaFlow's own
+source is inside the noise of the run.
+
+### 5.8 Optional compiled-coverage bridge
 
 Mermaid does not need a compiler, but real compiled evidence strengthens the dynamic story. `parse_cobertura` reads a Cobertura XML produced by:
 
@@ -366,7 +432,7 @@ LunaFlow analyze <coord> --coverage cov.xml
 
 Hit counts are mapped onto CFG nodes by `(file, line)`; report §3.4 shows per-function node coverage and every zero-hit line is labelled *uncovered by the observed suite*, never *dead*. A Cobertura fixture is unit-tested (`pipeline_test.mbt`). This bridge requires the target to build; it is optional so heavy modules remain analyzable.
 
-### 5.8 Program slicing
+### 5.9 Program slicing
 
 The dynamic dependence graph is built from trace events:
 

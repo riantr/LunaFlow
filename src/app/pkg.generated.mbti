@@ -44,6 +44,8 @@ pub fn dirname(String) -> String
 
 pub fn double_candidates() -> Array[Value]
 
+pub fn eva_families() -> Array[FindingKind]
+
 pub fn explain_family(String) -> String
 
 pub fn explain_roster() -> String
@@ -352,6 +354,8 @@ pub(all) enum EdgeKind {
 pub fn EdgeKind::equal(Self, Self) -> Bool
 pub fn EdgeKind::not_equal(Self, Self) -> Bool
 
+type EvaState
+
 #derive(Eq)
 pub(all) enum EventKind {
   EvEnter
@@ -433,6 +437,16 @@ pub(all) enum FindingKind {
   FParseGap
   FBudget
   FUnsupported
+  FIntOverflow
+  FDivZero
+  FIndexOob
+  FNoneDeref
+  FUninitRead
+  FInvalidCast
+  FUseAfterFree
+  FPointerArithmetic
+  FMemoryLeak
+  FFormatString
 }
 pub fn FindingKind::code(Self) -> String
 pub fn FindingKind::equal(Self, Self) -> Bool

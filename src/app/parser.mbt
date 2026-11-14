@@ -789,6 +789,14 @@ fn collect_type(p : P, stop_at_paren : Bool) -> String {
     if is_op(t, "{") && depth == 0 {
       break
     }
+    // The type annotation ENDS at the `=`. Without this the type ran on
+    // through the initializer: `let x : Int32 = 5` recorded the type as
+    // "Int32 = 5", which is not a type name and cannot be matched against
+    // one. It went unnoticed because every use of the type was a `contains`
+    // on the PREFIX, and the prefix was still right.
+    if is_op(t, "=") && depth == 0 {
+      break
+    }
     if is_op(t, "(") || is_op(t, "[") || is_op(t, "<") {
       depth = depth + 1
     } else if is_op(t, ")") || is_op(t, "]") || is_op(t, ">") {

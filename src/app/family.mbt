@@ -20,6 +20,12 @@
 
 ///|
 /// Every family, in report order.
+///
+/// The last ten are the EVOLVED VALUE ANALYSIS families: the defect classes a
+/// value analysis can reach once it stops being a range tracker and starts
+/// asking what the value is USED FOR. Four of them are RESERVED — the classes
+/// MoonBit's type system makes impossible in safe code — and their contracts
+/// say so, so `--explain` can answer for them instead of staying silent.
 pub fn family_roster() -> Array[FindingKind] {
   [
     FDead,
@@ -32,7 +38,27 @@ pub fn family_roster() -> Array[FindingKind] {
     FParseGap,
     FBudget,
     FUnsupported,
+    FIntOverflow,
+    FDivZero,
+    FIndexOob,
+    FNoneDeref,
+    FUninitRead,
+    FInvalidCast,
+    FUseAfterFree,
+    FPointerArithmetic,
+    FMemoryLeak,
+    FFormatString,
   ]
+}
+
+///|
+/// The families the EVOLVED VALUE ANALYSIS produces.
+///
+/// A family is in this list when the analysis has a check behind it. The
+/// RESERVED families are NOT in this list: they are in the roster so that
+/// `--explain` can answer for them, and they never fire.
+pub fn eva_families() -> Array[FindingKind] {
+  [FIntOverflow, FDivZero, FIndexOob, FNoneDeref, FUninitRead, FInvalidCast]
 }
 
 ///|
@@ -60,6 +86,16 @@ pub fn family_title(kind : FindingKind) -> String {
     FParseGap => "ParseGap"
     FBudget => "BudgetExceeded"
     FUnsupported => "UnsupportedSink"
+    FIntOverflow => "IntegerOverflow"
+    FDivZero => "DivisionByZero"
+    FIndexOob => "IndexOutOfBounds"
+    FNoneDeref => "NoneDereference"
+    FUninitRead => "UninitializedRead"
+    FInvalidCast => "InvalidCast"
+    FUseAfterFree => "UseAfterFree"
+    FPointerArithmetic => "PointerArithmetic"
+    FMemoryLeak => "MemoryLeak"
+    FFormatString => "FormatString"
   }
 }
 
@@ -83,6 +119,25 @@ pub fn family_property(kind : FindingKind) -> String {
     FBudget =>
       "an analysis budget was exhausted, so the rest of the function was not analysed"
     FUnsupported => "a tainted value may reach abort/panic"
+    FIntOverflow =>
+      "an integer operation may leave the range of its type: MoonBit wraps silently, so the value is wrong rather than a crash"
+    FDivZero =>
+      "a division or a modulo may divide by zero, which the runtime turns into a panic"
+    FIndexOob =>
+      "an index may fall outside the array it addresses, in either direction"
+    FNoneDeref =>
+      "an Option may be None where it is unwrapped, which the runtime turns into a panic"
+    FUninitRead =>
+      "an element of an uninitialized array may be read before it is written, so the value read is indeterminate"
+    FInvalidCast =>
+      "a conversion may not be representable in the target type, and the runtime saturates it silently"
+    FUseAfterFree =>
+      "a value may be used after the storage it referred to was released"
+    FPointerArithmetic =>
+      "pointer arithmetic may leave the bounds of the object it addresses"
+    FMemoryLeak => "storage may be allocated and never released"
+    FFormatString =>
+      "an attacker-controlled string may be interpreted as a format string"
   }
 }
 
@@ -110,6 +165,26 @@ pub fn family_assumption(kind : FindingKind) -> String {
       "the budget was large enough for the function up to the point it ran out"
     FUnsupported =>
       "the abort was read as a sink, and the tainted value reached it"
+    FIntOverflow =>
+      "the operand types were known, or the operation was on the default 32-bit Int type; MoonBit's integer arithmetic wraps rather than trapping, so this is a SILENT wrong value"
+    FDivZero =>
+      "the divisor's interval is the abstract one, so a zero inside it is a real possibility"
+    FIndexOob =>
+      "the array's length and the index's interval are both known, so the comparison is over the whole input abstraction"
+    FNoneDeref =>
+      "the Option's None-ness was tracked from the branches that produce it, and the unwrap is on a value the analysis could not prove to be Some"
+    FUninitRead =>
+      "the writes to the array were tracked, and the index read is not one of them"
+    FInvalidCast =>
+      "the source value's interval was known, and it leaves the target type's range"
+    FUseAfterFree =>
+      "NOT APPLICABLE IN MOONBIT: safe MoonBit has no raw pointers, the collector owns the storage, and values are immutable -- there is nothing to free and nothing to dangle"
+    FPointerArithmetic =>
+      "NOT APPLICABLE IN MOONBIT: there is no pointer type in safe MoonBit, so there is no pointer arithmetic to be illegal"
+    FMemoryLeak =>
+      "NOT APPLICABLE IN MOONBIT: the collector reclaims unreachable storage and there is no manual free, so storage cannot leak"
+    FFormatString =>
+      "NOT APPLICABLE IN MOONBIT: there are no format strings. The language interpolates with a typed syntax and the core has no printf-style formatting, so no string is ever interpreted as a format"
   }
 }
 
@@ -136,6 +211,26 @@ pub fn family_excluded(kind : FindingKind) -> String {
     FBudget => "everything after the budget ran out"
     FUnsupported =>
       "a panic the parser did not model, and a tainted value that never reached it"
+    FIntOverflow =>
+      "64-bit operands: the abstract domain's integer interval is 32-bit wide, so a 64-bit operation is NOT checked -- the check is stated for the default Int type and for operands whose type is known"
+    FDivZero =>
+      "a divisor whose interval could not be computed, and a floating-point division, where a zero divisor is an infinity rather than a panic"
+    FIndexOob =>
+      "an array whose length is not known -- a fixed-size array with an unknown size, and any array read through a pointer-like value"
+    FNoneDeref =>
+      "an Option that the analysis proved to be Some, and a Result, whose failure is a different family"
+    FUninitRead =>
+      "an element written on every path before the read, and an element written inside a loop, whose index set the analysis cannot bound"
+    FInvalidCast =>
+      "a conversion between integer types, which MoonBit makes explicit and total, and a narrowing between trait objects"
+    FUseAfterFree =>
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect"
+    FPointerArithmetic =>
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect"
+    FMemoryLeak =>
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect. The nearest real exhaustion is unbounded growth in a collection, which this analyzer does not measure"
+    FFormatString =>
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect"
   }
 }
 

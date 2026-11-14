@@ -601,6 +601,19 @@ fn abstract_findings(fs : Array[Finding]) -> Array[Finding] {
 }
 
 ///|
+/// The EVOLVED VALUE ANALYSIS findings: the ones that are about what a value
+/// is USED FOR, rather than about its range.
+fn eva_findings(fs : Array[Finding]) -> Array[Finding] {
+  let out : Array[Finding] = []
+  for f in fs {
+    if f.mode == "L2-EVA" {
+      out.push(f)
+    }
+  }
+  out
+}
+
+///|
 fn abstract_ranges_table(ranges : Map[String, AbsRange]) -> String {
   let keys = sort_strings(ranges.keys().to_array())
   if keys.length() == 0 {
@@ -936,6 +949,22 @@ pub fn render_report(
       "_Level 2 was not executed._ Run with `--level 2` or `--funnel`.\n\n",
     )
   }
+  out.write_string("\n### 5.3 EVA findings (evolved value analysis)\n\n")
+  if input.abstract is Some(abs) {
+    let eva = eva_findings(abs.findings)
+    if eva.length() == 0 {
+      out.write_string(
+        "_The evolved value analysis found nothing._ It asks what a value is USED FOR — an index that escapes its array, a divisor that may be zero, an integer operation that leaves its type's range, an Option that may be None where it is unwrapped, an element read before it was written, a conversion that saturates.\n\n",
+      )
+    } else {
+      out.write_string(
+        "The evolved value analysis rides on the same fixpoint and asks the second question about a value: not *what is its range* but *what happens when it is used*. These are the memory-safety and undefined-behaviour classes, mapped onto what MoonBit actually does — MoonBit's integer arithmetic WRAPS instead of trapping, so an overflow here is a silent wrong value and not a crash.\n\n",
+      )
+      out.write_string(findings_table(eva))
+    }
+  } else {
+    out.write_string("_Level 2 was not executed._\n\n")
+  }
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",
@@ -1035,6 +1064,7 @@ pub fn render_report(
     "| Ranges (L1) | dynamic sampling | union of observed values; not a proof |\n" +
     "| Ranges (L2) | interval / value-set domain | over-approximation at widening; sound relative to the abstract semantics |\n" +
     "| Contracts (L3) | WP-style VC + interval decision | `proved` only from entailed preconditions; `unknown` when facts are insufficient |\n" +
+    "| Evolved value analysis (L2-EVA) | the same fixpoint, asking what a value is USED FOR | may-analysis; a hit means the abstract state cannot exclude the defect, and the classes MoonBit cannot express are RESERVED and never fire |\n" +
     "| Slicing | dynamic dependence graph | exact for the recorded trace; not a static closure |\n\n",
   )
   out.write_string("## 10. Reproduction\n\n")

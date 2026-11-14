@@ -298,38 +298,57 @@ fn abs_cmp(
 }
 
 ///|
-fn abs_binop(op : BinOp, a : AbsCell, b : AbsCell) -> AbsCell {
+fn abs_binop(
+  ctx : AbsContext,
+  eva : EvaState,
+  op : BinOp,
+  a_expr : Expr,
+  b_expr : Expr,
+  a : AbsCell,
+  b : AbsCell,
+) -> AbsCell {
   let t = a.t.join(b.t)
   match (a.v, b.v) {
     (AInt(al, ah), AInt(bl, bh)) =>
       match op {
-        OpAdd => AbsCell::new(AInt(al + bl, ah + bh), t)
-        OpSub => AbsCell::new(AInt(al - bh, ah - bl), t)
-        OpMul =>
-          AbsCell::new(
-            AInt(
-              min4(
-                al.to_double() * bl.to_double(),
-                al.to_double() * bh.to_double(),
-                ah.to_double() * bl.to_double(),
-                ah.to_double() * bh.to_double(),
-              ).to_int(),
-              max4(
-                al.to_double() * bl.to_double(),
-                al.to_double() * bh.to_double(),
-                ah.to_double() * bl.to_double(),
-                ah.to_double() * bh.to_double(),
-              ).to_int(),
-            ),
-            t,
+        OpAdd => {
+          eva_check_overflow(ctx, eva, op, a_expr, b_expr, al, ah, bl, bh)
+          let (lo, hi) = eva_clamp32(
+            al.to_int64() + bl.to_int64(),
+            ah.to_int64() + bh.to_int64(),
           )
-        OpDiv =>
+          AbsCell::new(AInt(lo, hi), t)
+        }
+        OpSub => {
+          eva_check_overflow(ctx, eva, op, a_expr, b_expr, al, ah, bl, bh)
+          let (lo, hi) = eva_clamp32(
+            al.to_int64() - bh.to_int64(),
+            ah.to_int64() - bl.to_int64(),
+          )
+          AbsCell::new(AInt(lo, hi), t)
+        }
+        OpMul => {
+          eva_check_overflow(ctx, eva, op, a_expr, b_expr, al, ah, bl, bh)
+          let p1 = al.to_int64() * bl.to_int64()
+          let p2 = al.to_int64() * bh.to_int64()
+          let p3 = ah.to_int64() * bl.to_int64()
+          let p4 = ah.to_int64() * bh.to_int64()
+          let (lo, hi) = eva_clamp32(
+            min4i(p1, p2, p3, p4),
+            max4i(p1, p2, p3, p4),
+          )
+          AbsCell::new(AInt(lo, hi), t)
+        }
+        OpDiv => {
+          eva_check_divzero(ctx, al, ah, bl, bh, a_expr.span.start_line)
           if bl <= 0 && bh >= 0 {
             AbsCell::new(ATop, t)
           } else {
             AbsCell::new(AInt(al / bl, ah / bh), t)
           }
-        OpMod =>
+        }
+        OpMod => {
+          eva_check_divzero(ctx, al, ah, bl, bh, a_expr.span.start_line)
           AbsCell::new(
             AInt(
               0,
@@ -341,6 +360,7 @@ fn abs_binop(op : BinOp, a : AbsCell, b : AbsCell) -> AbsCell {
             ),
             t,
           )
+        }
         OpEq => {
           let (ct, cf) = abs_cmp(
             OpEq,
@@ -516,7 +536,12 @@ fn flip_op(op : BinOp) -> BinOp {
 }
 
 ///|
-fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
+fn abs_eval(
+  ctx : AbsContext,
+  st : AbsState,
+  eva : EvaState,
+  e : Expr,
+) -> AbsCell {
   ctx.steps = ctx.steps + 1
   match e.kind {
     EInt(n) => AbsCell::new(AInt(n, n), TClean)
@@ -529,26 +554,26 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
         None => AbsCell::new(ATop, TClean)
       }
     EBin(OpAnd, a, b) => {
-      let ca = abs_eval(ctx, st, a)
-      let cb = abs_eval(ctx, st, b)
+      let ca = abs_eval(ctx, st, eva, a)
+      let cb = abs_eval(ctx, st, eva, b)
       let (at, af) = bool_of_abs(ca.v)
       let (bt, bf) = bool_of_abs(cb.v)
       AbsCell::new(ABool(at && bt, af || bf), ca.t.join(cb.t))
     }
     EBin(OpOr, a, b) => {
-      let ca = abs_eval(ctx, st, a)
-      let cb = abs_eval(ctx, st, b)
+      let ca = abs_eval(ctx, st, eva, a)
+      let cb = abs_eval(ctx, st, eva, b)
       let (at, af) = bool_of_abs(ca.v)
       let (bt, bf) = bool_of_abs(cb.v)
       AbsCell::new(ABool(at || bt, af && bf), ca.t.join(cb.t))
     }
     EBin(op, a, b) => {
-      let ca = abs_eval(ctx, st, a)
-      let cb = abs_eval(ctx, st, b)
-      abs_binop(op, ca, cb)
+      let ca = abs_eval(ctx, st, eva, a)
+      let cb = abs_eval(ctx, st, eva, b)
+      abs_binop(ctx, eva, op, a, b, ca, cb)
     }
     EUn(UnNeg, a) => {
-      let ca = abs_eval(ctx, st, a)
+      let ca = abs_eval(ctx, st, eva, a)
       match ca.v {
         AInt(l, h) => AbsCell::new(AInt(-h, -l), ca.t)
         ADouble(l, h) => AbsCell::new(ADouble(-h, -l), ca.t)
@@ -556,13 +581,13 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
       }
     }
     EUn(UnNot, a) => {
-      let ca = abs_eval(ctx, st, a)
+      let ca = abs_eval(ctx, st, eva, a)
       let (t, f) = bool_of_abs(ca.v)
       AbsCell::new(ABool(f, t), ca.t)
     }
     EIndex(base, idx) => {
-      let cb = abs_eval(ctx, st, base)
-      let ci = abs_eval(ctx, st, idx)
+      let cb = abs_eval(ctx, st, eva, base)
+      let ci = abs_eval(ctx, st, eva, idx)
       if ci.t != TClean {
         add_finding(
           ctx,
@@ -579,7 +604,7 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
             let definite = ih < 0 || il >= hi_len
             add_finding(
               ctx,
-              FRangeViolation,
+              FIndexOob,
               e.span.start_line,
               if definite {
                 "abstract interval proves the index is out of bounds"
@@ -604,16 +629,24 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
           }
         _ => ()
       }
+      // An element of an UNINITIALIZED array is a different defect from an
+      // out-of-bounds one: the index is in range and the value is still
+      // indeterminate. MoonBit does not panic on it.
+      match (cb.v, ci.v) {
+        (_, AInt(il, ih)) =>
+          eva_check_uninit_read(ctx, eva, base, idx, il, ih, e.span.start_line)
+        _ => ()
+      }
       AbsCell::new(ATop, cb.t.join(ci.t))
     }
     ESlice(base, start, end) => {
-      let cb = abs_eval(ctx, st, base)
+      let cb = abs_eval(ctx, st, eva, base)
       let cs = match start {
-        Some(x) => abs_eval(ctx, st, x)
+        Some(x) => abs_eval(ctx, st, eva, x)
         None => AbsCell::new(AInt(0, 0), TClean)
       }
       let ce = match end {
-        Some(x) => abs_eval(ctx, st, x)
+        Some(x) => abs_eval(ctx, st, eva, x)
         None => AbsCell::new(AInt(0, 0), TClean)
       }
       // A slice is clamped by the runtime, so there is no out-of-bounds claim
@@ -625,7 +658,7 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
       let cells : Array[AbsCell] = []
       let mut t = TClean
       for a in args {
-        let c = abs_eval(ctx, st, a)
+        let c = abs_eval(ctx, st, eva, a)
         cells.push(c)
         t = t.join(c.t)
       }
@@ -697,11 +730,33 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
       }
     }
     EMethod(recv, m, args) => {
-      let cr = abs_eval(ctx, st, recv)
+      let cr = abs_eval(ctx, st, eva, recv)
       let mut t = cr.t
+      let arg_cells : Array[AbsCell] = []
       for a in args {
-        let c = abs_eval(ctx, st, a)
+        let c = abs_eval(ctx, st, eva, a)
+        arg_cells.push(c)
         t = t.join(c.t)
+      }
+      // The EVOLVED VALUE ANALYSIS checks: what the RECEIVER IS USED FOR.
+      // Each one is a question about the use of a value, not about its range.
+      if m == "unwrap" {
+        // `None.unwrap()` is MoonBit's null dereference: it panics.
+        eva_check_none_deref(ctx, eva, recv, e.span.start_line)
+      } else if m == "to_int" || m == "to_int64" {
+        // `Double::to_int` SATURATES: a value outside the target's range
+        // silently becomes the bound, and a NaN becomes 0.
+        match cr.v {
+          ADouble(lo, hi) =>
+            eva_check_invalid_cast(ctx, m, lo, hi, e.span.start_line)
+          _ => ()
+        }
+      } else if m == "set" && arg_cells.length() > 0 {
+        // A write into an uninitialized array.
+        match arg_cells[0].v {
+          AInt(k, k2) => if k == k2 { eva_note_uninit_set(eva, recv, k) }
+          _ => ()
+        }
       }
       if m == "length" {
         match cr.v {
@@ -743,13 +798,13 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
       }
     }
     EField(base, _) => {
-      let cb = abs_eval(ctx, st, base)
+      let cb = abs_eval(ctx, st, eva, base)
       AbsCell::new(ATop, cb.t)
     }
     EArray(xs) => {
       let mut t = TClean
       for x in xs {
-        t = t.join(abs_eval(ctx, st, x).t)
+        t = t.join(abs_eval(ctx, st, eva, x).t)
       }
       AbsCell::new(AArr(xs.length(), xs.length()), t)
     }
@@ -757,7 +812,7 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
       let vals : Array[AbsVal] = []
       let mut t = TClean
       for x in xs {
-        let c = abs_eval(ctx, st, x)
+        let c = abs_eval(ctx, st, eva, x)
         vals.push(c.v)
         t = t.join(c.t)
       }
@@ -768,7 +823,12 @@ fn abs_eval(ctx : AbsContext, st : AbsState, e : Expr) -> AbsCell {
 }
 
 ///|
-fn abs_block(ctx : AbsContext, st : AbsState, stmts : Array[Stmt]) -> AbsState {
+fn abs_block(
+  ctx : AbsContext,
+  st : AbsState,
+  eva : EvaState,
+  stmts : Array[Stmt],
+) -> AbsState {
   let mut cur = st
   for s in stmts {
     if ctx.steps > ctx.max_steps {
@@ -782,29 +842,39 @@ fn abs_block(ctx : AbsContext, st : AbsState, stmts : Array[Stmt]) -> AbsState {
       )
       return cur
     }
-    cur = abs_stmt(ctx, cur, s)
+    cur = abs_stmt(ctx, cur, eva, s)
   }
   cur
 }
 
 ///|
-fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
+fn abs_stmt(
+  ctx : AbsContext,
+  st : AbsState,
+  eva : EvaState,
+  s : Stmt,
+) -> AbsState {
   ctx.steps = ctx.steps + 1
   match s.kind {
-    SLet(n, _, e) => {
-      let c = abs_eval(ctx, st, e)
+    SLet(n, ty, e) => {
+      let c = abs_eval(ctx, st, eva, e)
       let out = copy_state(st)
       out.env[n] = c
       record_abs_range(ctx, n, c)
+      // The EVA facts for a binding. The declared type wins over the
+      // expression's own type, because the annotation is what the author
+      // wrote and the inference is the analyzer's guess.
+      eva_bind(eva, n, ty, e)
       out
     }
     SAssign(lhs, e) => {
-      let c = abs_eval(ctx, st, e)
+      let c = abs_eval(ctx, st, eva, e)
       match lhs.kind {
         EName(n) => {
           let out = copy_state(st)
           out.env[n] = c
           record_abs_range(ctx, n, c)
+          eva_bind(eva, n, "", e)
           out
         }
         _ => st
@@ -817,7 +887,15 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
             Some(c) => c
             None => AbsCell::new(ATop, TClean)
           }
-          let c = abs_binop(op, cur, abs_eval(ctx, st, e))
+          let c = abs_binop(
+            ctx,
+            eva,
+            op,
+            lhs,
+            e,
+            cur,
+            abs_eval(ctx, st, eva, e),
+          )
           let out = copy_state(st)
           out.env[n] = c
           record_abs_range(ctx, n, c)
@@ -826,12 +904,23 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
         _ => st
       }
     SIf(cond, a, b) => {
-      let cc = abs_eval(ctx, st, cond)
+      let cc = abs_eval(ctx, st, eva, cond)
       let (may_true, may_false) = bool_of_abs(cc.v)
       let sa = refine_cond(st, cond, true)
       let sb = refine_cond(st, cond, false)
+      // The EVA facts are FLOW-SENSITIVE, so the two branches are analysed
+      // from the same starting facts and the facts that come out of them are
+      // JOINED. Without the join a name that is None on one branch would
+      // stay None after the `if`, and the idiomatic
+      //
+      //     let mut x = None
+      //     if c { x = Some(v) } else { x = Some(w) }
+      //     x.unwrap()
+      //
+      // would be reported as a None dereference when it is not one.
+      let snap = eva_copy(eva)
       let ra = if may_true {
-        abs_block(ctx, sa, a)
+        abs_block(ctx, sa, eva, a)
       } else {
         add_finding(
           ctx,
@@ -843,8 +932,10 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
         )
         AbsState::new()
       }
+      let after_a = eva_copy(eva)
+      eva_assign(eva, snap)
       let rb = if may_false {
-        abs_block(ctx, sb, b)
+        abs_block(ctx, sb, eva, b)
       } else {
         add_finding(
           ctx,
@@ -856,6 +947,11 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
         )
         AbsState::new()
       }
+      let after_b = eva_copy(eva)
+      // The join is of the two BRANCHES, not of the branches and the state
+      // before them: a fact that was true before the `if` and is false on
+      // both branches is false after it.
+      eva_assign(eva, eva_join(after_a, after_b))
       if may_true && may_false {
         abs_join_state(ra, rb)
       } else if may_true {
@@ -868,8 +964,13 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
       let mut cur = st
       let mut iter = 0
       let mut last_cond = AbsCell::new(ABool(true, true), TClean)
+      // A write inside a loop makes an uninitialized array's written set
+      // unbounded, so the loop depth is tracked while the body is analysed.
+      let outer_depth = eva.loop_depth
+      eva.loop_depth = outer_depth + 1
+      let snap = eva_copy(eva)
       while iter < 6 {
-        last_cond = abs_eval(ctx, cur, cond)
+        last_cond = abs_eval(ctx, cur, eva, cond)
         let (may_true, _) = bool_of_abs(last_cond.v)
         if !may_true {
           break
@@ -878,7 +979,7 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
         if last_cond.t != TClean {
           implicit_abs_taint(body_in, cond)
         }
-        let after = abs_block(ctx, body_in, body)
+        let after = abs_block(ctx, body_in, eva, body)
         let next = abs_join_state(cur, after)
         let widened = if iter >= 3 { abs_widen(cur, next) } else { next }
         if abs_state_equal(widened, cur) {
@@ -888,6 +989,11 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
         cur = widened
         iter = iter + 1
       }
+      eva.loop_depth = outer_depth
+      // The loop may run zero times, so the facts that come out of it are
+      // JOINED with the facts that went in.
+      let after_loop = eva_copy(eva)
+      eva_assign(eva, eva_join(snap, after_loop))
       let (may_true, may_false) = bool_of_abs(last_cond.v)
       if may_true && !may_false && !has_break_or_return(body) {
         add_finding(
@@ -902,20 +1008,23 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
       refine_cond(cur, cond, false)
     }
     SFor(n, init, cond, step, body) => {
-      let c = abs_eval(ctx, st, init)
+      let c = abs_eval(ctx, st, eva, init)
       let mut cur = copy_state(st)
       cur.env[n] = c
       let mut iter = 0
+      let outer_depth = eva.loop_depth
+      eva.loop_depth = outer_depth + 1
+      let snap = eva_copy(eva)
       while iter < 6 {
-        let cc = abs_eval(ctx, cur, cond)
+        let cc = abs_eval(ctx, cur, eva, cond)
         let (may_true, _) = bool_of_abs(cc.v)
         if !may_true {
           break
         }
         let body_in = refine_cond(cur, cond, true)
-        let after = abs_block(ctx, body_in, body)
+        let after = abs_block(ctx, body_in, eva, body)
         let stepped = copy_state(after)
-        ignore(abs_eval(ctx, stepped, step))
+        ignore(abs_eval(ctx, stepped, eva, step))
         let next = abs_join_state(cur, stepped)
         let widened = if iter >= 3 { abs_widen(cur, next) } else { next }
         if abs_state_equal(widened, cur) {
@@ -924,29 +1033,32 @@ fn abs_stmt(ctx : AbsContext, st : AbsState, s : Stmt) -> AbsState {
         cur = widened
         iter = iter + 1
       }
+      eva.loop_depth = outer_depth
+      let after_loop = eva_copy(eva)
+      eva_assign(eva, eva_join(snap, after_loop))
       refine_cond(cur, cond, false)
     }
     SForIn(names, iter, body) => {
-      let ci = abs_eval(ctx, st, iter)
+      let ci = abs_eval(ctx, st, eva, iter)
       let cur = copy_state(st)
       for n in names {
         cur.env[n] = AbsCell::new(ATop, ci.t)
       }
-      let after = abs_block(ctx, cur, body)
+      let after = abs_block(ctx, cur, eva, body)
       abs_join_state(cur, after)
     }
     SReturn(e) => {
       match e {
-        Some(x) => ignore(abs_eval(ctx, st, x))
+        Some(x) => ignore(abs_eval(ctx, st, eva, x))
         None => ()
       }
       st
     }
     SExpr(e) => {
-      ignore(abs_eval(ctx, st, e))
+      ignore(abs_eval(ctx, st, eva, e))
       st
     }
-    SBlock(inner) | STry(inner) => abs_block(ctx, st, inner)
+    SBlock(inner) | STry(inner) => abs_block(ctx, st, eva, inner)
     SUnsupported(_) => st
     _ => st
   }
@@ -1065,6 +1177,12 @@ pub fn run_abstract(
   let ranges : Map[String, AbsRange] = Map::new()
   let mut steps = 0
   let mut count = 0
+  // The function table, so the EVOLVED VALUE ANALYSIS knows the width and
+  // the Option-ness of what a call returns.
+  let rets : Map[String, String] = Map::new()
+  for f in ast.all_funcs() {
+    rets[f.name] = f.ret_ty
+  }
   for f in ast.all_funcs() {
     if count >= max_functions {
       break
@@ -1081,11 +1199,23 @@ pub fn run_abstract(
       max_steps,
     }
     let st = AbsState::new()
+    // The EVA facts are per FUNCTION: a name that is None in one function
+    // says nothing about the same name in another.
+    let eva = EvaState::new(rets)
     for p in f.params {
       st.env[p.name] = initial_cell(p.ty)
       record_abs_range(ctx, p.name, st.env[p.name])
+      // A parameter of an Option type may be None: that is the null
+      // dereference class, and it starts at the parameter.
+      let w = eva_width_of_type(p.ty)
+      if w != 0 {
+        eva.width[p.name] = w
+      }
+      if eva_type_is_option(p.ty) {
+        eva.none[p.name] = true
+      }
     }
-    ignore(abs_block(ctx, st, f.body))
+    ignore(abs_block(ctx, st, eva, f.body))
     steps = steps + ctx.steps
     count = count + 1
   }

@@ -125,3 +125,35 @@ test "parser handles methods and indexing expressions" {
     _ => fail("expected let")
   }
 }
+
+///|
+test "a type annotation ends at the = and does not swallow the initializer" {
+  // The type used to run on through the initializer: `let x : Int32 = 5`
+  // recorded the type as "Int32 = 5", which is not a type name. It went
+  // unnoticed because every use of the type was a `contains` on the PREFIX,
+  // and the prefix was still right -- but a check that matches a type NAME
+  // cannot use it.
+  let src =
+    #|fn f() -> Int {
+    #|  let x : Int32 = 5
+    #|  let y : Option[Int32] = None
+    #|  let z : Int32? = None
+    #|  x
+    #|}
+  let f = parse_file("t.mbt", src)
+  let body = f.funcs[0].body
+  match body[0].kind {
+    SLet(_, ty, _) => inspect(ty, content="Int32")
+    _ => fail("expected let")
+  }
+  match body[1].kind {
+    SLet(_, ty, _) => inspect(ty, content="Option[Int32]")
+    _ => fail("expected let")
+  }
+  // The shorthand spelling is the same type, and the formatter rewrites one
+  // into the other, so both have to survive.
+  match body[2].kind {
+    SLet(_, ty, _) => inspect(ty.trim().has_suffix("?"), content="true")
+    _ => fail("expected let")
+  }
+}

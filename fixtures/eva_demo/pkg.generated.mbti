@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/fixtures/eva_demo"
+
+// Values
+pub fn divide_by_parameter(Int32) -> Int32
+
+pub fn divide_by_zero() -> Int32
+
+pub fn index_negative() -> Int32
+
+pub fn index_past_end() -> Int32
+
+pub fn modulo_by_zero(Int32) -> Int32
+
+pub fn overflow_literal() -> Int32
+
+pub fn overflow_multiply(Int32, Int32) -> Int32
+
+pub fn read_uninitialized() -> Int32
+
+pub fn safe_cast() -> Int32
+
+pub fn safe_divisor() -> Int32
+
+pub fn safe_index() -> Int32
+
+pub fn safe_initialized() -> Int32
+
+pub fn safe_some() -> Int32
+
+pub fn safe_some_on_both_branches(Bool) -> Int32
+
+pub fn safe_sum() -> Int32
+
+pub fn saturating_cast() -> Int32
+
+pub fn unwrap_maybe_none(Bool) -> Int32
+
+pub fn unwrap_none() -> Int32
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

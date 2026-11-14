@@ -96,6 +96,16 @@ check('the root js artifact is on disk', existsSync(jsArtifact), jsArtifact);
 
 // ------------------------------------------- the bare coordinate, end to end
 
+// Run the built executable. `exe` is the ROOT package's binary, which is the
+// one `moonx` resolves.
+const run = (args, timeout = 180000) =>
+  spawnSync(exe, args, {
+    cwd: ROOT,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+    timeout,
+  });
+
 if (existsSync(exe)) {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
@@ -219,14 +229,6 @@ if (existsSync(exe)) {
   // These five are the options the peer analyzer has and this one did not:
   // --exclude, --families, --explain, --metrics and --per-function. Each one
   // is checked by what it DOES, not by whether it is accepted.
-
-  const run = (args, timeout = 180000) =>
-    spawnSync(exe, args, {
-      cwd: ROOT,
-      encoding: 'utf8',
-      shell: process.platform === 'win32',
-      timeout,
-    });
 
   // --explain and --explain-all are CONTRACT REQUESTS, not scans: they answer
   // and stop, before any file is read.
@@ -391,6 +393,129 @@ if (existsSync(exe)) {
     '--per-function enters more functions than the cap allows',
     enteredOf(capped.stdout) === 5 && enteredOf(perFn.stdout) > 5,
     `capped=${enteredOf(capped.stdout)} per-function=${enteredOf(perFn.stdout)}`,
+  );
+}
+
+// --------------------------------------------------------- the evolved value
+// analysis
+//
+// The EVOLVED VALUE ANALYSIS asks what a value is USED FOR, not what its
+// range is. It is checked here against the fixture that carries both the
+// defects and the ordinary shapes next to them: a check that fires on the
+// safe half is a false positive, and a check that does not fire on the
+// defect half is a check that does not work.
+if (existsSync(join(ROOT, 'fixtures', 'eva_demo', 'lib.mbt'))) {
+  const evaRoster = run(['--explain-all']);
+  const evaCodes = [
+    'INTEGER-OVERFLOW',
+    'DIVISION-BY-ZERO',
+    'INDEX-OOB',
+    'NONE-DEREF',
+    'UNINITIALIZED-READ',
+    'INVALID-CAST',
+  ];
+  const reservedCodes = [
+    'USE-AFTER-FREE',
+    'POINTER-ARITHMETIC',
+    'MEMORY-LEAK',
+    'FORMAT-STRING',
+  ];
+  check(
+    'the roster carries the evolved value analysis families',
+    evaRoster.status === 0 && evaCodes.every((c) => evaRoster.stdout.includes(c)),
+  );
+  check(
+    'the roster carries the classes MoonBit cannot express',
+    reservedCodes.every((c) => evaRoster.stdout.includes(c)),
+  );
+  const evaOne = run(['--explain', 'INTEGER-OVERFLOW']);
+  check(
+    '--explain prints an evolved value analysis contract',
+    evaOne.status === 0 &&
+      evaOne.stdout.includes('property') &&
+      evaOne.stdout.includes('assumption') &&
+      evaOne.stdout.includes('excluded') &&
+      !evaOne.stdout.includes('REPORT'),
+    `exit=${evaOne.status}`,
+  );
+  const reserved = run(['--explain', 'USE-AFTER-FREE']);
+  check(
+    'the reserved families say why they never fire',
+    reserved.status === 0 && reserved.stdout.includes('NOT APPLICABLE IN MOONBIT'),
+    `exit=${reserved.status}`,
+  );
+
+  const evaRun = run([
+    'analyze',
+    '--dir',
+    'fixtures/eva_demo',
+    '--out',
+    join(OUT, 'eva'),
+    '--funnel',
+    '--trials',
+    '4',
+  ]);
+  const evaReport = join(OUT, 'eva', 'local_module_0.0.0.md');
+  const evaText = existsSync(evaReport) ? readFileSync(evaReport, 'utf8') : '';
+  check(
+    'the evolved value analysis reports every class it can',
+    evaRun.status === 0 &&
+      evaCodes.every((c) => evaText.includes(c)),
+    `exit=${evaRun.status}`,
+  );
+  check(
+    'the report has the evolved value analysis section',
+    evaText.includes('### 5.3 EVA findings'),
+  );
+  // The NEGATIVE half of the fixture must not be reported. Each of these is
+  // the ordinary shape that sits next to the defect. The check is scoped to
+  // the FINDINGS sections: the same names appear in the range tables, which
+  // is where a value's interval is printed and not where a defect is.
+  const safeFns = [
+    'safe_sum',
+    'safe_divisor',
+    'safe_index',
+    'safe_some',
+    'safe_some_on_both_branches',
+    'safe_initialized',
+    'safe_cast',
+  ];
+  const findingsSection = (text) => {
+    const start = text.indexOf('### 5.2 L2 abstract findings');
+    if (start < 0) return '';
+    const end = text.indexOf('\n## 6.', start);
+    return end < 0 ? text.slice(start) : text.slice(start, end);
+  };
+  const evaFindingsText = findingsSection(evaText);
+  const reportedSafe = safeFns.filter((fn) =>
+    new RegExp(`\\|\\s+${fn}\\s+\\|`).test(evaFindingsText),
+  );
+  check(
+    'the ordinary shapes are not reported',
+    reportedSafe.length === 0,
+    reportedSafe.join(','),
+  );
+
+  // The family profile selects the evolved families by their code.
+  const onlyOverflow = run([
+    'analyze',
+    '--dir',
+    'fixtures/eva_demo',
+    '--out',
+    join(OUT, 'eva_profile'),
+    '--funnel',
+    '--families',
+    'INTEGER-OVERFLOW',
+  ]);
+  const onlyText = existsSync(join(OUT, 'eva_profile', 'local_module_0.0.0.md'))
+    ? readFileSync(join(OUT, 'eva_profile', 'local_module_0.0.0.md'), 'utf8')
+    : '';
+  check(
+    'a family profile selects the evolved families by code',
+    onlyOverflow.status === 0 &&
+      onlyText.includes('INTEGER-OVERFLOW') &&
+      !onlyText.includes('DIVISION-BY-ZERO'),
+    `exit=${onlyOverflow.status}`,
   );
 }
 
