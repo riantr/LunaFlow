@@ -134,7 +134,9 @@ The version directory is the pin. Every reported location is relative to that di
 
 ### 3.3 Extension to arbitrary modules
 
-Everything is coordinate-driven; there is no allow-list. `--dir <path>` analyzes a vendored checkout with the same pipeline. The only hard limits are:
+Everything is coordinate-driven; there is no allow-list. `--dir <path>`, and a
+target that is a path, analyze a vendored checkout with the same pipeline. The
+only hard limits are:
 
 - files walk limit (`2000`, stated in `load_module`),
 - interpreted-function cap (`--max-functions`),
@@ -433,13 +435,27 @@ Interaction is intentionally file-based: the CLI produces Markdown that GitHub/G
 ### 7.1 CLI
 
 ```
-LunaFlow analyze <coord>[@version|@latest] | --dir <path>
+LunaFlow [analyze] [<target>]
   [--out <dir>] [--trials <n>] [--max-functions <n>]
   [--level <1|2|3>] [--funnel]
   [--function <fn>] [--slice <crit>] [--forward|--backward]
   [--coverage <cobertura.xml>] [--max-cfg <n>] [--max-taint <n>]
   [--max-slice <n>] [--list-functions] [--quiet]
 ```
+
+The **target slot** follows the peer analyzer's rule, so the two tools take the
+same invocation:
+
+| Target | What it is | What happens |
+| --- | --- | --- |
+| `author/module[@version]` | a coordinate | fetched through `moon fetch`, then analysed |
+| `./path`, `/abs/path`, `C:\path` | a path | analysed where it stands |
+| nothing | the default | the current directory is analysed |
+
+`--dir <path>` still names a tree and `analyze` is still accepted as a
+subcommand; both are kept because they are in the published documentation and
+in every QA harness. A target that LOOKS like a coordinate (`fixtures/x`) is
+resolved as one, which is the peer's rule too — a local path needs the `./`.
 
 Outputs, all deterministic except `elapsed_ms`:
 

@@ -110,11 +110,37 @@ if (existsSync(exe)) {
     timeout: 120000,
   });
 
-  // A PATH is not a coordinate, and neither spelling of a local path may be
-  // mistaken for one: "fixtures/vuln_demo" has no author, and
-  // "./fixtures/vuln_demo" has an author part of "." -- a path, not a name.
-  // Both must be refused rather than analysed as a module, because a wrong
-  // guess here is a report about the wrong tree.
+  // THE TARGET SLOT follows the peer analyzer's rule, so the two tools take
+  // the same invocation: a coordinate is fetched, a PATH is analysed where it
+  // stands, and with no target at all the CURRENT DIRECTORY is analysed.
+  //
+  // The report's own `root` line is the assertion: it names WHICH tree was
+  // analysed, so a tree that was mistaken for another one cannot pass.
+  const localTargets = [
+    { args: [], label: 'no target analyses the current directory', root: '.' },
+    { args: ['.'], label: 'a "." target analyses the current directory', root: '.' },
+    { args: ['./fixtures/vuln_demo'], label: 'a path target is analysed where it stands', root: './fixtures/vuln_demo' },
+    { args: ['analyze', '--dir', 'fixtures/vuln_demo'], label: '--dir still names a tree', root: 'fixtures/vuln_demo' },
+  ];
+  for (const t of localTargets) {
+    const localRun = spawnSync(exe, [...t.args, '--out', OUT], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      shell: process.platform === 'win32',
+      timeout: 120000,
+    });
+    check(
+      t.label,
+      localRun.status === 0 && (localRun.stdout || '').includes(`root\t${t.root}`),
+      `exit=${localRun.status}`,
+    );
+  }
+
+  // A coordinate-SHAPED string is a coordinate, not a directory: "fixtures/
+  // vuln_demo" has an author part and a module part, so it is resolved through
+  // the registry and refused there. The peer analyzer resolves it the same
+  // way -- a local path needs the "./" or a drive letter to be read as one.
+  // What must NOT happen is a report about the WRONG tree.
   for (const path of ['fixtures/vuln_demo', './fixtures/vuln_demo']) {
     const pathRun = spawnSync(exe, [path, '--out', OUT, '--quiet'], {
       cwd: ROOT,
@@ -123,8 +149,8 @@ if (existsSync(exe)) {
       timeout: 120000,
     });
     check(
-      `a local path is not mistaken for a coordinate: ${path}`,
-      pathRun.status === 0 && !pathRun.stdout.includes('REPORT'),
+      `a local path is not analysed as the wrong tree: ${path}`,
+      pathRun.status === 0 && !(pathRun.stdout || '').includes(`root\t${path}`),
       `exit=${pathRun.status}`,
     );
   }
@@ -180,6 +206,12 @@ if (existsSync(exe)) {
   check(
     'the usage text names the bare-coordinate form',
     help.stdout.includes('LunaFlow <author>/<module>'),
+  );
+  // The default target is a feature nobody can see unless the usage text
+  // says so.
+  check(
+    'the usage text names the default target',
+    help.stdout.includes('CURRENT DIRECTORY'),
   );
 }
 

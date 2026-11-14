@@ -48,9 +48,14 @@ fn usage() -> String {
     #|LunaFlow — dynamic-first CFG / taint / range / slicing visualizer
     #|
     #|Usage:
-    #|  LunaFlow analyze <author>/<module>[@<version>|@latest] [options]
+    #|  LunaFlow [analyze] [<target>] [options]
     #|  LunaFlow analyze --dir <path> [options]
     #|  LunaFlow <author>/<module>[@<version>|@latest] [options]
+    #|
+    #|  <target>   a registry coordinate (author/module[@version]) OR a local
+    #|             directory. With NO target at all, the CURRENT DIRECTORY is
+    #|             analysed — the same rule the peer analyzer uses, so the two
+    #|             tools take the same invocation.
     #|
     #|The last form is "analyze" with the coordinate where the subcommand
     #|would be. It exists because "moonx" hands the TARGET to the program as
@@ -58,7 +63,7 @@ fn usage() -> String {
     #|runs this binary with "riantr/LunaFlow@latest" as argv[1].
     #|
     #|Options:
-    #|  --dir <path>        analyze a local directory instead of a registry module
+    #|  --dir <path>        analyze a local directory (same as a path target)
     #|  --out <dir>         report directory (default: reports)
     #|  --trials <n>        synthesized input trials per function (default: 8)
     #|  --max-functions <n> cap on interpreted functions (default: 150)
@@ -141,26 +146,43 @@ fn is_coord(s : String) -> Bool {
 }
 
 ///|
+/// Parse the command line.
+///
+/// The TARGET SLOT follows the peer analyzer's rule, so the two tools take
+/// the same invocation:
+///
+///   * no target at all → the CURRENT DIRECTORY is analysed;
+///   * a target that is a coordinate → it is fetched and analysed;
+///   * a target that is NOT a coordinate → it is a local path, and it is
+///     analysed where it stands.
+///
+/// The difference from the peer is that this analyzer still has an `analyze`
+/// subcommand, and that `--dir` still names a tree. Both are kept: they are
+/// in the published documentation and in every QA harness.
 fn parse_args(args : Array[String]) -> (String, Opts)? {
+  let o = Opts::default()
+  // NO TARGET IS NOT AN ERROR. The current directory is the default, and the
+  // peer analyzer defaults the same way.
   if args.length() < 2 {
-    return None
+    return Some(("analyze", o))
   }
   let mut cmd = args[1]
   if cmd == "help" || cmd == "--help" || cmd == "-h" {
     return Some(("help", Opts::default()))
   }
-  let o = Opts::default()
-  if cmd != "analyze" {
-    // A BARE COORDINATE IS AN IMPLICIT "analyze". The coordinate lands in
-    // argv[1] — where a subcommand would be — because that is where "moonx"
-    // puts the target.
-    if !is_coord(cmd) {
-      return None
+  let mut i = 1
+  if cmd == "analyze" {
+    i = 2
+  } else if !cmd.has_prefix("--") {
+    // THE TARGET SLOT. A coordinate is fetched; anything else is a path.
+    if is_coord(cmd) {
+      o.coord = cmd
+    } else {
+      o.dir = cmd
     }
-    o.coord = cmd
-    cmd = "analyze"
+    i = 2
   }
-  let mut i = 2
+  cmd = "analyze"
   while i < args.length() {
     let a = args[i]
     if a == "--dir" {
@@ -221,7 +243,16 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
     } else if a.has_prefix("--") {
       i = i + 1
     } else {
-      if o.coord == "" {
+      // A TARGET after the first slot. The first one wins; a coordinate that
+      // follows a `--dir` LABELS the local scan, which is what it did before
+      // the target slot learned about paths.
+      if o.coord == "" && o.dir == "" {
+        if is_coord(a) {
+          o.coord = a
+        } else {
+          o.dir = a
+        }
+      } else if o.coord == "" && is_coord(a) {
         o.coord = a
       }
       i = i + 1
@@ -364,14 +395,15 @@ fn coord_file_stem(coord : String) -> String {
 
 ///|
 async fn analyze(opts : Opts) -> Unit {
-  if opts.coord == "" && opts.dir == "" {
-    println(usage())
-    return
-  }
+  // NO TARGET AT ALL MEANS THE CURRENT DIRECTORY. The peer analyzer defaults
+  // the same way, so `moonx riantr/LunaFlow@latest` and
+  // `moonx riantr/moonbit_static_analysis@latest` do the same thing.
+  let default_target = opts.coord == "" && opts.dir == ""
+  let dir = if default_target { "." } else { opts.dir }
   let t0 = @async.now()
   let mut coord = opts.coord
   let mut version = ""
-  let mut root = opts.dir
+  let mut root = dir
   let mut pinning = ""
   if root != "" {
     let manifest_text = read_text(@app.path_join(root, "moon.mod"))
@@ -382,14 +414,22 @@ async fn analyze(opts : Opts) -> Unit {
           coord = if m.name == "" { "local/module" } else { m.name }
         }
         version = m.version
-        pinning = "explicit local directory; no registry resolution performed"
+        pinning = if default_target {
+          "the current directory, by default; no registry resolution performed"
+        } else {
+          "explicit local directory; no registry resolution performed"
+        }
       }
       None => {
         if coord == "" {
           coord = "local/module"
         }
         version = "0.0.0"
-        pinning = "explicit local directory without moon.mod"
+        pinning = if default_target {
+          "the current directory, by default, and it has no moon.mod"
+        } else {
+          "explicit local directory without moon.mod"
+        }
       }
     }
   } else {

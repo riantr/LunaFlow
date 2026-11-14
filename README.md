@@ -127,7 +127,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.7
+moon add riantr/LunaFlow@0.1.8
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -135,7 +135,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.7",
+  "riantr/LunaFlow@0.1.8",
 }
 ```
 
@@ -186,7 +186,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.7](https://mooncakes.io/docs/riantr/LunaFlow@0.1.7).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.8](https://mooncakes.io/docs/riantr/LunaFlow@0.1.8).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -207,17 +207,29 @@ package of a module coordinate, so a module with no root executable fails with
 to `src/command` — and the registry publishes its **wasm** artifact, because
 `moonx --target` accepts no other value.
 
-The CLI also accepts a **bare coordinate**, which is what `moonx` passes as the
+The CLI also accepts a **bare target**, which is what `moonx` passes as the
 program's first argument:
 
 ```sh
 moonx riantr/LunaFlow@latest riantr/LunaFlow@latest   # the bare coordinate IS the target
 moon run src/cli -- riantr/LunaFlow@latest              # the same thing, locally
+moonx riantr/LunaFlow@latest .                         # a path IS the target too
+moonx riantr/LunaFlow@latest                            # no target at all: the current directory
 ```
 
-A bare coordinate is an implicit `analyze`. A local path is not: `./fixtures`
-has an author part of `.`, which is not a name, so it is refused rather than
-mistaken for a module.
+**The target slot follows the peer analyzer's rule**, so the two tools take the
+same invocation:
+
+| Target | What it is | What happens |
+|---|---|---|
+| `author/module[@version]` | a coordinate | it is fetched through `moon fetch` and analysed |
+| `./path`, `/abs/path`, `C:\path` | a path | it is analysed where it stands |
+| nothing | the default | the **current directory** is analysed |
+
+A bare coordinate is an implicit `analyze`. A path is a path — but a path that
+LOOKS like a coordinate (`fixtures/vuln_demo`) is a coordinate, and the registry
+is asked for it. The peer analyzer resolves it the same way, and it is why a
+local path needs the `./`.
 
 ### What the release was checked on
 
@@ -368,6 +380,53 @@ every package that uses it says so in
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
 
+### What changed in 0.1.8
+
+**The input surface now matches `riantr/moonbit_static_analysis`, and the
+default target is the current directory.**
+
+The peer analyzer takes one positional target and defaults it to `.`. This
+release adopts that rule, so the two tools take the same invocation:
+
+| Target | What it is | What happens |
+|---|---|---|
+| `author/module[@version]` | a coordinate | fetched through `moon fetch` and analysed |
+| `./path`, `/abs/path`, `C:\path` | a path | analysed where it stands |
+| nothing | the default | the **current directory** is analysed |
+
+```sh
+moonx riantr/LunaFlow@latest .                          # the current directory
+moonx riantr/LunaFlow@latest ./src/app                  # a tree, where it stands
+moonx riantr/LunaFlow@latest riantr/LunaFlow@latest      # a coordinate, fetched
+moonx riantr/LunaFlow@latest                             # no target: the current directory
+```
+
+**What changed in the parser.** The target slot used to accept a coordinate or
+nothing: a path was refused, and a run with no target at all printed the usage
+text. It now accepts a coordinate or a **path**, and it defaults to `.`. The
+resolution rule is the peer's, and it was settled by measurement rather than by
+reading: `moonx riantr/moonbit_static_analysis@latest fixtures/vuln_demo`
+resolves that string as a COORDINATE and fails in the registry, while
+`moonx riantr/moonbit_static_analysis@latest ./fixtures/vuln_demo` scans the
+directory. This analyzer now answers the same way for both.
+
+`--dir` still names a tree and `analyze` is still accepted as a subcommand —
+both are in the published documentation and in every QA harness, so neither
+was removed. The report says which of the two it analysed: the `pinning` line
+now reads *"the current directory, by default"* when the target was defaulted,
+and *"explicit local directory"* when it was named.
+
+**The gate moved with it.** `root_package.mjs` used to assert that a local
+path is REFUSED; that assertion encoded the old contract, and it was replaced
+by the new one: the report's own `root` line has to name the tree that was
+analysed, so a tree mistaken for another one cannot pass. The step count went
+from 16 to 21 — four new checks for the default target, the `.` target, the
+positional path and the `--dir` spelling, and one for the usage text naming
+the default.
+
+The analyser itself did not change: the same 73 tests pass, the wasm artifact
+is unchanged, and the host contract is still **108 imports, 107 covered**.
+
 ### What changed in 0.1.7
 
 **The module now builds and tests for JavaScript, and the library reaches
@@ -497,8 +556,8 @@ Measured after it: on this module's own source the statements understood went
 **3,346 → 3,093**, the unsupported statements **195 → 175**, and the functions
 extracted **395 → 396** — the `usage()` function is a function again. (The
 measured-runs table above re-measures the tree after this release's own test
-file was added, and again after 0.1.7's backend guards, so it reads 29 files
-and 3,145 statements.) On the peer module,
+file was added, and again after the 0.1.7 backend guards and the 0.1.8
+argument parser, so it reads 29 files and 3,150 statements.) On the peer module,
 which writes its own block strings, the statements understood went
 **12,997 → 12,970** and the unsupported statements **611 → 595**; on doubleML
 every number is unchanged, and the committed doubleML artefact is byte-identical
@@ -798,7 +857,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 29 | 3,145 | 12,560 | 22 | 2 / 1 / 3 | 3 | 1 | 0.14 s |
+| `LunaFlow` itself (`--dir .`) | 29 | 3,150 | 12,552 | 22 | 2 / 1 / 3 | 3 | 1 | 0.14 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -811,10 +870,12 @@ brace of its function, so whole function bodies were truncated. The committed
 numbers are now the honest ones: neither module has an unreachable statement,
 and the analyzer says so.
 
-This release moved ONE number in that table: LunaFlow's own statement count,
-3,126 → 3,145, because the `#cfg` guards and the stubs behind them are
-statements now. Nothing else moved — the analyser reads the other modules
-exactly as it did before.
+Only LunaFlow's OWN row has moved since then, and only because the analyzer is
+one of the modules it analyses: 0.1.7 moved the statement count, 3,126 →
+3,145, when the `#cfg` guards and the stubs behind them became statements, and
+this release moved it again to 3,150 and the L1 events from 12,560 to 12,552,
+because the analyzer now reads its own source through the rewritten argument
+parser. The other three rows have not moved at all.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.
