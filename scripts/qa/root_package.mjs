@@ -467,6 +467,31 @@ if (existsSync(join(ROOT, 'fixtures', 'eva_demo', 'lib.mbt'))) {
     'the report has the evolved value analysis section',
     evaText.includes('### 5.3 EVA findings'),
   );
+  // The six classes the roster declares as EVOLVED value families must be
+  // listed IN THE EVOLVED SECTION, not somewhere else in the report. A class
+  // that is filed under the classic abstract findings is a class a reader
+  // auditing the EVA coverage does not find.
+  const evaSection = (() => {
+    const start = evaText.indexOf('### 5.3 EVA findings');
+    if (start < 0) return '';
+    const end = evaText.indexOf('\n## 6.', start);
+    return end < 0 ? evaText.slice(start) : evaText.slice(start, end);
+  })();
+  const classicSection = (() => {
+    const start = evaText.indexOf('### 5.2 L2 abstract findings');
+    if (start < 0) return '';
+    const end = evaText.indexOf('### 5.3 EVA findings', start);
+    return end < 0 ? evaText.slice(start) : evaText.slice(start, end);
+  })();
+  check(
+    'the evolved section lists every class the roster declares as evolved',
+    evaCodes.every((c) => evaSection.includes(c)),
+    `section=${evaSection.length} chars`,
+  );
+  check(
+    'the classic section does not hold an evolved class',
+    !evaCodes.some((c) => classicSection.includes(c)),
+  );
   // The NEGATIVE half of the fixture must not be reported. Each of these is
   // the ordinary shape that sits next to the defect. The check is scoped to
   // the FINDINGS sections: the same names appear in the range tables, which

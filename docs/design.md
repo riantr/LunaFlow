@@ -392,8 +392,8 @@ than assumed. Every row below was settled by RUNNING it:
 
 | The class | What MoonBit does | The family | Engine |
 |---|---|---|---|
-| buffer overflow | `Buffer` grows, so there is no fixed capacity to overflow | `INDEX-OOB` | L2 |
-| out-of-bounds read/write | `a[5]` on three elements is `RuntimeError: unreachable` at `Array::at`; so is `a[-1]` | `INDEX-OOB` | L2 |
+| buffer overflow | `Buffer` grows, so there is no fixed capacity to overflow | `INDEX-OOB` | EVA |
+| out-of-bounds read/write | `a[5]` on three elements is `RuntimeError: unreachable` at `Array::at`; so is `a[-1]` | `INDEX-OOB` | EVA |
 | integer overflow | arithmetic **WRAPS silently**: `Int::MAX_VALUE + 1` is `Int::MIN_VALUE` | `INTEGER-OVERFLOW` | EVA |
 | division by zero | `100 / 0` is `RuntimeError: divide by zero`; `100 % 0` is `remainder by zero` | `DIVISION-BY-ZERO` | EVA |
 | null pointer dereference | no null pointers; `None.unwrap()` is `RuntimeError: unreachable` | `NONE-DEREF` | EVA |
@@ -415,6 +415,18 @@ own arithmetic wraps — so an interval computed in the domain wrapped to a
 WRONG bound, and a wrong bound downstream is a false finding somewhere else.
 The domain now computes in 64 bits and CLAMPS to the type's range, and the
 overflow check reports the overflow that caused it.
+
+**The index class is proved by an interval and FILED as an evolved finding.**
+The out-of-bounds check is the interval comparison the abstract domain already
+computes — the array's length and the index's range are both known, so the
+comparison covers the whole input abstraction rather than one observed
+execution. What is new is where the finding is filed: it carries the mode
+`L2-EVA` and the report lists it in §5.3 with the other evolved value
+findings, because an index is a value USED to address storage. A self-check
+with the published 0.1.10 over LunaFlow's own source found the opposite: the
+class was in the roster as an evolved family, but the finding was filed with
+the mode `L2-abstract` and landed in §5.2, so the section that documents what
+the EVA covers listed five of its six classes.
 
 **What it costs.** One pass, no new engine: the EVA checks are six
 expressions in the existing evaluation. The measured cost on LunaFlow's own
@@ -595,7 +607,7 @@ Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `
 | doubleML documented parameters (`--trials 4 --max-functions 120`) | 218,391 events, 73 sinks, 0 dead, 3.9 s |
 | fixture run, peak working set | 7.5 MB |
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
-| LunaFlow's own line coverage (`moon coverage`) | **31.55 %** (1,156 / 3,664 lines of `src/app`) |
+| LunaFlow's own line coverage (`moon coverage`) | **44.18 %** (1,855 / 4,199 coverable lines of `src/app`) |
 
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the

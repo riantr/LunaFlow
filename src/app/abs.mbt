@@ -600,33 +600,7 @@ fn abs_eval(
       }
       match (cb.v, ci.v) {
         (AArr(lo_len, hi_len), AInt(il, ih)) =>
-          if il < 0 || ih >= lo_len {
-            let definite = ih < 0 || il >= hi_len
-            add_finding(
-              ctx,
-              FIndexOob,
-              e.span.start_line,
-              if definite {
-                "abstract interval proves the index is out of bounds"
-              } else {
-                "index may be out of bounds on some inputs"
-              },
-              if definite {
-                0.95
-              } else {
-                0.6
-              },
-              "index [" +
-              il.to_string() +
-              "," +
-              ih.to_string() +
-              "] vs length [" +
-              lo_len.to_string() +
-              "," +
-              hi_len.to_string() +
-              "]",
-            )
-          }
+          eva_check_index_oob(ctx, il, ih, lo_len, hi_len, e.span.start_line)
         _ => ()
       }
       // An element of an UNINITIALIZED array is a different defect from an

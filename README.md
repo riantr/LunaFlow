@@ -159,7 +159,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.10
+moon add riantr/LunaFlow@0.1.11
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -167,7 +167,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.10",
+  "riantr/LunaFlow@0.1.11",
 }
 ```
 
@@ -218,7 +218,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.10](https://mooncakes.io/docs/riantr/LunaFlow@0.1.10).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.11](https://mooncakes.io/docs/riantr/LunaFlow@0.1.11).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -412,6 +412,54 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.11
+
+**A self-check with the published 0.1.10 against LunaFlow's own source found a
+filing bug, and this release fixes it.**
+
+The self-check ran the **published 0.1.10** module — `moonx` over the released
+coordinate — over this repository's source, not the local build. Two results came
+out of it. The first is the good one: the published wasm build's report is
+**byte-identical** to the local native build's report, down to the finding list —
+only the wall-clock line differs. The second is a real inconsistency, and it is
+in the EVA itself.
+
+**`INDEX-OOB` was filed in the wrong section.** The family roster declares six
+EVA families, and `INDEX-OOB` is one of them. But its finding was produced by the
+interval proof and filed with the mode `L2-abstract`, so the report put it in
+§5.2 *L2 abstract findings* — while §5.3, the section that documents what the
+EVA covers, listed only five of the six classes it claims. A reader auditing
+"does this tool find out-of-bounds accesses?" would look at the EVA section and
+not find it.
+
+The fix is the filing, not the proof. The interval comparison is unchanged — the
+array's length and the index's range are both known, so it covers the whole
+input abstraction — and the finding now carries the mode `L2-EVA` and is listed
+with the other evolved value findings:
+
+| | before | after |
+|---|---:|---:|
+| classes listed in report §5.3 | 5 | **6** |
+| EVA findings on the fixture | 9 | **11** |
+| `INDEX-OOB` rows in §5.2 (classic) | 2 | **0** |
+
+The proof is still the interval one; the check now lives with the other five in
+`src/app/eva.mbt`, and the report says so in one sentence rather than leaving
+the reader to infer it.
+
+**Two tests changed, and one of them was wrong.** The new test pins the filing
+contract: an out-of-bounds index carries the mode `L2-EVA` and no longer appears
+among the classic findings. The other one asserted the mode of *every* finding
+in a loop instead of the mode of the finding it meant to check, so it only
+passed while the out-of-bounds class happened to be filed the classic way. It
+now asserts what it says: the tainted-index finding's mode.
+
+**The QA gate grew two checks** that would have caught this: every class the
+roster declares as evolved must appear **inside the evolved section** of the
+report, and no evolved class may appear in the classic one. The old check
+scanned the whole report for the code, which is why it passed while the class
+sat in the wrong section.
 
 ### What changed in 0.1.10
 
@@ -1099,7 +1147,7 @@ src/app/                   16 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, family roster, evolved value
                            analysis, report renderer
-src/app/*_test.mbt         92 tests in 12 files
+src/app/*_test.mbt         93 tests in 12 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -1136,9 +1184,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 142 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 142 warnings, 0 errors |
 | `moon check --target js` | exit 0, 167 warnings, 0 errors |
-| `moon test src/app --target native` | **92 passed, 0 failed** |
-| `moon test src/app --target wasm` | **92 passed, 0 failed** |
-| `moon test src/app --target js` | **92 passed, 0 failed** |
+| `moon test src/app --target native` | **93 passed, 0 failed** |
+| `moon test src/app --target wasm` | **93 passed, 0 failed** |
+| `moon test src/app --target js` | **93 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1151,10 +1199,10 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **39 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **41 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.3` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.11` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
@@ -1163,7 +1211,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 33 | 3,687 | 12,651 | 29 | 2 / 1 / 3 | 3 | 3 | 0.17 s |
+| `LunaFlow` itself (`--dir .`) | 33 | 3,706 | 12,739 | 31 | 2 / 1 / 3 | 3 | 3 | 0.17 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
@@ -1184,7 +1232,12 @@ because the analyzer now reads its own source through the rewritten argument
 parser, and 0.1.10 moved it once more — to 3,687 statements and 12,651 events
 — because the family roster and the evolved value analysis are new source, and
 because the type-annotation fix in the frontend recovered 58 statements that
-the parser had been dropping. The other three rows have not moved at all.
+the parser had been dropping. The 0.1.11 patch moved it once more, to 3,706
+statements and 12,739 events, because the out-of-bounds check moved into the
+evolved value engine; the two extra findings are the analyzer reporting its own
+new branches as unreachable for the abstract input, and the evolved value
+analysis still finds **nothing** on LunaFlow's own source. The other three rows
+have not moved at all.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

@@ -774,6 +774,58 @@ fn eva_check_uninit_read(
 }
 
 ///|
+/// INDEX OUT OF BOUNDS.
+///
+/// An index is a value USED to address storage, so the question "what happens
+/// when this value is used?" applies to it directly. The array's length and
+/// the index's interval are both known, so the comparison covers the whole
+/// input abstraction rather than one observed execution — and a read or a
+/// write outside the array is a `RuntimeError: unreachable` at `Array::at`.
+///
+/// The proof is the interval one the abstract domain already computes; what
+/// changes here is the FILING. The finding carries the mode `L2-EVA`, so the
+/// report lists it with the other evolved value findings instead of leaving
+/// it among the classic abstract ones, where a reader looking for the
+/// out-of-bounds class would not find it.
+fn eva_check_index_oob(
+  ctx : AbsContext,
+  il : Int32,
+  ih : Int32,
+  lo_len : Int32,
+  hi_len : Int32,
+  line : Int32,
+) -> Unit {
+  if !(il < 0 || ih >= lo_len) {
+    return
+  }
+  let definite = ih < 0 || il >= hi_len
+  eva_add_finding(
+    ctx,
+    FIndexOob,
+    line,
+    if definite {
+      "abstract interval proves the index is out of bounds"
+    } else {
+      "index may be out of bounds on some inputs"
+    },
+    if definite {
+      0.95
+    } else {
+      0.6
+    },
+    "index [" +
+    il.to_string() +
+    "," +
+    ih.to_string() +
+    "] vs length [" +
+    lo_len.to_string() +
+    "," +
+    hi_len.to_string() +
+    "]",
+  )
+}
+
+///|
 /// INVALID CAST.
 ///
 /// `as` in MoonBit is a trait-object downcast and nothing else: a numeric

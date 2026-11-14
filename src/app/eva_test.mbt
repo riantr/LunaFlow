@@ -111,6 +111,31 @@ test "an index inside the array is not reported" {
 }
 
 ///|
+test "an out-of-bounds index is filed as an evolved value finding" {
+  let src =
+    #|pub fn f() -> Int {
+    #|  let a = [1, 2, 3]
+    #|  a[5]
+    #|}
+  let findings = eva_all(src)
+  let mut eva = 0
+  let mut classic = 0
+  for f in findings {
+    if f.kind == @app.FIndexOob {
+      if f.mode == "L2-EVA" {
+        eva = eva + 1
+      } else {
+        classic = classic + 1
+      }
+    }
+  }
+  // The class is in the roster as an EVOLVED value family, so the report has
+  // to list it with the other evolved findings and not among the classic ones.
+  inspect(eva, content="1")
+  inspect(classic, content="0")
+}
+
+///|
 test "unwrapping a None is reported" {
   let src =
     #|pub fn f() -> Int {

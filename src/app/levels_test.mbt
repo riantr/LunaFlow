@@ -92,8 +92,12 @@ test "abstract interpretation reports tainted index and may-range" {
   for f in abs.findings {
     if f.kind == FTaintIndex {
       tainted = tainted + 1
+      // The mode of the TAINTED INDEX finding: the taint class is a classic
+      // abstract one. The assertion belongs to this finding alone -- the same
+      // statement also produces the out-of-bounds class, which is an EVOLVED
+      // value finding and carries its own mode.
+      inspect(f.mode, content="L2-abstract")
     }
-    inspect(f.mode, content="L2-abstract")
   }
   assert_true(tainted >= 1)
   assert_true(abs.ranges.contains("f::n"))
