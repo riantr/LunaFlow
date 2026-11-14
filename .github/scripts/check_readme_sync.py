@@ -48,9 +48,35 @@ def manifest_version() -> str:
 
 
 def readme_versions(text: str) -> list[tuple[int, str, str]]:
-    """Every LunaFlow version reference in the README, with its line number."""
+    """Every LunaFlow version reference in the README, with its line number.
+
+    THE RELEASE HISTORY IS EXEMPT. A block headed
+    ``### What changed in <version>`` is about THAT version by construction:
+    it quotes what that version printed and what it changed, so a coordinate
+    in it is a quotation, not an install line. The 0.1.14 section quotes
+    ``riantr/LunaFlow@0.1.14`` -- the title that version printed -- and a
+    reader copying an install line copies one from the Install section, not
+    one out of a changelog table.
+
+    Every other section is checked in full: the Install section, the Quick
+    Start, the CLI reference and the registry link are all live, copyable
+    coordinates, and the exemption reaches none of them.
+    """
     found = []
+    in_history = False
+    history_level = 0
     for number, line in enumerate(text.splitlines(), start=1):
+        heading = re.match(r"^(#{1,6})\s+(.*)$", line)
+        if heading:
+            level = len(heading.group(1))
+            title = heading.group(2)
+            if re.match(r"^What changed in \d+\.\d+\.\d+\s*$", title):
+                in_history = True
+                history_level = level
+            elif in_history and level <= history_level:
+                in_history = False
+        if in_history:
+            continue
         for match in VERSION_PATTERN.finditer(line):
             found.append((number, match.group(0), match.group(1)))
     return found

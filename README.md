@@ -191,7 +191,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.14
+moon add riantr/LunaFlow@0.1.15
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -199,7 +199,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.14",
+  "riantr/LunaFlow@0.1.15",
 }
 ```
 
@@ -250,7 +250,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.14](https://mooncakes.io/docs/riantr/LunaFlow@0.1.14).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.15](https://mooncakes.io/docs/riantr/LunaFlow@0.1.15).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -264,6 +264,17 @@ without installing it, and the natural self-check is:
 ```sh
 moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
 ```
+
+That is the **standard form**, and it is the peer's form too — the two
+analyzers are invoked identically, so a command that works on one works on
+the other:
+
+```sh
+moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
+moonx riantr/moonbit_static_analysis@latest riantr/moonbit_static_analysis@latest
+```
+
+The full flag list is in [CLI reference](#cli-reference).
 
 That works, and it is what the root package is for: `moonx` resolves the ROOT
 package of a module coordinate, so a module with no root executable fails with
@@ -444,6 +455,67 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.15
+
+**The invocation is now the peer's invocation, and the README says so in one
+place.**
+
+`moonx riantr/LunaFlow@latest riantr/LunaFlow@latest` was already the standard
+self-check form — it is the shape `riantr/moonbit_static_analysis` publishes,
+and it was measured, not assumed: the peer scans itself with exactly this
+shape, materialising the published version under `.repos/` exactly as this
+analyzer does. What was missing was a **single canonical place** that says so,
+and a table of the flags.
+
+**The CLI reference.** The peer publishes
+
+```
+moonx riantr/moonbit_static_analysis@latest <target> [flags]
+```
+
+and this release publishes the same line for this module:
+
+```
+moonx riantr/LunaFlow@latest <target> [flags]
+```
+
+with the same `<target>` semantics — a registry coordinate
+(`author/module[@version]`) or a path, and the current directory when the
+target is omitted — and a table of the 25 flags the command line accepts.
+Two tools that take the same invocation can be compared side by side, which
+is the point: the two analyzers are alternatives, and a reader who has to
+learn a different command line for each is being asked to do the work twice.
+
+**The Quick Start leads with the no-install form.** The peer's quick start
+opens with *"Scan another project — no dependency, no changes"* and the
+`moonx` line; this one now opens the same way, with the checkout forms
+below it.
+
+**The exit code is not a verdict.** MEASURED on both tools: a target that
+cannot be located prints an error and still exits 0, because MoonBit exposes
+no process-exit entry point in the packages available here. The peer
+documents this; now so does this README, because a caller who trusts the
+exit code will read a failed run as a clean one.
+
+**Two QA tools changed.** `scripts/qa/headings.mjs` no longer reads a shell
+comment inside a fenced code block as a heading — it made a README with code
+examples look like it had six extra top-level sections, and the comparison
+against the peer's README reported a difference that was not one. And
+`scripts/qa/root_package.mjs` gained the gate the peer has for its own
+family table: **the set of flags the README documents is the set the CLI's
+argument parser accepts**, in both directions. A flag added to the code
+without a README line fails the gate, and a README line for a flag the code
+does not accept fails it too. It caught its own gap the first time it ran —
+`--backward` was documented inside a combined row — and it was proved to
+fail by planting a flag that does not exist.
+
+**The numbers.** Tests stay at **134**; the warning count stays at 150 on
+native and wasm and 175 on js; the library is 18 files and the test suite 14
+files; the finding roster stays at 26 families. The gate's CLI-surface checks
+move 66 → **70** — the four new ones are the CLI reference and the two
+invocation lines it asserts. No `.mbt` file changed, so the self-scan row
+did not move either.
 
 ### What changed in 0.1.14
 
@@ -1413,6 +1485,67 @@ EXECUTABLES cannot, because the core's wasm-gc async stub has no
 `run_async_main`. So `supported_targets` is `+native+wasm+js` and wasm-gc is
 not published — publishing it would break the build.
 
+## CLI reference
+
+```
+moonx riantr/LunaFlow@latest <target> [flags]
+```
+
+This is the same shape `riantr/moonbit_static_analysis` publishes, so the two
+analyzers take the same invocation:
+
+```
+moonx riantr/moonbit_static_analysis@latest <target> [flags]
+```
+
+| flag | meaning |
+|---|---|
+| `<target>` | registry coordinate (`author/module[@version]`) or a path. Omit it to scan the current directory. |
+| `--dir <dir>` | a tree to analyse, where it stands. It is the older spelling of the target slot and stays because every QA harness uses it. |
+| `--out <dir>` | where the report, the summary and the trace are written (default `reports`). |
+| `--funnel` | run the full funnel — L1 dynamic, L2 abstract, L3 contracts, taint and slicing — instead of L1 alone. It also sets `--level 3`. |
+| `--level <n>` | the analysis level (default `1`). |
+| `--trials <n>` | how many samples the dynamic layer runs (default `8`). |
+| `--max-functions <n>` | the cap on functions entered as entry points (default `150`). |
+| `--slice <criterion>` | the slicing criterion, spelled exactly — a criterion that names no function yields an empty slice **and** one fewer function run. |
+| `--forward` | the slice direction: forward from the criterion. |
+| `--backward` | the slice direction: backward to the criterion (the default). |
+| `--coverage <path>` | a compiled-coverage file to bridge in. |
+| `--max-cfg <n>` | the CFG depth cap (default `8`). |
+| `--max-cfg-functions <n>` | how many functions get a CFG (default `600`). |
+| `--max-taint <n>` | how many taint sinks are rendered (default `40`). |
+| `--max-slice <n>` | how many slice rows are rendered (default `40`). |
+| `--function <name>` | focus on one function in a large module. |
+| `--list-functions` | list the functions the target exposes, then stop. |
+| `--exclude <dir>` | a directory name to skip. Repeatable. It exists because a dot-directory rule cannot catch everything. |
+| `--families <codes>` | report **only** these families, by their stable code. The codes are the ones `--explain-all` prints. |
+| `--exclude-families <codes>` | report everything **except** these families. |
+| `--explain <code>` | print that family's **contract** — what it asserts, the assumption it rests on, and what it does **not** cover — then stop. No scan runs. The value is mandatory, for the same reason `--slice`'s is: a bare word after the flag could equally be the value or the target. |
+| `--explain-all` | the whole roster, each family's three parts, then stop. No scan runs. |
+| `--metrics` | print the adequacy block: how much was checked, not what was found. It changes no finding count above it. |
+| `--per-function` | enter the analysis at each **function** rather than at the module. |
+| `--stability` | re-run the analysis at several sample sizes and report which findings depend on the sample. |
+| `--quiet` | print less. |
+
+The **self-check** is the target slot pointed at this module itself, and it is
+the one invocation both tools answer the same way:
+
+```sh
+moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
+moonx riantr/moonbit_static_analysis@latest riantr/moonbit_static_analysis@latest
+```
+
+Each fetches its own published version with `moon fetch`, materialises it
+under `.repos/`, and analyses it there — measured, not asserted: the peer
+scanned `217 files under .repos/riantr/moonbit_static_analysis/0.4.46`, and
+this analyzer scanned `39 files` under `.repos/riantr/LunaFlow/0.1.14`.
+
+> **The CLI cannot exit non-zero.** MoonBit exposes no process-exit entry point
+> in the packages available here, so a target that cannot be located prints an
+> error and still exits 0 — **a caller must read the output, not the exit
+> code**. MEASURED on both tools: a missing target exits 0 on this analyzer
+> and on the peer.
+
 ## Layout
 
 ```
@@ -1483,7 +1616,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **66 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **70 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
 | `node scripts/qa/verify_published.mjs 0.1.11` | **4 passed, 0 failed** |
@@ -1728,6 +1861,21 @@ construct -- and `usage()`'s value is now byte-identical to the toolchain's
 
 ## Quick Start
 
+### Scan a published module — no dependency, no changes
+
+```sh
+moonx riantr/LunaFlow@latest riantr/moonbit_doubleML@latest
+```
+
+`moonx` downloads the **prebuilt wasm** that mooncakes built for the published
+version, caches it, and runs it — no clone, no local build, and no install
+step. The target is a registry coordinate (`author/module[@version]`) or a
+path; omit it to scan the current directory. This is the same invocation
+`riantr/moonbit_static_analysis` takes, so the two analyzers are used the
+same way.
+
+### Run it from a checkout
+
 ```sh
 # analyze a published module; @latest is resolved once and pinned
 moon run src/cli --target native -- analyze riantr/moonbit_doubleML@latest --out reports
@@ -1751,12 +1899,18 @@ moon run src/cli --target native -- analyze <coord> --coverage cov.xml --out rep
 ```
 
 The binary is `_build/native/debug/build/src/cli/cli.exe`, and the root
-package's is `_build/native/debug/build/LunaFlow.exe`. From the registry,
-there is no install step at all:
+package's is `_build/native/debug/build/LunaFlow.exe`.
+
+### The self-check
+
+The target slot pointed at this module itself:
 
 ```sh
 moonx riantr/LunaFlow@latest riantr/LunaFlow@latest
 ```
+
+The flags are in [CLI reference](#cli-reference), and the peer publishes the
+same list under the same name.
 
 ## Example
 

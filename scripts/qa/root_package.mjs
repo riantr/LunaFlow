@@ -704,5 +704,67 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
 }
 
+// ------------------------------------------------------ the documented flags
+//
+// The README's CLI reference is the only place a reader learns what the
+// command line accepts, and it is PROSE. `riantr/moonbit_static_analysis`
+// guards its family table the same way -- it asserts that the set of ids the
+// README names is the set the code returns -- because a table that drifts
+// from the code is a table nobody checks.
+//
+// This is the same guard for the flags: the set of `--flags` the README
+// documents is the set the CLI's argument parser accepts. The parser is the
+// source of truth and is read straight out of the source, so a flag added to
+// the code without a README line fails the gate, and a README line for a
+// flag the code does not accept fails it too.
+
+const cliSourcePath = join(ROOT, 'src', 'command', 'command.mbt');
+const readmePath = join(ROOT, 'README.md');
+if (existsSync(cliSourcePath) && existsSync(readmePath)) {
+  const cliSource = readFileSync(cliSourcePath, 'utf8');
+  const readme = readFileSync(readmePath, 'utf8');
+
+  // The flags the PARSER accepts: every `a == "--name"` in the argument
+  // loop. The loop is the only place a flag is recognised.
+  const accepted = new Set(
+    [...cliSource.matchAll(/a == "(--[a-z][a-z0-9-]*)"/g)].map((m) => m[1]),
+  );
+
+  // The flags the README's CLI reference documents: the first cell of every
+  // row of that table. The section is bounded by its own heading and by the
+  // next one, so a flag mentioned elsewhere in the README does not count.
+  const sectionStart = readme.indexOf('## CLI reference');
+  const sectionEnd = sectionStart >= 0 ? readme.indexOf('\n## ', sectionStart + 5) : -1;
+  const section =
+    sectionStart >= 0 && sectionEnd > sectionStart
+      ? readme.slice(sectionStart, sectionEnd)
+      : '';
+  const documented = new Set(
+    [...section.matchAll(/^\|\s*`?(--[a-z][a-z0-9-]*)`?/gm)].map((m) => m[1]),
+  );
+
+  const undocumented = [...accepted].filter((f) => !documented.has(f)).sort();
+  const unknown = [...documented].filter((f) => !accepted.has(f)).sort();
+
+  check(
+    'the README documents the canonical invocation line',
+    section.includes('moonx riantr/LunaFlow@latest <target> [flags]'),
+  );
+  check(
+    'the README documents the peer invocation line too',
+    section.includes('moonx riantr/moonbit_static_analysis@latest <target> [flags]'),
+  );
+  check(
+    'every flag the CLI accepts is in the README CLI reference',
+    undocumented.length === 0,
+    undocumented.length ? 'undocumented: ' + undocumented.join(', ') : `${accepted.size} flag(s)`,
+  );
+  check(
+    'every flag in the README CLI reference is one the CLI accepts',
+    unknown.length === 0,
+    unknown.length ? 'unknown: ' + unknown.join(', ') : `${documented.size} flag(s)`,
+  );
+}
+
 console.log(`\nRESULT: ${failures.length === 0 ? 'PASS' : 'FAIL'} (${passes.length} passed, ${failures.length} failure(s))`);
 process.exit(failures.length === 0 ? 0 : 1);

@@ -47,7 +47,7 @@
 
 name = "riantr/LunaFlow"
 
-version = "0.1.14"
+version = "0.1.15"
 
 // The file with the real content. The registry publishes this file as the
 // module's documentation page.

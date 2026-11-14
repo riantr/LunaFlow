@@ -12,6 +12,12 @@ _build/
 .DS_Store
 Thumbs.db
 
+# Python bytecode. The CI scripts under `.github/scripts/` are Python, and
+# importing one -- which the README-sync test does -- writes a `__pycache__`
+# next to it.
+__pycache__/
+*.py[cod]
+
 # Root-level QA scratch only. The pattern is anchored on purpose: a bare
 # `qa/` would also match `scripts/qa/`, and the harness has to be committed.
 # The harnesses write their working directories under `_build/qa/`.
