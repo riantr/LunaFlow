@@ -27,13 +27,18 @@
 // the same trade: a package that ships with the toolchain but is not yet
 // stable.
 //
-// NATIVE AND WASM, NOT JS AND NOT WASM-GC. The analyzer needs the filesystem
-// (it reads the sources it analyses) and process spawning (it runs
-// `moon fetch`), and the async runtime implements both only on native and
-// wasm. On wasm-gc the `fs` and `process` packages have no implementation
-// at all — they compile to nothing, and every call site becomes "value not
-// found in package" — so naming the supported set makes check/test SKIP that
-// backend instead of failing with a wall of errors.
+// NATIVE, WASM AND JS. The analyzer needs the filesystem (it reads the
+// sources it analyses) and process spawning (it runs `moon fetch`), and the
+// async runtime implements both only on native and wasm: on js the `fs` and
+// `process` packages compile to nothing. The call sites therefore sit behind
+// `#cfg` guards with stubs for the other backends, which is what makes the
+// js build real -- the library is checked and its tests run there, not
+// skipped.
+//
+// wasm-gc is NOT supported, and it is not a choice: the core's wasm-gc async
+// stub has no `run_async_main`, so `async fn main` cannot compile there at
+// all. Naming the supported set makes check/test SKIP that backend instead
+// of failing with a wall of errors.
 //
 // The module coordinate is `riantr/LunaFlow`: `riantr` is the author and
 // `LunaFlow` the module. The library package is `riantr/LunaFlow/src/app`,
@@ -42,7 +47,7 @@
 
 name = "riantr/LunaFlow"
 
-version = "0.1.6"
+version = "0.1.7"
 
 // The file with the real content. The registry publishes this file as the
 // module's documentation page.
@@ -80,4 +85,4 @@ description = "Trace-driven three-proof-strength control-flow, taint, value-rang
 
 preferred_target = "wasm"
 
-supported_targets = "+native+wasm"
+supported_targets = "+native+wasm+js"

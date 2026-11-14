@@ -15,9 +15,46 @@ This document is the design record for the implementation in `src/app` and `src/
 | Analysis paradigm | Dynamic-first: concrete execution of parsed function bodies produces the trace that drives CFG coverage, taint, ranges and slicing; static syntax-directed CFG supplements it |
 | Visualization carrier | Markdown with embedded Mermaid diagrams only (no server, no HTML, no binary images) |
 | Version policy | `@latest` is resolved once by `moon fetch`, the resolved version is recorded in the report and pinned for every later stage |
-| Toolchain | `moon 0.1.20261102`, `moonbitlang/async 0.22.9`, native backend |
+| Toolchain | `moon 0.1.20261104`, `moonc v0.10.20+65efd5b93`, native backend; the async runtime is the toolchain-bundled `moonbitlang/core/async` |
 
 The analyzer never mutates the analyzed module. It reads source files, executes a model of them, and writes only under `reports/`.
+
+### 1.1 The backend matrix
+
+The analyzer needs two things the host provides: the **filesystem** (it reads
+the sources it analyses) and **process spawning** (it runs `moon fetch`). The
+toolchain's async runtime implements both on native and wasm only — on js and
+on wasm-gc the `fs` and `process` packages compile to nothing.
+
+The decision is to keep the analyzer **backend-independent** and push the
+filesystem dependence to the edges:
+
+| Package | native | wasm | js | wasm-gc |
+| --- | --- | --- | --- | --- |
+| `src/app` (library) | yes | yes | yes | yes |
+| `src/command` (library) | yes | yes | yes | yes |
+| `src/cli` and the root package (executables) | yes | yes | yes | no |
+
+Three rules make that work, and each of them is a consequence of a toolchain
+behaviour rather than a preference:
+
+- **`#cfg` guards declarations, not statements.** A call site that cannot
+  exist on a backend has to live in a declaration of its own, with a stub
+  beside it. That is why the `@fs.mkdir` call in the report writer became a
+  helper, `ensure_dir`.
+- **Mutable state has to be touched on every backend.** `ScanStats`' counters
+  were accumulated by the caller; with the scan stubbed out, the `mut` fields
+  went untouched on js and the compiler REJECTED the build. They moved into
+  `ScanStats::add_file`, which every backend calls.
+- **The command line arrives differently on Node.** `env.args()` is
+  `process.argv` there, so the node executable AND the script path come first:
+  `[node, script.js, "analyze", ...]`, where every other backend gives
+  `[exe, "analyze", ...]`. `cli_args` normalises it.
+
+wasm-gc is excluded from the published set for a different reason: the core's
+wasm-gc async stub has no `run_async_main`, so `async fn main` — the only way
+to reach the async runtime — cannot compile there. A plain `fn main` may not
+call an async function on any backend (`Error: [4149]`).
 
 ---
 
@@ -36,8 +73,8 @@ src/app/                     one library package (avoids cross-package plumbing)
   funnel.mbt                 L1 -> L2 -> L3 escalation, dedup, specification gaps
   report.mbt                 Markdown + Mermaid rendering and diagram validation
   scan.mbt    coverage.mbt   module acquisition, manifest parsing, Cobertura import
-  *_test.mbt                 18 black-box tests
-src/cli/main.mbt             async native CLI; the only package that touches the OS
+  *_test.mbt                 73 tests in 11 files
+src/cli/main.mbt             async CLI entrypoint; thin, over src/command
 fixtures/vuln_demo/          intentionally defective MoonBit package for acceptance
 scripts/verify.mjs           dependency-free acceptance checker
 reports/                     generated Markdown / JSONL / JSON artifacts

@@ -587,6 +587,7 @@ pub struct ScanStats {
   mut issues : Int32
   skipped_files : Array[String]
 }
+pub fn ScanStats::add_file(Self, SourceFile) -> Unit
 pub fn ScanStats::new() -> Self
 pub fn ScanStats::parse_rate(Self) -> Double
 

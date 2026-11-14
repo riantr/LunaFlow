@@ -127,7 +127,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.6
+moon add riantr/LunaFlow@0.1.7
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -135,7 +135,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.6",
+  "riantr/LunaFlow@0.1.7",
 }
 ```
 
@@ -186,7 +186,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.6](https://mooncakes.io/docs/riantr/LunaFlow@0.1.6).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.7](https://mooncakes.io/docs/riantr/LunaFlow@0.1.7).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -227,11 +227,13 @@ number in this file was measured on — **and** `moon 0.1.20261104`, carrying
 this module, and the reason that is checked rather than hoped for is under
 [The core compatibility contract](#the-core-compatibility-contract).
 
-The module is **native and wasm**. The analyzer reaches the filesystem and
-spawns `moon fetch`, and the async runtime implements both on those two
-backends: `supported_targets` is `+native+wasm`, and `preferred_target` is
-`wasm` because the registry publishes ONE artifact per version and
-`moonx --target` takes `wasm` as its one possible value.
+The module is **native, wasm and js**. The analyzer reaches the filesystem and
+spawns `moon fetch`, and the async runtime implements both on native and wasm
+only — so the `fs` and `process` call sites sit behind `#cfg` guards with
+stubs for the backends that have no filesystem, and the js build is a REAL
+build rather than a skipped one. `supported_targets` is `+native+wasm+js`, and
+`preferred_target` is `wasm` because the registry publishes ONE artifact per
+version and `moonx --target` takes `wasm` as its one possible value.
 
 The wasm backend really does work, and it is not a degraded build:
 
@@ -242,19 +244,31 @@ moon run . --target wasm -- analyze riantr/moonbit_static_analysis@latest --out 
 That fetches the target, analyses it and writes the report from the wasm
 artifact — the same numbers as the native run.
 
-**wasm-gc is not supported, and it is not a choice.** MEASURED:
-`moon build src/cli --target wasm-gc` fails with **14 errors**, every one of
-them *"value not found in package"* — `fs.read_file`, `fs.readdir`,
-`fs.exists`, `fs.kind`, `process.collect_output`. The reason is upstream:
-`moonbitlang/core/async/fs` and `moonbitlang/core/async/process` ship
-`native` and `wasm` implementations only, and their whole import block is
-guarded by `#cfg(any(target="native", target="wasm"))`. On wasm-gc they
-compile to nothing. The async runtime's own event loop is a
-`unimplemented.mbt` stub there.
+**wasm-gc is not supported, and it is not a choice.** MEASURED, and the reason
+is now precise. The upstream `moonbitlang/core/async/fs` and
+`moonbitlang/core/async/process` ship `native` and `wasm` implementations
+only, and their whole import block is guarded by
+`#cfg(any(target="native", target="wasm"))` — on every other backend those
+packages compile to nothing, and each call site becomes *"value not found in
+package"*. On the pristine tree that was **11 errors** in `src/app/scan.mbt`
+(`process.run`, `fs.readdir`, `fs.exists`, `fs.kind`, `fs.Unknown`,
+`fs.Directory`, `fs.Regular`, `fs.read_text`) and, once those are gone,
+**3 more** in `src/command/command.mbt` (`fs.write_text`, `fs.read_text`,
+`fs.mkdir`).
 
-This module's OWN source is wasm-gc clean — `moon check --target wasm-gc`
-reports **zero errors in this repository's files** — so the dependency is the
-only thing in the way, and it is upstream's to fix.
+Those guards are what this release adds, and they take the library all the way
+to wasm-gc: `moon check src/app --target wasm-gc` reports **0 errors** and
+`moon test src/app --target wasm-gc` runs **73/73**. The *executable* still
+cannot be built there, and the blocker is upstream: the core's wasm-gc async
+stub has no `run_async_main`, so
+
+```
+Error: [4021] Value run_async_main not found in package `moonbitlang/core/async`.
+```
+
+`async fn main` is the only way to reach the async runtime, and a plain
+`fn main` may not call an async function — `Error: [4149]`, on every backend
+alike. So wasm-gc stays out of the published set, and it is upstream's to fix.
 
 ### The host contract
 
@@ -354,6 +368,65 @@ every package that uses it says so in
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
 
+### What changed in 0.1.7
+
+**The module now builds and tests for JavaScript, and the library reaches
+wasm-gc as well.**
+
+`supported_targets` is `+native+wasm+js`. The question this release answers is
+whether the analyzer's backends can be widened without touching what it
+analyses, and the answer turned out to be: **yes, and the change is small** —
+but removing `@fs`/`@process` is *necessary, not sufficient*. Two separate
+things stood in the way, and neither is about the filesystem.
+
+- **The filesystem and process calls sit behind `#cfg` guards now.** There are
+  13 such call sites, in two files: ten in `src/app/scan.mbt` and three in
+  `src/command/command.mbt`. Each one moves into a guarded declaration with a
+  stub for the backends that have no filesystem, because `#cfg` guards
+  *declarations* — a statement inside a function body cannot be guarded, so the
+  `@fs.mkdir` call had to move into a helper of its own. The counters moved
+  into `ScanStats::add_file` for the same reason: left in the caller, the
+  `mut` fields would be unused on js and the compiler would reject the build.
+- **On Node, the command line arrives one element later.** `env.args()` is
+  `process.argv` there, so the node executable AND the script path come first:
+  `[node, script.js, "analyze", ...]` where every other backend gives
+  `[exe, "analyze", ...]`. The CLI read `args[1]` as the command, so on js it
+  read the script path and printed the usage text instead of analysing. It is
+  one helper now, and it is the only js-specific line in the source.
+
+The result, measured rather than asserted:
+
+| | native | wasm | js | wasm-gc |
+|---|---:|---:|---:|---:|
+| `moon check` (whole module) | 0 errors | 0 errors | **0 errors** | 1 error |
+| `moon check src/app` | 0 errors | 0 errors | **0 errors** | **0 errors** |
+| `moon test src/app` | 73/73 | 73/73 | **73/73** | **73/73** |
+
+The wasm-gc column is measured with the target set widened past what the
+module publishes. The libraries compile there and their 73 tests pass; the
+EXECUTABLES do not, and the reason is upstream:
+
+```
+Error: [4021] Value run_async_main not found in package `moonbitlang/core/async`.
+```
+
+The core's wasm-gc async stub has no `run_async_main`, and `async fn main` is
+the only way to reach the async runtime — a plain `fn main` may not call an
+async function (`Error: [4149]`, on every backend alike). So wasm-gc is left
+out of the published set: adding it would break the build.
+
+**What js actually buys.** The js build compiles, runs under Node, and the
+library's 73 tests pass there. But js has no filesystem in the core, so the
+js *CLI* can only analyse what it is handed in-process; it cannot walk a
+directory or write a report. The value is to **library consumers**:
+`riantr/LunaFlow/src/app` is the analyzer — text in, CFG / taint / slice /
+contracts out — and it now runs inside a Node or wasm-gc host as well as a
+MoonBit one.
+
+The wasm artifact is unchanged: `moon check --target wasm` still reports 131
+warnings and 0 errors, and the host contract is still **108 imports, 107 of
+them covered** by the bundled core.
+
 ### What changed in 0.1.6
 
 **This release is what the peer analyzer found when it was pointed at this module.**
@@ -424,7 +497,8 @@ Measured after it: on this module's own source the statements understood went
 **3,346 → 3,093**, the unsupported statements **195 → 175**, and the functions
 extracted **395 → 396** — the `usage()` function is a function again. (The
 measured-runs table above re-measures the tree after this release's own test
-file was added, so it reads 29 files and 3,126 statements.) On the peer module,
+file was added, and again after 0.1.7's backend guards, so it reads 29 files
+and 3,145 statements.) On the peer module,
 which writes its own block strings, the statements understood went
 **12,997 → 12,970** and the unsupported statements **611 → 595**; on doubleML
 every number is unchanged, and the committed doubleML artefact is byte-identical
@@ -508,10 +582,12 @@ from the registry.**
   (without one, `moonx` says *"Prebuilt wasm asset does not exist"*), a
   wasm artifact for the registry to publish (`preferred_target = "wasm"`), and
   a CLI that treats a bare coordinate as an implicit `analyze`.
-- **The module builds and runs for wasm.** `supported_targets` is
-  `+native+wasm`, and the wasm artifact fetches, analyses and writes the
-  report. wasm-gc is still excluded, and the reason is upstream's — see
-  [The host contract](#the-host-contract).
+- **The module builds and runs for wasm, and the library also builds for js.**
+  `supported_targets` is `+native+wasm+js`, and the wasm artifact fetches,
+  analyses and writes the report. The js build is real — the library is checked
+  and its 73 tests run there — but it has no filesystem, so the js *library* is
+  what gains: text in, analysis out. wasm-gc is still excluded, and the reason
+  is upstream's — see [The host contract](#the-host-contract).
 - **The fetch log is gone, and with it a whole class of bug.** The version used
   to be scanned out of the `moon fetch` log — free-form text whose shape differs
   between platforms. It is now taken from the directories the fetch wrote. The
@@ -631,15 +707,22 @@ these three defects were invisible on the machine that wrote the code.
 
 | Package | Kind | Native | Wasm | Wasm-GC | JS |
 |---|---|---:|---:|---:|---:|
-| `riantr/LunaFlow` (root) | executable | yes | yes | — | — |
-| `riantr/LunaFlow/src/app` | library | yes | yes | — | — |
-| `riantr/LunaFlow/src/command` | library | yes | yes | — | — |
-| `riantr/LunaFlow/src/cli` | executable | yes | yes | — | — |
+| `riantr/LunaFlow` (root) | executable | yes | yes | — | yes |
+| `riantr/LunaFlow/src/app` | library | yes | yes | yes | yes |
+| `riantr/LunaFlow/src/command` | library | yes | yes | yes | yes |
+| `riantr/LunaFlow/src/cli` | executable | yes | yes | — | yes |
 
 A `—` means the runtime does not implement what the package needs there. The
 analyzer needs the filesystem and process spawning, and the async runtime
-implements both on native and wasm only; on wasm-gc the `fs` and `process`
-packages compile to nothing, and js has no async runtime at all.
+implements both on native and wasm only — on js and on wasm-gc the `fs` and
+`process` packages compile to nothing, so those call sites sit behind `#cfg`
+guards and the package builds without them.
+
+The wasm-gc column is measured with the target set widened past what the
+module publishes: the LIBRARIES compile and their 73 tests pass there, but the
+EXECUTABLES cannot, because the core's wasm-gc async stub has no
+`run_async_main`. So `supported_targets` is `+native+wasm+js` and wasm-gc is
+not published — publishing it would break the build.
 
 ## Layout
 
@@ -647,7 +730,7 @@ packages compile to nothing, and js has no async runtime at all.
 LunaFlow.png               the mark this README shows
 LunaFlow_Logo.png          the same artwork at 1024x1024
 LICENSE                    MIT
-moon.mod                   module metadata (native and wasm)
+moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
 src/app/                   14 library files: parser, CFG, L1 interpreter,
@@ -687,10 +770,14 @@ The gate, and the result it produced for this version:
 | `moon fmt --check` | exit 0 |
 | `moon check --target native` | exit 0, 131 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 131 warnings, 0 errors |
+| `moon check --target js` | exit 0, 155 warnings, 0 errors |
 | `moon test src/app --target native` | **73 passed, 0 failed** |
 | `moon test src/app --target wasm` | **73 passed, 0 failed** |
+| `moon test src/app --target js` | **73 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
+| `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
+| `moon build . --target js` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **56 passed, 0 failed** |
@@ -711,9 +798,9 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 29 | 3,126 | 12,560 | 22 | 2 / 1 / 3 | 3 | 1 | 0.14 s |
+| `LunaFlow` itself (`--dir .`) | 29 | 3,145 | 12,560 | 22 | 2 / 1 / 3 | 3 | 1 | 0.14 s |
 
-**Reproduction status (2026-11-12).** The rows above are the committed
+**Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They
 were regenerated for this release, and every number in them moved: the previous
 rows said 43,822 statements, 137 dead-code findings and 102 taint sinks for
@@ -723,6 +810,11 @@ constructs the parser did not model, and a shredded fragment ate the closing
 brace of its function, so whole function bodies were truncated. The committed
 numbers are now the honest ones: neither module has an unreachable statement,
 and the analyzer says so.
+
+This release moved ONE number in that table: LunaFlow's own statement count,
+3,126 → 3,145, because the `#cfg` guards and the stubs behind them are
+statements now. Nothing else moved — the analyser reads the other modules
+exactly as it did before.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

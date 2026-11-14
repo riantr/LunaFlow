@@ -10,7 +10,7 @@
 //   * the root `moon.pkg` exists, is an executable, and supports wasm
 //   * the module's preferred target is wasm, because the registry publishes
 //     ONE artifact per version and `moonx --target` accepts no other value
-//   * the root builds for BOTH native and wasm
+//   * the root builds for native, wasm AND js
 //   * the CLI accepts a BARE COORDINATE, which is what `moonx` passes as
 //     argv[1] — `moonx <module>@latest <target>` runs the program with the
 //     target as its first argument
@@ -81,6 +81,7 @@ check(
 
 check('the root builds for native', moon(['build', '.', '--target', 'native']).status === 0);
 check('the root builds for wasm', moon(['build', '.', '--target', 'wasm']).status === 0);
+check('the root builds for js', moon(['build', '.', '--target', 'js']).status === 0);
 
 const nativeExe = join(ROOT, '_build', 'native', 'debug', 'build', 'LunaFlow.exe');
 const nativeBin = join(ROOT, '_build', 'native', 'debug', 'build', 'LunaFlow');
@@ -89,6 +90,9 @@ check('the root executable is on disk', existsSync(exe), exe);
 
 const wasmArtifact = join(ROOT, '_build', 'wasm', 'debug', 'build', 'LunaFlow.wasm');
 check('the root wasm artifact is on disk', existsSync(wasmArtifact), wasmArtifact);
+
+const jsArtifact = join(ROOT, '_build', 'js', 'debug', 'build', 'LunaFlow.js');
+check('the root js artifact is on disk', existsSync(jsArtifact), jsArtifact);
 
 // ------------------------------------------- the bare coordinate, end to end
 

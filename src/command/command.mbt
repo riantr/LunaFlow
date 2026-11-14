@@ -231,6 +231,7 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
 }
 
 ///|
+#cfg(any(target="native", target="wasm"))
 async fn write_text(path : String, text : String) -> Bool {
   @fs.write_text(path, text) catch {
     _ => return false
@@ -239,6 +240,7 @@ async fn write_text(path : String, text : String) -> Bool {
 }
 
 ///|
+#cfg(any(target="native", target="wasm"))
 async fn read_text(path : String) -> String? {
   let text = @fs.read_text(path) catch { _ => return None }
   Some(text)
@@ -574,9 +576,7 @@ async fn analyze(opts : Opts) -> Unit {
     abstract: abs_result,
     proof: proof_result,
   }
-  @fs.mkdir(opts.out, recursive=true, allow_exist=true) catch {
-    _ => ()
-  }
+  ensure_dir(opts.out)
   let stem = @app.safe_stem(coord_file_stem(coord) + "_" + version2)
   let report_path = @app.path_join(opts.out, stem + ".md")
   let trace_path = @app.path_join(opts.out, stem + "_trace.jsonl")
@@ -630,6 +630,34 @@ async fn analyze(opts : Opts) -> Unit {
 }
 
 ///|
+/// The command line, normalized per backend.
+///
+/// On Node, `env.args()` is `process.argv`: the node executable AND the
+/// script path come before the user's arguments, so the command lands at
+/// index 2 instead of index 1.
+#cfg(target="js")
+fn cli_args(args : Array[String]) -> Array[String] {
+  // Keep argv[0] (the program name) and drop argv[1] (the script path), so
+  // the command lands at index 1 like it does on every other backend.
+  let out : Array[String] = []
+  if args.length() > 0 {
+    out.push(args[0])
+  }
+  let mut i = 2
+  while i < args.length() {
+    out.push(args[i])
+    i = i + 1
+  }
+  out
+}
+
+///|
+#cfg(not(target="js"))
+fn cli_args(args : Array[String]) -> Array[String] {
+  args
+}
+
+///|
 /// Run the CLI with `args`.
 ///
 /// The entry point is a FUNCTION and not the special `main`, because the
@@ -637,7 +665,8 @@ async fn analyze(opts : Opts) -> Unit {
 /// resolves, and `src/cli`, which is the published CLI coordinate. Both call
 /// this one function, so there is ONE implementation of the CLI and two ways
 /// to reach it.
-pub async fn run(args : Array[String]) -> Unit {
+pub async fn run(raw_args : Array[String]) -> Unit {
+  let args = cli_args(raw_args)
   match parse_args(args) {
     None => println(usage())
     Some((cmd, opts)) =>
@@ -647,4 +676,30 @@ pub async fn run(args : Array[String]) -> Unit {
         analyze(opts)
       }
   }
+}
+
+///|
+#cfg(any(target="native", target="wasm"))
+async fn ensure_dir(path : String) -> Unit {
+  @fs.mkdir(path, recursive=true, allow_exist=true) catch {
+    _ => ()
+  }
+}
+
+///|
+#cfg(not(any(target="native", target="wasm")))
+fn ensure_dir(path : String) -> Unit {
+
+}
+
+///|
+#cfg(not(any(target="native", target="wasm")))
+async fn write_text(path : String, text : String) -> Bool {
+  false
+}
+
+///|
+#cfg(not(any(target="native", target="wasm")))
+async fn read_text(path : String) -> String? {
+  None
 }

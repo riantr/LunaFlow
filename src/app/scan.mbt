@@ -174,6 +174,7 @@ pub struct FetchResult {
 }
 
 ///|
+#cfg(any(target="native", target="wasm"))
 pub async fn fetch_module(coord : Coord, cwd : String) -> FetchResult {
   let spec = coord.author + "/" + coord.name
   let pinned = coord.version != "" && coord.version != "latest"
@@ -257,6 +258,19 @@ pub fn ScanStats::new() -> ScanStats {
 }
 
 ///|
+/// The counters are accumulated here rather than in the caller, so that the
+/// MUTATION lives in a declaration compiled on EVERY backend. Left in the
+/// caller, the `mut` fields would only ever be written on the native and wasm
+/// paths, and the other backends would report the `mut` as unused.
+pub fn ScanStats::add_file(self : ScanStats, sf : SourceFile) -> Unit {
+  self.files = self.files + 1
+  self.funcs = self.funcs + sf.funcs.length()
+  self.stmts = self.stmts + sf.parsed_stmts
+  self.unsupported = self.unsupported + sf.unsupported_stmts
+  self.issues = self.issues + sf.issues.length()
+}
+
+///|
 pub fn ScanStats::parse_rate(self : ScanStats) -> Double {
   let total = self.stmts + self.unsupported
   if total == 0 {
@@ -273,6 +287,7 @@ struct WalkState {
 }
 
 ///|
+#cfg(any(target="native", target="wasm"))
 async fn walk_dir(
   dir : String,
   rel : String,
@@ -317,6 +332,7 @@ async fn walk_dir(
 }
 
 ///|
+#cfg(any(target="native", target="wasm"))
 pub async fn load_module(
   root : String,
   coord : String,
@@ -331,11 +347,7 @@ pub async fn load_module(
     let full = path_join(root, rel)
     let text = @fs.read_text(full) catch { _ => continue }
     let sf = parse_file(rel, text)
-    stats.files = stats.files + 1
-    stats.funcs = stats.funcs + sf.funcs.length()
-    stats.stmts = stats.stmts + sf.parsed_stmts
-    stats.unsupported = stats.unsupported + sf.unsupported_stmts
-    stats.issues = stats.issues + sf.issues.length()
+    stats.add_file(sf)
     files.push(sf)
   }
   if st.truncated {
@@ -372,4 +384,47 @@ pub async fn load_module(
     },
     stats,
   )
+}
+
+///|
+#cfg(not(any(target="native", target="wasm")))
+pub async fn fetch_module(coord : Coord, cwd : String) -> FetchResult {
+  {
+    root: "",
+    version: "",
+    ok: false,
+    note: "this backend has no filesystem or process access",
+  }
+}
+
+///|
+#cfg(not(any(target="native", target="wasm")))
+async fn walk_dir(
+  dir : String,
+  rel : String,
+  st : WalkState,
+  limit : Int32,
+  depth : Int32,
+) -> Unit {
+
+}
+
+///|
+#cfg(not(any(target="native", target="wasm")))
+pub async fn load_module(
+  root : String,
+  coord : String,
+  version : String,
+  file_limit : Int32,
+) -> (ModuleAst, ScanStats) {
+  let ast : ModuleAst = {
+    coord,
+    version,
+    root,
+    files: [],
+    manifest_deps: [],
+    manifest_target: "",
+  }
+  let stats = ScanStats::new()
+  (ast, stats)
 }

@@ -102,11 +102,19 @@ jobs:
       - name: Check the core compatibility
         run: node scripts/qa/core_compat.mjs
 
-      # NATIVE AND WASM. The module declares `supported_targets = "+native+wasm"`:
-      # the analyzer needs the filesystem and process spawning, and the async
-      # runtime implements both on those two backends only. wasm-gc has no
-      # `fs`/`process` implementation upstream at all, and js has no async
-      # runtime, so neither is supported.
+      # NATIVE, WASM AND JS. The module declares `supported_targets =
+      # "+native+wasm+js"`. The analyzer needs the filesystem (it reads the
+      # sources it analyses) and process spawning (it runs `moon fetch`), and
+      # the async runtime implements both ONLY on native and wasm -- on js the
+      # `fs` and `process` packages compile to nothing. So the fs/process call
+      # sites sit behind `#cfg` guards with stubs for the other backends, and
+      # the js build is a REAL build: the library is checked and its tests run
+      # there, not skipped.
+      #
+      # wasm-gc is NOT supported, and it is not a choice: the core's wasm-gc
+      # async stub has no `run_async_main`, so `async fn main` cannot compile
+      # there at all. Naming the supported set makes check/test SKIP that
+      # backend instead of failing with a wall of errors.
       #
       # No --deny-warn either: the warnings are outstanding (the deprecated
       # `Map::new()` calls, the `test_unqualified_package` notices in the
@@ -123,6 +131,12 @@ jobs:
 
       - name: Test package (wasm)
         run: moon test src/app --target wasm
+
+      - name: Check package (js)
+        run: moon check --target js
+
+      - name: Test package (js)
+        run: moon test src/app --target js
 
       - name: Check formatting
         run: moon fmt --check
