@@ -41,6 +41,10 @@ struct Interp {
   reads : Array[String]
   mut func_name : String
   mut file : String
+  /// The module's GLOBAL REGION: the values of the top-level bindings.
+  mut global_values : Map[String, Val]
+  /// The value of each expression statement, by statement id.
+  expr_values : Map[Int32, Val]
 }
 
 ///|
@@ -63,7 +67,75 @@ fn Interp::new(
     reads: [],
     func_name: "",
     file: "",
+    global_values: Map([]),
+    expr_values: Map([]),
   }
+}
+
+///|
+/// Evaluate the module's GLOBAL REGION: the top-level bindings, in DEPENDENCY
+/// order.
+///
+/// MoonBit resolves top-level bindings by dependency, not by file order, so a
+/// global may read a global declared later in the file. The globals are
+/// computed ONCE, outside the trials: they are constants of the module, so
+/// their value does not depend on the input the analyzer happened to sample.
+///
+/// A global that is MUTATED somewhere in the module is left unknown: its
+/// value at the point of use is not the value of its initializer, and
+/// guessing would be a lie the report could not defend.
+pub fn eval_globals(
+  funcs : Map[String, Func],
+  opts : RunOptions,
+  ast : ModuleAst,
+) -> (Map[String, Val], Array[TraceEvent]) {
+  let table = globals_of(ast)
+  let (order, _unresolved) = global_order(table)
+  let mutated = globals_mutated(ast)
+  let values : Map[String, Val] = Map([])
+  let events : Array[TraceEvent] = []
+  let p = Interp::new(funcs, opts, 0)
+  p.func_name = "<global>"
+  for name in order {
+    match table.get(name) {
+      Some(g) => {
+        let env : Map[String, Val] = Map([])
+        for other in order {
+          if other != name {
+            match values.get(other) {
+              Some(v) => env[other] = v
+              None => ()
+            }
+          }
+        }
+        let v = if mutated.contains(name) {
+          clean(VUnknown)
+        } else {
+          eval(p, env, g.init)
+        }
+        values[name] = v
+        events.push(
+          TraceEvent::new(
+            EvDef,
+            "<global>",
+            g.file,
+            g.line,
+            0,
+            name,
+            v.v.repr(),
+            false,
+            0,
+            "global",
+          ),
+        )
+      }
+      None => ()
+    }
+  }
+  for e in p.events {
+    events.push(e)
+  }
+  (values, events)
 }
 
 ///|
@@ -262,7 +334,13 @@ fn eval(p : Interp, env : Map[String, Val], e : Expr) -> Val {
       p.reads.push(n)
       match env.get(n) {
         Some(v) => v
-        None => clean(VUnknown)
+        None =>
+          // A name that is not local may be a GLOBAL: the module's global
+          // region, whose value was computed once in dependency order.
+          match p.global_values.get(n) {
+            Some(g) => g
+            None => clean(VUnknown)
+          }
       }
     }
     EBin(OpAnd, l, r) => {
@@ -1120,7 +1198,11 @@ fn exec_stmt(
     SBreak => BreakLoop
     SContinue => ContinueLoop
     SExpr(e) => {
-      let _ = eval(p, env, e)
+      let v = eval(p, env, e)
+      // The value of an expression statement is remembered by its statement
+      // id, so a function body that ENDS with an expression can return it --
+      // which is what MoonBit does: `fn f() -> Int { 42 }` returns 42.
+      p.expr_values[s.id] = v
       Normal
     }
     SBlock(inner) => exec_block(p, env, inner, fn_name)
@@ -1146,15 +1228,40 @@ fn exec_stmt(
 }
 
 ///|
+/// The value of a function body that ENDS with an expression.
+///
+/// MoonBit gives a block the value of its last expression, so `fn f() -> Int
+/// { 42 }` returns 42 and not Unit. The value was already computed while the
+/// statement ran, so it is looked up by the statement's id rather than
+/// evaluated a second time -- evaluating it twice would run its side effects
+/// twice.
+fn tail_value(p : Interp, body : Array[Stmt]) -> Val? {
+  if body.length() == 0 {
+    return None
+  }
+  let last = body[body.length() - 1]
+  match last.kind {
+    SExpr(_) =>
+      match p.expr_values.get(last.id) {
+        Some(v) => Some(v)
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
 pub fn run_function(
   fn_name : Func,
   funcs : Map[String, Func],
   opts : RunOptions,
   trial : Int32,
+  global_values~ : Map[String, Val] = Map([]),
 ) -> RunResult {
   let p = Interp::new(funcs, opts, trial)
   p.func_name = fn_name.name
   p.file = fn_name.file
+  p.global_values = global_values
   let env : Map[String, Val] = Map::new()
   let trials = synthesize(fn_name, opts.trials)
   let mut i = 0
@@ -1204,7 +1311,14 @@ pub fn run_function(
     let sig = exec_block(p, env, fn_name.body, fn_name.name)
     let rv = match sig {
       Returned(v) => v
-      _ => clean(VUnit)
+      _ =>
+        // MoonBit: the value of a function body is the value of its LAST
+        // EXPRESSION, so a body that ends in an expression returns it rather
+        // than Unit.
+        match tail_value(p, fn_name.body) {
+          Some(v) => v
+          None => clean(VUnit)
+        }
     }
     observe_def(p, "<ret>", rv, fn_name.span, -1)
     run = run + 1
@@ -1239,7 +1353,10 @@ pub fn run_function_by_name(
     }
   }
   match funcs.get(name) {
-    Some(f) => run_function(f, funcs, opts, 0)
+    Some(f) => {
+      let (global_values, _) = eval_globals(funcs, opts, ast)
+      run_function(f, funcs, opts, 0, global_values~)
+    }
     None =>
       {
         events: [],
@@ -1282,6 +1399,12 @@ pub fn run_module(
   let mut total_steps = 0
   let skipped : Array[String] = []
   let mut count = 0
+  // The GLOBAL REGION is computed once, before any function runs: the
+  // top-level bindings are constants of the module.
+  let (global_values, global_events) = eval_globals(funcs, opts, ast)
+  for e in global_events {
+    all_events.push(e)
+  }
   for f in ast.all_funcs() {
     if opts.entry_filter != "" && f.name != opts.entry_filter {
       continue
@@ -1294,7 +1417,7 @@ pub fn run_module(
       skipped.push(f.name)
       continue
     }
-    let r = run_function(f, funcs, opts, count)
+    let r = run_function(f, funcs, opts, count, global_values~)
     count = count + 1
     total_steps = total_steps + r.steps
     for e in r.events {

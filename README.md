@@ -100,6 +100,19 @@ One analyzer · three evidence strengths · one Markdown report.
   free, pointer arithmetic, memory leaks, format strings — are in the roster as
   RESERVED families whose contracts say why they never fire.
 
+* A memory layout model, in the terms the language actually has
+
+  MoonBit has no addresses: no pointer type, no address space, no `size_of`, and
+  the byte order is spelled out in the API rather than inherited from the
+  machine. So the model is not a smaller hardware model — it is the **placement**
+  question. The **global region** is evaluated once, in dependency order, because
+  MoonBit resolves top-level bindings by dependency and not by file order. Every
+  **allocation site** is classified as global, frame, heap or foreign by a static
+  escape analysis, so the answer does not depend on which inputs a run sampled.
+  And `--stability` re-samples the analysis and says, row by row, **which
+  findings depend on the sample** — the abstract ones do not, and the observed
+  ones do, and the report says so instead of letting a reader assume otherwise.
+
 * Markdown is the UI
 
   Reports use `flowchart TD` for CFGs and slices, `flowchart LR` for taint and
@@ -137,6 +150,7 @@ The module is a library plus an executable, so "what you get" is a set of
 | `LunaFlow analyze --exclude <name>` | skip a directory name while walking (repeatable) | the same report |
 | `LunaFlow analyze --metrics` | the ADEQUACY block: read, understood, entered, found | four `METRICS` lines |
 | `LunaFlow analyze --per-function` | every function entered as an entry point, the `--max-functions` cap lifted | the same report, more of the module |
+| `LunaFlow analyze --stability` | re-sample the analysis and report which findings depend on the sample | report §5.6 |
 | `LunaFlow analyze --level 2` + the EVA | the memory-safety and undefined-behaviour classes | report §5.3 |
 | `LunaFlow --explain <code>` | one family's contract — property, assumption, exclusions | three clauses, no scan |
 | `LunaFlow --explain-all` | the roster of every family and the property it asserts | one block, no scan |
@@ -159,7 +173,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.11
+moon add riantr/LunaFlow@0.1.12
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -167,7 +181,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.11",
+  "riantr/LunaFlow@0.1.12",
 }
 ```
 
@@ -218,7 +232,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.11](https://mooncakes.io/docs/riantr/LunaFlow@0.1.11).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.12](https://mooncakes.io/docs/riantr/LunaFlow@0.1.12).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -412,6 +426,111 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.12
+
+**The memory layout: the global region, the allocation classes, and a
+self-check that says which conclusions depend on the run.**
+
+The request behind this release was a hardware memory model — stack, heap,
+global region and physical addresses; per-architecture word size, alignment,
+endianness and memory maps; MMIO registers and address spaces; and a guarantee
+that no conclusion depends on the layout of one lucky run. **MoonBit has none
+of the hardware**, and that is not an opinion — it was measured:
+
+| The question | What the toolchain says |
+|---|---|
+| Is there a pointer type? | **No.** No `unsafe_ptr`, no `Pointer`, no address arithmetic anywhere in the core. |
+| Is there an address space? | **No.** No MMIO, no physical address, no `mmap`. |
+| Is the word size the target's? | **No.** `Int` is 32 bits on native *and* on wasm: it wraps after 2^30 on both. The toolchain's own Why3 prelude pins the same range. |
+| Is the byte order the machine's? | **No.** Only `_be` and `_le` variants exist — the *program* chooses the order. |
+| Is there layout introspection? | **No.** No `size_of`, no `align_of`, no reflection. |
+| Is there an ARM or RISC-V target? | **No.** The targets are `wasm`, `wasm-gc`, `js`, `native`, `llvm`. |
+| What *is* there? | A GC, immutable values, and **one** route to a raw address: `extern "C"` with `#external type`, which the wasm backend rejects. |
+
+So the honest translation is not a smaller hardware model — it is the
+**placement** question, which has a real answer in MoonBit, plus the
+**soundness** question, which is the part that actually mattered.
+
+**1. The global region.** Top-level `let` and `const` bindings were not parsed
+at all: they were skipped, so every read of a global was an *unknown* value.
+They are now parsed, and the region is evaluated **once, in dependency order**,
+because MoonBit resolves top-level bindings by dependency and not by file
+order. The fixture proves it:
+
+```moonbit
+let derived : Int32 = base + 2   // reads a global declared LATER
+let base : Int32 = 10
+```
+
+`derived` is **12**, not unknown — and the order in the file does not matter.
+The global region's values are computed *outside* the trials, so a global's
+value does not depend on the input the analyzer happened to sample.
+
+**A top-level binding is immutable**: `let mut` at the top level is a **parse
+error** (E3002), measured against the real compiler. So a global is a constant
+of the module. The analyzer still leaves a global unknown when the module
+assigns to it, because the analyzer does not compile the target and cannot know
+that the assignment is an error.
+
+**And the globals are where a real defect shows up.** A global whose
+initializer leaves the type's range is now reported *at the initializer*:
+
+| The global | What MoonBit computes | What the analyzer says |
+|---|---|---|
+| `let overflowing : Int32 = 2147483647 + 1` | `-2147483648` | `INTEGER-OVERFLOW`, at the global's line |
+
+**2. The allocation classes.** Every allocation site is classified by where it
+can live, and the classification is **static** — computed over the AST, so it
+does not depend on which inputs a run sampled:
+
+| Class | Meaning |
+|---|---|
+| **GLOBAL** | bound to a top-level name: it lives in the module's global region. |
+| **FRAME** | created in a function and never leaves it: a frame allocation would be sound for it. |
+| **HEAP** | escapes — returned, stored into another object, or handed to a call the analyzer cannot see into. |
+| **FOREIGN** | came from outside the analysed module: its region is not the analyzer's to name. |
+
+The escape rules are the interesting part, and two of them are easy to get
+wrong: `a.set(0, 7)` **mutates** the allocation and does not hand it over,
+while `consume(b)` **does** — and a call nested inside a larger expression
+(`consume(b) + x`) hands its arguments over too. The fixture carries all
+three shapes, and the analyzer puts each one where it belongs.
+
+**3. The layout-stability self-check.** This is the part that answers "does
+the conclusion depend on one run's luck?", and it is now a measurement rather
+than a promise. `--stability` re-runs the analysis at several sample sizes and
+compares the findings row by row:
+
+| Finding | Engine | Rows | In every run | Depends on the sample? |
+|---|---|---:|---:|---|
+| `TAINT-INDEX` | L2-abstract | 1 | 1 | no |
+| `UNREACHABLE` | L2-abstract | 18 | 18 | no |
+| `TAINT-INDEX-RANGE` | dynamic+symbolic | 2 | **0** | **yes** |
+
+That last row is the whole point: on LunaFlow's own source the
+`TAINT-INDEX-RANGE` class appears **only** in the main run, so it is a
+property of the *sample*, not of the program — and the report says so instead
+of letting a reader take it for a finding. The abstract layer's classes do not
+depend on the sample, and the check confirms it: they are a may-analysis over
+the whole input abstraction, not a sample of it.
+
+**4. A tail value, and a frontend fact that came with it.** A MoonBit function
+body ends with its last **expression**, and that expression is the function's
+value: `fn f() -> Int { 42 }` returns 42. The analyzer returned Unit for
+every such function, which hid the globals behind them. Now the tail value is
+the function's value — and the value is looked up by the statement's id, so
+the expression is not evaluated twice and its side effects do not run twice.
+
+**5. The parse issues are listed, not just counted.** The report printed
+`| Parse issues | 3 |` and nothing else, so a reader could not tell *what* the
+frontend could not model — and the FFI declarations are exactly the
+constructs a reader needs to know about. They are listed now, with the
+location and the reason.
+
+**The numbers.** Tests 93 → **107**; the gate's CLI-surface checks 41 → **51**;
+the library is 17 files and the test suite 13 files. The self-scan row moved
+because the analyzer is one of the modules it analyses.
 
 ### What changed in 0.1.11
 
@@ -1143,16 +1262,18 @@ LICENSE                    MIT
 moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
-src/app/                   16 library files: parser, CFG, L1 interpreter,
+src/app/                   17 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, family roster, evolved value
-                           analysis, report renderer
-src/app/*_test.mbt         93 tests in 12 files
+                           analysis, memory layout model, report renderer
+src/app/*_test.mbt         107 tests in 13 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
 fixtures/eva_demo/         the evolved value analysis fixture: the defect
                            classes and the ordinary shapes next to them
+fixtures/memory_demo/      the memory layout fixture: the global region, the
+                           allocation classes and the tail value
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
 docs/qa/REPORT.md          deep QA report (security, coverage, metrics)
@@ -1235,8 +1356,12 @@ because the type-annotation fix in the frontend recovered 58 statements that
 the parser had been dropping. The 0.1.11 patch moved it once more, to 3,706
 statements and 12,739 events, because the out-of-bounds check moved into the
 evolved value engine; the two extra findings are the analyzer reporting its own
-new branches as unreachable for the abstract input, and the evolved value
-analysis still finds **nothing** on LunaFlow's own source. The other three rows
+new branches as unreachable for the abstract input. The 0.1.12 release moved it
+again, to 4,076 statements and 13,295 events, because the memory-layout model
+is new source and because the tail-value fix changed what the analyzer
+understands. The evolved value analysis now reports **exactly one** finding on
+LunaFlow's own tree, and it is the deliberate overflow in the memory fixture's
+global initializer — the library's own source has none. The other three rows
 have not moved at all.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;

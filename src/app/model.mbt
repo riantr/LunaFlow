@@ -269,6 +269,9 @@ pub struct SourceFile {
   lines : Array[String]
   funcs : Array[Func]
   issues : Array[ParseIssue]
+  /// The module's GLOBAL REGION: the top-level bindings, which live for the
+  /// whole module rather than in a frame.
+  globals : Array[Global]
   mut parsed_stmts : Int32
   mut unsupported_stmts : Int32
 }
@@ -280,6 +283,7 @@ pub fn SourceFile::new(path : String, text : String) -> SourceFile {
     lines: split_lines(text),
     funcs: [],
     issues: [],
+    globals: [],
     parsed_stmts: 0,
     unsupported_stmts: 0,
   }

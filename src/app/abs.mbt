@@ -214,6 +214,9 @@ pub struct AbsContext {
   file : String
   findings : Array[Finding]
   ranges : Map[String, AbsRange]
+  /// The module's GLOBAL REGION: the abstract value of each top-level
+  /// binding. A name that is not local may still be a global.
+  globals : Map[String, AbsCell]
   mut steps : Int32
   max_steps : Int32
 }
@@ -551,7 +554,13 @@ fn abs_eval(
     EName(n) =>
       match st.env.get(n) {
         Some(c) => c
-        None => AbsCell::new(ATop, TClean)
+        None =>
+          // Not a local: it may be a GLOBAL, whose abstract value was
+          // computed once for the whole module.
+          match ctx.globals.get(n) {
+            Some(c) => c
+            None => AbsCell::new(ATop, TClean)
+          }
       }
     EBin(OpAnd, a, b) => {
       let ca = abs_eval(ctx, st, eva, a)
@@ -1142,6 +1151,52 @@ fn initial_cell(ty : String) -> AbsCell {
 }
 
 ///|
+/// The abstract values of the module's GLOBAL REGION.
+///
+/// The globals are evaluated in DEPENDENCY order with the same abstract
+/// domain the functions are analysed in, so a global that holds a constant
+/// integer contributes that constant everywhere it is read -- and an integer
+/// operation that leaves the type's range in a global's INITIALIZER is
+/// reported where the initializer is, not where it is used.
+fn eval_globals_abs(
+  findings : Array[Finding],
+  ranges : Map[String, AbsRange],
+  rets : Map[String, String],
+  ast : ModuleAst,
+  max_steps : Int32,
+) -> Map[String, AbsCell] {
+  let table = globals_of(ast)
+  let (order, _unresolved) = global_order(table)
+  let mutated = globals_mutated(ast)
+  let out : Map[String, AbsCell] = Map([])
+  for name in order {
+    match table.get(name) {
+      Some(g) =>
+        if mutated.contains(name) {
+          // A mutated global's value at the point of use is not its
+          // initializer's value.
+          out[name] = AbsCell::new(ATop, TClean)
+        } else {
+          let ctx : AbsContext = {
+            fn_name: "<global>",
+            file: g.file,
+            findings,
+            ranges,
+            globals: out,
+            steps: 0,
+            max_steps,
+          }
+          let st = AbsState::new()
+          let eva = EvaState::new(rets)
+          out[name] = abs_eval(ctx, st, eva, g.init)
+        }
+      None => ()
+    }
+  }
+  out
+}
+
+///|
 pub fn run_abstract(
   ast : ModuleAst,
   max_functions : Int32,
@@ -1157,6 +1212,10 @@ pub fn run_abstract(
   for f in ast.all_funcs() {
     rets[f.name] = f.ret_ty
   }
+  // The GLOBAL REGION is computed once, before the functions are analysed:
+  // the top-level bindings are constants of the module, and their abstract
+  // values are what a function that reads a global sees.
+  let global_cells = eval_globals_abs(findings, ranges, rets, ast, max_steps)
   for f in ast.all_funcs() {
     if count >= max_functions {
       break
@@ -1169,6 +1228,7 @@ pub fn run_abstract(
       file: f.file,
       findings,
       ranges,
+      globals: global_cells,
       steps: 0,
       max_steps,
     }

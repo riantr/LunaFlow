@@ -494,8 +494,9 @@ if (existsSync(join(ROOT, 'fixtures', 'eva_demo', 'lib.mbt'))) {
   );
   // The NEGATIVE half of the fixture must not be reported. Each of these is
   // the ordinary shape that sits next to the defect. The check is scoped to
-  // the FINDINGS sections: the same names appear in the range tables, which
-  // is where a value's interval is printed and not where a defect is.
+  // the FINDINGS sections: the same names appear in the range tables and in
+  // the allocation table, which are where a value's interval and a value's
+  // placement are printed and not where a defect is.
   const safeFns = [
     'safe_sum',
     'safe_divisor',
@@ -506,9 +507,9 @@ if (existsSync(join(ROOT, 'fixtures', 'eva_demo', 'lib.mbt'))) {
     'safe_cast',
   ];
   const findingsSection = (text) => {
-    const start = text.indexOf('### 5.2 L2 abstract findings');
+    const start = text.indexOf('### 5.1 Taint sinks');
     if (start < 0) return '';
-    const end = text.indexOf('\n## 6.', start);
+    const end = text.indexOf('### 5.4 The global region', start);
     return end < 0 ? text.slice(start) : text.slice(start, end);
   };
   const evaFindingsText = findingsSection(evaText);
@@ -541,6 +542,80 @@ if (existsSync(join(ROOT, 'fixtures', 'eva_demo', 'lib.mbt'))) {
       onlyText.includes('INTEGER-OVERFLOW') &&
       !onlyText.includes('DIVISION-BY-ZERO'),
     `exit=${onlyOverflow.status}`,
+  );
+}
+
+// The MEMORY LAYOUT model: the global region, the allocation classes and the
+// layout-stability self-check.
+//
+// The fixture carries a global that reads a global declared LATER in the file
+// (MoonBit resolves top-level bindings by dependency), a global whose
+// initializer overflows, an allocation that stays in the frame and one that
+// escapes. Every claim about it was settled by running the toolchain.
+if (existsSync(join(ROOT, 'fixtures', 'memory_demo', 'lib.mbt'))) {
+  const memRun = run([
+    'analyze',
+    '--dir',
+    'fixtures/memory_demo',
+    '--out',
+    join(OUT, 'mem'),
+    '--funnel',
+    '--trials',
+    '4',
+    '--stability',
+  ]);
+  const memReport = join(OUT, 'mem', 'local_module_0.0.0.md');
+  const memText = existsSync(memReport) ? readFileSync(memReport, 'utf8') : '';
+  check(
+    'the report has the global region section',
+    memText.includes('### 5.4 The global region'),
+  );
+  check(
+    'the report has the allocation classes section',
+    memText.includes('### 5.5 Where the allocations live'),
+  );
+  check(
+    'the report has the layout stability section',
+    memText.includes('### 5.6 Layout stability'),
+  );
+  // The dependency-order global: `derived` is written BEFORE `base`, and its
+  // value is still 12. A file-order evaluator would leave it unknown.
+  check(
+    'a global is resolved in dependency order, not file order',
+    /`derived`\s*\|\s*Int32\s*\|\s*12\s*\|/.test(memText),
+  );
+  // The global whose initializer overflows: the value is the WRAPPED one.
+  check(
+    "a global's value is the wrapped one MoonBit computes",
+    /`overflowing`\s*\|\s*Int32\s*\|\s*-2147483648\s*\|/.test(memText),
+  );
+  check(
+    'the overflow in a global initializer is reported',
+    memText.includes('INTEGER-OVERFLOW'),
+  );
+  // The allocation classes: one stays in the frame, one escapes.
+  const frameRow = /\| frame_allocation \|.*\| \*\*FRAME\*\*/.test(memText);
+  const heapRows =
+    /\| escaping_allocation \|.*\| \*\*HEAP\*\*/.test(memText) &&
+    /\| handed_over \|.*\| \*\*HEAP\*\*/.test(memText);
+  check(
+    'an allocation that does not escape is in the frame',
+    frameRow,
+  );
+  check(
+    'an allocation that escapes is on the heap',
+    heapRows,
+  );
+  // The stability self-check: the abstract classes do not depend on the
+  // sample, and the check says so.
+  check(
+    'the stability check compares the findings across the re-samples',
+    memText.includes('Does the sample depend on it') ||
+      memText.includes('Depends on the sample?'),
+  );
+  check(
+    'the stability check ran at more than one sample size',
+    memRun.status === 0 && memText.includes('In every run'),
   );
 }
 

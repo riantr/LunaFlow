@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/fixtures/memory_demo"
+
+// Values
+pub fn escaping_allocation() -> Array[Int32]
+
+pub fn frame_allocation() -> Int32
+
+pub fn handed_over(Array[Int32]) -> Int32
+
+pub fn overflowing_global() -> Int32
+
+pub fn read_late_global() -> Int32
+
+pub fn read_through_global() -> Int32
+
+pub fn tail_value() -> Int32
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

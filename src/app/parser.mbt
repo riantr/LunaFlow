@@ -1410,10 +1410,72 @@ fn parse_fn(p : P, is_test : Bool, test_name : String) -> Func? {
 }
 
 ///|
+/// A top-level binding: the module's GLOBAL REGION.
+///
+/// MoonBit has two top-level binding forms: `let` (a global) and `const` (a
+/// compile-time constant). Both live in the global region, and both may read
+/// each other regardless of the order they are written in -- MoonBit resolves
+/// top-level bindings by DEPENDENCY, not by file order.
+fn parse_global(p : P) -> Global? {
+  let start = p.peek()
+  let is_const = start.text == "const"
+  ignore(p.bump())
+  if p.at("mut") {
+    ignore(p.bump())
+  }
+  if p.at_op("(") || p.at_op("[") {
+    // A destructuring top-level binding: the analyzer cannot name the parts,
+    // so it records the gap rather than guessing at them.
+    if p.at_op("(") {
+      skip_balanced_parens(p)
+    } else {
+      skip_balanced_brackets(p)
+    }
+    if p.at_op("=") {
+      ignore(p.bump())
+      p.skip_all_newlines()
+      ignore(parse_expr(p, 0))
+    }
+    p.issues.push({
+      file: p.file,
+      line: start.line,
+      message: "top-level destructuring binding is not modeled: its parts are unknown",
+    })
+    return None
+  }
+  if p.peek().kind != TIdent {
+    return None
+  }
+  let name = p.bump()
+  let mut ty = ""
+  if p.at_op(":") {
+    ignore(p.bump())
+    ty = collect_type(p, false)
+  }
+  let mut init = Expr::unknown(
+    span_from(start, p.last_tok(), p.file),
+    "no initializer",
+  )
+  if p.at_op("=") {
+    ignore(p.bump())
+    p.skip_all_newlines()
+    let e = parse_expr(p, 0)
+    if p.swallow_expr_tail(false) {
+      p.unsupported = p.unsupported + 1
+      init = Expr::unknown(e.span, "unmodelled expression")
+    } else {
+      init = e
+    }
+  }
+  Some(Global::new(name.text, ty, init, p.file, start.line, is_const))
+}
+
+///|
 pub fn parse_file(path : String, text : String) -> SourceFile {
   let toks = lex(text)
   let p = P::new(path, toks)
   let funcs : Array[Func] = []
+  let globals : Array[Global] = []
   let mut depth = 0
   while !p.eof() {
     let t = p.peek()
@@ -1450,6 +1512,13 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
         Some(f) => funcs.push(f)
         None => ignore(p.bump())
       }
+    } else if depth == 0 &&
+      t.kind == TIdent &&
+      (t.text == "let" || t.text == "const") {
+      match parse_global(p) {
+        Some(g) => globals.push(g)
+        None => ignore(p.bump())
+      }
     } else {
       ignore(p.bump())
     }
@@ -1461,6 +1530,9 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
   f.funcs.clear()
   for fn_name in funcs {
     f.funcs.push(fn_name)
+  }
+  for g in globals {
+    f.globals.push(g)
   }
   for issue in issues {
     f.issues.push(issue)

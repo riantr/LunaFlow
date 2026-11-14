@@ -1,0 +1,2 @@
+// The MEMORY LAYOUT fixture: the global region, the allocation classes and
+// the tail value of a function body.

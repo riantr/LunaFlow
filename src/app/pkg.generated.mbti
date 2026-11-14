@@ -2,6 +2,10 @@
 package "riantr/LunaFlow/src/app"
 
 // Values
+pub fn alloc_tally(Array[AllocSite]) -> Map[String, Int32]
+
+pub fn analyze_allocations(ModuleAst) -> Array[AllocSite]
+
 pub fn array_candidates(String) -> Array[Value]
 
 pub fn basename(String) -> String
@@ -30,6 +34,8 @@ pub fn clean(Value) -> Val
 
 pub fn code_span(String) -> String
 
+pub fn compare_runs(Array[Int32], Array[Array[Finding]], constant? : Array[Finding]) -> StabilityResult
+
 pub fn compare_versions(String, String) -> Int32
 
 pub fn contract_above(String, String, Int32) -> Contract
@@ -45,6 +51,8 @@ pub fn dirname(String) -> String
 pub fn double_candidates() -> Array[Value]
 
 pub fn eva_families() -> Array[FindingKind]
+
+pub fn eval_globals(Map[String, Func], RunOptions, ModuleAst) -> (Map[String, Val], Array[TraceEvent])
 
 pub fn explain_family(String) -> String
 
@@ -73,6 +81,18 @@ pub fn find_func(ModuleAst, String) -> Func?
 pub fn format_double(Double) -> String
 
 pub fn funcs_with_contracts(ModuleAst) -> Array[String]
+
+pub fn global_deps(Expr) -> Array[String]
+
+pub fn global_order(Map[String, Global]) -> (Array[String], Array[String])
+
+pub fn global_rows(ModuleAst, Map[String, String]) -> Array[GlobalRow]
+
+pub fn global_values_from_events(Array[TraceEvent]) -> Map[String, String]
+
+pub fn globals_mutated(ModuleAst) -> Map[String, Bool]
+
+pub fn globals_of(ModuleAst) -> Map[String, Global]
 
 pub fn hex4(Int32) -> String
 
@@ -142,11 +162,11 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue]) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
-pub fn run_function(Func, Map[String, Func], RunOptions, Int32) -> RunResult
+pub fn run_function(Func, Map[String, Func], RunOptions, Int32, global_values? : Map[String, Val]) -> RunResult
 
 pub fn run_function_by_name(ModuleAst, String, RunOptions) -> RunResult
 
@@ -202,6 +222,7 @@ pub struct AbsContext {
   file : String
   findings : Array[Finding]
   ranges : Map[String, AbsRange]
+  globals : Map[String, AbsCell]
   mut steps : Int32
   max_steps : Int32
 }
@@ -236,6 +257,28 @@ pub(all) enum AbsVal {
   ATop
 }
 pub fn AbsVal::code(Self) -> String
+
+#derive(Eq)
+pub(all) enum AllocClass {
+  AGlobal
+  AFrame
+  AHeap
+  AForeign
+}
+pub fn AllocClass::code(Self) -> String
+pub fn AllocClass::equal(Self, Self) -> Bool
+pub fn AllocClass::not_equal(Self, Self) -> Bool
+pub fn AllocClass::title(Self) -> String
+
+pub struct AllocSite {
+  file : String
+  line : Int32
+  fn_name : String
+  kind : String
+  mut class : AllocClass
+  mut reason : String
+}
+pub fn AllocSite::new(String, Int32, String, String, AllocClass, String) -> Self
 
 #derive(Eq)
 pub(all) enum BinOp {
@@ -479,6 +522,26 @@ pub struct FunnelResult {
   abstract_steps : Int32
 }
 
+pub struct Global {
+  name : String
+  ty : String
+  init : Expr
+  file : String
+  line : Int32
+  is_const : Bool
+}
+pub fn Global::new(String, String, Expr, String, Int32, Bool) -> Self
+
+pub struct GlobalRow {
+  name : String
+  ty : String
+  file : String
+  line : Int32
+  value : String
+  note : String
+}
+pub fn GlobalRow::new(String, String, String, Int32, String, String) -> Self
+
 pub struct InputSet {
   args : Array[Val]
 }
@@ -678,6 +741,7 @@ pub struct SourceFile {
   lines : Array[String]
   funcs : Array[Func]
   issues : Array[ParseIssue]
+  globals : Array[Global]
   mut parsed_stmts : Int32
   mut unsupported_stmts : Int32
 }
@@ -694,6 +758,24 @@ pub fn Span::empty(String) -> Self
 pub fn Span::merge(Self, Self) -> Self
 pub fn Span::new(String, Int32, Int32, Int32, Int32) -> Self
 pub fn Span::to_string(Self) -> String
+
+pub struct StabilityResult {
+  runs : Array[Int32]
+  rows : Array[StabilityRow]
+  stable : Int32
+  sample_dependent : Int32
+}
+pub fn StabilityResult::new(Array[Int32], Array[StabilityRow]) -> Self
+
+pub struct StabilityRow {
+  code : String
+  mode : String
+  rows : Int32
+  stable_rows : Int32
+  runs : Int32
+}
+pub fn StabilityRow::new(String, String, Int32, Int32, Int32) -> Self
+pub fn StabilityRow::stable(Self) -> Bool
 
 pub struct Stmt {
   id : Int32

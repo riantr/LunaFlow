@@ -466,6 +466,55 @@ Precision: exact for the recorded execution, including values and the concrete p
 
 Ambiguity: MoonBit function names are not package-qualified in the trace. `render_reports` exists in three packages of `moonbit_static_analysis`; a name-only criterion intentionally matches all three. Use `--function` to disambiguate.
 
+### 5.10 The memory layout model
+
+The request behind this section was a hardware memory model: stack, heap, global
+region and physical addresses; per-architecture word size, alignment, endianness
+and memory maps; MMIO registers and address spaces; and a guarantee that no
+conclusion depends on the layout of one lucky run. **MoonBit has none of the
+hardware**, and that was measured against the toolchain rather than assumed:
+
+| The question | What the toolchain says |
+|---|---|
+| A pointer type? | No — no `unsafe_ptr`, no `Pointer`, no address arithmetic in the core. |
+| An address space? | No — no MMIO, no physical address, no `mmap`. |
+| The target's word size? | No — `Int` is 32 bits on native *and* on wasm (it wraps after 2^30 on both); the toolchain's Why3 prelude pins the same range. |
+| The machine's byte order? | No — only `_be` and `_le` variants exist, so the program chooses the order. |
+| Layout introspection? | No — no `size_of`, no `align_of`, no reflection. |
+| An ARM or RISC-V target? | No — the targets are `wasm`, `wasm-gc`, `js`, `native`, `llvm`. |
+
+What is left is the **placement** question, and it has a real answer:
+
+- **The global region.** Top-level `let` and `const` bindings are parsed and the
+  region is evaluated ONCE, in **dependency** order, because MoonBit resolves
+  top-level bindings by dependency and not by file order. A top-level binding is
+  **immutable** — `let mut` at the top level is a parse error (E3002) — so a
+  global is a constant of the module. The values are computed outside the
+  trials, so a global's value does not depend on the sampled input.
+- **The allocation classes.** Every allocation site is classified by a static
+  escape analysis: **global** (bound to a top-level name), **frame** (created in
+  a function and never leaves it), **heap** (returned, stored into another
+  object, or handed to a call the analyzer cannot see into) and **foreign** (from
+  outside the analysed module). Two escape rules are easy to get wrong and are
+  pinned by the fixture: a method call's **receiver** is not an escape
+  (`a.set(0, 7)` mutates in place), while a call **nested inside** a larger
+  expression hands its arguments over (`consume(b) + x`).
+- **The tail value.** A MoonBit function body's value is its last
+  **expression**. The analyzer returned Unit for every such function, which hid
+  the globals behind them; the tail value is now the function's value, looked up
+  by the statement's id so the expression is not evaluated twice.
+- **The layout-stability self-check.** `--stability` re-runs the analysis at
+  several sample sizes and compares the findings row by row. The abstract
+  layer's findings do not depend on the sample — they are a may-analysis over
+  the whole input abstraction, not a sample of it — and the observed layer's
+  do. Measured on this module's own source: the `TAINT-INDEX-RANGE` class
+  appears in **0 of 4** re-sampled runs and only in the main one, so it is a
+  property of the sample and the report says so.
+
+Cost: the global region is one pass over the globals, the allocation classes
+are a static pass over the AST, and the stability check costs one extra
+interpreter run per sample size — which is why it is opt-in.
+
 ---
 
 ## 6. Visualization
@@ -480,6 +529,9 @@ Ambiguity: MoonBit function names are not package-qualified in the trace. `rende
 6. Program slicing — per criterion: Mermaid dependence graph + statement table
 7. Method summary
 8. Reproduction commands
+
+The report also carries the evolved value analysis (5.3), the global region
+(5.4), the allocation classes (5.5) and the layout-stability self-check (5.6).
 
 ### 6.2 Mermaid conventions
 
@@ -607,7 +659,7 @@ Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `
 | doubleML documented parameters (`--trials 4 --max-functions 120`) | 218,391 events, 73 sinks, 0 dead, 3.9 s |
 | fixture run, peak working set | 7.5 MB |
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
-| LunaFlow's own line coverage (`moon coverage`) | **44.18 %** (1,855 / 4,199 coverable lines of `src/app`) |
+| LunaFlow's own line coverage (`moon coverage`) | **44.25 %** (2,046 / 4,624 coverable lines of `src/app`) |
 
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the

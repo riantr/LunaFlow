@@ -702,9 +702,19 @@ pub fn proof_counts(vcs : Array[VC]) -> (Int32, Int32, Int32) {
 /// the reader can tell a full sweep from a capped one. It is an optional
 /// argument, so the published signature of this function is unchanged for a
 /// caller that does not use it.
+///
+/// The memory-layout arguments are optional too, and for the same reason:
+/// `globals` is the module's global region, `allocs` the allocation sites
+/// with their class, and `stability` the result of the layout-stability
+/// self-check. A caller that does not use them gets the report without those
+/// sections.
 pub fn render_report(
   input : ReportInput,
   per_function~ : Bool = false,
+  globals~ : Array[GlobalRow] = [],
+  allocs~ : Array[AllocSite] = [],
+  stability~ : StabilityResult? = None,
+  issues~ : Array[ParseIssue] = [],
 ) -> String {
   let out = StringBuilder::new()
   let md = "docs/design.md"
@@ -756,6 +766,33 @@ pub fn render_report(
     " |\n",
   )
   out.write_string("| Parse issues | " + input.issues.to_string() + " |\n")
+  if issues.length() > 0 {
+    // The COUNT is not enough: a reader who sees "3 parse issues" cannot tell
+    // what the frontend could not model, and the FFI declarations are exactly
+    // the constructs a reader needs to know about.
+    out.write_string("\n<details><summary>The parse issues</summary>\n\n")
+    out.write_string(
+      "| Location | What the frontend could not model |\n| --- | --- |\n",
+    )
+    let mut shown = 0
+    for i in issues {
+      if shown >= 20 {
+        break
+      }
+      out.write_string(
+        "| " + i.file + ":" + i.line.to_string() + " | " + i.message + " |\n",
+      )
+      shown = shown + 1
+    }
+    if issues.length() > 20 {
+      out.write_string(
+        "\n_Showing the first 20 of " +
+        issues.length().to_string() +
+        " parse issues._\n",
+      )
+    }
+    out.write_string("\n</details>\n")
+  }
   out.write_string("| CFG functions | " + cfg_coverage_line(input) + " |\n")
   out.write_string(
     "| Trace events | " + input.run.events.length().to_string() + " |\n",
@@ -929,7 +966,7 @@ pub fn render_report(
     out.write_string(coverage_table(cov, input.cfgs))
     out.write_string("\n")
   }
-  out.write_string("## 5. Data flow and taint\n\n")
+  out.write_string("## 5. Data flow, taint and the memory layout\n\n")
   out.write_string(
     "Sources are entry-function parameters (and `@env.args` when the frontend sees it); propagation follows recorded definitions and the variables read by each statement; sinks are array-index expressions and allocation sizes. The graph below is the *observed* propagation, not a may-analysis over all inputs.\n\n",
   )
@@ -964,6 +1001,145 @@ pub fn render_report(
     }
   } else {
     out.write_string("_Level 2 was not executed._\n\n")
+  }
+  out.write_string("\n### 5.4 The global region\n\n")
+  out.write_string(
+    "MoonBit resolves top-level bindings by DEPENDENCY, not by file order: a global may read a global declared later in the file. The analyzer evaluates the global region once, in dependency order, outside the trials -- so a global's value does not depend on the input the analyzer happened to sample.\n\nA top-level binding is IMMUTABLE in MoonBit: `let mut` at the top level is a parse error, so a global is a constant of the module. The analyzer still leaves a global unknown when the module assigns to it, because the analyzer does not compile the target and cannot know that the assignment is an error.\n\n",
+  )
+  if globals.length() == 0 {
+    out.write_string("_The module has no top-level bindings._\n\n")
+  } else {
+    out.write_string(
+      "| Global | Type | Value | Location | State |\n| --- | --- | --- | --- | --- |\n",
+    )
+    for g in globals {
+      out.write_string(
+        "| `" +
+        g.name +
+        "` | " +
+        (if g.ty == "" { "_untyped_" } else { g.ty }) +
+        " | " +
+        g.value +
+        " | " +
+        g.file +
+        ":" +
+        g.line.to_string() +
+        " | " +
+        g.note +
+        " |\n",
+      )
+    }
+    out.write_string("\n")
+  }
+  out.write_string("\n### 5.5 Where the allocations live\n\n")
+  out.write_string(
+    "MoonBit has no addresses: there is no pointer type, no address arithmetic and no address space, so a hardware memory model -- frames at fixed addresses, a heap, MMIO registers -- has nothing to model here. What there IS to model is placement. A **global** binding lives in the module's global region. An allocation that does not **escape** the function that made it could live in that function's frame. An allocation that **escapes** -- returned, stored into another object, handed to a call the analyzer cannot see into -- outlives the frame, so it is heap-allocated. A value from **outside** the analysed module has a region the analyzer cannot name.\n\nThe classification is STATIC: it is computed over the AST, so it does not depend on which inputs a run sampled.\n\n",
+  )
+  if allocs.length() == 0 {
+    out.write_string("_No allocation site was recognized._\n\n")
+  } else {
+    let tally = alloc_tally(allocs)
+    let parts : Array[String] = []
+    for k in sort_strings(tally.keys().to_array()) {
+      let n = match tally.get(k) {
+        Some(v) => v
+        None => 0
+      }
+      parts.push(k + " " + n.to_string())
+    }
+    out.write_string(
+      "Allocation sites: " +
+      allocs.length().to_string() +
+      " — " +
+      parts.join(", ") +
+      ".\n\n",
+    )
+    out.write_string(
+      "| Allocation | Kind | Region | Location | Why |\n| --- | --- | --- | --- | --- |\n",
+    )
+    let mut shown = 0
+    for a in allocs {
+      if shown >= 40 {
+        break
+      }
+      out.write_string(
+        "| " +
+        a.fn_name +
+        " | " +
+        a.kind +
+        " | **" +
+        a.class.code() +
+        "** — " +
+        a.class.title() +
+        " | " +
+        a.file +
+        ":" +
+        a.line.to_string() +
+        " | " +
+        a.reason +
+        " |\n",
+      )
+      shown = shown + 1
+    }
+    if allocs.length() > 40 {
+      out.write_string(
+        "\n_Showing the first 40 of " +
+        allocs.length().to_string() +
+        " allocation sites._\n\n",
+      )
+    } else {
+      out.write_string("\n")
+    }
+  }
+  out.write_string(
+    "\n### 5.6 Layout stability: does the conclusion depend on the run?\n\n",
+  )
+  match stability {
+    Some(s) => {
+      out.write_string(
+        "The same analysis, re-sampled. The check re-runs the interpreter with different sample sizes and compares the findings row by row, so a class that appears only in some runs is declared sample-dependent instead of being presented as a property of the program.\n\nThe abstract layer's findings are in the comparison by construction: they are a may-analysis over the whole input abstraction, not a sample of it, so they do not depend on which inputs a run happened to use.\n\n",
+      )
+      out.write_string(
+        "| Finding | Engine | Rows | In every run | Depends on the sample? |\n| --- | --- | ---: | ---: | --- |\n",
+      )
+      for r in s.rows {
+        out.write_string(
+          "| " +
+          r.code +
+          " | " +
+          r.mode +
+          " | " +
+          r.rows.to_string() +
+          " | " +
+          r.stable_rows.to_string() +
+          " | " +
+          (if r.stable() { "no" } else { "**yes**" }) +
+          " |\n",
+        )
+      }
+      out.write_string(
+        "\n" +
+        s.stable.to_string() +
+        " of " +
+        (s.stable + s.sample_dependent).to_string() +
+        " finding rows do not depend on the sample" +
+        (if s.sample_dependent > 0 {
+          "; " +
+          s.sample_dependent.to_string() +
+          (if s.sample_dependent == 1 {
+            " does, and is marked above.\n\n"
+          } else {
+            " do, and are marked above.\n\n"
+          })
+        } else {
+          ".\n\n"
+        }),
+      )
+    }
+    None =>
+      out.write_string(
+        "_The stability self-check was not run._ Pass `--stability` to re-sample the analysis and compare the findings.\n\n",
+      )
   }
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(

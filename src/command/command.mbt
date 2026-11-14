@@ -1,4 +1,50 @@
 ///|
+/// The LAYOUT STABILITY self-check.
+///
+/// The same analysis, re-sampled with different sample sizes, and the findings
+/// compared row by row. A finding class whose rows appear in EVERY run does
+/// not depend on the sample; one that appears in SOME of them does, and the
+/// report says so instead of presenting it as a property of the program.
+///
+/// The MAIN run is part of the comparison: a class that only the main run
+/// found is exactly the class a reader would mistake for a property of the
+/// program, so it has to be in the table.
+///
+/// The abstract layer's findings are passed as the CONSTANT set: they are a
+/// may-analysis over the whole input abstraction, so they do not depend on
+/// the sample and re-running them would only re-measure what is already
+/// known. The interpreter's findings are the ones the sample decides.
+///
+/// The cost is one extra interpreter run per sample size, so the check is
+/// opt-in.
+fn stability_check(
+  ast : @app.ModuleAst,
+  run_opts : @app.RunOptions,
+  per_function : Bool,
+  family_include : Array[String],
+  family_exclude : Array[String],
+  constant : Array[@app.Finding],
+  main_findings : Array[@app.Finding],
+) -> @app.StabilityResult {
+  let sizes : Array[Int32] = [1, 2, 4]
+  let runs : Array[Array[@app.Finding]] = []
+  for s in sizes {
+    let o : @app.RunOptions = {
+      trials: s,
+      max_steps: run_opts.max_steps,
+      max_depth: run_opts.max_depth,
+      max_functions: run_opts.max_functions,
+      entry_filter: run_opts.entry_filter,
+    }
+    let r = @app.run_module(ast, o, per_function~)
+    runs.push(@app.filter_findings(r.findings, family_include, family_exclude))
+  }
+  sizes.push(run_opts.trials)
+  runs.push(main_findings)
+  @app.compare_runs(sizes, runs, constant~)
+}
+
+///|
 struct Opts {
   mut coord : String
   mut dir : String
@@ -30,6 +76,8 @@ struct Opts {
   mut metrics : Bool
   /// Enter EVERY function as an entry point, with no `--max-functions` cap.
   mut per_function : Bool
+  /// Re-sample the analysis and report which findings depend on the sample.
+  mut stability : Bool
 }
 
 ///|
@@ -59,6 +107,7 @@ fn Opts::default() -> Opts {
     explain_all: false,
     metrics: false,
     per_function: false,
+    stability: false,
   }
 }
 
@@ -317,6 +366,9 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
       i = i + 1
     } else if a == "--per-function" {
       o.per_function = true
+      i = i + 1
+    } else if a == "--stability" {
+      o.stability = true
       i = i + 1
     } else if a.has_prefix("--") {
       i = i + 1
@@ -607,6 +659,25 @@ async fn analyze(opts : Opts) -> Unit {
     entry_filter: opts.function_name,
   }
   let run = @app.run_module(ast, run_opts, per_function=opts.per_function)
+  // The GLOBAL REGION and the allocation classes are computed from the AST,
+  // so they are a property of the module and not of the run.
+  let global_rows = @app.global_rows(
+    ast,
+    @app.global_values_from_events(run.events),
+  )
+  let allocs = @app.analyze_allocations(ast)
+  // The parse issues, so the report can LIST them and not only count them.
+  let parse_issues : Array[@app.ParseIssue] = []
+  for f in ast.files {
+    for i in f.issues {
+      parse_issues.push(i)
+    }
+  }
+  // The LAYOUT STABILITY self-check: the same analysis, re-sampled. It costs
+  // one extra run per sample size, which is why it is opt-in. It is computed
+  // after the abstract layer, because the abstract findings are part of the
+  // comparison.
+  let mut stability : @app.StabilityResult? = None
   if opts.slice != "" {
     match opts.slice.find("@") {
       Some(i) => {
@@ -666,6 +737,28 @@ async fn analyze(opts : Opts) -> Unit {
       }
     }
     None => ()
+  }
+  // The stability self-check needs the abstract findings, so it runs here.
+  if opts.stability {
+    let constant : Array[@app.Finding] = []
+    match abs_result {
+      Some(a) =>
+        for f in a.findings {
+          constant.push(f)
+        }
+      None => ()
+    }
+    stability = Some(
+      stability_check(
+        ast,
+        run_opts,
+        opts.per_function,
+        opts.family_include,
+        opts.family_exclude,
+        constant,
+        run.findings,
+      ),
+    )
   }
   let critical = @app.critical_functions(run.findings)
   match abs_result {
@@ -763,7 +856,14 @@ async fn analyze(opts : Opts) -> Unit {
   let report_path = @app.path_join(opts.out, stem + ".md")
   let trace_path = @app.path_join(opts.out, stem + "_trace.jsonl")
   let summary_path = @app.path_join(opts.out, stem + "_summary.json")
-  let md = @app.render_report(input, per_function=opts.per_function)
+  let md = @app.render_report(
+    input,
+    per_function=opts.per_function,
+    globals=global_rows,
+    allocs~,
+    stability~,
+    issues=parse_issues,
+  )
   let _ = write_text(report_path, md) catch { _ => false }
   let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {
     _ => false
