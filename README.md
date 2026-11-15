@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.17
+moon add riantr/LunaFlow@0.1.18
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.17",
+  "riantr/LunaFlow@0.1.18",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.17](https://mooncakes.io/docs/riantr/LunaFlow@0.1.17).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.18](https://mooncakes.io/docs/riantr/LunaFlow@0.1.18).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -492,6 +492,61 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.18
+
+**A peek is a view only when the value is used AS one — and 0.1.17's rule
+reported the analyzer's own `peek` calls thirteen times.**
+
+0.1.17 shipped the IPC model with the rule "the analyzer matches the METHOD
+NAME". That rule is right about the core's API and **wrong about `peek`**:
+`peek` is a common name, and a **parser has one** — and it returns a
+**token**, not a view. The self-scan caught it: the analyzer's own source
+produced **thirteen** `IPC-VIEW-STALE` findings, from **four** distinct
+`peek` results, every one of them a false positive.
+
+The fix is not a whitelist of names; it is **evidence**. A `peek` is treated
+as a view only when the analyzer can *see* the value used as one:
+
+| Evidence | What it is |
+|---|---|
+| the binding is annotated `BytesView` | the source says what it is |
+| the value is passed to a parameter declared `BytesView` | the module's own signature says so |
+| the value is handed to the core's writer — `write`, `write_reader` | the core's signature says so |
+| the value is the receiver of a method only a view has — `to_owned`, `exact_view`, `get_view`, … | only a `BytesView` has them |
+| the value is passed to a callee the analyzer **cannot see** — a function of another module | its parameter types are not visible, so the argument MAY be a view |
+
+A peek whose result is only **matched on** is not a view, and is not
+reported. The result: the analyzer's own source now reports **zero** IPC
+findings, and the fixture still reports exactly its four.
+
+**Two more defects of the same family, both fixed.** A name holds **one**
+view: a new binding of it replaces the old one, so two `let t = p.peek()`
+lines no longer make two views out of one name. And a stale view that is used
+**twice** is **one** finding, not one per use.
+
+**`BytesView` is a pointer type, and that was measured.** The FFI model's
+pointer-type set is the set the toolchain's own **E0055** fires for, one type
+at a time — and `BytesView` was missing from it. Measured: an
+`extern "C" fn takes_view(v : BytesView)` trips **E0055** exactly as a
+`Bytes` parameter does. A `BytesView` that crosses the boundary is an address,
+so it needs the same ownership annotation, and it now gets
+`FFI-UNANNOTATED-OWNERSHIP` when it has none.
+
+**No regression, and it is proved over the same tree.** The **local build** and
+the **published 0.1.17** were both run over the **same** tree: every summary
+number is identical (45 files, 806 functions, 5 483 statements, 9 973 events,
+25 findings, 2/1/3 VCs, 4 taint sinks) and every finding family matches
+**exactly** — with one exception, and the exception is the point:
+`IPC-VIEW-STALE` is **14** in the published 0.1.17 (thirteen false positives
+plus the fixture's one) and **1** in this build.
+
+**The numbers.** Tests move 162 → **166** (four new ones: the evidence rule,
+the once-only report, the shadowed binding, and the `BytesView` pointer type);
+the CLI-surface checks move 103 → **106**, and the two new ones scan **the
+analyzer's own source** and assert that it reports **no** IPC finding at all.
+The families stay at **37** — this release fixes what they say, it does not
+add any.
 
 ### What changed in 0.1.17
 
@@ -1778,7 +1833,7 @@ src/app/                   22 library files: parser, CFG, L1 interpreter,
                            analysis, memory layout model, foreign address
                            space model, concurrency model, IPC and buffer
                            model, report renderer
-src/app/*_test.mbt         162 tests in 16 files
+src/app/*_test.mbt         166 tests in 16 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -1825,9 +1880,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 170 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 170 warnings, 0 errors |
 | `moon check --target js` | exit 0, 195 warnings, 0 errors |
-| `moon test src/app --target native` | **162 passed, 0 failed** |
-| `moon test src/app --target wasm` | **162 passed, 0 failed** |
-| `moon test src/app --target js` | **162 passed, 0 failed** |
+| `moon test src/app --target native` | **166 passed, 0 failed** |
+| `moon test src/app --target wasm` | **166 passed, 0 failed** |
+| `moon test src/app --target js` | **166 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1840,10 +1895,10 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **103 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **106 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.17` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.18` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
@@ -1852,7 +1907,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 45 | 5,483 | 9,973 | 25 | 2 / 1 / 3 | 0 | 4 | 0.32 s |
+| `LunaFlow` itself (`--dir .`) | 45 | 5,528 | 9,497 | 25 | 2 / 1 / 3 | 0 | 5 | 0.30 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They

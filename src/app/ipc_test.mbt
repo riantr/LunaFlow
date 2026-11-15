@@ -319,3 +319,88 @@ test "the IPC families have their own method" {
     assert_true(finding.mode == "L2-IPC")
   }
 }
+
+///|
+/// A `peek` that returns something else is NOT a view. A parser has one and
+/// it returns a token, and the analyzer's own source is full of them: before
+/// the evidence rule they were reported as stale views, thirteen times.
+const IPC_PEEK_NOT_A_VIEW_SRC : String =
+  #|pub fn not_a_view() -> Unit {
+  #|  let t = p.peek()
+  #|  match t.kind {
+  #|    TInt => 0
+  #|    _ => 1
+  #|  }
+  #|}
+  #|
+
+///|
+test "a peek whose result is not used as a view is not a view" {
+  inspect(ipc_count(IPC_PEEK_NOT_A_VIEW_SRC, @app.FIpcViewStale), content="0")
+}
+
+///|
+/// The evidence that a peek DID produce a view: the value is passed to a
+/// parameter declared `BytesView`.
+const IPC_VIEW_USED_AS_ONE_SRC : String =
+  #|fn take(b : BytesView) -> Unit {
+  #|  ignore(b.length())
+  #|}
+  #|
+  #|pub fn stale() -> Unit {
+  #|  let reader = make_reader()
+  #|  let buf = make_buffer()
+  #|  let v = reader.peek()
+  #|  let n = reader.read_into(buf)
+  #|  use_buffer(buf)
+  #|  take(v)
+  #|}
+  #|
+
+///|
+test "a peek whose result is used as a view IS a view" {
+  inspect(ipc_count(IPC_VIEW_USED_AS_ONE_SRC, @app.FIpcViewStale), content="1")
+}
+
+///|
+/// The same view, used twice after the reader ran again: one defect is one
+/// finding.
+const IPC_VIEW_USED_TWICE_SRC : String =
+  #|fn take(b : BytesView) -> Unit {
+  #|  ignore(b.length())
+  #|}
+  #|
+  #|pub fn stale() -> Unit {
+  #|  let reader = make_reader()
+  #|  let buf = make_buffer()
+  #|  let v = reader.peek()
+  #|  let n = reader.read_into(buf)
+  #|  use_buffer(buf)
+  #|  take(v)
+  #|  take(v)
+  #|}
+  #|
+
+///|
+test "a stale view used twice is reported once" {
+  inspect(ipc_count(IPC_VIEW_USED_TWICE_SRC, @app.FIpcViewStale), content="1")
+}
+
+///|
+/// A `BytesView` parameter of a C function is a POINTER: measured, the
+/// toolchain's own E0055 fires for it exactly as it fires for a `Bytes`.
+const FFI_BYTESVIEW_DECL : String =
+  #|extern "C" fn takes_view(v : BytesView) -> Unit = "takes_view"
+  #|
+
+///|
+test "a BytesView parameter of a C function is a pointer" {
+  let m = ffi_model(FFI_BYTESVIEW_DECL)
+  let mut unannotated = 0
+  for f in m.findings {
+    if f.kind == @app.FFfiUnannotatedOwnership {
+      unannotated = unannotated + 1
+    }
+  }
+  inspect(unannotated, content="1")
+}

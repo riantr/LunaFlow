@@ -132,6 +132,12 @@ priv struct IpcViewRec {
   /// The line of the operation that broke the view, or 0 while it is good.
   mut broken_line : Int32
   mut broken_op : String
+  /// False once the name has been bound again: the name then holds a
+  /// DIFFERENT view, and the old one is not what the name shows.
+  mut live : Bool
+  /// True once the stale view has been reported, so one defect is one
+  /// finding and not one per use.
+  mut reported : Bool
 }
 
 ///|
@@ -177,6 +183,19 @@ fn ipc_is_reader_op(op : String) -> Bool {
 /// True when the operation returns a view into the reader's buffer.
 fn ipc_is_peek_op(op : String) -> Bool {
   ipc_peek_ops().contains(op)
+}
+
+///|
+/// The last part of a qualified name: `write` for `@io.write`.
+fn ipc_last_part(name : String) -> String {
+  let mut i = name.length() - 1
+  while i >= 0 {
+    if name[i] == '.' {
+      return name[i + 1:].to_owned()
+    }
+    i = i - 1
+  }
+  name
 }
 
 ///|
@@ -256,11 +275,161 @@ pub fn analyze_ipc(ast : ModuleAst) -> IpcModel {
   let views : Array[IpcView] = []
   let shared : Array[IpcShared] = []
   let findings : Array[Finding] = []
+  let sigs = ipc_signatures(ast)
   for f in ast.all_funcs() {
-    ipc_scan_function(f, calls, views, findings)
+    ipc_scan_function(f, calls, views, findings, sigs)
   }
   ipc_check_shared(ast, shared, findings)
   { calls, views, shared, findings, }
+}
+
+///|
+/// The signatures of the module's own functions: the parameter types and the
+/// return type.
+///
+/// This is the EVIDENCE that tells a VIEW from something else. A `peek` is a
+/// common name — a parser has one, and it returns a token — so the name
+/// alone cannot decide. What decides it is that the value is USED AS A VIEW:
+/// passed to a parameter declared `BytesView`, handed to the core's writer,
+/// or copied with a method only a view has.
+fn ipc_signatures(ast : ModuleAst) -> Map[String, (Array[String], String)] {
+  let out = Map([])
+  for f in ast.all_funcs() {
+    let params : Array[String] = []
+    for p in f.params {
+      params.push(p.ty)
+    }
+    out.set(f.name, (params, f.ret_ty))
+  }
+  out
+}
+
+///|
+/// The methods only a `BytesView` has. A call on one of them proves the
+/// receiver is a view.
+fn ipc_view_only_methods() -> Array[String] {
+  [
+    "to_owned", "exact_view", "get_view", "clamped_view", "start_offset", "unsafe_get",
+    "equal_to_bytes",
+  ]
+}
+
+///|
+/// True when the name is USED AS A VIEW in the body.
+///
+/// The evidence, all of it a fact about the source:
+///
+///   - the binding is annotated `BytesView`;
+///   - the name is an argument to the core's WRITER — `write` and
+///     `write_reader` take a `BytesView`;
+///   - the name is an argument to one of the module's own functions, at a
+///     position whose parameter is declared `BytesView`;
+///   - the name is the receiver of a method only a view has;
+///   - the name is returned from a function whose return type is `BytesView`.
+fn ipc_used_as_view(
+  stmts : Array[Stmt],
+  name : String,
+  fn_name : String,
+  sigs : Map[String, (Array[String], String)],
+) -> Bool {
+  for s in stmts {
+    match s.kind {
+      SLet(bound, ty, _) =>
+        if bound == name && ty.contains("BytesView") {
+          return true
+        }
+      _ => ()
+    }
+    for e in ipc_exprs_of(s) {
+      if ipc_expr_used_as_view(e, name, sigs) {
+        return true
+      }
+    }
+    for sub in ipc_sub_stmts(s) {
+      if ipc_used_as_view(sub, name, fn_name, sigs) {
+        return true
+      }
+    }
+  }
+  // The function RETURNS the view.
+  match sigs.get(fn_name) {
+    Some((_, ret)) =>
+      if ret.contains("BytesView") {
+        for s in stmts {
+          match s.kind {
+            SReturn(Some(e)) => if ipc_root(e) == name { return true }
+            _ => ()
+          }
+        }
+      }
+    None => ()
+  }
+  false
+}
+
+///|
+fn ipc_expr_used_as_view(
+  e : Expr,
+  name : String,
+  sigs : Map[String, (Array[String], String)],
+) -> Bool {
+  match e.kind {
+    ECall(f, args) => {
+      // The core's WRITER takes a `BytesView`.
+      if ipc_writer_ops().contains(ipc_last_part(f)) {
+        for a in args {
+          if ipc_root(a) == name {
+            return true
+          }
+        }
+        return false
+      }
+      // One of the module's own functions, at a `BytesView` parameter.
+      match sigs.get(f) {
+        Some((params, _)) => {
+          let mut i = 0
+          while i < args.length() {
+            if i < params.length() &&
+              params[i].contains("BytesView") &&
+              ipc_root(args[i]) == name {
+              return true
+            }
+            i = i + 1
+          }
+          false
+        }
+        // A callee the analyzer cannot see: a function of ANOTHER module.
+        // Its parameter types are not visible, so the argument MAY be a
+        // view -- and the argument is not the name being matched on, which
+        // is what a token is used for.
+        None => {
+          let mut found = false
+          for a in args {
+            if ipc_root(a) == name {
+              found = true
+            }
+          }
+          found
+        }
+      }
+    }
+    EMethod(recv, m, args) => {
+      // A method only a view has, on the name itself.
+      if ipc_root(recv) == name && ipc_view_only_methods().contains(m) {
+        return true
+      }
+      // The name handed to the core's writer.
+      if ipc_writer_ops().contains(m) {
+        for a in args {
+          if ipc_root(a) == name {
+            return true
+          }
+        }
+      }
+      false
+    }
+    _ => false
+  }
 }
 
 ///|
@@ -270,9 +439,49 @@ fn ipc_scan_function(
   calls : Array[IpcCall],
   views : Array[IpcView],
   findings : Array[Finding],
+  sigs : Map[String, (Array[String], String)],
 ) -> Unit {
   let state = IpcState::{ pending: [], views: [], }
-  ipc_scan_stmts(f.body, f, false, state, calls, views, findings)
+  // Which of the peeks produced a VIEW. This is worked out over the whole
+  // body first, because a view may be used long after the peek that made it
+  // -- and because a `peek` that returns something else is not a view at
+  // all.
+  let view_names = ipc_view_names(f.body, f.body, f.name, sigs)
+  ipc_scan_stmts(f.body, f, false, state, calls, views, findings, view_names)
+}
+
+///|
+/// The names in the body that a `peek` bound AND that are used as a view.
+fn ipc_view_names(
+  top : Array[Stmt],
+  stmts : Array[Stmt],
+  fn_name : String,
+  sigs : Map[String, (Array[String], String)],
+) -> Array[String] {
+  let out : Array[String] = []
+  for s in stmts {
+    match s.kind {
+      SLet(name, _, e) =>
+        match ipc_find_peek(e) {
+          Some(recv) =>
+            if recv != "" &&
+              !out.contains(name) &&
+              ipc_used_as_view(top, name, fn_name, sigs) {
+              out.push(name)
+            }
+          None => ()
+        }
+      _ => ()
+    }
+    for sub in ipc_sub_stmts(s) {
+      for n in ipc_view_names(top, sub, fn_name, sigs) {
+        if !out.contains(n) {
+          out.push(n)
+        }
+      }
+    }
+  }
+  out
 }
 
 ///|
@@ -289,6 +498,7 @@ fn ipc_scan_stmts(
   calls : Array[IpcCall],
   views : Array[IpcView],
   findings : Array[Finding],
+  view_names : Array[String],
 ) -> Unit {
   for s in stmts {
     let call = ipc_call_of(s)
@@ -370,7 +580,7 @@ fn ipc_scan_stmts(
         // (4) A reader operation breaks the views into that reader's buffer.
         if ipc_is_reader_op(c.op) && c.receiver != "" {
           for v in state.views {
-            if v.receiver == c.receiver && v.broken_line == 0 {
+            if v.live && v.receiver == c.receiver && v.broken_line == 0 {
               v.broken_line = s.span.start_line
               v.broken_op = c.op
             }
@@ -379,9 +589,14 @@ fn ipc_scan_stmts(
       }
       None => ()
     }
-    // (5) A view that was broken, used anyway.
+    // (5) A view that was broken, used anyway. It is reported ONCE: one
+    // defect is one finding, and not one per use of the name.
     for v in state.views {
-      if v.broken_line != 0 && ipc_stmt_mentions(s, v.name) {
+      if v.live &&
+        !v.reported &&
+        v.broken_line != 0 &&
+        ipc_stmt_mentions(s, v.name) {
+        v.reported = true
         views.push({
           name: v.name,
           receiver: v.receiver,
@@ -417,18 +632,27 @@ fn ipc_scan_stmts(
         )
       }
     }
-    // (6) The statement may BIND a view.
+    // (6) The statement may BIND a view. Only a peek whose result is USED AS
+    // A VIEW is one: a `peek` that returns a token is not a view, and the
+    // name holds ONE view -- a new binding of it replaces the old one.
     match s.kind {
       SLet(name, _, e) =>
         match ipc_find_peek(e) {
           Some(recv) =>
-            if recv != "" {
+            if recv != "" && view_names.contains(name) {
+              for v in state.views {
+                if v.name == name {
+                  v.live = false
+                }
+              }
               state.views.push({
                 name,
                 receiver: recv,
                 peek_line: s.span.start_line,
                 broken_line: 0,
                 broken_op: "",
+                live: true,
+                reported: false,
               })
             }
           None => ()
@@ -439,7 +663,9 @@ fn ipc_scan_stmts(
     // body is not, because the `for` has a count of its own.
     for sub in ipc_sub_stmts(s) {
       let nested_loop = in_loop || ipc_is_while(s)
-      ipc_scan_stmts(sub, f, nested_loop, state, calls, views, findings)
+      ipc_scan_stmts(
+        sub, f, nested_loop, state, calls, views, findings, view_names,
+      )
     }
   }
 }

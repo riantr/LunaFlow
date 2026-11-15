@@ -664,9 +664,20 @@ running the core:
 |---|---|
 | **Reader / writer** | a value the module reads from or writes to. The analyzer matches the **method name** — it does not infer types — so the core's API names (`read_into`, `read`, `read_exactly`, `peek`, `write`, …) are what it sees. |
 | **Discarded count** | a reader call whose result is thrown away. MoonBit does not let a value be dropped silently, so this is `ignore(reader.read_into(buf))` or `let _ = reader.read_into(buf)`, and both are the same defect. |
-| **View** | the result of `peek`, `peek_at_least` or `peek_exactly`: a window into the reader's own buffer, valid only until the next operation on that reader. |
+| **View** | the result of `peek`, `peek_at_least` or `peek_exactly`: a window into the reader's own buffer, valid only until the next operation on that reader. A `peek` is only a view when the analyzer can SEE the value **used as one** — passed to a `BytesView` parameter, handed to the core's writer, or copied with a method only a view has. |
 | **Shared buffer** | a buffer a task body writes and the function that started the task also uses. The buffer is **captured** — the task body uses it and does not bind it. |
 | **Base name** | the variable a buffer expression stands for: `buf`, `buf[0]` and `buf.unsafe_reinterpret_as_bytes()` are all the buffer `buf`. |
+
+**Why the view needs EVIDENCE.** `peek` is a common name: a parser has one
+and it returns a **token**, not a view. Matching the name alone reported
+every one of the analyzer's own `peek` results — **four** distinct views,
+**thirteen** findings — on its own source. The evidence rule removes them all
+and keeps the real one: the analyzer's own source now reports **zero** IPC
+findings, and the fixture reports exactly its four.
+
+**The view is reported ONCE.** A name holds one view: a new binding of it
+replaces the old one, and a stale view that is used twice is one finding and
+not two.
 
 **The findings** are filed under their own method, `L2-IPC`, in report §5.9:
 
@@ -687,6 +698,12 @@ the limit is stated rather than implied.
 | `FFI-DOUBLE-FREE` | the same object is handed to a C function that frees it, twice, so the C side frees memory it no longer owns |
 | `FFI-USE-AFTER-FREE` | an object the C side has freed is used afterwards, so the use reads memory the allocator may already have handed to someone else |
 | `FFI-LENGTH-MISMATCH` | a C call is given an object and a length that is not that object's length, so the C side may read or write outside the object |
+
+The **pointer-type set** was measured one type at a time, and `BytesView` was
+added to it after a measurement: an `extern "C" fn takes_view(v : BytesView)`
+trips the toolchain's own **E0055** exactly as a `Bytes` parameter does. A
+`BytesView` that crosses the boundary is an address, and it needs the same
+ownership annotation.
 
 **What the model does not claim.** It does not claim a reader the analyzer
 does not recognise by name, a length that comes **from** the stream and sizes

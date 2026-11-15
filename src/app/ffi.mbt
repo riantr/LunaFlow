@@ -297,14 +297,17 @@ pub fn is_scalar_type(ty : String) -> Bool {
 /// toolchain's own E0055 fires for exactly these, and for none of the
 /// scalars, and not for a tuple.
 ///
-/// `String`, `StringView`, `Bytes`, `Array`, `FixedArray`, `Option`,
-/// `Result` and `Map` all have a heap representation, so the C side gets an
-/// address of a MoonBit object.
+/// `String`, `StringView`, `Bytes`, `BytesView`, `Array`, `FixedArray`,
+/// `Option`, `Result` and `Map` all have a heap representation, so the C side
+/// gets an address of a MoonBit object. `BytesView` was MEASURED too: an
+/// `extern "C" fn takes_view(v : BytesView)` trips E0055 exactly like a
+/// `Bytes` parameter does.
 fn is_builtin_pointer_type(ty : String) -> Bool {
   let b = base_type_name(ty)
   b == "String" ||
   b == "StringView" ||
   b == "Bytes" ||
+  b == "BytesView" ||
   b == "Array" ||
   b == "FixedArray" ||
   b == "Option" ||

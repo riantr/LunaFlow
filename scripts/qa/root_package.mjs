@@ -894,6 +894,35 @@ if (existsSync(join(ROOT, 'fixtures', 'ipc_demo', 'lib.mbt'))) {
     'the model says a length that comes from the stream is not judged here',
     ipcText.includes('A length that comes from the stream'),
   );
+
+  // The analyzer's OWN source is the false-positive test. It has THIRTEEN
+  // `peek` calls that return a TOKEN and not a view, and matching the name
+  // alone reported every one of them. A peek is only a view when the value
+  // is USED AS ONE, so the analyzer's own source must report NO stale view
+  // at all -- while the fixture still reports its one.
+  const selfRun = run([
+    'analyze',
+    '--dir',
+    'src/app',
+    '--out',
+    join(OUT, 'ipc_self'),
+    '--funnel',
+    '--trials',
+    '4',
+  ]);
+  const selfReport = join(OUT, 'ipc_self', 'local_module_0.0.0.md');
+  const selfText = existsSync(selfReport) ? readFileSync(selfReport, 'utf8') : '';
+  check('the analyzer scans its own source', selfRun.status === 0);
+  check(
+    'a peek that returns a token is NOT a stale view',
+    !selfText.includes('IPC-VIEW-STALE'),
+  );
+  check(
+    'the analyzer\'s own source reports no IPC finding at all',
+    !selfText.includes('IPC-PARTIAL-READ') &&
+      !selfText.includes('IPC-READ-EOF') &&
+      !selfText.includes('IPC-BUFFER-SHARED'),
+  );
 }
 
 // ------------------------------------------------------ the documented flags

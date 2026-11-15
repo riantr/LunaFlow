@@ -320,7 +320,7 @@ pub fn family_assumption(kind : FindingKind) -> String {
     FIpcReadEof =>
       "the loop is a `while` loop, so it is not bounded by a count of its own, and the read is the only thing that could report the end of the stream"
     FIpcViewStale =>
-      "the view comes from the core's `peek` family -- the analyzer matches the METHOD NAME -- and the reader keeps ONE buffer and reuses it, which the core's own reader controller does"
+      "the peek was one of the core's -- the analyzer matches the METHOD NAME -- AND the value it produced is USED AS A VIEW: passed to a `BytesView` parameter, handed to the core's writer, or copied with a method only a view has; and the reader keeps ONE buffer and reuses it, which the core's own reader controller does"
     FIpcBufferShared =>
       "the buffer is CAPTURED by the task body -- the analyzer knows the names the body uses and the names it binds -- and the parent uses the buffer after the task was started, so the two writes can overlap"
   }
@@ -400,7 +400,7 @@ pub fn family_excluded(kind : FindingKind) -> String {
     FIpcReadEof =>
       "a `for` loop, which is bounded by its own count, and a reader the analyzer does not recognise by name"
     FIpcViewStale =>
-      "a view that is COPIED before the reader runs again -- `to_owned()` makes a copy -- and a reader the analyzer does not recognise by name"
+      "a peek whose result is only MATCHED ON -- a token, for instance -- because a value that is never USED AS A VIEW is not one; and a view that is COPIED before the reader runs again -- `to_owned()` makes a copy -- and a reader the analyzer does not recognise by name"
     FIpcBufferShared =>
       "a buffer the task body binds itself, which is private to the task, and a buffer the parent uses only BEFORE the task was started"
   }
