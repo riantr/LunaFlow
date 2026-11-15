@@ -121,6 +121,10 @@ pub(all) enum ExprKind {
   EDouble(Double)
   EBool(Bool)
   EString(String)
+  /// A BYTE literal: `b"abc"`. It is not a string: it is the way MoonBit
+  /// writes a `Bytes`, and the byte length of its content is what the C
+  /// side is told when a buffer crosses the boundary.
+  EBytes(String)
   EName(String)
   EBin(BinOp, Expr, Expr)
   EUn(UnOp, Expr)
@@ -161,6 +165,7 @@ pub fn Expr::render(self : Expr) -> String {
     EDouble(d) => format_double(d)
     EBool(b) => if b { "true" } else { "false" }
     EString(s) => "\"" + s + "\""
+    EBytes(s) => "b\"" + s + "\""
     EName(n) => n
     EBin(op, l, r) =>
       "(" + l.render() + " " + op.symbol() + " " + r.render() + ")"
@@ -449,12 +454,21 @@ pub(all) enum FindingKind {
   FFfiTargetMismatch
   FFfiAddressUnknown
   FFfiAddressConflict
+  FFfiDoubleFree
+  FFfiUseAfterFree
+  FFfiLengthMismatch
   // The CONCURRENCY families. See `conc.mbt` for the model and the
   // measurements every one of them rests on.
   FFconcLostUpdate
   FFconcStaleRead
   FFconcDeadlockCycle
   FFconcResourceUnreleased
+  // The IPC AND BUFFER families. See `ipc.mbt` for the model and the
+  // measurements every one of them rests on.
+  FIpcPartialRead
+  FIpcReadEof
+  FIpcViewStale
+  FIpcBufferShared
 }
 
 ///|
@@ -489,10 +503,17 @@ pub fn FindingKind::code(self : FindingKind) -> String {
     FFfiTargetMismatch => "FFI-TARGET-MISMATCH"
     FFfiAddressUnknown => "FFI-ADDRESS-UNKNOWN"
     FFfiAddressConflict => "FFI-ADDRESS-CONFLICT"
+    FFfiDoubleFree => "FFI-DOUBLE-FREE"
+    FFfiUseAfterFree => "FFI-USE-AFTER-FREE"
+    FFfiLengthMismatch => "FFI-LENGTH-MISMATCH"
     FFconcLostUpdate => "CONC-RACE-LOST-UPDATE"
     FFconcStaleRead => "CONC-RACE-STALE-READ"
     FFconcDeadlockCycle => "CONC-DEADLOCK-CYCLE"
     FFconcResourceUnreleased => "CONC-RESOURCE-UNRELEASED"
+    FIpcPartialRead => "IPC-PARTIAL-READ"
+    FIpcReadEof => "IPC-READ-EOF"
+    FIpcViewStale => "IPC-VIEW-STALE"
+    FIpcBufferShared => "IPC-BUFFER-SHARED"
   }
 }
 
@@ -519,9 +540,15 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     // and the MoonBit side still uses, a declaration the published target
     // cannot build: these are errors.
     FFfiSignatureConflict | FFfiUseAfterMove | FFfiTargetMismatch => "error"
+    // A C function that frees the same object twice, and an object that is
+    // used after the C side freed it: both are errors.
+    FFfiDoubleFree | FFfiUseAfterFree => "error"
     // A contract the toolchain leaves to the default, and an address whose
     // owner is ambiguous.
     FFfiUnannotatedOwnership | FFfiAddressConflict => "warning"
+    // A length the C side is told that is not the length of the object it is
+    // given: the C side may read or write outside the object.
+    FFfiLengthMismatch => "warning"
     // An address the analyzer cannot name: a limit of the analysis, not a
     // defect.
     FFfiAddressUnknown => "info"
@@ -533,6 +560,14 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     // A read that may already be out of date, and a lock that is never given
     // back: both are warnings.
     FFconcStaleRead | FFconcResourceUnreleased => "warning"
+    // The IPC AND BUFFER families.
+    //
+    // A buffer whose tail was never written, a loop that can never see EOF,
+    // and a buffer that two tasks write at once: these are errors.
+    FIpcPartialRead | FIpcReadEof | FIpcBufferShared => "error"
+    // A view that shows bytes the reader has already overwritten: a warning,
+    // because the program keeps running with data it did not intend to read.
+    FIpcViewStale => "warning"
   }
 }
 

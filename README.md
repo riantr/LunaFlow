@@ -147,6 +147,27 @@ One analyzer · three evidence strengths · one Markdown report.
   mutex-protected counter and the counter only one task touches are **not**
   reported.
 
+* An IPC and buffer model, for the reads that can come back short
+
+  MoonBit's own IPC goes through the core's `BinaryReader` and `BinaryWriter`
+  traits, and those traits have a contract that the language does not enforce.
+  Everything about it was **measured against the core**, not read off a
+  documentation page: a `read_into` into a 16-byte sentinel buffer returned
+  **3** and left the other 13 bytes at their old value, so a read can leave a
+  **stale tail**; at the end of the stream the read returns **0** and `read()`
+  returns `None`, so `0` is both "no progress" and "the stream ended"; a peeked
+  **view** read `78 79 7A` after two reads had reused the reader's one buffer;
+  and a **pending write is not a snapshot** — the reader received the bytes the
+  buffer held when the write was *handed over*, not when it was issued. The
+  model finds the read whose count is discarded, the loop that therefore cannot
+  see the end of the stream, the view used after the reader ran again, and the
+  buffer a task writes while the function that started it uses it too. One
+  measurement **refused** to support a family: `write` is exhaustive — it loops
+  until every byte is handed over — so there is no partial-write defect here,
+  and none is claimed. The safe shapes are not reported: the read with its
+  count kept, the view used *before* the next read, and the task with a buffer
+  of its own.
+
 * Markdown is the UI
 
   Reports use `flowchart TD` for CFGs and slices, `flowchart LR` for taint and
@@ -207,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.16
+moon add riantr/LunaFlow@0.1.17
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -215,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.16",
+  "riantr/LunaFlow@0.1.17",
 }
 ```
 
@@ -266,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.16](https://mooncakes.io/docs/riantr/LunaFlow@0.1.16).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.17](https://mooncakes.io/docs/riantr/LunaFlow@0.1.17).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -471,6 +492,95 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.17
+
+**The analyzer now checks memory safety on both sides of a boundary: the C
+boundary, and MoonBit's own IPC.**
+
+The question was asked in two halves — *shared memory, IPC and buffers* — and
+the C half was already there from 0.1.13. What was missing was the IPC half,
+and the way to find out what the IPC contract even **is**: the core's
+`BinaryReader` and `BinaryWriter` traits. So the release starts with
+measurements, because the contract is not what a reader expects.
+
+**A read can come back SHORT, and the bytes past the count were never
+written.** Measured: a 16-byte buffer pre-filled with `0xFF`, a pipe with 3
+bytes in it, one `read_into` → returned **3**, and the buffer afterwards was
+`61 62 63 FF FF FF … FF`. The count is the only thing that says so. A program
+that discards it cannot tell a short read from a full one, and it reads the
+bytes that were there before.
+
+**The offset is the caller's job.** Measured: `read_into(buf, offset=8)`
+returned 3 and wrote at `buf[8..11]`; `buf[0..8)` was untouched. Nothing
+advances the offset for you.
+
+**EOF is zero.** Measured: at the end of the stream `read_into` returns **0**
+and `read()` returns **None**. So `0` is both "no progress" and "the stream
+ended", and a loop that discards the count cannot tell them apart.
+
+**A peeked view goes stale, and the core says so.** "The caller of `peek`
+MUST NOT use the returned slice after any other `BinaryReader` operation is
+invoked on the same reader" — because the reader keeps **one** buffer and
+reuses it. Measured: peeked `61 62 63`; after two `read()` calls the **same
+view** read `78 79 7A`.
+
+**A pending write is not a snapshot.** Measured: a 4-byte buffer of 'A' handed
+to `write`, then overwritten with 'B' while the write was still pending → the
+reader received `42 42 42 42`, the 'B's, not the 'A's that were in the buffer
+when the write was issued. So a buffer the parent keeps using after the task
+started is a buffer whose bytes the two sides can both decide.
+
+**One measurement refused to support a family, and it is in the report.**
+`write` is **exhaustive** — it loops until every byte has been handed over
+(measured: 5 bytes written and read 2 at a time → 5 bytes in 3 reads) — so
+there is no partial-write defect at the `write` level, and this release does
+not claim one.
+
+**Four families, under their own method `L2-IPC`, in report §5.9:**
+
+| Code | What it asserts |
+|---|---|
+| `IPC-PARTIAL-READ` | a read's count is discarded and the buffer is then used, so the bytes past the count are the bytes that were there before |
+| `IPC-READ-EOF` | a loop reads until the stream ends with the count discarded, so the loop cannot see the end |
+| `IPC-VIEW-STALE` | a view into a reader's buffer is read after the reader has reused that buffer, so the bytes it shows are not the bytes that were read |
+| `IPC-BUFFER-SHARED` | a buffer is written by a task and used by the function that started it, so the two writes can land in the same bytes |
+
+**Three more families on the C side, under `L2-FFI`:** `FFI-DOUBLE-FREE` (the
+same object handed to a C function that frees it, twice), `FFI-USE-AFTER-FREE`
+(an object the C side freed, used afterwards) and `FFI-LENGTH-MISMATCH` (the C
+side is told a length that is not the length of the object it is given). The C
+source is not visible, so a **release is recognised by the symbol's name** —
+and the family contract says so, so the limit is stated rather than implied.
+
+**The parser learned the byte literal.** `b"abc"` is how MoonBit writes a
+`Bytes`, and the lexer splits it into an identifier and a string. Left alone,
+the identifier was read as a name and the string as a second expression, so a
+call that takes a byte buffer **lost an argument** — which is exactly where a
+byte buffer crosses the C boundary and its length has to be checked. It is now
+its own expression kind.
+
+**The safe shapes are not reported.** The fixture holds the defect and the
+shape next to it: the read with its count **kept** is not reported, the view
+used **before** the next read is not reported, and the task with a buffer of
+its **own** is not reported. A check that fires on the safe half is a false
+positive, so the gate asserts both halves — 84 → **103** checks.
+
+**What the model does not cover is in the report.** §5.9.4 lists it: a reader
+the analyzer does not recognise by name, a length that comes **from** the
+stream (the taint families are where a source has to be declared for that), a
+buffer reached through a field or a container, a view that was copied, a count
+that is used but an offset that is not advanced, and the C side of a socket.
+
+**The numbers.** Tests move 146 → **162** (sixteen new ones); the finding
+roster moves 30 → **37** families; the library is 22 files and the test suite
+16; the CLI-surface checks move 84 → **103**. The self-scan row moves too, and
+the reason is worth stating: the module gained 83 functions, and
+`--max-functions` (150 by default) selects the **first** 150 — so the analysed
+set changed, not the analyzer. Measured: the **new** analyzer over the **old**
+tree reproduces the 0.1.16 row exactly (42 files, 5 150 statements, 10 576
+events, 3 dead, 19 findings), and over the new tree it is 45 files, 5 483
+statements, 9 973 events, 0 dead and 25 findings.
 
 ### What changed in 0.1.16
 
@@ -1662,12 +1772,13 @@ LICENSE                    MIT
 moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
-src/app/                   21 library files: parser, CFG, L1 interpreter,
+src/app/                   22 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, family roster, evolved value
                            analysis, memory layout model, foreign address
-                           space model, concurrency model, report renderer
-src/app/*_test.mbt         146 tests in 15 files
+                           space model, concurrency model, IPC and buffer
+                           model, report renderer
+src/app/*_test.mbt         162 tests in 16 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -1680,6 +1791,9 @@ fixtures/ffi_demo/         the foreign address space fixture: the C boundary,
 fixtures/conc_demo/        the concurrency fixture: the lost update, the
                            deadlock, the unreleased lock, and the safe
                            shapes next to them
+fixtures/ipc_demo/          the IPC and buffer fixture: the short read, the
+                           invisible end of the stream, the stale view, the
+                           shared buffer, and the safe shapes next to them
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
 docs/qa/REPORT.md          deep QA report (security, coverage, metrics)
@@ -1708,12 +1822,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 162 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 162 warnings, 0 errors |
-| `moon check --target js` | exit 0, 187 warnings, 0 errors |
-| `moon test src/app --target native` | **146 passed, 0 failed** |
-| `moon test src/app --target wasm` | **146 passed, 0 failed** |
-| `moon test src/app --target js` | **146 passed, 0 failed** |
+| `moon check --target native` | exit 0, 170 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 170 warnings, 0 errors |
+| `moon check --target js` | exit 0, 195 warnings, 0 errors |
+| `moon test src/app --target native` | **162 passed, 0 failed** |
+| `moon test src/app --target wasm` | **162 passed, 0 failed** |
+| `moon test src/app --target js` | **162 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1726,10 +1840,10 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **84 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **103 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.16` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.17` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
@@ -1738,7 +1852,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 42 | 5,150 | 10,576 | 19 | 2 / 1 / 3 | 3 | 4 | 0.29 s |
+| `LunaFlow` itself (`--dir .`) | 45 | 5,483 | 9,973 | 25 | 2 / 1 / 3 | 0 | 4 | 0.32 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They

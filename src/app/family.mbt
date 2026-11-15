@@ -54,11 +54,26 @@ pub fn family_roster() -> Array[FindingKind] {
     FFfiTargetMismatch,
     FFfiAddressUnknown,
     FFfiAddressConflict,
+    FFfiDoubleFree,
+    FFfiUseAfterFree,
+    FFfiLengthMismatch,
     FFconcLostUpdate,
     FFconcStaleRead,
     FFconcDeadlockCycle,
     FFconcResourceUnreleased,
+    FIpcPartialRead,
+    FIpcReadEof,
+    FIpcViewStale,
+    FIpcBufferShared,
   ]
+}
+
+///|
+/// The families the IPC AND BUFFER analysis produces.
+///
+/// A family is in this list when the analysis has a check behind it.
+pub fn ipc_families() -> Array[FindingKind] {
+  [FIpcPartialRead, FIpcReadEof, FIpcViewStale, FIpcBufferShared]
 }
 
 ///|
@@ -140,10 +155,17 @@ pub fn family_title(kind : FindingKind) -> String {
     FFfiTargetMismatch => "FfiTargetMismatch"
     FFfiAddressUnknown => "FfiAddressUnknown"
     FFfiAddressConflict => "FfiAddressConflict"
+    FFfiDoubleFree => "FfiDoubleFree"
+    FFfiUseAfterFree => "FfiUseAfterFree"
+    FFfiLengthMismatch => "FfiLengthMismatch"
     FFconcLostUpdate => "ConcLostUpdate"
     FFconcStaleRead => "ConcStaleRead"
     FFconcDeadlockCycle => "ConcDeadlockCycle"
     FFconcResourceUnreleased => "ConcResourceUnreleased"
+    FIpcPartialRead => "IpcPartialRead"
+    FIpcReadEof => "IpcReadEof"
+    FIpcViewStale => "IpcViewStale"
+    FIpcBufferShared => "IpcBufferShared"
   }
 }
 
@@ -198,6 +220,12 @@ pub fn family_property(kind : FindingKind) -> String {
       "an argument of a C call cannot be named, so the region the call touches is unknown"
     FFfiAddressConflict =>
       "the same constant reaches two different C symbols, so what the C side does with it depends on which call ran last"
+    FFfiDoubleFree =>
+      "the same object is handed to a C function that frees it, twice, so the C side frees memory it no longer owns"
+    FFfiUseAfterFree =>
+      "an object the C side has freed is used afterwards, so the use reads memory the allocator may have handed to someone else"
+    FFfiLengthMismatch =>
+      "a C call is given an object and a length that is not that object's length, so the C side may read or write outside the object"
     FFconcLostUpdate =>
       "a task reads a shared cell and writes it back after an await point, so another task's write can land between the read and the write and the update is lost"
     FFconcStaleRead =>
@@ -206,6 +234,14 @@ pub fn family_property(kind : FindingKind) -> String {
       "the tasks take the locks in a circular order: each one holds a lock the next one wants, so none of them can proceed"
     FFconcResourceUnreleased =>
       "a lock is acquired and not released on the path, so every later acquire of it waits forever"
+    FIpcPartialRead =>
+      "a read returns fewer bytes than the buffer holds and the count is discarded, so the bytes past the count were never written"
+    FIpcReadEof =>
+      "a read loop discards the count the read returns, so the loop can never observe the end of the stream"
+    FIpcViewStale =>
+      "a view into a reader's buffer is read after the reader has reused that buffer, so the bytes the view shows are not the bytes that were read"
+    FIpcBufferShared =>
+      "a buffer is written by a task and used by the function that started it, so the two writes can land in the same bytes"
   }
 }
 
@@ -265,6 +301,12 @@ pub fn family_assumption(kind : FindingKind) -> String {
       "the module passes a constant in the same slot of the same symbol at another call site, so the slot is one the module treats as sometimes-fixed; whether it carries an address is an ASSUMPTION"
     FFfiAddressConflict =>
       "the same constant reaches two symbols in the same module; whether it is an address at all is an ASSUMPTION, so the finding states the fact and not a verdict"
+    FFfiDoubleFree =>
+      "the C symbol is recognised as a RELEASE BY ITS NAME -- the analyzer cannot see the C source, so the name is all it has -- and the two calls are in the same function"
+    FFfiUseAfterFree =>
+      "the C symbol is recognised as a RELEASE BY ITS NAME -- the analyzer cannot see the C source, so the name is all it has -- and the use is after the call in the same function"
+    FFfiLengthMismatch =>
+      "the integer parameter is the LENGTH of the pointer parameter -- the analyzer reads that from the parameter's NAME, and the C source is not visible -- and the argument is a literal or the length of a DIFFERENT object, so the disagreement is a fact and not a guess"
     FFconcLostUpdate =>
       "the two accesses are under a COMMON lock, and then they are ordered; and a task that does not yield between its read and its write, which cannot lose an update; and two tasks whose owners never call each other, which cannot interleave at all"
     FFconcStaleRead =>
@@ -273,6 +315,14 @@ pub fn family_assumption(kind : FindingKind) -> String {
       "a resource that is not a lock -- a semaphore's permits, for instance, are not tracked as a cycle; and two owners that never call each other, whose tasks cannot interleave"
     FFconcResourceUnreleased =>
       "a release on another path of the same task: the check is per PATH, and a lock released on one arm and not on another is reported on the arm that does not release it"
+    FIpcPartialRead =>
+      "the reader is one of the core's reader types -- the analyzer matches the METHOD NAME, because it does not infer types -- and the buffer named in the call is the destination the read fills"
+    FIpcReadEof =>
+      "the loop is a `while` loop, so it is not bounded by a count of its own, and the read is the only thing that could report the end of the stream"
+    FIpcViewStale =>
+      "the view comes from the core's `peek` family -- the analyzer matches the METHOD NAME -- and the reader keeps ONE buffer and reuses it, which the core's own reader controller does"
+    FIpcBufferShared =>
+      "the buffer is CAPTURED by the task body -- the analyzer knows the names the body uses and the names it binds -- and the parent uses the buffer after the task was started, so the two writes can overlap"
   }
 }
 
@@ -339,6 +389,20 @@ pub fn family_excluded(kind : FindingKind) -> String {
       "a resource conflict that is not a lock -- the resource ordering graph carries the locks only -- and the tasks of two functions that never call each other, which never run at the same time"
     FFconcResourceUnreleased =>
       "a lock released on ANOTHER path of the same task: the check is per path"
+    FFfiDoubleFree =>
+      "a free in ANOTHER function -- the analyzer follows one function at a time -- and a C function that frees under a name the analyzer does not recognise as a release"
+    FFfiUseAfterFree =>
+      "a use in ANOTHER function -- the analyzer follows one function at a time -- and a C function that frees under a name the analyzer does not recognise as a release"
+    FFfiLengthMismatch =>
+      "a length argument that is a VARIABLE -- the analyzer cannot prove what the variable holds -- and a C function whose length parameter is not named like one"
+    FIpcPartialRead =>
+      "a read whose count the module DOES use, and a reader the analyzer does not recognise by name"
+    FIpcReadEof =>
+      "a `for` loop, which is bounded by its own count, and a reader the analyzer does not recognise by name"
+    FIpcViewStale =>
+      "a view that is COPIED before the reader runs again -- `to_owned()` makes a copy -- and a reader the analyzer does not recognise by name"
+    FIpcBufferShared =>
+      "a buffer the task body binds itself, which is private to the task, and a buffer the parent uses only BEFORE the task was started"
   }
 }
 

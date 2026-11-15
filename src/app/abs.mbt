@@ -551,6 +551,7 @@ fn abs_eval(
     EDouble(d) => AbsCell::new(ADouble(d, d), TClean)
     EBool(b) => AbsCell::new(ABool(b, b), TClean)
     EString(s) => AbsCell::new(AStr([s]), TClean)
+    EBytes(s) => AbsCell::new(AStr([s]), TClean)
     EName(n) =>
       match st.env.get(n) {
         Some(c) => c

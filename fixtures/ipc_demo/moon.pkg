@@ -1,0 +1,13 @@
+// The IPC AND BUFFER fixture: the reads that can come back short, the views
+// that go stale, the buffers two sides write, and the shapes that are safe.
+//
+// `moonbitlang/core/async` is EXPERIMENTAL in the core, so using it has to
+// be acknowledged.
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/builtin",
+}
+
+options(
+  "allow-experimental-packages": [ "moonbitlang/core/async" ],
+)

@@ -88,3 +88,59 @@ pub fn poke_register() -> Unit {
 pub fn poke_dynamic(base : UInt64) -> Unit {
   poke(base, 7)
 }
+
+///|
+// A C function that RELEASES what it is given -- it frees the buffer.
+//
+// The annotation is `#borrow` on purpose: the release is recognised by the
+// SYMBOL's NAME, and an `#owned` argument would ALSO be reported as a
+// use-after-move, so the two defects would arrive together and the fixture
+// could not show which check found what.
+#cfg(target="native")
+#borrow(buffer)
+pub extern "C" fn release_buffer(buffer : Bytes) -> Unit = "free_buffer"
+
+///|
+// A C function that copies `len` bytes out of `src`.
+//
+// The source is BORROWED: the C side reads it and the MoonBit side keeps
+// it. The toolchain's E0055 requires an annotation on a pointer parameter,
+// and this one says what actually happens.
+#cfg(target="native")
+#borrow(src)
+pub extern "C" fn copy_bytes(src : Bytes, len : Int32) -> Unit = "copy_bytes"
+
+///|
+// The same buffer released TWICE. The C side frees memory it has already
+// taken back.
+#cfg(target="native")
+pub fn release_twice() -> Unit {
+  let buffer = b"payload"
+  release_buffer(buffer)
+  release_buffer(buffer)
+}
+
+///|
+// A buffer the C side has released, used afterwards.
+#cfg(target="native")
+pub fn use_after_release() -> Unit {
+  let buffer = b"payload"
+  release_buffer(buffer)
+  println(buffer)
+}
+
+///|
+// The C side is told to copy four bytes out of a three-byte object.
+#cfg(target="native")
+pub fn wrong_length() -> Unit {
+  copy_bytes(b"abc", 4)
+}
+
+///|
+// The same call with the object's OWN length: the two agree, so this must NOT
+// be reported.
+#cfg(target="native")
+pub fn right_length() -> Unit {
+  let payload = b"abc"
+  copy_bytes(payload, payload.length())
+}

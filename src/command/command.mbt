@@ -673,6 +673,10 @@ async fn analyze(opts : Opts) -> Unit {
   // computed from the AST, so it is a property of the module and not of the
   // run.
   let conc_model = @app.analyze_conc(ast)
+  // The IPC AND BUFFER model: the reads that can come back short, the views
+  // that go stale and the buffers two sides write. Also computed from the
+  // AST, so it is a property of the module and not of the run.
+  let ipc_model = @app.analyze_ipc(ast)
   // The parse issues, so the report can LIST them and not only count them.
   let parse_issues : Array[@app.ParseIssue] = []
   for f in ast.files {
@@ -872,6 +876,7 @@ async fn analyze(opts : Opts) -> Unit {
     issues=parse_issues,
     ffi=Some(ffi_model),
     conc=Some(conc_model),
+    ipc=Some(ipc_model),
   )
   let _ = write_text(report_path, md) catch { _ => false }
   let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {

@@ -638,6 +638,68 @@ anything on the C side of a boundary. Report §5.8.5 lists all of it.
 Cost: one static pass over the AST for the tasks, one over each task body for
 the accesses, and one over the edges for the cycles.
 
+### 5.13 The IPC and buffer model
+
+§5.11 modelled the address space on the other side of the **C** boundary. This
+section models the boundary MoonBit has with **itself**: the IPC that goes
+through the core's `BinaryReader` and `BinaryWriter` traits — sockets, pipes
+and process stdio.
+
+The contract of those traits is not something the language enforces, so it has
+to be measured before it can be checked. Every row below was produced by
+running the core:
+
+| The question | What the core says |
+|---|---|
+| Can a read fill the whole buffer? | **No.** `read_into(dst)` returns the number of bytes it read, and that number can be smaller than the buffer. Measured: a 16-byte buffer pre-filled with `0xFF`, a pipe with 3 bytes in it, one `read_into` → returned **3**, and the buffer afterwards was `61 62 63 FF FF FF … FF`. The bytes past the count were **never written**. |
+| Who advances the offset? | The caller. Measured: `read_into(buf, offset=8)` returned 3 and wrote at `buf[8..11]`; `buf[0..8)` was untouched. |
+| What does the end of the stream look like? | `read_into` returns **0** and `read()` returns **None**. So `0` is both "no progress" and "the stream ended". |
+| How long is a peeked view good for? | Until the next operation on the same reader. The core says so — "the caller of `peek` MUST NOT use the returned slice after any other `BinaryReader` operation" — because the reader keeps **one** buffer and reuses it. Measured: peeked `61 62 63`; after two `read()` calls the **same view** read `78 79 7A`. |
+| Can a write come back short? | **No.** `write` is **exhaustive**: it loops until every byte has been handed over. Measured: 5 bytes written and read 2 at a time → 5 bytes in 3 reads. So there is **no partial-write defect** at the `write` level, and this model does not claim one. |
+| Is a pending write a snapshot of the buffer? | **No.** Measured: a 4-byte buffer of 'A' handed to `write`, then overwritten with 'B' while the write was still pending → the reader received `42 42 42 42`, the 'B's, not the 'A's that were in the buffer when the write was issued. |
+
+**The model.**
+
+| Piece | What it is |
+|---|---|
+| **Reader / writer** | a value the module reads from or writes to. The analyzer matches the **method name** — it does not infer types — so the core's API names (`read_into`, `read`, `read_exactly`, `peek`, `write`, …) are what it sees. |
+| **Discarded count** | a reader call whose result is thrown away. MoonBit does not let a value be dropped silently, so this is `ignore(reader.read_into(buf))` or `let _ = reader.read_into(buf)`, and both are the same defect. |
+| **View** | the result of `peek`, `peek_at_least` or `peek_exactly`: a window into the reader's own buffer, valid only until the next operation on that reader. |
+| **Shared buffer** | a buffer a task body writes and the function that started the task also uses. The buffer is **captured** — the task body uses it and does not bind it. |
+| **Base name** | the variable a buffer expression stands for: `buf`, `buf[0]` and `buf.unsafe_reinterpret_as_bytes()` are all the buffer `buf`. |
+
+**The findings** are filed under their own method, `L2-IPC`, in report §5.9:
+
+| Code | What it asserts |
+|---|---|
+| `IPC-PARTIAL-READ` | a read's count is discarded and the buffer is then used, so the bytes past the count are the bytes that were there before |
+| `IPC-READ-EOF` | a loop reads until the stream ends with the count discarded, so the loop cannot see the end |
+| `IPC-VIEW-STALE` | a view into a reader's buffer is read after the reader has reused that buffer, so the bytes it shows are not the bytes that were read |
+| `IPC-BUFFER-SHARED` | a buffer is written by a task and used by the function that started it, so the two writes can land in the same bytes |
+
+**The C boundary gains three families** in the same release, because the
+question was asked about the C side too. The C source is not visible, so a
+**release is recognised by the symbol's name** — and the contract says so, so
+the limit is stated rather than implied.
+
+| Code | What it asserts |
+|---|---|
+| `FFI-DOUBLE-FREE` | the same object is handed to a C function that frees it, twice, so the C side frees memory it no longer owns |
+| `FFI-USE-AFTER-FREE` | an object the C side has freed is used afterwards, so the use reads memory the allocator may already have handed to someone else |
+| `FFI-LENGTH-MISMATCH` | a C call is given an object and a length that is not that object's length, so the C side may read or write outside the object |
+
+**What the model does not claim.** It does not claim a reader the analyzer
+does not recognise by name, a length that comes **from** the stream and sizes
+an allocation (the taint families are where a source has to be declared for
+that), a buffer reached through a field or a container, a view that was
+**copied** (`to_owned()` makes a copy, and a copy is not a view), a count that
+is used but an offset that is **not** advanced, or the C side of a socket.
+Report §5.9.4 lists all of it.
+
+Cost: one static pass over the AST for the calls, one over each function body
+for the discarded counts and the views, and one over the closures for the
+shared buffers.
+
 ---
 
 ## 6. Visualization
@@ -655,7 +717,8 @@ the accesses, and one over the edges for the cycles.
 
 The report also carries the evolved value analysis (5.3), the global region
 (5.4), the allocation classes (5.5), the layout-stability self-check (5.6), the
-foreign address space (5.7) and the concurrency model (5.8).
+foreign address space (5.7), the concurrency model (5.8) and the IPC and
+buffer model (5.9).
 
 ### 6.2 Mermaid conventions
 

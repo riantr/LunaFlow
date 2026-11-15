@@ -10,6 +10,8 @@ pub fn analyze_conc(ModuleAst) -> ConcModel
 
 pub fn analyze_ffi(ModuleAst) -> FfiModel
 
+pub fn analyze_ipc(ModuleAst) -> IpcModel
+
 pub fn array_candidates(String) -> Array[Value]
 
 pub fn basename(String) -> String
@@ -124,6 +126,8 @@ pub fn hex_of(Int64) -> String
 
 pub fn int_candidates() -> Array[Value]
 
+pub fn ipc_families() -> Array[FindingKind]
+
 pub fn is_array_type(String) -> Bool
 
 pub fn is_digit(Char) -> Bool
@@ -194,7 +198,7 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
@@ -532,6 +536,7 @@ pub(all) enum ExprKind {
   EDouble(Double)
   EBool(Bool)
   EString(String)
+  EBytes(String)
   EName(String)
   EBin(BinOp, Expr, Expr)
   EUn(UnOp, Expr)
@@ -681,10 +686,17 @@ pub(all) enum FindingKind {
   FFfiTargetMismatch
   FFfiAddressUnknown
   FFfiAddressConflict
+  FFfiDoubleFree
+  FFfiUseAfterFree
+  FFfiLengthMismatch
   FFconcLostUpdate
   FFconcStaleRead
   FFconcDeadlockCycle
   FFconcResourceUnreleased
+  FIpcPartialRead
+  FIpcReadEof
+  FIpcViewStale
+  FIpcBufferShared
 }
 pub fn FindingKind::code(Self) -> String
 pub fn FindingKind::equal(Self, Self) -> Bool
@@ -743,6 +755,43 @@ pub struct InputSet {
 }
 
 type Interp
+
+pub struct IpcCall {
+  op : String
+  receiver : String
+  discarded : Bool
+  bound : String
+  file : String
+  line : Int32
+  fn_name : String
+}
+
+pub struct IpcModel {
+  calls : Array[IpcCall]
+  views : Array[IpcView]
+  shared : Array[IpcShared]
+  findings : Array[Finding]
+}
+
+pub struct IpcShared {
+  name : String
+  task : String
+  parent : String
+  task_line : Int32
+  parent_line : Int32
+  file : String
+  fn_name : String
+}
+
+pub struct IpcView {
+  name : String
+  receiver : String
+  peek_line : Int32
+  broken_line : Int32
+  broken_op : String
+  file : String
+  fn_name : String
+}
 
 pub struct LineHit {
   file : String

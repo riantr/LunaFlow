@@ -1091,6 +1091,237 @@ fn ffi_check_target(
 
 ///|
 /// The call sites of the foreign functions, and what happens at them.
+
+///|
+/// An object the C side has been told to FREE.
+priv struct FfiFreed {
+  /// The name of the object.
+  name : String
+  /// The line of the call that freed it.
+  line : Int32
+  /// The C symbol that freed it.
+  symbol : String
+  /// False once the name has been given a NEW value: it then holds a
+  /// different object, and the object that was freed is not this one.
+  mut live : Bool
+}
+
+///|
+/// True when the C symbol is a RELEASE: a function that frees what it is
+/// given.
+///
+/// The analyzer cannot see the C source, so the NAME is all it has. The
+/// words below are the ones the C world uses for a release, and a C function
+/// that frees under a name outside this set is not recognised -- the family
+/// contract says so, so the limit is stated rather than implied.
+fn ffi_is_release_symbol(symbol : String) -> Bool {
+  let s = symbol.to_lower()
+  for
+    word in [
+      "free", "release", "destroy", "dispose", "dealloc", "finalize", "close",
+    ] {
+    if s.contains(word) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// True when the parameter's NAME says it is a LENGTH.
+///
+/// The C source is not visible, so the name is the only signal there is.
+fn ffi_is_length_name(name : String) -> Bool {
+  let n = name.to_lower()
+  n.contains("len") || n.contains("size") || n.contains("count") || n == "n"
+}
+
+///|
+/// True when the type is a byte buffer: a `Bytes`, or an array of bytes.
+///
+/// A `String` is NOT one of these: it crosses as `uint16_t *`, so its length
+/// in bytes is not its length in MoonBit.
+fn ffi_is_bytes_type(ty : String) -> Bool {
+  let t = ty.trim()
+  t == "Bytes" || t == "FixedArray[Byte]" || t == "Array[Byte]"
+}
+
+///|
+/// The byte length of a byte literal, when the analyzer can tell it.
+///
+/// The length is exact only when every byte is a printable ASCII one: an
+/// escape has already been resolved by the lexer, so the text would be
+/// longer than the bytes it stands for, and those are not measured.
+fn ffi_bytes_literal_len(e : Expr) -> Int32? {
+  match e.kind {
+    EBytes(s) => {
+      for i in 0..<s.length() {
+        let b = s[i]
+        if b < 32 || b > 126 {
+          return None
+        }
+      }
+      Some(s.length())
+    }
+    _ => None
+  }
+}
+
+///|
+/// The root name of an expression: the variable it is.
+fn ffi_root_name(e : Expr) -> String {
+  match e.kind {
+    EName(n) => n
+    _ => ""
+  }
+}
+
+///|
+/// True when the statement REBINDS the name, rather than reading what it
+/// holds.
+fn ffi_assigns_to(s : Stmt, name : String) -> Bool {
+  match s.kind {
+    SAssign(lhs, _) =>
+      match lhs.kind {
+        EName(n) => n == name
+        _ => false
+      }
+    _ => false
+  }
+}
+
+///|
+/// The length the C side is told, and the object it is told it for.
+///
+/// Two shapes are a disagreement, and both are facts rather than guesses:
+///
+///   - the length is the length of something this call is NOT given: the C
+///     side is told how many bytes to move, and the number describes a
+///     different object;
+///   - the length is a literal and the object is a literal of another
+///     length: the C side is told to move four bytes of a three-byte object.
+///
+/// A length that is a VARIABLE is not judged: the analyzer cannot prove what
+/// the variable holds, and the family contract says so.
+fn ffi_check_length_mismatch(
+  d : FfiDecl,
+  args : Array[Expr],
+  f : Func,
+  s : Stmt,
+  findings : Array[Finding],
+) -> Unit {
+  let mut len_idx = -1
+  let obj_idx : Array[Int32] = []
+  for i in 0..<d.params.length() {
+    let p = d.params[i]
+    if is_integer_type(p.ty) && ffi_is_length_name(p.name) {
+      if len_idx < 0 {
+        len_idx = i
+      }
+    } else if ffi_is_bytes_type(p.ty) {
+      obj_idx.push(i)
+    }
+  }
+  if len_idx < 0 || obj_idx.length() == 0 {
+    return
+  }
+  if len_idx >= args.length() {
+    return
+  }
+  // The names of the objects this call is given.
+  let obj_names : Array[String] = []
+  for i in obj_idx {
+    if i < args.length() {
+      let n = ffi_root_name(args[i])
+      if n != "" {
+        obj_names.push(n)
+      }
+    }
+  }
+  let len_text = args[len_idx].render()
+  // (1) The length is the length of something this call is NOT given.
+  let suffix = ".length()"
+  if len_text.has_suffix(suffix) {
+    let other = len_text[0:len_text.length() - suffix.length()].to_owned()
+    if !obj_names.contains(other) {
+      findings.push(
+        Finding::new(
+          FFfiLengthMismatch,
+          f.file,
+          s.span.start_line,
+          f.name,
+          "'" +
+          d.name +
+          "' is given the length of '" +
+          other +
+          "', which is not one of the objects it is given (" +
+          ffi_join(obj_names) +
+          "). The C side is told how many bytes to move, and the number describes a different object, so it may read or write outside the one the C side was handed.",
+          "L2-FFI",
+          0.7,
+          d.name + " @ " + f.file + ":" + s.span.start_line.to_string(),
+        ),
+      )
+    }
+    return
+  }
+  // (2) The length is a literal and the ONE object is a literal of another
+  // length.
+  if obj_idx.length() != 1 {
+    return
+  }
+  let oi = obj_idx[0]
+  if oi >= args.length() {
+    return
+  }
+  match const_of_expr(args[len_idx]) {
+    Some(n) =>
+      match ffi_bytes_literal_len(args[oi]) {
+        Some(actual) =>
+          if actual.to_int64() != n {
+            findings.push(
+              Finding::new(
+                FFfiLengthMismatch,
+                f.file,
+                s.span.start_line,
+                f.name,
+                "'" +
+                d.name +
+                "' is given the length " +
+                n.to_string() +
+                " and an object of " +
+                actual.to_string() +
+                " bytes. The C side is told to move more bytes than the object holds, so it may read or write outside it.",
+                "L2-FFI",
+                0.7,
+                d.name + " @ " + f.file + ":" + s.span.start_line.to_string(),
+              ),
+            )
+          }
+        None => ()
+      }
+    None => ()
+  }
+}
+
+///|
+fn ffi_join(names : Array[String]) -> String {
+  if names.length() == 0 {
+    return "none"
+  }
+  let mut out = ""
+  let mut i = 0
+  while i < names.length() {
+    if i > 0 {
+      out = out + ", "
+    }
+    out = out + "'" + names[i] + "'"
+    i = i + 1
+  }
+  out
+}
+
+///|
 fn ffi_collect_calls(
   ast : ModuleAst,
   decls : Array[FfiDecl],
@@ -1101,12 +1332,13 @@ fn ffi_collect_calls(
 ) -> Unit {
   for f in ast.all_funcs() {
     let moved : Array[(String, Int32, String)] = []
+    let freed : Array[FfiFreed] = []
     // The C symbol that produced each local value: the PROVENANCE of a
     // foreign address.
     let producers : Map[String, String] = Map([])
     for s in f.body {
       ffi_visit_stmt(
-        f, s, decls, external_types, types, calls, findings, moved, producers,
+        f, s, decls, external_types, types, calls, findings, moved, freed, producers,
       )
     }
   }
@@ -1124,8 +1356,75 @@ fn ffi_visit_stmt(
   calls : Array[FfiCall],
   findings : Array[Finding],
   moved : Array[(String, Int32, String)],
+  freed : Array[FfiFreed],
   producers : Map[String, String],
 ) -> Unit {
+  // The name is given a NEW value: it is a different object now, so the
+  // object the C side freed is not the one the name holds.
+  match s.kind {
+    SAssign(lhs, _) =>
+      match lhs.kind {
+        EName(n) => {
+          let mut k = 0
+          while k < freed.length() {
+            if freed[k].name == n {
+              freed[k].live = false
+            }
+            k = k + 1
+          }
+        }
+        _ => ()
+      }
+    _ => ()
+  }
+  // The calls this statement makes, and the objects it releases. The release
+  // is worked out BEFORE the use checks, because a call that FREES an object
+  // is not itself a USE of the freed memory -- it IS the free.
+  let found : Array[(FfiDecl, Array[Expr])] = []
+  stmt_ffi_calls(s, decls, found)
+  let freed_here : Array[String] = []
+  for (d, args) in found {
+    if d.is_c && d.symbol != "" && ffi_is_release_symbol(d.symbol) {
+      for i in 0..<d.params.length() {
+        if !is_pointer_type(d.params[i].ty, external_types, types) {
+          continue
+        }
+        if i >= args.length() {
+          continue
+        }
+        let name = root_name(args[i])
+        if name != "" && !freed_here.contains(name) {
+          freed_here.push(name)
+        }
+      }
+    }
+  }
+  // A USE of an object the C side has already freed.
+  for fr in freed {
+    if fr.live &&
+      !freed_here.contains(fr.name) &&
+      !ffi_assigns_to(s, fr.name) &&
+      stmt_reads(s, fr.name) {
+      findings.push(
+        Finding::new(
+          FFfiUseAfterFree,
+          f.file,
+          s.span.start_line,
+          f.name,
+          "'" +
+          fr.name +
+          "' was given to the C function '" +
+          fr.symbol +
+          "' at line " +
+          fr.line.to_string() +
+          ", and it is used here. That function frees what it is given, so this use reads memory the allocator may already have handed to someone else.",
+          "L2-FFI",
+          0.9,
+          fr.name + " -> " + fr.symbol,
+        ),
+      )
+    }
+  }
   // A USE of an object that was already given away.
   for (name, line, symbol) in moved {
     if stmt_reads(s, name) {
@@ -1149,8 +1448,6 @@ fn ffi_visit_stmt(
       )
     }
   }
-  let found : Array[(FfiDecl, Array[Expr])] = []
-  stmt_ffi_calls(s, decls, found)
   for (d, args) in found {
     let call_args : Array[FfiArg] = []
     for i in 0..<args.length() {
@@ -1208,6 +1505,54 @@ fn ffi_visit_stmt(
       }
       moved.push((name, s.span.start_line, d.symbol))
     }
+    // The object this call FREES. A release-shaped C symbol frees what it is
+    // given, whatever the ownership annotation says.
+    if d.is_c && d.symbol != "" && ffi_is_release_symbol(d.symbol) {
+      for i in 0..<d.params.length() {
+        if !is_pointer_type(d.params[i].ty, external_types, types) {
+          continue
+        }
+        if i >= args.length() {
+          continue
+        }
+        let name = root_name(args[i])
+        if name == "" {
+          continue
+        }
+        let mut already = false
+        for fr in freed {
+          if fr.live && fr.name == name {
+            already = true
+            break
+          }
+        }
+        if already {
+          findings.push(
+            Finding::new(
+              FFfiDoubleFree,
+              f.file,
+              s.span.start_line,
+              f.name,
+              "'" +
+              name +
+              "' was already given to a C function that frees it, and it is given to one again here. The C side frees the same object twice, so the second free hands the allocator memory it has already taken back.",
+              "L2-FFI",
+              0.9,
+              name + " -> " + d.symbol,
+            ),
+          )
+        } else {
+          freed.push({
+            name,
+            line: s.span.start_line,
+            symbol: d.symbol,
+            live: true,
+          })
+        }
+      }
+    }
+    // The length the C side is told, and the object it is told it for.
+    ffi_check_length_mismatch(d, args, f, s, findings)
     // The PROVENANCE of the value this call returns: the name it is bound
     // to now belongs to the C symbol that produced it.
     match s.kind {
@@ -1227,43 +1572,43 @@ fn ffi_visit_stmt(
     SIf(_, then_body, else_body) => {
       for x in then_body {
         ffi_visit_stmt(
-          f, x, decls, external_types, types, calls, findings, moved, producers,
+          f, x, decls, external_types, types, calls, findings, moved, freed, producers,
         )
       }
       for x in else_body {
         ffi_visit_stmt(
-          f, x, decls, external_types, types, calls, findings, moved, producers,
+          f, x, decls, external_types, types, calls, findings, moved, freed, producers,
         )
       }
     }
     SWhile(_, body) =>
       for x in body {
         ffi_visit_stmt(
-          f, x, decls, external_types, types, calls, findings, moved, producers,
+          f, x, decls, external_types, types, calls, findings, moved, freed, producers,
         )
       }
     SFor(_, _, _, _, body) =>
       for x in body {
         ffi_visit_stmt(
-          f, x, decls, external_types, types, calls, findings, moved, producers,
+          f, x, decls, external_types, types, calls, findings, moved, freed, producers,
         )
       }
     SForIn(_, _, body) =>
       for x in body {
         ffi_visit_stmt(
-          f, x, decls, external_types, types, calls, findings, moved, producers,
+          f, x, decls, external_types, types, calls, findings, moved, freed, producers,
         )
       }
     SBlock(body) =>
       for x in body {
         ffi_visit_stmt(
-          f, x, decls, external_types, types, calls, findings, moved, producers,
+          f, x, decls, external_types, types, calls, findings, moved, freed, producers,
         )
       }
     STry(body) =>
       for x in body {
         ffi_visit_stmt(
-          f, x, decls, external_types, types, calls, findings, moved, producers,
+          f, x, decls, external_types, types, calls, findings, moved, freed, producers,
         )
       }
     _ => ()

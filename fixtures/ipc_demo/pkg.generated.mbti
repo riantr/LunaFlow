@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/fixtures/ipc_demo"
+
+// Values
+pub fn checked_read() -> Unit
+
+pub fn partial_read() -> Unit
+
+pub async fn private_buffer() -> Unit
+
+pub fn read_until_eof() -> Unit
+
+pub async fn shared_buffer() -> Unit
+
+pub fn stale_view() -> Unit
+
+pub fn view_used_before_the_next_read() -> Unit
+
+// Errors
+
+// Types and methods
+pub struct Reader {
+  data : FixedArray[Byte]
+  mut pos : Int32
+}
+pub fn Reader::Reader(FixedArray[Byte]) -> Self
+pub fn Reader::peek(Self) -> BytesView?
+pub fn Reader::read_into(Self, FixedArray[Byte]) -> Int32
+
+pub struct Writer {
+  sent : Array[Byte]
+}
+pub fn Writer::Writer() -> Self
+pub fn Writer::write(Self, BytesView) -> Unit
+
+// Type aliases
+
+// Traits

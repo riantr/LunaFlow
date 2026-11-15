@@ -647,6 +647,16 @@ fn parse_primary(p : P) -> Expr {
       if t.text == "true" || t.text == "false" {
         ignore(p.bump())
         Expr::new(span_from(t, t, p.file), EBool(t.text == "true"))
+      } else if t.text == "b" && p.peek_at(1).kind == TString {
+        // A BYTE LITERAL: `b"abc"`. It is how MoonBit writes a `Bytes`, and
+        // the lexer splits it into an identifier and a string, so the two are
+        // joined here. Left alone, the identifier was read as a name and the
+        // string as a second expression, and the call it belongs to lost an
+        // argument -- which is exactly where a byte buffer crosses the C
+        // boundary and its length has to be checked.
+        ignore(p.bump())
+        let s = p.bump()
+        Expr::new(span_from(t, s, p.file), EBytes(s.text))
       } else if t.text == "if" {
         // An `if` EXPRESSION is one expression: the condition, both branches
         // and the `else` belong to it. The branches are not interpreted, but

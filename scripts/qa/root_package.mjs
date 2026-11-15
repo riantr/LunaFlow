@@ -702,6 +702,24 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
     'the FFI findings are NOT filed as the classic abstract findings',
     !ffiText.includes('| L2-abstract |'),
   );
+  // The RELEASE families. The C side cannot be seen, so a release is
+  // recognised by the SYMBOL's NAME -- and the fixture says so.
+  check(
+    'the same buffer released twice is reported as a double free',
+    (ffiText.match(/FFI-DOUBLE-FREE/g) || []).length === 1,
+  );
+  check(
+    'a buffer the C side released, used afterwards, is reported',
+    (ffiText.match(/FFI-USE-AFTER-FREE/g) || []).length === 1,
+  );
+  check(
+    'a length that is not the object\'s length is reported',
+    (ffiText.match(/FFI-LENGTH-MISMATCH/g) || []).length === 1,
+  );
+  check(
+    'the length finding is on the call with the wrong length, not on the right one',
+    /FFI-LENGTH-MISMATCH \| warning \| wrong_length/.test(ffiText),
+  );
 }
 
 // ------------------------------------------------------ the concurrency model
@@ -783,6 +801,98 @@ if (existsSync(join(ROOT, 'fixtures', 'conc_demo', 'lib.mbt'))) {
   check(
     'the model says a thread-level data race is not covered',
     concText.includes('A thread-level data race'),
+  );
+}
+
+// ------------------------------------------------------ the IPC and buffer model
+//
+// The fixture holds the shapes that break the core's reader contract and the
+// shapes that do not: a read whose count is discarded, the SAME read with the
+// count kept, a loop that cannot see the end of the stream, a peeked view
+// used after the reader ran again and the SAME view used before it, and a
+// buffer a task writes while the parent uses it next to a task that has a
+// buffer of its own.
+//
+// Every claim about the core was settled by RUNNING it: a read into a
+// 16-byte sentinel buffer returned 3 and left the other 13 bytes at their
+// old value; at EOF the read returns 0; a peeked view read `78 79 7A` after
+// two reads; and a pending write delivered the bytes the buffer held when
+// the write was HANDED OVER, not when it was issued.
+//
+// A check that fires on the safe half is a false positive, and a check that
+// does not fire on the defect half is a check that does not work.
+if (existsSync(join(ROOT, 'fixtures', 'ipc_demo', 'lib.mbt'))) {
+  const ipcRun = run([
+    'analyze',
+    '--dir',
+    'fixtures/ipc_demo',
+    '--out',
+    join(OUT, 'ipc'),
+    '--funnel',
+    '--trials',
+    '4',
+  ]);
+  const ipcReport = join(OUT, 'ipc', 'local_module_0.0.0.md');
+  const ipcText = existsSync(ipcReport) ? readFileSync(ipcReport, 'utf8') : '';
+  check('the IPC model is analysed', ipcRun.status === 0);
+  check(
+    'the report has the IPC section',
+    ipcText.includes('### 5.9 IPC and buffers'),
+  );
+  check(
+    'the report lists the calls on the readers and writers',
+    ipcText.includes('#### 5.9.1 The calls on the readers and writers'),
+  );
+  check(
+    'the report lists the stale views',
+    ipcText.includes('#### 5.9.2 The views that went stale'),
+  );
+  check(
+    'the report lists the shared buffers',
+    ipcText.includes('#### 5.9.3 The buffers two sides write'),
+  );
+  check(
+    'the report says what the model does NOT cover',
+    ipcText.includes('#### 5.9.4 What this model does NOT cover'),
+  );
+  // The findings. Each one is counted, because a check that fires TWICE on
+  // the same defect is as wrong as one that does not fire at all.
+  check(
+    'a read whose count is discarded is reported ONCE',
+    (ipcText.match(/IPC-PARTIAL-READ/g) || []).length === 1,
+  );
+  check(
+    'a loop that cannot see the end of the stream is reported ONCE',
+    (ipcText.match(/IPC-READ-EOF/g) || []).length === 1,
+  );
+  check(
+    'a peeked view used after the reader ran again is reported ONCE',
+    (ipcText.match(/IPC-VIEW-STALE/g) || []).length === 1,
+  );
+  check(
+    'a buffer a task writes and the parent uses is reported ONCE',
+    (ipcText.match(/IPC-BUFFER-SHARED/g) || []).length === 1,
+  );
+  check(
+    'the IPC findings are filed under their own method',
+    ipcText.includes('L2-IPC'),
+  );
+  check(
+    'the IPC findings are NOT filed as the classic abstract findings',
+    !ipcText.includes('| L2-abstract |'),
+  );
+  // The model states what it measured, and it states what it does not model.
+  check(
+    'the model says a read can come back short',
+    ipcText.includes('A read can come back SHORT'),
+  );
+  check(
+    'the model says a pending write is not a snapshot',
+    ipcText.includes('A pending write is not a snapshot'),
+  );
+  check(
+    'the model says a length that comes from the stream is not judged here',
+    ipcText.includes('A length that comes from the stream'),
   );
 }
 

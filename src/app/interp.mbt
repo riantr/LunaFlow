@@ -334,6 +334,7 @@ fn eval(p : Interp, env : Map[String, Val], e : Expr) -> Val {
     EDouble(d) => clean(VDouble(d))
     EBool(b) => clean(VBool(b))
     EString(s) => clean(VStr(s))
+    EBytes(s) => clean(VStr(s))
     EName(n) => {
       p.reads.push(n)
       match env.get(n) {

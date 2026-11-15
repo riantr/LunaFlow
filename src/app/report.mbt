@@ -913,6 +913,141 @@ fn conc_edge_table(m : ConcModel) -> String {
 }
 
 ///|
+/// The IPC AND BUFFERS section: the reads that can come back short, the
+/// views that go stale, and the buffers two sides write.
+fn ipc_section(model : IpcModel?) -> String {
+  let out = StringBuilder::new()
+  out.write_string(
+    "\n### 5.9 IPC and buffers: the reads that can come back short\n\n",
+  )
+  match model {
+    None => out.write_string("_The IPC model was not analysed._\n\n")
+    Some(m) => {
+      out.write_string(
+        "MoonBit's own IPC -- sockets, pipes and process stdio -- goes through the core's `BinaryReader` and `BinaryWriter` traits, and those traits have a contract. The defect classes here are the ways a program can break that contract, and every one of them was MEASURED against the core rather than read off a documentation page:\n\n" +
+        "- **A read can come back SHORT.** `read_into(dst)` returns the number of bytes it read, and that number can be smaller than the buffer. Measured: a 16-byte buffer pre-filled with `0xFF`, a pipe with 3 bytes in it, one `read_into` -> returned **3**, and the buffer afterwards was `61 62 63 FF FF FF ... FF`. The bytes past the count were never written: they still held what the buffer held before. The count is the only thing that says so, and a program that discards it cannot tell a short read from a full one.\n" +
+        "- **The offset is the caller's job.** Measured: `read_into(buf, offset=8)` returned 3 and wrote at `buf[8..11]`; `buf[0..8)` was untouched. Nothing advances the offset for you.\n" +
+        "- **EOF is zero.** Measured: at the end of the stream `read_into` returns **0** and `read()` returns **None**. So 0 is both \"no progress\" and \"the stream ended\", and a loop that discards the count cannot tell them apart.\n" +
+        "- **A peeked view goes stale.** The core says it outright -- \"the caller of `peek` MUST NOT use the returned slice after any other `BinaryReader` operation is invoked on the same reader\" -- because the reader keeps ONE buffer and reuses it. Measured: peeked `61 62 63`; after two `read()` calls the SAME view read `78 79 7A`.\n" +
+        "- **A pending write is not a snapshot.** Measured: a 4-byte buffer of 'A' handed to `write`, then overwritten with 'B' while the write was still pending -> the reader received `42 42 42 42`, the 'B's, not the 'A's that were in the buffer when the write was issued.\n\n" +
+        "One thing the measurement REFUSED to support: `write` is **exhaustive**. It loops until every byte has been handed over -- measured, 5 bytes written and read 2 at a time -> 5 bytes in 3 reads -- so there is no partial-write defect at the `write` level, and this model does not claim one.\n\n",
+      )
+      out.write_string("#### 5.9.1 The calls on the readers and writers\n\n")
+      out.write_string(ipc_call_table(m))
+      out.write_string("\n#### 5.9.2 The views that went stale\n\n")
+      out.write_string(ipc_view_table(m))
+      out.write_string("\n#### 5.9.3 The buffers two sides write\n\n")
+      out.write_string(ipc_shared_table(m))
+      out.write_string("\n#### 5.9.4 What this model does NOT cover\n\n")
+      out.write_string(
+        "The model is sound about what it reports and silent about the rest, so here is exactly what it does not model:\n\n" +
+        "- **A reader the analyzer does not recognise by name.** The analyzer matches the METHOD NAME, because it does not infer types: a reader of your own with a method called `read_into` is treated as the core's reader. A reader with a different method name is not seen at all.\n" +
+        "- **A length that comes from the stream.** A length read off the wire and used to size an allocation is a real defect, and it is not judged here: the taint families (§5.4) are where a source has to be declared for that to be checkable. This model judges the LENGTH ARGUMENT AT THE C BOUNDARY (§5.7), not a length that came in over the socket.\n" +
+        "- **A buffer reached through a field, a container or an array.** The shared buffers are the ones a task body CAPTURES by name. A buffer stored in a struct field or in a collection is not tracked.\n" +
+        "- **A use of a view that was copied.** `to_owned()` makes a copy, and a copy is not a view: the model only reports the view itself.\n" +
+        "- **A count that is used but an offset that is not advanced.** `read_into(buf, offset=k)` does not move `k` for you (measured). The model reports a DISCARDED count; a count that is used but an offset that is not advanced is not judged.\n" +
+        "- **The C side of a socket.** What arrives is whatever the peer sent. §5.7 says the same about the other side of a C boundary.\n\n",
+      )
+      out.write_string(findings_table(m.findings))
+    }
+  }
+  out.to_string()
+}
+
+///|
+/// The calls the module makes on its readers and writers.
+fn ipc_call_table(m : IpcModel) -> String {
+  let out = StringBuilder::new()
+  if m.calls.length() == 0 {
+    out.write_string("_No call on a reader or a writer._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| Call | Receiver | Count discarded | Bound to | Location |\n| --- | --- | --- | --- | --- |\n",
+  )
+  for c in m.calls {
+    out.write_string(
+      "| `" +
+      c.op +
+      "` | `" +
+      (if c.receiver == "" { "-" } else { c.receiver }) +
+      "` | " +
+      (if c.discarded { "yes" } else { "no" }) +
+      " | " +
+      (if c.bound == "" { "-" } else { "`" + c.bound + "`" }) +
+      " | `" +
+      c.file +
+      ":" +
+      c.line.to_string() +
+      "` |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
+/// The views that were read after the reader had reused their buffer.
+fn ipc_view_table(m : IpcModel) -> String {
+  let out = StringBuilder::new()
+  if m.views.length() == 0 {
+    out.write_string("_No stale view._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| View | Reader | Peeked at | Broken by | Location |\n| --- | --- | --- | --- | --- |\n",
+  )
+  for v in m.views {
+    out.write_string(
+      "| `" +
+      v.name +
+      "` | `" +
+      v.receiver +
+      "` | " +
+      v.peek_line.to_string() +
+      " | `" +
+      v.broken_op +
+      "` at " +
+      v.broken_line.to_string() +
+      " | `" +
+      v.file +
+      "` |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
+/// The buffers a task body and the function that started it both write.
+fn ipc_shared_table(m : IpcModel) -> String {
+  let out = StringBuilder::new()
+  if m.shared.length() == 0 {
+    out.write_string("_No shared buffer._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| Buffer | Written by the task | Used by the parent | Task line | Parent line | Location |\n| --- | --- | --- | --- | --- | --- |\n",
+  )
+  for s in m.shared {
+    out.write_string(
+      "| `" +
+      s.name +
+      "` | `" +
+      s.task +
+      "` | `" +
+      s.parent +
+      "` | " +
+      s.task_line.to_string() +
+      " | " +
+      s.parent_line.to_string() +
+      " | `" +
+      s.file +
+      "` |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
 /// The foreign declarations: what the module depends on, and in which
 /// space each value lands.
 fn ffi_decl_table(m : FfiModel) -> String {
@@ -1070,6 +1205,7 @@ pub fn render_report(
   issues~ : Array[ParseIssue] = [],
   ffi~ : FfiModel? = None,
   conc~ : ConcModel? = None,
+  ipc~ : IpcModel? = None,
 ) -> String {
   let out = StringBuilder::new()
   let md = "docs/design.md"
@@ -1498,6 +1634,7 @@ pub fn render_report(
   }
   out.write_string(ffi_section(ffi))
   out.write_string(conc_section(conc))
+  out.write_string(ipc_section(ipc))
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",
