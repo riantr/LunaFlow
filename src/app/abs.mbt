@@ -801,6 +801,7 @@ fn abs_eval(
       }
       AbsCell::new(ATuple(vals), t)
     }
+    EFn(_, _) => AbsCell::new(ATop, TClean)
     EUnknown(_) => AbsCell::new(ATop, TClean)
   }
 }

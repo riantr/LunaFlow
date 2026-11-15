@@ -669,6 +669,10 @@ async fn analyze(opts : Opts) -> Unit {
   // The FOREIGN ADDRESS SPACE: the C boundary, computed from the AST, so it
   // is a property of the module and not of the run.
   let ffi_model = @app.analyze_ffi(ast)
+  // The CONCURRENCY model: the tasks, the shared cells and the waits, also
+  // computed from the AST, so it is a property of the module and not of the
+  // run.
+  let conc_model = @app.analyze_conc(ast)
   // The parse issues, so the report can LIST them and not only count them.
   let parse_issues : Array[@app.ParseIssue] = []
   for f in ast.files {
@@ -867,6 +871,7 @@ async fn analyze(opts : Opts) -> Unit {
     stability~,
     issues=parse_issues,
     ffi=Some(ffi_model),
+    conc=Some(conc_model),
   )
   let _ = write_text(report_path, md) catch { _ => false }
   let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {

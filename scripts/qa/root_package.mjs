@@ -704,6 +704,88 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
 }
 
+// ------------------------------------------------------ the concurrency model
+//
+// The fixture holds the shapes that interleave and the shapes that do not:
+// a counter two tasks update without a lock, the SAME counter under a mutex,
+// the ABBA deadlock, a lock that is never given back, and a counter only one
+// task touches. A check that fires on the safe half is a false positive, and
+// a check that does not fire on the defect half is a check that does not
+// work.
+//
+// Every claim here was settled by RUNNING the toolchain: MoonBit tasks do
+// NOT run MoonBit code on several OS threads (a spin-lock with no await
+// inside HANGS), so the defect class is INTERLEAVING sensitivity, and the
+// read-modify-write that loses an update is the one split by an await.
+if (existsSync(join(ROOT, 'fixtures', 'conc_demo', 'lib.mbt'))) {
+  const concRun = run([
+    'analyze',
+    '--dir',
+    'fixtures/conc_demo',
+    '--out',
+    join(OUT, 'conc'),
+    '--funnel',
+    '--trials',
+    '4',
+  ]);
+  const concReport = join(OUT, 'conc', 'local_module_0.0.0.md');
+  const concText = existsSync(concReport) ? readFileSync(concReport, 'utf8') : '';
+  check('the concurrency model is analysed', concRun.status === 0);
+  check(
+    'the report has the concurrency section',
+    concText.includes('### 5.8 Concurrency'),
+  );
+  check('the report lists the tasks', concText.includes('#### 5.8.1 The tasks'));
+  check(
+    'the report lists the shared cells',
+    concText.includes('#### 5.8.2 The shared cells'),
+  );
+  check(
+    'the report lists the waits',
+    concText.includes('#### 5.8.3 The waits'),
+  );
+  check(
+    'the report says what the model does NOT cover',
+    concText.includes('#### 5.8.5 What this model does NOT cover'),
+  );
+  // The read-modify-write split by an await point loses the update -- and
+  // ONLY the unprotected one does: the mutex orders the other pair.
+  check(
+    'the lost update is reported',
+    concText.includes('CONC-RACE-LOST-UPDATE'),
+  );
+  check(
+    'the lost update is reported ONCE -- the mutex-protected counter is not',
+    (concText.match(/CONC-RACE-LOST-UPDATE/g) || []).length === 1,
+  );
+  check(
+    'the ABBA deadlock is reported',
+    concText.includes('CONC-DEADLOCK-CYCLE'),
+  );
+  check(
+    'a lock that is never released is reported',
+    concText.includes('CONC-RESOURCE-UNRELEASED'),
+  );
+  check(
+    'the concurrency findings are filed under their own method',
+    concText.includes('L2-CONC'),
+  );
+  check(
+    'the concurrency findings are NOT filed as the classic abstract findings',
+    !concText.includes('| L2-abstract |'),
+  );
+  // The model does NOT claim a thread-level data race: it says what it
+  // models, and it says what it does not.
+  check(
+    'the model says the defect class is interleaving sensitivity',
+    concText.includes('interleaving sensitivity'),
+  );
+  check(
+    'the model says a thread-level data race is not covered',
+    concText.includes('A thread-level data race'),
+  );
+}
+
 // ------------------------------------------------------ the documented flags
 //
 // The README's CLI reference is the only place a reader learns what the

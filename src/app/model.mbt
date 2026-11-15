@@ -131,6 +131,10 @@ pub(all) enum ExprKind {
   ESlice(Expr, Expr?, Expr?)
   EArray(Array[Expr])
   ETuple(Array[Expr])
+  /// A FUNCTION LITERAL: its synthetic name and whether it is `async`. The
+  /// body lives in `SourceFile.closures`, keyed by that name, so the
+  /// expression domain does not have to carry statements.
+  EFn(String, Bool)
   EUnknown(String)
 }
 
@@ -179,6 +183,7 @@ pub fn Expr::render(self : Expr) -> String {
     }
     EArray(xs) => "[" + render_args(xs) + "]"
     ETuple(xs) => "(" + render_args(xs) + ")"
+    EFn(id, _) => "fn-literal"
     EUnknown(t) => t
   }
 }
@@ -251,6 +256,10 @@ pub struct Func {
   span : Span
   file : String
   is_test : Bool
+  /// Whether the function is `async`. A call to an async function is an
+  /// AWAIT POINT -- the only place a MoonBit task yields, and so the only
+  /// place another task may run.
+  mut is_async : Bool
   start_line : Int32
   end_line : Int32
   mut contract : Contract
@@ -280,6 +289,9 @@ pub struct SourceFile {
   /// The module's own type declarations, so the analyzer can tell a type
   /// with a heap representation from a value type.
   types : Array[TypeDecl]
+  /// The FUNCTION LITERALS in this file. A closure handed to a spawn call is
+  /// a task body, so the concurrency model needs its statements.
+  closures : Array[Func]
   mut parsed_stmts : Int32
   mut unsupported_stmts : Int32
 }
@@ -295,6 +307,7 @@ pub fn SourceFile::new(path : String, text : String) -> SourceFile {
     ffi_decls: [],
     external_types: [],
     types: [],
+    closures: [],
     parsed_stmts: 0,
     unsupported_stmts: 0,
   }
@@ -436,6 +449,12 @@ pub(all) enum FindingKind {
   FFfiTargetMismatch
   FFfiAddressUnknown
   FFfiAddressConflict
+  // The CONCURRENCY families. See `conc.mbt` for the model and the
+  // measurements every one of them rests on.
+  FFconcLostUpdate
+  FFconcStaleRead
+  FFconcDeadlockCycle
+  FFconcResourceUnreleased
 }
 
 ///|
@@ -470,6 +489,10 @@ pub fn FindingKind::code(self : FindingKind) -> String {
     FFfiTargetMismatch => "FFI-TARGET-MISMATCH"
     FFfiAddressUnknown => "FFI-ADDRESS-UNKNOWN"
     FFfiAddressConflict => "FFI-ADDRESS-CONFLICT"
+    FFconcLostUpdate => "CONC-RACE-LOST-UPDATE"
+    FFconcStaleRead => "CONC-RACE-STALE-READ"
+    FFconcDeadlockCycle => "CONC-DEADLOCK-CYCLE"
+    FFconcResourceUnreleased => "CONC-RESOURCE-UNRELEASED"
   }
 }
 
@@ -502,6 +525,14 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     // An address the analyzer cannot name: a limit of the analysis, not a
     // defect.
     FFfiAddressUnknown => "info"
+    // The CONCURRENCY families.
+    //
+    // An update that is lost, and a deadlock in which no task can proceed:
+    // these are errors.
+    FFconcLostUpdate | FFconcDeadlockCycle => "error"
+    // A read that may already be out of date, and a lock that is never given
+    // back: both are warnings.
+    FFconcStaleRead | FFconcResourceUnreleased => "warning"
   }
 }
 

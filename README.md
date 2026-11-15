@@ -131,6 +131,22 @@ One analyzer · three evidence strengths · one Markdown report.
   **the compiler does not catch**, and both were confirmed against the real
   toolchain.
 
+* A concurrency model, and the class of defect that actually exists here
+
+  MoonBit tasks do **not** run MoonBit code on several OS threads — measured,
+  not assumed: a spin-lock whose spin loop contains no `await` **hangs**. So a
+  task yields only at an await point, and the defect class is **interleaving
+  sensitivity**, not a thread-level data race. The report says so in those
+  words, and it says in §5.8.5 that a thread-level data race is **not**
+  covered. The model finds the read-modify-write that an await point splits
+  from its read, the read whose value is used after an await point while
+  another task writes the cell, the circular lock order that deadlocks, and
+  the lock that is never given back. A shared cell is a `Ref` a task
+  **captures**, keyed by the function that binds it, and two tasks may
+  interleave only if their owners may run at the same time — so the
+  mutex-protected counter and the counter only one task touches are **not**
+  reported.
+
 * Markdown is the UI
 
   Reports use `flowchart TD` for CFGs and slices, `flowchart LR` for taint and
@@ -191,7 +207,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.15
+moon add riantr/LunaFlow@0.1.16
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -199,7 +215,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.15",
+  "riantr/LunaFlow@0.1.16",
 }
 ```
 
@@ -250,7 +266,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.15](https://mooncakes.io/docs/riantr/LunaFlow@0.1.15).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.16](https://mooncakes.io/docs/riantr/LunaFlow@0.1.16).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -455,6 +471,97 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.16
+
+**The analyzer now models what happens when more than one task runs.**
+
+The question was asked in the sharpest form: *race conditions across all
+execution paths, deadlocks, resource conflicts* — and the answer had to start
+with a measurement, because the interesting thing about MoonBit's concurrency
+is that it is not what a race-condition checker expects.
+
+**MoonBit tasks do not run MoonBit code on several OS threads.** That was
+measured, not assumed: a spin-lock whose spin loop contains no `await`
+**hangs** — the spinner printed its marker and the second task never printed at
+all, because it never got to run. The runtime's thread pool
+(`max_worker_count = 1024` by default) executes the **blocking I/O**; the
+coroutine waits on the event-loop thread.
+
+So a task yields **only at an await point**, and an await point is where another
+task may run. That makes the defect class here **interleaving sensitivity**,
+not a thread-level data race — there is no second thread for a MoonBit value
+to race with. The report says *interleaving sensitivity*, and it says in
+§5.8.5 that a thread-level data race is **not** covered.
+
+The measurement that pins the defect down: a read-modify-write with **no** await
+inside it loses nothing (8 tasks × 200 000 increments = exactly 1 600 000
+counted), while a read-**await**-write over a shared `Ref[Int]` lost **21 000 of
+24 000** updates — and the **same interleaving every run**. The interleaving
+space is finite and reproducible, so a conflict can be **found** rather than
+waited for. That is why the model is a state-space model and not a sampler.
+
+**Four families, under their own method `L2-CONC`, in report §5.8:**
+
+| Code | What it asserts |
+|---|---|
+| `CONC-RACE-LOST-UPDATE` | a task reads a shared cell and writes it back after an await point, and another writer of that cell can run at the same time — the write is not atomic with its read, so the update can be lost |
+| `CONC-RACE-STALE-READ` | a task reads a shared cell, the value is used after an await point, and another task writes that cell without a common lock |
+| `CONC-DEADLOCK-CYCLE` | the tasks take the locks in a circular order — each holds a lock the next one wants — so none of them can proceed |
+| `CONC-RESOURCE-UNRELEASED` | a lock is acquired and not released on that path, so every later acquire of it waits forever |
+
+**The model is careful about which tasks may interleave.** A closure handed to
+a spawn API is a task; the closure's body is parsed into a **function of its
+own** so the model can walk it. A closure written **inside a loop** is created
+once per iteration, so more than one instance of that body may be running at
+once — and two instances of the same body conflict exactly as two different
+tasks would. A shared cell is a `Ref` a task **captures** from the function
+that spawned it, keyed by the function that binds it, so two functions that
+each bind `counter` are two cells and not one. And two tasks may interleave
+**only if their owners may run at the same time**: the tasks of two functions
+that never call each other do not interleave, and the model does not report a
+conflict between them.
+
+**The safe shapes are not reported.** The fixture holds the defect and the
+shape next to it: the same counter under a mutex is **not** reported (the two
+accesses are ordered by a common lock), and a counter only one task touches is
+**not** reported (there is nothing to lose the update against). A check that
+fires on the safe half is a false positive, so the gate asserts both halves.
+
+**What the model does not cover is in the report.** §5.8.5 lists it: no
+thread-level data race, no release on another path, no resource that is not a
+lock, no task the model does not see, no `Ref` reached through a field or a
+container, and nothing on the C side.
+
+**The parser keeps a closure body instead of throwing it away.** The function
+literal was parsed and **discarded**, which is why a task body was invisible.
+It is now a function of its own — and the parser no longer lets the
+call-argument depth leak into the closure's body, which used to swallow the
+newline between two statements and merge them into one. The await point between
+a read and a write is exactly what the model looks for, and it was being
+merged away.
+
+**Two QA tools changed.** `scripts/qa/core_compat.mjs` now strips **string
+literals** before it looks for call sites: the fixtures embed MoonBit source
+in block strings, and a package named in one of those is sample code, not a
+call of this module. The block-string syntax was MEASURED, not guessed — it
+opens with `#|`, every line carries the `#|` prefix, and a line whose content
+after the prefix is empty is an **empty line** of the string, not the end of
+it. The gate's count is unchanged at 12 declarations, and the two that failed
+before were the two that were never calls. And `scripts/qa/root_package.mjs`
+gained the gate for the concurrency fixture: 70 → **84** checks, and the new
+ones assert the defect halves *and* the safe halves.
+
+**The numbers.** Tests move 134 → **146** (twelve new ones, all about the
+concurrency model); the finding roster moves 26 → **30** families; the
+library is 21 files and the test suite 15; the CLI-surface checks move 70 →
+**84**. The self-scan row moves too, and the reason is worth stating: the
+module gained 81 functions, and `--max-functions` (150 by default) selects the
+**first** 150 — so the analysed set changed, not the analyzer. Measured: with
+the budget lifted, this analyzer and the published 0.1.15 produce **identical**
+numbers over the same tree (99 752 trace events, 130 L2 findings), and over
+the old tree they agree exactly as well (39 files, 642 functions, 4 601
+statements, 16 674 events).
 
 ### What changed in 0.1.15
 
@@ -1555,12 +1662,12 @@ LICENSE                    MIT
 moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
-src/app/                   18 library files: parser, CFG, L1 interpreter,
+src/app/                   21 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, family roster, evolved value
                            analysis, memory layout model, foreign address
-                           space model, report renderer
-src/app/*_test.mbt         134 tests in 14 files
+                           space model, concurrency model, report renderer
+src/app/*_test.mbt         146 tests in 15 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -1570,6 +1677,9 @@ fixtures/memory_demo/      the memory layout fixture: the global region, the
                            allocation classes and the tail value
 fixtures/ffi_demo/         the foreign address space fixture: the C boundary,
                            the ownership contract and the named addresses
+fixtures/conc_demo/        the concurrency fixture: the lost update, the
+                           deadlock, the unreleased lock, and the safe
+                           shapes next to them
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
 docs/qa/REPORT.md          deep QA report (security, coverage, metrics)
@@ -1598,12 +1708,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 150 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 150 warnings, 0 errors |
-| `moon check --target js` | exit 0, 175 warnings, 0 errors |
-| `moon test src/app --target native` | **134 passed, 0 failed** |
-| `moon test src/app --target wasm` | **134 passed, 0 failed** |
-| `moon test src/app --target js` | **134 passed, 0 failed** |
+| `moon check --target native` | exit 0, 162 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 162 warnings, 0 errors |
+| `moon check --target js` | exit 0, 187 warnings, 0 errors |
+| `moon test src/app --target native` | **146 passed, 0 failed** |
+| `moon test src/app --target wasm` | **146 passed, 0 failed** |
+| `moon test src/app --target js` | **146 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1616,10 +1726,10 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **70 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **84 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
-| `node scripts/qa/core_compat.mjs` | **12 declarations identical in 3 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.11` | **4 passed, 0 failed** |
+| `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
+| `node scripts/qa/verify_published.mjs 0.1.16` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
@@ -1628,7 +1738,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 39 | 4,601 | 16,674 | 32 | 2 / 1 / 3 | 3 | 4 | 0.24 s |
+| `LunaFlow` itself (`--dir .`) | 42 | 5,150 | 10,576 | 19 | 2 / 1 / 3 | 3 | 4 | 0.29 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They

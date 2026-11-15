@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "riantr/LunaFlow/fixtures/conc_demo"
+
+// Values
+pub async fn deadlock_abba() -> Unit
+
+pub async fn lock_never_released() -> Unit
+
+pub async fn lost_update() -> Unit
+
+pub async fn safe_counter() -> Unit
+
+pub async fn single_task_counter() -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

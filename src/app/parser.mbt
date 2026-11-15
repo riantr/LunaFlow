@@ -9,6 +9,10 @@ struct P {
   mut parsed : Int32
   mut unsupported : Int32
   mut depth : Int32
+  /// The FUNCTION LITERALS seen while parsing this file. A closure is a
+  /// task body when it is handed to a spawn call, so the concurrency model
+  /// needs its body -- not a marker that says "there was a closure here".
+  closures : Array[Func]
 }
 
 ///|
@@ -30,6 +34,7 @@ fn P::new(file : String, toks : Array[Tok]) -> P {
     parsed: 0,
     unsupported: 0,
     depth: 0,
+    closures: [],
   }
 }
 
@@ -670,30 +675,81 @@ fn parse_primary(p : P) -> Expr {
           }
         }
         Expr::unknown(span_from(t, p.last_tok(), p.file), "if-expression")
-      } else if t.text == "fn" {
-        // A function literal, or a nested function declaration used as a
-        // statement. Both are one unit: the parameters and the body belong to
-        // the function. Leaving the body behind shredded it into statements
-        // of the enclosing function, and the statements that followed a
-        // `return` in it were reported as unreachable code.
+      } else if t.text == "fn" ||
+        (t.text == "async" && p.peek_at(1).text == "fn") {
+        // A FUNCTION LITERAL. Its body is the whole point: a closure handed
+        // to a spawn call is a TASK BODY, and the concurrency model needs the
+        // statements inside it -- not a marker saying "there was a closure
+        // here". Leaving the body behind shredded it into statements of the
+        // enclosing function, and the statements that followed a `return` in
+        // it were reported as unreachable code.
+        //
+        // The literal becomes a FUNCTION of its own, with a synthetic name
+        // that says where it was written, and the expression carries that
+        // name -- so the spawn site and the body can be joined without
+        // changing the expression domain.
+        let is_async = t.text == "async"
+        let start = p.peek()
+        if is_async {
+          ignore(p.bump())
+          p.skip_all_newlines()
+        }
         ignore(p.bump())
         p.skip_all_newlines()
-        skip_balanced_parens(p)
+        let params = parse_params(p)
+        let mut ret_ty = "Unit"
         p.skip_all_newlines()
         if p.at_op("->") {
           ignore(p.bump())
-          ignore(collect_type(p, false))
+          ret_ty = collect_type(p, false)
           p.skip_all_newlines()
         }
+        let mut body : Array[Stmt] = []
+        // The body is a NEW SCOPE, so the call-argument depth of the closure's
+        // surroundings does not reach into it.
+        //
+        // Without this, a closure written as a call argument --
+        // `tasks.push(async fn() { ... })` -- was parsed with the argument
+        // depth still raised, and the parser then treated every newline
+        // inside the body as a CONTINUATION of the expression before it. Two
+        // statements became one, and the await point between them -- the
+        // exact thing the concurrency model looks for -- disappeared.
+        let saved_paren = p.paren
+        p.paren = 0
         if p.at_op("=>") {
+          // The short form: `fn(x) { x + 1 }` is a block, and `fn(x) => x + 1`
+          // is an expression. The expression form is a single statement.
           ignore(p.bump())
           p.skip_all_newlines()
-          ignore(parse_expr(p, 0))
+          let e = parse_expr(p, 0)
+          body.push(
+            Stmt::new(
+              p.next_stmt_id(),
+              span_from(start, p.last_tok(), p.file),
+              SExpr(e),
+              "fn-literal",
+            ),
+          )
         } else if p.at_op("{") {
-          let body = parse_block(p)
-          ignore(body)
+          body = parse_block(p)
         }
-        Expr::unknown(span_from(t, p.last_tok(), p.file), "fn-literal")
+        p.paren = saved_paren
+        let stop = p.last_tok()
+        let id = "<fn@" + p.file + ":" + start.line.to_string() + ">"
+        p.closures.push(Func::{
+          name: id,
+          params,
+          ret_ty,
+          body,
+          span: span_from(start, stop, p.file),
+          file: p.file,
+          is_test: false,
+          is_async,
+          start_line: start.line,
+          end_line: stop.line,
+          contract: Contract::empty(),
+        })
+        Expr::new(span_from(t, p.last_tok(), p.file), EFn(id, is_async))
       } else if t.text == "match" {
         // A `match` EXPRESSION is one expression, and its arms belong to it.
         // Leaving the arms behind shredded them into statements of their own,
@@ -1433,7 +1489,7 @@ fn parse_fn_body(
   let body = parse_block(p)
   let stop = p.last_tok()
   let span = span_from(start, stop, p.file)
-  Some({
+  Some(Func::{
     name,
     params,
     ret_ty,
@@ -1441,6 +1497,7 @@ fn parse_fn_body(
     span,
     file: p.file,
     is_test,
+    is_async: false,
     start_line: start.line,
     end_line: stop.line,
     contract: Contract::empty(),
@@ -1836,7 +1893,18 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
         }
       }
       attrs = []
-    } else if depth == 0 && t.kind == TIdent && t.text == "fn" {
+    } else if depth == 0 &&
+      t.kind == TIdent &&
+      (t.text == "fn" || (t.text == "async" && p.peek_at(1).text == "fn")) {
+      // An `async` FUNCTION. The `async` keyword used to be skipped, so an
+      // `async fn` parsed as an ordinary one -- and the concurrency model
+      // needs to know which functions are async, because a call to an async
+      // function is an AWAIT POINT and a call to an ordinary one is not.
+      let is_async = t.text == "async"
+      if is_async {
+        ignore(p.bump())
+        p.skip_all_newlines()
+      }
       p.skip_all_newlines()
       let start = p.peek()
       match parse_fn_head(p, false, "") {
@@ -1855,6 +1923,7 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
             match parse_fn_body(p, start, name, params, ret_ty, false) {
               Some(f) => {
                 f.contract = contract_above(text, path, f.start_line)
+                f.is_async = is_async
                 funcs.push(f)
               }
               None => ignore(p.bump())
@@ -1909,6 +1978,9 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
   }
   for td in types {
     f.types.push(td)
+  }
+  for c in p.closures {
+    f.closures.push(c)
   }
   for issue in issues {
     f.issues.push(issue)

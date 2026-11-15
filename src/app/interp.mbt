@@ -571,6 +571,7 @@ fn eval(p : Interp, env : Map[String, Val], e : Expr) -> Val {
       }
       Val::new(VTuple(out), t)
     }
+    EFn(_, _) => clean(VUnknown)
     EUnknown(_) => clean(VUnknown)
   }
 }

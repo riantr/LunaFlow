@@ -54,6 +54,10 @@ pub fn family_roster() -> Array[FindingKind] {
     FFfiTargetMismatch,
     FFfiAddressUnknown,
     FFfiAddressConflict,
+    FFconcLostUpdate,
+    FFconcStaleRead,
+    FFconcDeadlockCycle,
+    FFconcResourceUnreleased,
   ]
 }
 
@@ -69,6 +73,19 @@ pub fn ffi_families() -> Array[FindingKind] {
     FFfiTargetMismatch,
     FFfiAddressUnknown,
     FFfiAddressConflict,
+  ]
+}
+
+///|
+/// The families the CONCURRENCY analysis produces.
+///
+/// A family is in this list when the analysis has a check behind it.
+pub fn conc_families() -> Array[FindingKind] {
+  [
+    FFconcLostUpdate,
+    FFconcStaleRead,
+    FFconcDeadlockCycle,
+    FFconcResourceUnreleased,
   ]
 }
 
@@ -123,6 +140,10 @@ pub fn family_title(kind : FindingKind) -> String {
     FFfiTargetMismatch => "FfiTargetMismatch"
     FFfiAddressUnknown => "FfiAddressUnknown"
     FFfiAddressConflict => "FfiAddressConflict"
+    FFconcLostUpdate => "ConcLostUpdate"
+    FFconcStaleRead => "ConcStaleRead"
+    FFconcDeadlockCycle => "ConcDeadlockCycle"
+    FFconcResourceUnreleased => "ConcResourceUnreleased"
   }
 }
 
@@ -177,6 +198,14 @@ pub fn family_property(kind : FindingKind) -> String {
       "an argument of a C call cannot be named, so the region the call touches is unknown"
     FFfiAddressConflict =>
       "the same constant reaches two different C symbols, so what the C side does with it depends on which call ran last"
+    FFconcLostUpdate =>
+      "a task reads a shared cell and writes it back after an await point, so another task's write can land between the read and the write and the update is lost"
+    FFconcStaleRead =>
+      "a task reads a shared cell that another task writes without a common lock, so the value it holds may already be out of date"
+    FFconcDeadlockCycle =>
+      "the tasks take the locks in a circular order: each one holds a lock the next one wants, so none of them can proceed"
+    FFconcResourceUnreleased =>
+      "a lock is acquired and not released on the path, so every later acquire of it waits forever"
   }
 }
 
@@ -236,6 +265,14 @@ pub fn family_assumption(kind : FindingKind) -> String {
       "the module passes a constant in the same slot of the same symbol at another call site, so the slot is one the module treats as sometimes-fixed; whether it carries an address is an ASSUMPTION"
     FFfiAddressConflict =>
       "the same constant reaches two symbols in the same module; whether it is an address at all is an ASSUMPTION, so the finding states the fact and not a verdict"
+    FFconcLostUpdate =>
+      "the two accesses are under a COMMON lock, and then they are ordered; and a task that does not yield between its read and its write, which cannot lose an update; and two tasks whose owners never call each other, which cannot interleave at all"
+    FFconcStaleRead =>
+      "a read whose value is used before any yield, and a cell that only one task body reaches"
+    FFconcDeadlockCycle =>
+      "a resource that is not a lock -- a semaphore's permits, for instance, are not tracked as a cycle; and two owners that never call each other, whose tasks cannot interleave"
+    FFconcResourceUnreleased =>
+      "a release on another path of the same task: the check is per PATH, and a lock released on one arm and not on another is reported on the arm that does not release it"
   }
 }
 
@@ -294,6 +331,14 @@ pub fn family_excluded(kind : FindingKind) -> String {
       "a slot that is computed at EVERY call site of the symbol: the module never pins it down, so the analyzer has nothing to compare it against"
     FFfiAddressConflict =>
       "a constant that reaches two symbols in DIFFERENT modules: the analyzer sees one module at a time"
+    FFconcLostUpdate =>
+      "a cell one task body reaches ONCE: there is nothing to lose the update against -- and the tasks of two functions that never call each other, which never run at the same time"
+    FFconcStaleRead =>
+      "a cell one task body reaches ONCE, a read whose value is used before any yield point, and the tasks of two functions that never call each other"
+    FFconcDeadlockCycle =>
+      "a resource conflict that is not a lock -- the resource ordering graph carries the locks only -- and the tasks of two functions that never call each other, which never run at the same time"
+    FFconcResourceUnreleased =>
+      "a lock released on ANOTHER path of the same task: the check is per path"
   }
 }
 

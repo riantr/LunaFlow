@@ -1,0 +1,13 @@
+// The CONCURRENCY fixture: two tasks, one shared cell, the lost update,
+// the deadlock cycle and the shapes that are safe.
+//
+// `moonbitlang/core/async` is EXPERIMENTAL in the core, so using it has to
+// be acknowledged.
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/ref",
+}
+
+options(
+  "allow-experimental-packages": [ "moonbitlang/core/async" ],
+)

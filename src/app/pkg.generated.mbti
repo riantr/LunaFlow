@@ -6,6 +6,8 @@ pub fn alloc_tally(Array[AllocSite]) -> Map[String, Int32]
 
 pub fn analyze_allocations(ModuleAst) -> Array[AllocSite]
 
+pub fn analyze_conc(ModuleAst) -> ConcModel
+
 pub fn analyze_ffi(ModuleAst) -> FfiModel
 
 pub fn array_candidates(String) -> Array[Value]
@@ -41,6 +43,8 @@ pub fn code_span(String) -> String
 pub fn compare_runs(Array[Int32], Array[Array[Finding]], constant? : Array[Finding]) -> StabilityResult
 
 pub fn compare_versions(String, String) -> Int32
+
+pub fn conc_families() -> Array[FindingKind]
 
 pub fn const_of_expr(Expr) -> Int64?
 
@@ -190,7 +194,7 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
@@ -346,6 +350,10 @@ pub fn BinOp::symbol(Self) -> String
 
 type Builder
 
+type CState
+
+type CWalk
+
 pub struct Cfg {
   fn_name : String
   file : String
@@ -371,6 +379,58 @@ pub struct CfgNode {
   file : String
   line : Int32
   stmt : Int32
+}
+
+pub struct ConcAccess {
+  task : String
+  cell : String
+  kind : String
+  file : String
+  line : Int32
+  split : Bool
+  locks : Array[String]
+  yields_at : Int32
+}
+
+type ConcArrays
+
+pub struct ConcCell {
+  name : String
+  varname : String
+  file : String
+  line : Int32
+  tasks : Array[String]
+}
+
+type ConcCycle
+
+pub struct ConcEdge {
+  from : String
+  to : String
+  kind : String
+  file : String
+  line : Int32
+  task : String
+  owner : String
+}
+
+pub struct ConcModel {
+  tasks : Array[ConcTask]
+  cells : Array[ConcCell]
+  accesses : Array[ConcAccess]
+  edges : Array[ConcEdge]
+  findings : Array[Finding]
+}
+
+pub struct ConcTask {
+  id : String
+  owner : String
+  spawn : String
+  file : String
+  line : Int32
+  is_async : Bool
+  instances : Int32
+  yields : Int32
 }
 
 pub struct Contract {
@@ -482,6 +542,7 @@ pub(all) enum ExprKind {
   ESlice(Expr, Expr?, Expr?)
   EArray(Array[Expr])
   ETuple(Array[Expr])
+  EFn(String, Bool)
   EUnknown(String)
 }
 
@@ -620,6 +681,10 @@ pub(all) enum FindingKind {
   FFfiTargetMismatch
   FFfiAddressUnknown
   FFfiAddressConflict
+  FFconcLostUpdate
+  FFconcStaleRead
+  FFconcDeadlockCycle
+  FFconcResourceUnreleased
 }
 pub fn FindingKind::code(Self) -> String
 pub fn FindingKind::equal(Self, Self) -> Bool
@@ -634,6 +699,7 @@ pub struct Func {
   span : Span
   file : String
   is_test : Bool
+  mut is_async : Bool
   start_line : Int32
   end_line : Int32
   mut contract : Contract
@@ -875,6 +941,7 @@ pub struct SourceFile {
   ffi_decls : Array[FfiDecl]
   external_types : Array[ExternalType]
   types : Array[TypeDecl]
+  closures : Array[Func]
   mut parsed_stmts : Int32
   mut unsupported_stmts : Int32
 }

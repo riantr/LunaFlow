@@ -757,6 +757,162 @@ fn ffi_section(model : FfiModel?) -> String {
 }
 
 ///|
+/// The CONCURRENCY section: the tasks, the shared cells, the conflicts.
+fn conc_section(model : ConcModel?) -> String {
+  let out = StringBuilder::new()
+  out.write_string("\n### 5.8 Concurrency: the tasks and the shared state\n\n")
+  match model {
+    None => out.write_string("_The concurrency model was not analysed._\n\n")
+    Some(m) => {
+      out.write_string(
+        "MoonBit tasks do **NOT** run MoonBit code on several OS threads. That was measured, not assumed: a spin-lock whose spin loop contains no `await` HANGS -- the spinner printed its marker and the second task never printed at all, because it never got to run. The runtime's thread pool (`max_worker_count = 1024` by default) executes the BLOCKING I/O; the coroutine waits on the event-loop thread.\n\nSo a task yields ONLY at an await point, and an await point is where another task may run. That makes the defect class here **interleaving sensitivity**, not a thread-level data race: a read-modify-write with no await inside it loses nothing (measured: 8 tasks x 200 000 increments = exactly 1 600 000 counted), while a read-AWAIT-write over a shared `Ref[Int]` lost 21 000 of 24 000 updates -- the SAME interleaving every run. The space is finite and reproducible, so a conflict can be FOUND rather than waited for.\n\n",
+      )
+      if m.tasks.length() == 0 {
+        out.write_string(
+          "_This module spawns no task._ There is no concurrency to model: no closure is handed to a spawn API.\n\n",
+        )
+      } else {
+        out.write_string("#### 5.8.1 The tasks\n\n")
+        out.write_string(conc_task_table(m))
+        out.write_string("\n#### 5.8.2 The shared cells\n\n")
+        out.write_string(conc_cell_table(m))
+        out.write_string("\n#### 5.8.3 The waits\n\n")
+        out.write_string(conc_edge_table(m))
+        out.write_string("\n#### 5.8.4 What the concurrency costs\n\n")
+        out.write_string(
+          "The runtime has its own deadlock detector -- `set_deadlock_handler` fires when there is no pending event and every task is blocked -- and it caught the ABBA deadlock in the fixture. It does NOT fire for a busy-wait: one task spinning while another is blocked hangs SILENTLY, because the loop is not idle. That is the shape the static analysis is for. What it cannot see is the C side of a boundary, and what it does not model is a resource that is not a lock: a semaphore's permits are counted, not waited on in a graph.\n\n",
+        )
+        out.write_string("#### 5.8.5 What this model does NOT cover\n\n")
+        out.write_string(
+          "The model is sound about what it reports and silent about the rest, so here is exactly what it does not model:\n\n" +
+          "- **A thread-level data race.** MoonBit tasks do not run MoonBit code on several OS threads (measured above), so there is no second thread for a MoonBit value to race with. What the model finds is INTERLEAVING sensitivity.\n" +
+          "- **A release on another path.** The lock that is never released is reported on the path that acquires it without releasing it; a lock released on a path the model cannot join is not modelled.\n" +
+          "- **A resource that is not a lock.** A semaphore's permits are counted, a channel's capacity is counted, and neither is a node of the resource ordering graph.\n" +
+          "- **A task the model does not see.** A closure handed to a spawn API is a task. A closure handed to anything else -- a callback, a `map` -- is not, and the model says nothing about it.\n" +
+          "- **A `Ref` the model cannot trace.** The shared cells are the `Ref`s a task CAPTURES from the function that spawned it, and the `Ref` parameters a function is handed -- the caller's binding is substituted for the parameter, so the two are one cell. A `Ref` reached through a field, a container or an array is not tracked.\n" +
+          "- **The C side.** A lock held across a C call is invisible on the other side of the boundary, exactly as §5.7 says.\n\n",
+        )
+        out.write_string(findings_table(m.findings))
+      }
+    }
+  }
+  out.to_string()
+}
+
+///|
+/// The tasks: what was spawned, by which API, and where its body is.
+fn conc_task_table(m : ConcModel) -> String {
+  let out = StringBuilder::new()
+  if m.tasks.length() == 0 {
+    out.write_string("_No task._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| Task | Spawned by | Async | Instances | Await points | Body |\n| --- | --- | --- | --- | --- | --- |\n",
+  )
+  for t in m.tasks {
+    out.write_string(
+      "| `" +
+      t.id +
+      "` | `" +
+      t.spawn +
+      "` | " +
+      (if t.is_async { "yes" } else { "no" }) +
+      " | " +
+      t.instances.to_string() +
+      " | " +
+      t.yields.to_string() +
+      " | `" +
+      t.file +
+      ":" +
+      t.line.to_string() +
+      "` |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
+/// The shared cells: the `Ref`s that more than one task reaches.
+fn conc_cell_table(m : ConcModel) -> String {
+  let out = StringBuilder::new()
+  if m.cells.length() == 0 {
+    out.write_string("_No shared cell._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| Cell | Reached by | Instances at once | Location |\n| --- | --- | --- | --- |\n",
+  )
+  for c in m.cells {
+    let mut instances = 1
+    for id in c.tasks {
+      for t in m.tasks {
+        if t.id == id && t.instances > instances {
+          instances = t.instances
+        }
+      }
+    }
+    out.write_string(
+      "| `" +
+      c.name +
+      "` | " +
+      c.tasks.length().to_string() +
+      " task body(s) | " +
+      instances.to_string() +
+      " | `" +
+      c.file +
+      ":" +
+      c.line.to_string() +
+      "` |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
+/// The waits: who waits for what, and which lock is taken while another is
+/// wanted. The last of those is the edge of the resource ordering graph, and
+/// a cycle in that graph is a deadlock.
+fn conc_edge_table(m : ConcModel) -> String {
+  let out = StringBuilder::new()
+  if m.edges.length() == 0 {
+    out.write_string("_No wait._\n")
+    return out.to_string()
+  }
+  out.write_string(
+    "| Task | Relation | Resource | Location |\n| --- | --- | --- | --- |\n",
+  )
+  for e in m.edges {
+    let relation = if e.kind == "waits" {
+      "waits for"
+    } else if e.kind == "wants" {
+      "holds while wanting"
+    } else {
+      "never releases"
+    }
+    let resource = if e.kind == "wants" {
+      "`" + e.from + "` → `" + e.to + "`"
+    } else {
+      "`" + e.to + "`"
+    }
+    out.write_string(
+      "| `" +
+      e.task +
+      "` | " +
+      relation +
+      " | " +
+      resource +
+      " | `" +
+      e.file +
+      ":" +
+      e.line.to_string() +
+      "` |\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
 /// The foreign declarations: what the module depends on, and in which
 /// space each value lands.
 fn ffi_decl_table(m : FfiModel) -> String {
@@ -913,6 +1069,7 @@ pub fn render_report(
   stability~ : StabilityResult? = None,
   issues~ : Array[ParseIssue] = [],
   ffi~ : FfiModel? = None,
+  conc~ : ConcModel? = None,
 ) -> String {
   let out = StringBuilder::new()
   let md = "docs/design.md"
@@ -1340,6 +1497,7 @@ pub fn render_report(
       )
   }
   out.write_string(ffi_section(ffi))
+  out.write_string(conc_section(conc))
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",
@@ -1440,6 +1598,8 @@ pub fn render_report(
     "| Ranges (L2) | interval / value-set domain | over-approximation at widening; sound relative to the abstract semantics |\n" +
     "| Contracts (L3) | WP-style VC + interval decision | `proved` only from entailed preconditions; `unknown` when facts are insufficient |\n" +
     "| Evolved value analysis (L2-EVA) | the same fixpoint, asking what a value is USED FOR | may-analysis; a hit means the abstract state cannot exclude the defect, and the classes MoonBit cannot express are RESERVED and never fire |\n" +
+    "| Foreign address space (L2-FFI) | static model of the C boundary | the C side is invisible; the checks are about the MoonBit side of the contract, and the report says which ones cannot be checked at all |\n" +
+    "| Concurrency (L2-CONC) | interleaving model over the tasks | MoonBit tasks run on one thread (measured), so the defect class is interleaving sensitivity; a hit means the read-modify-write is not atomic with its read |\n" +
     "| Slicing | dynamic dependence graph | exact for the recorded trace; not a static closure |\n\n",
   )
   out.write_string("## 10. Reproduction\n\n")

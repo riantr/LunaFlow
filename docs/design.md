@@ -581,6 +581,63 @@ compiler does not enforce it either.
 Cost: one static pass over the AST, plus one classification pass over the
 declarations.
 
+### 5.12 The concurrency model
+
+§5.10 modelled where a value lives and §5.11 the address space on the other
+side of the C boundary. This section models the **third** thing: what happens
+when more than one **task** runs.
+
+Every property of MoonBit's concurrency was MEASURED against the toolchain,
+not read off a document. The measurements are what the model is built on:
+
+| The question | What the toolchain says |
+|---|---|
+| Do tasks run MoonBit code on several OS threads? | **No.** A spin-lock whose spin loop contains no `await` **HANGS**: the spinner printed its marker and the second task never printed at all, because it never got to run. |
+| Then what does the thread pool do? | The pool (`with_event_loop(..., max_worker_count = 1024)`) executes the **blocking I/O**; the coroutine waits on the event-loop thread. |
+| Where does a task yield? | **Only at an await point.** The await points are the core's async API (`sleep`, `all`, `any`, `acquire`, `wait`, `with_timeout`, …), a call to the module's own `async fn`, and a package-qualified read or write. |
+| Does a read-modify-write lose an update? | **Only when an await point is inside it.** Measured: 8 tasks × 200 000 increments with no await = exactly 1 600 000 counted; a read-**await**-write over a shared `Ref[Int]` lost **21 000 of 24 000** updates — and the same interleaving every run. |
+| Does the runtime detect a deadlock? | `set_deadlock_handler` fires when there is no pending event and **every** task is blocked. It caught the ABBA case. It does **not** fire for a busy-wait: one task spinning while another is blocked hangs **silently**. |
+| What does `Ref::update` do? | `self.val = f(self.val)` — a **non-atomic** read-modify-write. |
+
+**The defect class is therefore interleaving sensitivity, not a thread-level
+data race.** MoonBit has no thread-level data race between two tasks, because
+there is no second thread running MoonBit code. Saying otherwise would be a
+claim the toolchain does not support; the report says *interleaving
+sensitivity* instead.
+
+That is also why the model is a **state-space** model and not a sampling one:
+the interleaving space is finite and reproducible, so a conflict can be
+*found* rather than waited for.
+
+**The model.**
+
+| Piece | What it is |
+|---|---|
+| **Task** | a closure handed to a spawn API (`spawn`, `spawn_bg`, `spawn_loop`, `with_task_group`, `all`, `any`). The closure literal is parsed into a **function of its own**, so the body is available to walk. |
+| **Instance** | a closure written **inside a loop** is created once per iteration, so its body may be running more than once at the same time. Two instances of the same body conflict exactly as two different tasks would. |
+| **Shared cell** | a `Ref` a task **captures** from the function that spawned it, or is handed as a `Ref` parameter. The cell is keyed by the function that binds it, so two functions that each bind `counter` are two cells. A `Ref` the task creates for itself is **private** to that task. |
+| **Await point** | a call that may suspend. The yield count along a path is what separates a read from the write that follows it. |
+| **Lock** | a `Mutex`. An acquire adds a *waits for* edge; the locks held before it add the *holds while wanting* edge that is the resource-ordering graph. |
+| **Overlap** | two tasks may interleave only if their owners are the same function or one calls the other. Two functions that never call each other cannot interleave, so a conflict between them is not a conflict. |
+
+**The findings** are filed under their own method, `L2-CONC`, in report §5.8:
+
+| Code | What it asserts |
+|---|---|
+| `CONC-RACE-LOST-UPDATE` | a task reads a shared cell and writes it back after an await point, and another writer of that cell can run at the same time — so the write is not atomic with its read and the update can be lost |
+| `CONC-RACE-STALE-READ` | a task reads a shared cell, the value is used after an await point, and another task writes that cell without a common lock |
+| `CONC-DEADLOCK-CYCLE` | the tasks take the locks in a circular order — each holds a lock the next one wants — so none of them can proceed |
+| `CONC-RESOURCE-UNRELEASED` | a lock is acquired and not released on that path, so every later acquire of it waits forever |
+
+**What the model does not claim.** It does not claim a thread-level data race.
+It does not model a release on another path, a resource that is not a lock (a
+semaphore's permits are counted, not waited on), a closure handed to anything
+other than a spawn API, a `Ref` reached through a field or a container, or
+anything on the C side of a boundary. Report §5.8.5 lists all of it.
+
+Cost: one static pass over the AST for the tasks, one over each task body for
+the accesses, and one over the edges for the cycles.
+
 ---
 
 ## 6. Visualization
@@ -597,8 +654,8 @@ declarations.
 8. Reproduction commands
 
 The report also carries the evolved value analysis (5.3), the global region
-(5.4), the allocation classes (5.5), the layout-stability self-check (5.6) and
-the foreign address space (5.7).
+(5.4), the allocation classes (5.5), the layout-stability self-check (5.6), the
+foreign address space (5.7) and the concurrency model (5.8).
 
 ### 6.2 Mermaid conventions
 

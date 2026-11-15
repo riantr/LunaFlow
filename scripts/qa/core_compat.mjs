@@ -266,6 +266,44 @@ function findDecl(coreDir, pkg, name) {
 
 // -------------------------------------------------------- our call sites
 
+///| The source with the COMMENTS and the STRING LITERALS removed.
+///
+/// A package named inside a string literal is sample code, not a call of
+/// this module: the test fixtures embed MoonBit source in block strings,
+/// so `@async.all(tasks)` in one of those is NOT a call of this module.
+/// A real call cannot be inside a string literal, so removing them cannot
+/// hide one.
+///
+/// The block string is MEASURED, not assumed. It opens with `#|`, EVERY
+/// line carries the `#|` prefix -- a line whose content after the prefix
+/// is empty is an EMPTY LINE of the string, not the end of it -- and the
+/// block ends at the first line that does not carry the prefix. So the
+/// block is stripped line by line.
+function stripLiterals(raw) {
+  const out = [];
+  let inBlock = false;
+  for (const line of raw.split(/\r?\n/)) {
+    const t = line.trim();
+    if (inBlock && !t.startsWith("#|")) {
+      inBlock = false;
+    }
+    if (inBlock) {
+      // The content of the block is SAMPLE CODE: it is dropped, and the
+      // line is kept empty so the line numbers stay right.
+      out.push("");
+      continue;
+    }
+    if (t.includes("#|")) {
+      inBlock = true;
+      out.push("");
+      continue;
+    }
+    out.push(line.replace(/\/\/[^\n]*/g, ""));
+  }
+  // A normal string literal: a package named in one is prose too.
+  return out.join("\n").replace(/"(?:[^"\\\n]|\\.)*"/g, '""');
+}
+
 ///| Every call site in this module that touches a core package.
 ///
 /// The arguments matter as much as the name: a call that passes
@@ -287,8 +325,17 @@ function ourCallSites() {
   const calls = new Map();
   for (const f of files) {
     const raw = readFileSync(f, "utf8");
-    // Comments are stripped first: a package mentioned in prose is not a call.
-    const text = raw.replace(/\/\/[^\n]*/g, "");
+    // Comments and STRING LITERALS are stripped first: a package mentioned
+    // in prose is not a call, and neither is a package named inside a
+    // string literal.
+    //
+    // The string literals matter here: the concurrency fixtures embed
+    // MoonBit source in `#| ... |#` literals, so `@async.all(tasks)` in
+    // those literals is SAMPLE CODE and not a call of this module. The
+    // gate's job is the calls THIS module makes -- the ones that have to
+    // compile against every core -- and a call inside a string literal
+    // cannot break the build of this module.
+    const text = stripLiterals(raw);
     for (const m of text.matchAll(/@([a-z_][a-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)) {
       const alias = m[1];
       if (!PACKAGES[alias]) continue;
