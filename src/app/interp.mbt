@@ -193,6 +193,20 @@ fn numeric_of(v : Val) -> Double? {
 }
 
 ///|
+/// The integer a value holds, when it holds one.
+///
+/// A range's end is an integer in the source. When the value computed for it
+/// is not an integer -- it is unknown, or the expression failed -- there is
+/// no trip count to run, and the loop does not run.
+fn int_of_value(v : Value) -> Int32 {
+  match v {
+    VInt(n) => n
+    VDouble(d) => d.to_int()
+    _ => 0
+  }
+}
+
+///|
 /// Bind the binders of a `for` loop. A plain binder takes the element; a
 /// destructuring binder takes the parts of a tuple element, one name per
 /// part. An element that is not a tuple leaves every name unknown rather
@@ -572,6 +586,12 @@ fn eval(p : Interp, env : Map[String, Val], e : Expr) -> Val {
       }
       Val::new(VTuple(out), t)
     }
+    ERange(_, _, _) =>
+      // A RANGE is not a value: the toolchain says "Range operators are
+      // currently only supported in `for .. in` loops". It is read by the
+      // `for` loop itself, so evaluating one here means the range was used
+      // somewhere it cannot be used.
+      clean(VUnknown)
     EFn(_, _) => clean(VUnknown)
     EUnknown(_) => clean(VUnknown)
   }
@@ -1166,14 +1186,25 @@ fn exec_stmt(
       Normal
     }
     SForIn(names, iter, body) => {
-      let src = eval(p, env, iter)
-      let src_names = unique_reads(p)
-      match src.v {
-        VArr(xs) => {
-          let mut i = 0
-          while i < xs.length() && p.steps < p.max_steps {
-            seed_reads(p, src_names)
-            bind_for_binders(p, env, names, xs[i], src.tainted, s.span, s.id)
+      match iter.kind {
+        ERange(start_e, end_e, inclusive) => {
+          // A RANGE loop: `for i in a..<b`.
+          //
+          // The end is evaluated ONCE, before the loop. MEASURED against the
+          // toolchain: `for i in 0..<next(0)` yields ONE value, not one per
+          // call -- a bound that the body changes does not change the trip
+          // count.
+          let sv = eval(p, env, start_e)
+          let ev = eval(p, env, end_e)
+          let range_reads = unique_reads(p)
+          let lo = int_of_value(sv.v)
+          let hi = int_of_value(ev.v)
+          let tainted = sv.tainted || ev.tainted
+          let mut i = lo
+          while (if inclusive { i <= hi } else { i < hi }) &&
+                p.steps < p.max_steps {
+            seed_reads(p, range_reads)
+            bind_for_binders(p, env, names, VInt(i), tainted, s.span, s.id)
             let sig = exec_block(p, env, body, fn_name)
             match sig {
               BreakLoop => break
@@ -1183,7 +1214,35 @@ fn exec_stmt(
             i = i + 1
           }
         }
-        _ => ()
+        _ => {
+          let src = eval(p, env, iter)
+          let src_names = unique_reads(p)
+          match src.v {
+            VArr(xs) => {
+              let mut i = 0
+              while i < xs.length() && p.steps < p.max_steps {
+                seed_reads(p, src_names)
+                bind_for_binders(
+                  p,
+                  env,
+                  names,
+                  xs[i],
+                  src.tainted,
+                  s.span,
+                  s.id,
+                )
+                let sig = exec_block(p, env, body, fn_name)
+                match sig {
+                  BreakLoop => break
+                  Returned(v) => return Returned(v)
+                  _ => ()
+                }
+                i = i + 1
+              }
+            }
+            _ => ()
+          }
+        }
       }
       Normal
     }

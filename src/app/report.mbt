@@ -1471,7 +1471,7 @@ pub fn render_report(
   out.write_string("\n### 5.2 L2 abstract findings (may-analysis)\n\n")
   if input.abstract is Some(abs) {
     out.write_string(
-      "Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed.\n\n",
+      "Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Two rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. And a tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose.\n\n",
     )
     out.write_string(findings_table(abstract_findings(abs.findings)))
   } else {

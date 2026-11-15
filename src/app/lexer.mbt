@@ -274,6 +274,29 @@ pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
       continue
     }
     let start_col = col
+    // A RANGE operator is THREE or FOUR characters: `..<` and `..<=`. It has
+    // to be read before the two-character operators, or `..<` would be lexed
+    // as `..` followed by `<` -- and then the range would look like a `..`
+    // with a comparison after it, which is not what the source says.
+    //
+    // MEASURED against the toolchain: `0..<3` yields 0,1,2 and `0..<=3` yields
+    // 0,1,2,3, so `..<` has an EXCLUSIVE end and `..<=` an INCLUSIVE one. A
+    // bare `a..b` is a parse error in MoonBit ("Missing `=` after `..`"), so
+    // there is no two-character range to read.
+    let three = if i + 2 < n { src[i:i + 3].to_string() } else { "" }
+    let four = if i + 3 < n { src[i:i + 4].to_string() } else { "" }
+    if four == "..<=" {
+      toks.push({ kind: TOp, text: four, line, col: start_col, })
+      i = i + 4
+      col = col + 4
+      continue
+    }
+    if three == "..<" {
+      toks.push({ kind: TOp, text: three, line, col: start_col, })
+      i = i + 3
+      col = col + 3
+      continue
+    }
     let two = if i + 1 < n { src[i:i + 2].to_string() } else { "" }
     let is_two = two == "==" ||
       two == "!=" ||

@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.18
+moon add riantr/LunaFlow@0.1.19
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.18",
+  "riantr/LunaFlow@0.1.19",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.18](https://mooncakes.io/docs/riantr/LunaFlow@0.1.18).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.19](https://mooncakes.io/docs/riantr/LunaFlow@0.1.19).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -492,6 +492,84 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.19
+
+**The analyzer read `for i in 0..<n` as no loop at all — and this release fixes the
+parser, not the symptom.**
+
+The self-check found **two** out-of-bounds findings in the analyzer's own source,
+and **both** were false positives. Both sat inside a range loop, and the cause was
+in the frontend: the lexer emitted `..` and `<` as **two tokens**, so the parser
+never saw a range. The `for` loop degraded to an iterator of `0`, **the loop body
+was left behind**, and its statements became statements of the enclosing function.
+The guard that said the index was inside the array was in that body, so it never
+reached the abstract state, the index could not be narrowed, and the index was
+reported as out of bounds.
+
+The range is now a first-class expression — `ExprKind::ERange(start, end,
+inclusive)` — and the frontend learned it end to end:
+
+| Where | What it does now |
+|---|---|
+| the lexer | `..<` and `..<=` are lexed as **one** operator (`..` stays the fallback) |
+| the parser | the range is read in every `for .. in` form, the body is **kept**, and the trip count is recorded |
+| the interpreter | the loop runs its **real** trip count, and the bound is evaluated **once** |
+| the abstract layer | the binder gets the range's interval, and the relation that says the binder is below an array's length when the range's end **is** that length |
+
+The range's semantics are the toolchain's, measured: `0..<3` is 0, 1, 2 and
+`0..<=3` is 0, 1, 2, 3; the end is evaluated once; and a range is only legal in a
+`for .. in` loop — the compiler says so.
+
+**Four more defects of the same family, all found by the same self-check.**
+
+| Defect | What it did | The fix |
+|---|---|---|
+| a comparison of two **overlapping** intervals | `x < 0` with `x` in `[-1000000, 1000000]` read as **impossible**: both branches were "unreachable" and the code after them was analysed as dead | a comparison can hold when the smallest left value is below the largest right one, and can fail when the largest left value reaches the smallest right one |
+| the **widening** of a loop variable | a counter that starts at 0 lost its lower bound, so an index that cannot be negative became one that might be | only the bound that **moved** goes to the top; the other one stays where it was |
+| the state after a branch that **returns** | the state after `if cond { return }` was a **join** with a branch that left the function, so the narrowing the guard was written to give was thrown away | the state after the `if` is the **false** branch's state |
+| an index **inside** an array | the index's interval and the array's length interval are independent numbers, so the comparison of them said the index MAY be past the end even when the code says it cannot be | the relation "this index is below that array's length" is kept as its own fact — set by a comparison, by the false side of its opposite, and by a range whose end is that length |
+
+**And the loop model itself was wrong in two ways, in the same family.**
+
+- The body of a `for .. in` loop was analysed on the loop's **own** state, so a
+  body that grows an array (`arr.push(x)`) **erased** the fact that the loop may
+  run **zero** times.
+- The body was analysed **once**, so an array the loop grows looked like it had
+  exactly **one** element — and every refinement of that length was then wrong.
+
+Both are fixed: the body is analysed on a **copy** of the loop's entry state, once
+**per iteration**, with the state joined and widened between the iterations — the
+way a `while` loop is analysed.
+
+**A tainted index is only claimed when the container is known to be an array.** The
+abstract layer's tainted-index rule claims that "a tainted value may reach an array
+index or a buffer offset". That claim needs the container to **be** an array: the
+analyzer reads a container's type from its **declared** type, and a **field** of a
+struct is opaque to it — the frontend does not carry a struct's field types. A
+container it cannot see may well be a **Map**, where the index is a **key**: a key
+cannot be out of bounds, and it is not an offset that untrusted input chose. The
+dynamic layer sees the container's **runtime** type and files the witnessed claim;
+the abstract layer files the may-claim only where it can stand behind the words
+"array index".
+
+**No regression, and it is proved over the same tree.** The **local build** and the
+**published 0.1.18** were both run over the **same** tree, and every summary number
+is the same (45 files, 816 functions, 9 497 events, 2/1/3 VCs, 0 dead, 5 taint
+sinks) with **one** difference in the statements — 5 528 → **5 569** — and it is
+the point: the new parser understands **41 more statements** in the old tree,
+because a range loop's body is no longer left behind. The findings: **47** rows
+become **23**, and **every** one of the 24 that went away was a false positive —
+21 `UNREACHABLE` (every one of them a claim that a condition the code can satisfy
+was impossible), 2 `INDEX-OOB` (the two this release is about) and 1 `TAINT-INDEX`
+that the dynamic layer had already reported at the same line. **Nothing new
+appears.**
+
+**The numbers.** Tests move 166 → **191** (25 new ones: the range's parsing and
+trip count, the guard narrowing, the length refinement, the coupled index, the
+relation, the loop model and the tainted-index rule); the CLI-surface checks stay
+at **106**; the library is 21 files and the test suite 18 files; the finding roster
+stays at **37** — this release fixes what they say, it does not add any.
 
 ### What changed in 0.1.18
 
@@ -1827,13 +1905,13 @@ LICENSE                    MIT
 moon.mod                   module metadata (native, wasm and js)
 moon.pkg                    the ROOT package: the executable moonx resolves
 main.mbt                    the root entrypoint, a forwarder to src/command
-src/app/                   22 library files: parser, CFG, L1 interpreter,
+src/app/                   21 library files: parser, CFG, L1 interpreter,
                            L2 abstract interpreter, L3 contracts, funnel,
                            taint/slice, family roster, evolved value
                            analysis, memory layout model, foreign address
                            space model, concurrency model, IPC and buffer
-                           model, report renderer
-src/app/*_test.mbt         166 tests in 16 files
+                           model, index/length relation, report renderer
+src/app/*_test.mbt         191 tests in 18 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -1877,12 +1955,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 170 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 170 warnings, 0 errors |
-| `moon check --target js` | exit 0, 195 warnings, 0 errors |
-| `moon test src/app --target native` | **166 passed, 0 failed** |
-| `moon test src/app --target wasm` | **166 passed, 0 failed** |
-| `moon test src/app --target js` | **166 passed, 0 failed** |
+| `moon check --target native` | exit 0, 172 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 172 warnings, 0 errors |
+| `moon check --target js` | exit 0, 197 warnings, 0 errors |
+| `moon test src/app --target native` | **191 passed, 0 failed** |
+| `moon test src/app --target wasm` | **191 passed, 0 failed** |
+| `moon test src/app --target js` | **191 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1898,7 +1976,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **106 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.18` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.19` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
@@ -1907,7 +1985,7 @@ measured runs committed with the reports:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 45 | 5,528 | 9,497 | 25 | 2 / 1 / 3 | 0 | 5 | 0.30 s |
+| `LunaFlow` itself (`--dir .`) | 48 | 5,714 | 9,547 | 1 | 2 / 1 / 3 | 0 | 6 | 0.40 s |
 
 **Reproduction status (2026-11-14).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They

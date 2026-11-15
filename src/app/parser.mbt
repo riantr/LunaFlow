@@ -1280,6 +1280,35 @@ fn parse_update(p : P) -> Expr {
 }
 
 ///|
+/// The ITERATOR of a `for .. in` loop.
+///
+/// A RANGE is `a..<b` or `a..<=b`. It is not a value in MoonBit -- the
+/// toolchain says "Range operators are currently only supported in `for .. in`
+/// loops" -- so it is read HERE, where it is legal, and it becomes an
+/// `ERange` node that says which end is included.
+///
+/// Before this, `..<` was not read as one operator: the lexer produced `..`
+/// and `<` separately, so `0..<n` looked like a `..` with a comparison after
+/// it. There was then no range to read, the iterator degraded to the `0` in
+/// front of it, and -- when the bound was a CALL -- the loop body was left
+/// behind entirely and its statements became statements of the ENCLOSING
+/// function. Both shapes were measured on the analyzer's own source: a range
+/// loop over `d.params.length()` lost its body, so the two variables the body
+/// assigned kept their values from before the loop, and the guards that
+/// narrowed them could not narrow what was never assigned.
+fn parse_for_in_iter(p : P) -> Expr {
+  let start = parse_expr(p, 0)
+  if p.at_op("..<") || p.at_op("..<=") {
+    let inclusive = p.at_op("..<=")
+    ignore(p.bump())
+    let end = parse_expr(p, 0)
+    Expr::new(start.span.merge(end.span), ERange(start, end, inclusive))
+  } else {
+    start
+  }
+}
+
+///|
 fn parse_for(p : P) -> StmtKind {
   ignore(p.bump())
   p.skip_all_newlines()
@@ -1298,7 +1327,7 @@ fn parse_for(p : P) -> StmtKind {
     }
     if p.at("in") {
       ignore(p.bump())
-      let iter = parse_expr(p, 0)
+      let iter = parse_for_in_iter(p)
       ignore(p.swallow_expr_tail(true))
       p.skip_all_newlines()
       let body = parse_block(p)
@@ -1310,7 +1339,7 @@ fn parse_for(p : P) -> StmtKind {
     }
   } else if p.at("in") {
     ignore(p.bump())
-    let iter = parse_expr(p, 0)
+    let iter = parse_for_in_iter(p)
     ignore(p.swallow_expr_tail(true))
     p.skip_all_newlines()
     let body = parse_block(p)
@@ -1332,7 +1361,7 @@ fn parse_for(p : P) -> StmtKind {
     }
     if p.at("in") {
       ignore(p.bump())
-      let iter = parse_expr(p, 0)
+      let iter = parse_for_in_iter(p)
       ignore(p.swallow_expr_tail(true))
       p.skip_all_newlines()
       let body = parse_block(p)

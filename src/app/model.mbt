@@ -135,6 +135,13 @@ pub(all) enum ExprKind {
   ESlice(Expr, Expr?, Expr?)
   EArray(Array[Expr])
   ETuple(Array[Expr])
+  /// A RANGE: `a..<b` (exclusive) or `a..<=b` (inclusive). The flag says
+  /// whether the END is included.
+  ///
+  /// A range is not a value in MoonBit -- the toolchain says "Range operators
+  /// are currently only supported in `for .. in` loops" -- so this node only
+  /// ever appears as the ITERATOR of a `for .. in` loop.
+  ERange(Expr, Expr, Bool)
   /// A FUNCTION LITERAL: its synthetic name and whether it is `async`. The
   /// body lives in `SourceFile.closures`, keyed by that name, so the
   /// expression domain does not have to carry statements.
@@ -188,6 +195,8 @@ pub fn Expr::render(self : Expr) -> String {
     }
     EArray(xs) => "[" + render_args(xs) + "]"
     ETuple(xs) => "(" + render_args(xs) + ")"
+    ERange(a, b, inclusive) =>
+      a.render() + (if inclusive { "..<=" } else { "..<" }) + b.render()
     EFn(id, _) => "fn-literal"
     EUnknown(t) => t
   }

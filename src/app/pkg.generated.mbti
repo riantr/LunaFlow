@@ -547,6 +547,7 @@ pub(all) enum ExprKind {
   ESlice(Expr, Expr?, Expr?)
   EArray(Array[Expr])
   ETuple(Array[Expr])
+  ERange(Expr, Expr, Bool)
   EFn(String, Bool)
   EUnknown(String)
 }

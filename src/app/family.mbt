@@ -256,7 +256,7 @@ pub fn family_assumption(kind : FindingKind) -> String {
     FInfinite =>
       "the condition was modelled as a constant, or as true over the whole abstract input set"
     FTaintIndex =>
-      "the taint source set was complete, and the sink was reached on an observed path"
+      "the taint source set was complete, the sink was reached on an observed path, and the container was known to be an array"
     FTaintIndexRange =>
       "every path the interpreter executed was observed, and the array's length was known"
     FTaintAlloc =>
@@ -333,11 +333,11 @@ pub fn family_excluded(kind : FindingKind) -> String {
     FDead =>
       "a statement the parser folded into its parent, and a function whose body was not parsed at all"
     FUnreachable =>
-      "a branch the parser could not model, and a path the interpreter never executed"
+      "a branch the parser could not model, a path the interpreter never executed, and a branch that is unreachable in ONE iteration of a loop: the finding is filed outside a loop body"
     FInfinite =>
       "a loop whose condition the parser did not model, and a loop with a break the parser did not see"
     FTaintIndex =>
-      "an index the runtime clamps, and a value the source model did not mark tainted"
+      "an index the runtime clamps, a container that is not an array -- a Map's key is not an offset -- and a value the source model did not mark tainted"
     FTaintIndexRange =>
       "a path the trials did not synthesise, and an array whose length is unknown"
     FTaintAlloc =>
@@ -354,7 +354,7 @@ pub fn family_excluded(kind : FindingKind) -> String {
     FDivZero =>
       "a divisor whose interval could not be computed, and a floating-point division, where a zero divisor is an infinity rather than a panic"
     FIndexOob =>
-      "an array whose length is not known -- a fixed-size array with an unknown size, and any array read through a pointer-like value"
+      "an array whose length is not known -- a fixed-size array with an unknown size, and any array read through a pointer-like value -- and an index the analysis proved to be below that array's length"
     FNoneDeref =>
       "an Option that the analysis proved to be Some, and a Result, whose failure is a different family"
     FUninitRead =>

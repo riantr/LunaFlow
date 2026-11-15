@@ -717,6 +717,108 @@ Cost: one static pass over the AST for the calls, one over each function body
 for the discarded counts and the views, and one over the closures for the
 shared buffers.
 
+### 5.14 The range loop, the index/length relation, and the abstract layer's precision
+
+§5.6 modelled an integer's range and §4.2 the abstract domain over it. This
+section is about the **precision** of that domain, and it starts from a defect the
+self-check found on the analyzer's **own source**: **two** out-of-bounds findings,
+**both** of them false positives, both of them inside a `for i in 0..<n` loop.
+
+**The root cause was the frontend, not the analysis.** The lexer emitted `..` and
+`<` as **two tokens**, so the parser never saw a range. The `for` loop degraded
+to an iterator of `0`, the **loop body was left behind**, and its statements
+became statements of the enclosing function. The guard that said the index was
+inside the array was in that body, so it never reached the abstract state, the
+index could not be narrowed, and the index was reported as out of bounds.
+
+The range's semantics are the toolchain's, and they were measured rather than
+assumed:
+
+| The question | What the toolchain says |
+|---|---|
+| What does `0..<3` yield? | 0, 1, 2. MEASURED. |
+| What does `0..<=3` yield? | 0, 1, 2, 3. MEASURED. |
+| Is the end evaluated once? | Yes. MEASURED: a call in the end position is called **once**, not once per iteration. |
+| Where may a range appear? | Only in a `for .. in` loop — error **4137**: *"Range operators are currently only supported in `for .. in` loops."* |
+
+**The model.**
+
+| Piece | What it is |
+|---|---|
+| **The range** | `ExprKind::ERange(start, end, inclusive)` — a first-class expression, so the exclusive and the inclusive form stay apart. The blast radius was measured: **two** exhaustive `match e.kind` sites, not a hundred. |
+| **The lexer** | `..<` and `..<=` are lexed as **one** operator, checked before the two-character table; `..` stays the fallback. |
+| **The parser** | the range is read in every `for .. in` form — parenthesised, plain and destructuring — and the body is **kept**. |
+| **The interpreter** | the loop runs its **real** trip count, and the bound is evaluated **once**. |
+| **The binder** | the range's interval: `[start, end-1]` when the end is exclusive, `[start, end]` when it is inclusive. When the end is **not** a number the analysis could compute, the trip count is not known — but the start is, and the binder keeps it. |
+| **The relation** | the index/length relation: "this index is below that array's length". |
+
+**Why the relation is its own fact.** The abstract domain's intervals cannot say
+"this index is below that array's length". The two intervals are independent
+numbers — the index's upper bound and the length's lower bound — so comparing
+them says the index MAY be past the end even when the code says it cannot be.
+That is how `for i in 0..<xs.length() { xs[i] }` came to be reported as an
+out-of-bounds access when the range's own definition says the index is below the
+length. The relation is kept as its own fact, in the state's environment under a
+key no source name can have, and it is set in three places that all say the same
+thing:
+
+- a comparison that says so — `i < xs.length()`;
+- the **false** side of a comparison that says the opposite — `if i >= xs.length()
+  { return }` leaves `i < xs.length()` behind;
+- a **range** whose end is that length — `for i in 0..<xs.length()`.
+
+It is dropped when the index is bound again (it may be a different number now) or
+when the array it names is bound again, it survives a join only when it holds on
+**both** sides, and an assignment that only makes the index **smaller**
+(`i = i - k`) keeps it.
+
+**Four more defects of the same family**, all found by the same self-check:
+
+| Defect | What it did | The fix |
+|---|---|---|
+| a comparison of two **overlapping** intervals | `x < 0` with `x` in `[-1000000, 1000000]` read as **impossible**: both branches were "unreachable" and the code after them was analysed as dead | a comparison can hold when the smallest left value is below the largest right one, and can fail when the largest left value reaches the smallest right one |
+| the **widening** of a loop variable | a counter that starts at 0 lost its lower bound, so an index that cannot be negative became one that might be | only the bound that **moved** goes to the top; the other one stays where it was |
+| the state after a branch that **returns** | the state after `if cond { return }` was a **join** with a branch that left the function, so the narrowing the guard was written to give was thrown away | the state after the `if` is the **false** branch's state |
+| an index **inside** an array | the index's interval and the array's length interval are independent numbers | the relation above |
+
+**And the loop model itself was wrong in two ways.** The body of a `for .. in`
+loop was analysed on the loop's **own** state, so a body that grows an array
+(`arr.push(x)`) **erased** the fact that the loop may run **zero** times; and the
+body was analysed **once**, so an array the loop grows looked like it had exactly
+**one** element — and every refinement of that length was then wrong. Both are
+fixed: the body is analysed on a **copy** of the loop's entry state, once **per
+iteration**, with the state joined and widened between the iterations, the way a
+`while` loop is analysed.
+
+**A tainted index is only claimed when the container is known to be an array.** The
+tainted-index rule claims that "a tainted value may reach an array index or a
+buffer offset". That claim needs the container to **be** an array: the analyzer
+reads a container's type from its **declared** type, and a **field** of a struct
+is opaque to it — the frontend does not carry a struct's field types. A container
+it cannot see may well be a **Map**, where the index is a **key**: a key cannot
+be out of bounds, and it is not an offset that untrusted input chose. The dynamic
+layer sees the container's **runtime** type and files the witnessed claim; the
+abstract layer files the may-claim only where it can stand behind the words
+"array index".
+
+**The proof that nothing else moved.** The **local build** and the **published
+0.1.18** were both run over the **same** tree. Every summary number is the same
+(45 files, 816 functions, 9 497 events, 2/1/3 VCs, 0 dead, 5 taint sinks) with one
+difference in the statements — 5 528 → **5 569** — and it is the point: the new
+parser understands **41 more statements** in the old tree, because a range loop's
+body is no longer left behind. The findings: **47** rows become **23**, and every
+one of the 24 that went away was a false positive — 21 `UNREACHABLE`, 2
+`INDEX-OOB` and 1 `TAINT-INDEX` the dynamic layer had already reported at the
+same line. **Nothing new appears.**
+
+**What the model does not claim.** It does not claim a range outside a `for ..
+in` loop (the toolchain does not allow one), a trip count it cannot compute, an
+index that is below the length of an array the analyzer cannot name, or a
+tainted index into a container whose type it cannot see.
+
+Cost: one token in the lexer, one expression form in the parser, one interval in
+the abstract layer, and one relation in the state's environment.
+
 ---
 
 ## 6. Visualization
