@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.20
+moon add riantr/LunaFlow@0.1.21
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.20",
+  "riantr/LunaFlow@0.1.21",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.20](https://mooncakes.io/docs/riantr/LunaFlow@0.1.20).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.21](https://mooncakes.io/docs/riantr/LunaFlow@0.1.21).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -492,6 +492,59 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.21
+
+**A documentation-only release — and the reason is a fact about how the registry
+publishes a README.**
+
+The 0.1.20 release corrected two measurement cells in this file **after** the tag was
+cut: the self-scan row and the regression counts. A tag cannot be re-published, and the
+registry serves the README **as it stood at the tag**, so the page for 0.1.20 shows
+numbers the analyser never printed — `6,010 / 9,736 / 6` and `28 rows | 30 rows`. A
+reader who copied the install line from that page got a working release; a reader who
+read its measurement table got a table that does not exist.
+
+A release is the only thing the registry serves, so the fix is a release.
+
+**The analyser is unchanged.** No source file is touched: the published 0.1.21 artefact
+is the same program as 0.1.20's, and it finds the same things.
+
+**And the correction was re-measured through the registry's own runner** — the
+published wasm artefact, fetched and executed by `moonx`, not the local build. That is
+a stronger check than a local run, because it is the artefact a reader actually gets.
+
+| Tree | published 0.1.19 | published 0.1.20 / 0.1.21 | Difference |
+|---|---|---|---|
+| LunaFlow itself (49 files) | 29 rows | 31 rows | **2 removed, 4 added** |
+| `riantr/moonbit_doubleML@0.164.64` (220 files) | 319 rows | 319 rows | **none** |
+| `riantr/moonbit_static_analysis@0.4.50` (239 files) | 20 rows | 20 rows | **none** |
+
+The **2 removed** rows are the `TAINT-INDEX` and the `INDEX-OOB` that the index/length
+relation's single-length limitation produced **on the analyser's own source**; the **4
+added** are one per new family, each on its fixture's defect half. The two **real**
+modules do not move by a single row.
+
+**The published artefact and the local build are the same analyser**, compared row by
+row over the same tree:
+
+| Comparison | Rows | Removed | Added |
+|---|---:|---:|---:|
+| published 0.1.21 vs the local build, over LunaFlow's own tree | 29 | 0 | 0 |
+| published 0.1.21 vs the local build, over `moonbit_doubleML` | 319 | 0 | 0 |
+| published 0.1.21 vs the local build, over `moonbit_static_analysis` | 20 | 0 | 0 |
+
+**And the self-scan row, as the published artefact prints it:**
+
+| Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `LunaFlow` itself (`--dir .`) | 49 | 6,022 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.43 s |
+
+The **4 IPC rows** in that self-scan all sit in `fixtures/ipc_demo/` — the analyser's
+own source has **none**, which is the invariant `scripts/qa/root_package.mjs` holds.
+
+**The timing rows carry over unchanged**, because the artefact is the same program:
+the wasm comparison below reads **5.59 s** for 0.1.20 and for 0.1.21 alike.
 
 ### What changed in 0.1.20
 
@@ -2068,7 +2121,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.20` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.21` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
@@ -2091,7 +2144,8 @@ the **minimum** of three rounds each: the **0.1.19 native build** and this **nat
 build** measured **6.36 s** and **6.40 s** — the new checks cost **0.6%** where the
 local QA harness runs. Over the **published wasm** artifacts — the ones the registry
 serves — the same comparison reads **5.11 s** for 0.1.19 and **5.59 s** for 0.1.20, so
-the new checks cost **9.5%** there. The difference is the artefact: the native build is
+the new checks cost **9.5%** there. (0.1.21 is the same program, republished, and reads
+the same.) The difference is the artefact: the native build is
 a debug build whose time is dominated by the interpreter, and the wasm one is a
 release build that pays the new checks in full.
 
