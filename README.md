@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.21
+moon add riantr/LunaFlow@0.1.22
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.21",
+  "riantr/LunaFlow@0.1.22",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.21](https://mooncakes.io/docs/riantr/LunaFlow@0.1.21).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.22](https://mooncakes.io/docs/riantr/LunaFlow@0.1.22).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -492,6 +492,64 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.22
+
+**The peer analyzer found a defect in this module's own source — and this release
+fixes it.**
+
+The cross-check is not decorative. `riantr/moonbit_static_analysis` was pointed at
+this module's source, and it reported **14 actionable findings**. Most were its own
+limits, but **one was real, and it was in this module**:
+
+```
+src/app/conc.mbt:1676:3 - warning: parameter 'tasks' may not be used (UnusedParam)
+```
+
+`conc_cycles(edges, tasks, reach)` was handed the task list and **never read it**. The
+MoonBit compiler said the same thing independently — `Warning (unused_value): Unused
+variable 'tasks'` — and the parameter is now gone, along with its argument. The
+function's results are unchanged: the self-scan over this tree is **31 rows before and
+after, with 0 rows removed and 0 added**, and the three committed artefacts regenerate
+**byte-identically**, traces included.
+
+**The other 13 are the peer's limits, and each was established by a probe rather than
+by reading.**
+
+| count | what it is | why it is not a defect here |
+|---:|---|---|
+| 10 | `ArgTypeMismatch` and `UnusedParam` in `src/app/scan.mbt` | **The peer does not model `#cfg`.** `walk_dir` is defined twice — 6 parameters for native/wasm, 5 for the js stub — and the peer binds the name to the stub, so it reports the real 6-argument call sites as arity errors and the empty stub's parameters as unused |
+| 2 | `DivisionByZero` and `NegativeIndex` in `fixtures/eva_demo/lib.mbt` | the fixture's **deliberate** defects, and LunaFlow reports the same two at the identical file, line and column |
+| 1 | `DeadStore` on `x` in `fixtures/eva_demo/lib.mbt:138` | literally true — the initial `None` is overwritten on both branches — but the fixture's stated contract is about the **unwrap** being safe, and LunaFlow correctly reports nothing there |
+
+The `#cfg` claim is reproduced by a **25-line file** with two `#cfg` definitions of one
+name: the peer says *"too many arguments to 'gated': expected 1, got 2"*, exactly as it
+does for `walk_dir`.
+
+**And the peer is behind the language in three places.** It parses **46 of 49** of this
+module's `.mbt` files; LunaFlow parses **49 of 49**. Each gap is now pinned to a
+construct and reproduced by a minimal probe:
+
+| the construct | the peer's error |
+|---|---|
+| a block string with bare `#|` continuation lines | `expected ')'` |
+| a `for` whose pattern is on the next line | ``unexpected token `,` `` |
+| a tuple pattern in a `for` header | `expected loop variable` |
+
+The peer's other 505 notices are its subset boundary, not findings: 129 printed
+`if`-as-expression notices (MoonBit's `if` **expression**, as in `AInt(if al < bl { al }
+else { bl }, …)` — `if` **statements** are fine), 11 closure literals, and 365
+aggregated by shape.
+
+**The warning counts drop by one on every target** — **171 / 171 / 196** — because the
+fixed code adds none and removes one.
+
+**The timing does not move.** With the two builds alternating and the **minimum** of
+five rounds each, over the same trees and the same recipe, the deltas are the
+machine's noise: **+2.4 %** on doubleML, **-0.5 %** on the static-analysis module,
+**0 %** on the fixture and **-1 %** on this module's own tree. The table is in
+[Verification](#verification). Over the **published wasm** artefact, the same
+comparison reads the same rows as the local build: **319 rows, 0 removed, 0 added**.
 
 ### What changed in 0.1.21
 
@@ -2100,9 +2158,9 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 172 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 172 warnings, 0 errors |
-| `moon check --target js` | exit 0, 197 warnings, 0 errors |
+| `moon check --target native` | exit 0, 171 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 171 warnings, 0 errors |
+| `moon check --target js` | exit 0, 196 warnings, 0 errors |
 | `moon test src/app --target native` | **215 passed, 0 failed** |
 | `moon test src/app --target wasm` | **215 passed, 0 failed** |
 | `moon test src/app --target js` | **215 passed, 0 failed** |
@@ -2121,16 +2179,22 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.21` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.22` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
-measured runs committed with the reports:
+measured runs committed with the reports — the **Time** column is the
+`elapsed_ms` of the committed artefact itself, so every cell is traceable to a
+file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 (no specs) | 0 | 118 | 6.5 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 (no specs) | 0 | 118 | 8.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 (no specs) | 0 | 9 | 1.3 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 49 | 6,022 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.43 s |
+| `LunaFlow` itself (`--dir .`) | 49 | 6,022 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.39 s |
+
+The last row has no committed artefact — the self-scan is a run over this
+tree — so its time is the **minimum of five** alternating runs, which is also
+how the deltas below are measured.
 
 The three committed artefacts are regenerated by this release's build, with
 `--funnel --trials 4` and one slice each (`theta_hat@aggregate_coef_se` for doubleML,
@@ -2140,14 +2204,28 @@ version the registry served when it was generated.
 
 **The absolute times move with the machine, so the comparison that counts is the
 controlled one.** Over the same 220-file module, with the two builds alternating and
-the **minimum** of three rounds each: the **0.1.19 native build** and this **native
-build** measured **6.36 s** and **6.40 s** — the new checks cost **0.6%** where the
-local QA harness runs. Over the **published wasm** artifacts — the ones the registry
+the **minimum** of three rounds each: the **0.1.19 native build** and the **0.1.20
+native build** measured **6.36 s** and **6.40 s** — the new checks cost **0.6%** where
+the local QA harness runs. Over the **published wasm** artifacts — the ones the registry
 serves — the same comparison reads **5.11 s** for 0.1.19 and **5.59 s** for 0.1.20, so
 the new checks cost **9.5%** there. (0.1.21 is the same program, republished, and reads
 the same.) The difference is the artefact: the native build is
 a debug build whose time is dominated by the interpreter, and the wasm one is a
 release build that pays the new checks in full.
+
+**And 0.1.22's change costs nothing, measured the same way.** The pre-fix native
+build and this one, alternating over the same module with the same recipe,
+measured:
+
+| Run | pre-fix | this build | delta |
+|---|---:|---:|---:|
+| `riantr/moonbit_doubleML@latest` | 6.08 s | 6.23 s | **+2.4 %** |
+| `riantr/moonbit_static_analysis@latest` | 1.30 s | 1.30 s | **-0.5 %** |
+| `fixtures/vuln_demo` | 4 ms | 4 ms | **0 %** |
+| `LunaFlow` itself (`--dir .`) | 398 ms | 394 ms | **-1 %** |
+
+The change removes one unused parameter and adds no work, so the deltas are the
+machine's noise, not the code's.
 
 **Reproduction status (2026-11-16).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated, and they
@@ -2203,12 +2281,19 @@ nothing looks broken:
 
 ```sh
 moon run src/cli --target native -- analyze --dir fixtures/vuln_demo \
-  --out reports --funnel --trials 4 --max-functions 120 --slice "i@copy_prefix"
+  --out reports --funnel --trials 4 --slice "i@copy_prefix"
 moon run src/cli --target native -- analyze riantr/moonbit_static_analysis@latest \
-  --out reports --funnel --trials 4 --max-functions 120 --slice "buf@render_reports"
+  --out reports --funnel --trials 4 --slice "buf@render_reports"
 moon run src/cli --target native -- analyze riantr/moonbit_doubleML@latest \
-  --out reports --funnel --trials 4 --max-functions 120 --slice "theta_hat@aggregate_coef_se"
+  --out reports --funnel --trials 4 --slice "theta_hat@aggregate_coef_se"
 ```
+
+**There is NO `--max-functions` cap in that recipe, and adding one changes every
+number.** Measured on the committed artefacts: with `--max-functions 120` the
+doubleML run produces **193,962** trace events and **141** L2 findings; without it,
+**237,904** events and **187** findings. The committed artefacts are the **no-cap**
+run, and re-running the recipe above with this release's build reproduces all three
+of them **byte-identically** — traces included.
 
 The module version is part of the artefact's file name, so a new release of a
 validation module means a new file and a new pin in `scripts/verify.mjs`. One

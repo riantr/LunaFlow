@@ -930,6 +930,62 @@ returned, or stored into another object — because whoever holds it now owns it
 Cost: four families, two AST walks (both skipped when the module has no C
 boundary and no globals), one relation that grew from one array name to a set.
 
+### 5.16 The peer cross-check, and what it does and does not prove
+
+The cross-check is not a formality. `riantr/moonbit_static_analysis` was run over
+this module's own source, and the two tools were compared on the same tree. This
+section records what that comparison establishes, because a cross-check that is
+reported without its error rate is not evidence.
+
+**What the peer found.** 14 actionable findings over 59 files. **One was real**:
+`conc_cycles(edges, tasks, reach)` was handed the task list and never read it. The
+MoonBit compiler said the same thing independently (`unused_value`), which is the
+cross-check that mattered — two independent tools, one conclusion. The parameter and
+its argument are gone, and the results are unchanged: the self-scan is 31 rows before
+and after, and the three committed artefacts regenerate byte-identically.
+
+**What the peer's other 13 findings were, and why 10 of them are its limit rather
+than a defect here.** The peer does not model `#cfg`. A module that defines a name
+twice — once for the native/wasm backends and once as a stub for the others — has two
+definitions of that name, and the peer binds the name to **one** of them. The
+consequences are systematic, and they are not defects in the analysed module:
+
+| what the peer reports | why it is wrong here |
+|---|---|
+| `ArgTypeMismatch` — "expected 5, got 6" | the native/wasm definition has **6** parameters and the js stub has **5**; the peer bound the name to the stub |
+| `UnusedParam` on the stub's parameters | the stub's body is **empty**, and the parameter exists in the *other* definition |
+
+The claim was established by a probe, not by inference: a 25-line file with two `#cfg`
+definitions of one name reproduces *"too many arguments to 'gated': expected 1, got 2"*
+exactly.
+
+**The other three were the fixtures' own defects.** `fixtures/eva_demo/lib.mbt` holds
+deliberate defects — `100 / 0` at line 44 and `a[-1]` at line 65 — and the peer finds
+both, at the identical file, line and column LunaFlow reports them at. The peer's
+`DeadStore` at line 138 is *literally* true (the initial `None` is overwritten on both
+branches before it is read) but is **outside the fixture's stated contract**, which is
+about the **unwrap** being safe; LunaFlow correctly reports nothing there. A fixture
+that exists to prove a case must not be "fixed" to satisfy a tool.
+
+**What the peer cannot do at all.** It parses **46 of 49** of this module's `.mbt`
+files; LunaFlow parses **49 of 49**. Each gap is pinned to a construct and reproduced
+by a minimal probe: a block string with bare `#|` continuation lines (`expected ')'`),
+a `for` whose pattern is on the next line (``unexpected token `,` ``), and a tuple
+pattern in a `for` header (`expected loop variable`).
+
+**The method, stated so it can be repeated.** The peer is run from the **repository
+root**, because it resolves `.repos/` relative to the current working directory and
+fails with *"cannot locate source for target"* from anywhere else. Its coordinate
+target works from the root. Every peer finding was then checked against the source
+by reading it, and every claim about the peer's own behaviour was checked by a
+**minimal probe** rather than by reasoning about the peer's implementation.
+
+**And the direction that matters is reciprocal.** The peer over its own module
+(0.4.50, 257 files) reports **0 actionable** findings; LunaFlow over the same module
+reports **20 rows**. Neither tool invents a defect on the other's code.
+
+Cost: one peer run per release, plus a probe file per disputed claim.
+
 ---
 
 ## 6. Visualization
@@ -1051,11 +1107,22 @@ Outputs, all deterministic except `elapsed_ms`:
 
 ### 7.2 Measured performance (native, Windows 11, warm cache)
 
+The **committed artefacts**, regenerated with the release recipe in §7.2 of the
+README — `--funnel --trials 4` and one slice each, with **no** `--max-functions`
+cap:
+
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.64 (120 fn) | 220 | 29,853 | 218,391 | 166 | 0 / 0 / 0 (no specs) | 0 | 73 | 4.5 s | 94 KB | 33.8 MB |
-| static_analysis 0.4.46 (200 fn) | 199 | 12,970 | 14,296 | 43 | 0 / 0 / 0 (no specs) | 0 | 6 | 1.0 s | 62 KB | 4.5 MB |
-| fixtures/vuln_demo | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms | 21 KB | 79 KB |
+| doubleML 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 / 0 / 0 (no specs) | 0 | 118 | 8.0 s | 130 KB | 36.8 MB |
+| static_analysis 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 / 0 / 0 (no specs) | 0 | 9 | 1.3 s | 81 KB | 2.5 MB |
+| fixtures/vuln_demo | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms | 33 KB | 79 KB |
+
+**The cap is not part of the recipe, and adding it moves every number.** With
+`--max-functions 120` the doubleML run produces **193,962** trace events and
+**141** L2 findings; without it, **237,904** events and **187** findings. The
+committed artefacts are the **no-cap** run, and re-running the recipe with the
+current build reproduces all three of them **byte-identically** — traces
+included.
 
 The statement counts fell and the dead-code column emptied because the old
 numbers were wrong: the parser shredded every construct it did not model into
@@ -1064,7 +1131,7 @@ its function, so whole function bodies were truncated. Neither module has an
 unreachable statement, and the analyzer now says so. The event count rose
 because the analyzer understands more of the module and explores more paths.
 
-Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 34 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-functions` or stream events to disk.
+Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 36.8 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-functions` or stream events to disk.
 
 Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `scripts/qa/metrics.mjs`):
 
