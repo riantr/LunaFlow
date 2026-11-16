@@ -1557,7 +1557,7 @@ fn conc_findings(
     }
   }
   // THE DEADLOCK: a cycle in the resource ordering graph.
-  for cycle in conc_cycles(edges, tasks, reach) {
+  for cycle in conc_cycles(edges, reach) {
     out.push(
       Finding::new(
         FFconcDeadlockCycle,
@@ -1673,7 +1673,6 @@ struct ConcCycle {
 /// canonical order and a cycle already reported is skipped.
 fn conc_cycles(
   edges : Array[ConcEdge],
-  tasks : Array[ConcTask],
   reach : Map[String, Array[String]],
 ) -> Array[ConcCycle] {
   let out : Array[ConcCycle] = []
