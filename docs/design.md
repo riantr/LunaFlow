@@ -819,6 +819,117 @@ tainted index into a container whose type it cannot see.
 Cost: one token in the lexer, one expression form in the parser, one interval in
 the abstract layer, and one relation in the state's environment.
 
+### 5.15 The classes safe MoonBit cannot express, and the C boundary can
+
+§5.7 modelled the C boundary. §5.15 is about the **four defect classes** the
+boundary makes real and the MoonBit side cannot, and about the two **defects**
+the self-check found while they were being added.
+
+**The classes.** The evolved value analysis (§5.3) reserves four families:
+`USE-AFTER-FREE`, `MEMORY-LEAK`, `POINTER-ARITHMETIC` and `FORMAT-STRING`. The
+reservation is not a claim that the classes do not exist — it is a claim that
+**safe MoonBit cannot express them**:
+
+| The class | Why safe MoonBit cannot express it |
+|---|---|
+| `USE-AFTER-FREE` | there is no raw pointer, the collector owns the storage, and values are immutable — there is nothing to free and nothing to dangle |
+| `MEMORY-LEAK` | the collector reclaims unreachable storage and there is no manual `free` |
+| `POINTER-ARITHMETIC` | there is no pointer type in the core, so there is no pointer arithmetic to be illegal |
+| `FORMAT-STRING` | the language interpolates with a typed syntax and the core has no printf-style formatting, so no string is ever *interpreted* as a format |
+
+All four are **real** across a C boundary. A C function allocates, frees,
+interprets a format, and takes an address — and the analyzer can see the
+**MoonBit** side of every one of those calls. The four new families report them
+from there:
+
+| The reserved class | The family at the boundary | What the analyzer can see |
+|---|---|---|
+| `MEMORY-LEAK` | `FFI-ALLOCATION-NOT-RELEASED` | the module received an allocation and never handed it to anything that frees |
+| `FORMAT-STRING` | `FFI-FORMAT-STRING` | the module put a string it did not write out into a slot the C side interprets |
+| `POINTER-ARITHMETIC` | `FFI-ADDRESS-OOB` | the module computed an address past the end of a region it carved |
+| `USE-AFTER-FREE` | `FFI-DOUBLE-FREE`, `FFI-USE-AFTER-FREE`, `FFI-USE-AFTER-MOVE` | the module gave the same object to a freeing function twice, used one after it was freed, or used one it gave away |
+
+The reserved contracts keep their wording and now **name** the family that
+covers their class at the boundary, so `--explain MEMORY-LEAK` answers the
+question a reader is actually asking rather than only saying "not applicable".
+
+**The bargain, stated once.** The C source is not visible, so the **name** is
+all the analyzer has — the same bargain the release list and the length slot
+already make. Each rule is therefore two conditions, not one:
+
+| The thing | The name says | The type says |
+|---|---|---|
+| an **allocation** | `alloc`, `mmap`, `create`, `reserve`, `open`, `obtain`, `acquire` | it returns an **address**: an `#external` type (one by construction) or an integer (which may be one) |
+| a **release** | `free`, `release`, `destroy`, `dispose`, `dealloc`, `finalize`, `close` | the slot is a pointer or the foreign type the allocator returned |
+| a **format slot** | `fmt`, `format`, `template`, `spec`, `pattern` | the slot holds a `String` or a `Bytes` |
+| a **region** | the size is in the slot named like a length (`len`, `size`, `count`, `n`) | both the base and the size are **constants** |
+
+The type condition is what keeps `map_page` out of the allocator set: it is a
+foreign address, but its name is not an allocator's name. The **integer** return
+is the weaker case — a function called `created_at` that returns an `Int32` is
+not an allocation on the strength of its name alone — so an integer return has
+to be one of the allocator names proper.
+
+**The format rule is GCC's.** `-Wformat-security` warns about a format
+parameter with **no other argument after it**: a function that takes more
+arguments is almost certainly using its format properly, and the analyzer does
+not claim it. The value has to come from **outside** the function that makes
+the call, which is the analyzer's proxy for "untrusted" — the FFI model is a
+static pass over the AST and has no taint of its own, and the contract says so.
+
+**The MoonBit-side answer to `MEMORY-LEAK`** is `UNBOUNDED-GROWTH`. The
+collector makes a leak inexpressible, but one shape survives it: a
+**module-level collection** (a top-level `let`, which lives for as long as the
+module does) that is only ever **added** to, inside a **loop whose trip count
+the analyzer cannot bound**. Nothing in the module ever removes an element from
+it, and nothing ever replaces it with a fresh one, so it holds every element it
+is given. What is **not** claimed: a collection that is trimmed somewhere, a
+**local** collection (it dies with the function that made it), and a collection
+filled in a loop the analyzer **can** bound.
+
+**Two defects, both found by the analyzer's own source.**
+
+*One defect was reported once per visit.* The FFI walk descends into nested
+statements itself, and the collector it used descended as well — so a statement
+inside an `if` was visited **twice**, and a double free there was reported
+**three** times, at three different lines. The collector is now the one that
+does **not** descend, and the descent is the walk's job alone. The probe
+`fixtures/ffi_demo`'s flat double free and its nested one now report the same
+number of rows.
+
+*The index/length relation could hold only ONE length.* §5.14's relation says
+"this index is below that array's length", and it was stored as **one** array
+name per index. But an index can be below several lengths at once: `for i in
+0..<xs.length()` says the index is below `xs`'s length, and a guard `if i >=
+other.length() { continue }` says it is below `other`'s length **too**. The
+second guard **overwrote** the first, so an index that was provably inside the
+array it indexes was reported as an offset that untrusted input chose. The
+relation now holds the whole **set**, and a join keeps the **intersection** of
+its two sides — which is the right rule, because a relation that holds on one
+side of a branch and not on the other does not hold after it.
+
+**The proof that nothing else moved.** The **local build** and the **published
+0.1.19** were run over the **same** trees, and the finding sets were compared
+row by row: over **LunaFlow's own tree**, 2 rows go away (the two false
+positives above) and 4 appear (one per new family, each on the fixture's defect
+half); over `riantr/moonbit_doubleML@0.164.64` (**220 files**, 319 rows) and
+`riantr/moonbit_static_analysis@0.4.50` (**239 files**, 20 rows), **not one row
+moves**. The new families do not fire on a module with no C boundary and no
+unbounded collection, and the relation fix does not change what the analyzer
+says about them.
+
+**What the model does not claim.** It does not claim that the C side leaked:
+the analyzer cannot see whether the C function freed the allocation by itself,
+so `FFI-ALLOCATION-NOT-RELEASED` is a **may**-claim and a warning. It does not
+claim a format slot the module filled with its **own** text, or a C function
+with another argument after the format. It does not claim an address whose
+base or whose offset is **computed** at run time, or a region whose size was
+not a constant. It does not claim an allocation the module **hands on** —
+returned, or stored into another object — because whoever holds it now owns it.
+
+Cost: four families, two AST walks (both skipped when the module has no C
+boundary and no globals), one relation that grew from one array name to a set.
+
 ---
 
 ## 6. Visualization
@@ -836,8 +947,8 @@ the abstract layer, and one relation in the state's environment.
 
 The report also carries the evolved value analysis (5.3), the global region
 (5.4), the allocation classes (5.5), the layout-stability self-check (5.6), the
-foreign address space (5.7), the concurrency model (5.8) and the IPC and
-buffer model (5.9).
+foreign address space (5.7), the concurrency model (5.8), the IPC and
+buffer model (5.9) and the classes the C boundary makes real (5.15).
 
 ### 6.2 Mermaid conventions
 

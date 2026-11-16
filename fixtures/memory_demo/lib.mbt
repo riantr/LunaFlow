@@ -94,3 +94,71 @@ let doubled : Int32 = LIMIT * 2
 fn consume(xs : Array[Int32]) -> Int32 {
   xs.length()
 }
+
+// ---------------------------------------------------------------------------
+// A COLLECTION THAT ONLY GROWS.
+//
+// The MEMORY-LEAK class is inexpressible in safe MoonBit: there is no
+// `free`, and every allocation is the collector's business. One shape
+// survives that, and it is the shape the analyzer reports: a module-level
+// collection that is only ever added to, inside a loop whose trip count the
+// analyzer cannot bound.
+//
+// A top-level `let` is IMMUTABLE in MoonBit (the toolchain rejects `let mut`
+// at the top level), but the collection it HOLDS is mutable, and that is
+// enough: the module keeps every element it is given.
+// ---------------------------------------------------------------------------
+
+///|
+// A module-level collection. It lives for as long as the module does.
+let ledger : Array[Int32] = []
+
+///|
+// A module-level collection that IS trimmed.
+let ring : Array[Int32] = []
+
+///|
+// A module-level collection filled a fixed number of times.
+let few : Array[Int32] = []
+
+///|
+// It is added to inside a loop whose trip count the analyzer cannot bound,
+// and nothing in the module ever removes an element from it.
+pub fn record_every(n : Int32) -> Unit {
+  for i in 0..<n {
+    ledger.push(i)
+  }
+}
+
+///|
+// The same shape, but the collection IS trimmed: so it does not grow without
+// bound. This half must NOT be reported.
+pub fn record_and_trim(n : Int32) -> Unit {
+  for i in 0..<n {
+    ring.push(i)
+  }
+  while ring.length() > 0 {
+    ignore(ring.pop())
+  }
+}
+
+///|
+// A LOCAL collection: it dies with the function that made it. This half must
+// NOT be reported.
+pub fn collect_locally(n : Int32) -> Int32 {
+  let scratch : Array[Int32] = []
+  for i in 0..<n {
+    scratch.push(i)
+  }
+  scratch.length()
+}
+
+///|
+// A module-level collection added to inside a loop whose trip count IS a
+// compile-time constant: the analyzer can bound it, so the growth is
+// bounded too. This half must NOT be reported.
+pub fn record_a_few() -> Unit {
+  for i in 0..<4 {
+    few.push(i)
+  }
+}

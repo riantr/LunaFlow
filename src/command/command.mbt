@@ -666,6 +666,10 @@ async fn analyze(opts : Opts) -> Unit {
     @app.global_values_from_events(run.events),
   )
   let allocs = @app.analyze_allocations(ast)
+  // The GROWTH check: a module-level collection that only ever grows. It is
+  // computed from the AST, so it is a property of the module and not of the
+  // run.
+  let growth = @app.analyze_growth(ast)
   // The FOREIGN ADDRESS SPACE: the C boundary, computed from the AST, so it
   // is a property of the module and not of the run.
   let ffi_model = @app.analyze_ffi(ast)
@@ -872,6 +876,7 @@ async fn analyze(opts : Opts) -> Unit {
     per_function=opts.per_function,
     globals=global_rows,
     allocs~,
+    growth~,
     stability~,
     issues=parse_issues,
     ffi=Some(ffi_model),

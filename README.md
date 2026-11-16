@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.19
+moon add riantr/LunaFlow@0.1.20
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.19",
+  "riantr/LunaFlow@0.1.20",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.19](https://mooncakes.io/docs/riantr/LunaFlow@0.1.19).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.20](https://mooncakes.io/docs/riantr/LunaFlow@0.1.20).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -492,6 +492,93 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.20
+
+**Four classes that safe MoonBit cannot express are real at a C boundary — and this
+release reports them there.**
+
+The roster carries `MEMORY-LEAK`, `USE-AFTER-FREE`, `POINTER-ARITHMETIC` and
+`FORMAT-STRING` as **reserved**: MoonBit has no raw pointer, no `free`, no format
+string and no pointer arithmetic to be wrong, so the evolved value analysis can never
+produce them, and their contracts say so. That was true, and it was incomplete: the
+classes are real on the **other** side of a C boundary, and the analyzer can see the
+MoonBit side of that boundary. Four new families do it now.
+
+| The reserved class | The family that covers it at the boundary | How it is recognised |
+|---|---|---|
+| `MEMORY-LEAK` | `FFI-ALLOCATION-NOT-RELEASED` | a C function that **allocates** — its name says so and it returns an address — and nothing in the module ever releases the allocation |
+| `FORMAT-STRING` | `FFI-FORMAT-STRING` | a parameter **named** like a format, holding a string the module did not write out |
+| `POINTER-ARITHMETIC` | `FFI-ADDRESS-OOB` | a constant base plus a constant offset, past the end of the region the module carved |
+| `USE-AFTER-FREE` | `FFI-DOUBLE-FREE`, `FFI-USE-AFTER-FREE`, `FFI-USE-AFTER-MOVE` | already there since 0.1.16 — the same class, seen from the other direction |
+
+The reserved contracts keep their "NOT APPLICABLE IN MOONBIT" wording and now **name**
+the family that covers their class at the boundary, so `--explain MEMORY-LEAK` answers
+the question a reader is actually asking.
+
+Each family's contract also states what it does **not** cover, because the C source is
+invisible and the **name** is all the analyzer has:
+
+- a **release** is recognised by the symbol's name (`free`, `release`, `destroy`,
+  `close`, …);
+- an **allocation** needs the name (`alloc`, `mmap`, `create`, `reserve`, …) **and** a
+  return type that is an address — an `#external` type, which is one by construction, or
+  an integer, which may be one. That second half is what keeps `map_page` out of the
+  set: a function that returns an `Int32` is not an allocation on the strength of its
+  name alone;
+- a **format slot** is recognised by the parameter's name (`fmt`, `format`, `template`,
+  `spec`, `pattern`), and the rule is the one GCC's `-Wformat-security` uses: a format
+  slot with **no other argument after it**, and a value that comes from **outside** the
+  function that makes the call;
+- a **region** is nameable only when its base and its size are both **constants**, and
+  an **address** only when both halves are.
+
+**And the MoonBit-side answer to `MEMORY-LEAK` is `UNBOUNDED-GROWTH`.** The collector
+reclaims unreachable storage, so storage cannot leak in safe MoonBit — but a
+**module-level collection that is only ever added to**, inside a **loop whose trip count
+the analyzer cannot bound**, holds every element it is given for as long as the module
+lives. That is the nearest real exhaustion the language allows. What is *not* claimed:
+a collection that is trimmed somewhere, a **local** collection (it dies with the
+function that made it), and a collection filled in a loop the analyzer **can** bound.
+
+**Two real defects, both found by the analyzer's own source.**
+
+- **One defect was reported once per visit.** The FFI walk descended into nested
+  statements itself, and the collector it used descended as well: a double free inside
+  an `if` was reported **three** times, at three different lines. The collector is now
+  the one that does **not** descend, and the nested defect is reported **once** — the
+  same as the flat one next to it.
+- **The index/length relation could hold only ONE length.** An index can be below
+  several lengths at once: `for i in 0..<xs.length()` says the index is below `xs`'s
+  length, and a guard `if i >= other.length() { continue }` says it is below `other`'s
+  length too. The relation kept one and dropped the other, so an index that was
+  **provably inside** the array it indexes was reported as an offset that untrusted
+  input chose. The relation now holds the whole **set**, and a join keeps the
+  **intersection** of its two sides.
+
+**No regression, and it is proved over the same tree — twice.** The **local build** and
+the **published 0.1.19** were both run over the **same** trees, and the finding sets
+were compared row by row.
+
+| Tree | Published 0.1.19 | Local build | Difference |
+|---|---|---|---|
+| LunaFlow itself (49 files) | 28 rows | 30 rows | **2 removed, 4 added** |
+| `riantr/moonbit_doubleML@0.164.64` (220 files) | 319 rows | 319 rows | **none** |
+| `riantr/moonbit_static_analysis@0.4.50` (239 files) | 20 rows | 20 rows | **none** |
+
+The **two rows that go away** are the `TAINT-INDEX` and the `INDEX-OOB` the relation's
+single-length limitation produced **on the analyzer's own source** — the second defect
+above. The **four rows that appear** are one per new family, each on the fixture's
+defect half. On the two **real** modules — 220 and 239 files — **not one row moves**:
+the new families do not fire on a module with no C boundary and no unbounded
+collection, and the relation fix does not change what the analyzer says about them.
+
+**The numbers.** Tests move 191 → **215** (24 new ones: the three FFI families with
+their safe halves, the growth family with its three safe halves, the double-count fix,
+and the two relation cases); the CLI-surface checks move 106 → **122**; the library is
+21 files and the test suite 19 files; the finding roster moves 37 → **41**; and the
+warning counts stay exactly where they were — **172 / 172 / 197** — because the new
+code adds none.
 
 ### What changed in 0.1.19
 
@@ -1911,16 +1998,21 @@ src/app/                   21 library files: parser, CFG, L1 interpreter,
                            analysis, memory layout model, foreign address
                            space model, concurrency model, IPC and buffer
                            model, index/length relation, report renderer
-src/app/*_test.mbt         191 tests in 18 files
+src/app/*_test.mbt         215 tests in 19 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
 fixtures/eva_demo/         the evolved value analysis fixture: the defect
                            classes and the ordinary shapes next to them
 fixtures/memory_demo/      the memory layout fixture: the global region, the
-                           allocation classes and the tail value
+                           allocation classes, the tail value, and the
+                           collection that only grows
 fixtures/ffi_demo/         the foreign address space fixture: the C boundary,
-                           the ownership contract and the named addresses
+                           the ownership contract, the named addresses, and
+                           the classes safe MoonBit cannot express -- the
+                           allocation that is never released, the format slot,
+                           the address past the end of its region -- each
+                           with its safe half next to it
 fixtures/conc_demo/        the concurrency fixture: the lost update, the
                            deadlock, the unreleased lock, and the safe
                            shapes next to them
@@ -1958,9 +2050,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 172 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 172 warnings, 0 errors |
 | `moon check --target js` | exit 0, 197 warnings, 0 errors |
-| `moon test src/app --target native` | **191 passed, 0 failed** |
-| `moon test src/app --target wasm` | **191 passed, 0 failed** |
-| `moon test src/app --target js` | **191 passed, 0 failed** |
+| `moon test src/app --target native` | **215 passed, 0 failed** |
+| `moon test src/app --target wasm` | **215 passed, 0 failed** |
+| `moon test src/app --target js` | **215 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -1973,24 +2065,46 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
-| `node scripts/qa/root_package.mjs` | **106 passed, 0 failed** |
+| `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
-| `node scripts/qa/verify_published.mjs 0.1.19` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.20` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 29,853 | 218,391 | 166 | 0 (no specs) | 0 | 73 | 4.1 s |
-| `riantr/moonbit_static_analysis@latest` → 0.4.46 | 199 | 12,970 | 14,296 | 43 | 0 (no specs) | 0 | 6 | 1.0 s |
-| `fixtures/vuln_demo` | 1 | 32 | 604 | 11 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 48 | 5,714 | 9,547 | 1 | 2 / 1 / 3 | 0 | 6 | 0.40 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 (no specs) | 0 | 118 | 8.0 s |
+| `riantr/moonbit_static_analysis@latest` → 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 (no specs) | 0 | 9 | 1.3 s |
+| `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms |
+| `LunaFlow` itself (`--dir .`) | 49 | 6,010 | 9,736 | 1 | 2 / 1 / 3 | 0 | 6 | 1.3 s |
 
-**Reproduction status (2026-11-14).** The rows above are the committed
-artefacts, pinned to the versions resolved on the day they were generated. They
-were regenerated for this release, and every number in them moved: the previous
-rows said 43,822 statements, 137 dead-code findings and 102 taint sinks for
+The three committed artefacts are regenerated by this release's build, with
+`--funnel --trials 4` and one slice each (`theta_hat@aggregate_coef_se` for doubleML,
+`buf@render_reports` for the static-analysis module, `i@copy_prefix` for the fixture).
+`node scripts/verify.mjs` checks all three, and the version in each file name is the
+version the registry served when it was generated.
+
+**The absolute times move with the machine, so the comparison that counts is the
+controlled one.** The **0.1.19 build** and this **build** — both the local native
+executable, alternating, over the same 220-file module — measured **15.48 s** and
+**15.63 s**: the new checks cost **1%**. An earlier comparison against the *published*
+wasm artifact read as 27%, and that difference is the wasm release build against the
+native debug build, not the new checks.
+
+**Reproduction status (2026-11-16).** The rows above are the committed
+artefacts, pinned to the versions resolved on the day they were generated, and they
+were **regenerated by this release's build**. Two things moved, and neither of them is a
+regression:
+
+- the **static-analysis module** is now **0.4.50** — the registry served a newer version
+  — and it is a bigger module than the 0.4.46 the previous artefacts were made from
+  (199 → 239 files, 12,970 → 16,592 statements);
+- **doubleML** moved from 29,853 to **30,258** statements and from 166 to **187** L2
+  findings. The reason is the **0.1.19 parser fix**: a range loop's body used to be
+  left behind, and the statements in it were never counted.
+
+The earlier rows said 43,822 statements, 137 dead-code findings and 102 taint sinks for
 doubleML, and 14,505 / 48 / 103 for the static-analysis module. The reason is
 in the next section — the old numbers counted the shredded fragments of
 constructs the parser did not model, and a shredded fragment ate the closing
@@ -1998,8 +2112,8 @@ brace of its function, so whole function bodies were truncated. The committed
 numbers are now the honest ones: neither module has an unreachable statement,
 and the analyzer says so.
 
-Only LunaFlow's OWN row has moved since then, and only because the analyzer is
-one of the modules it analyses: 0.1.7 moved the statement count, 3,126 →
+LunaFlow's OWN row moves because the analyzer is one of the modules it analyses, and
+because the new checks are new source: 0.1.7 moved the statement count, 3,126 →
 3,145, when the `#cfg` guards and the stubs behind them became statements, the
 0.1.8 release moved it again to 3,150 and the L1 events from 12,560 to 12,552,
 because the analyzer now reads its own source through the rewritten argument
@@ -2020,8 +2134,7 @@ now understands the FFI declarations it used to count as parse issues. The
 the coordinate fix and its three tests are new source. The
 evolved value analysis now reports **exactly one** finding on LunaFlow's own
 tree, and it is the deliberate overflow in the memory fixture's global
-initializer — the library's own source has none. The other three rows have not
-moved at all.
+initializer — the library's own source has none.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

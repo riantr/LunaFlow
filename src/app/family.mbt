@@ -48,6 +48,7 @@ pub fn family_roster() -> Array[FindingKind] {
     FPointerArithmetic,
     FMemoryLeak,
     FFormatString,
+    FUnboundedGrowth,
     FFfiSignatureConflict,
     FFfiUnannotatedOwnership,
     FFfiUseAfterMove,
@@ -57,6 +58,9 @@ pub fn family_roster() -> Array[FindingKind] {
     FFfiDoubleFree,
     FFfiUseAfterFree,
     FFfiLengthMismatch,
+    FFfiAllocationNotReleased,
+    FFfiFormatString,
+    FFfiAddressOob,
     FFconcLostUpdate,
     FFconcStaleRead,
     FFconcDeadlockCycle,
@@ -88,7 +92,21 @@ pub fn ffi_families() -> Array[FindingKind] {
     FFfiTargetMismatch,
     FFfiAddressUnknown,
     FFfiAddressConflict,
+    FFfiDoubleFree,
+    FFfiUseAfterFree,
+    FFfiLengthMismatch,
+    FFfiAllocationNotReleased,
+    FFfiFormatString,
+    FFfiAddressOob,
   ]
+}
+
+///|
+/// The families the MEMORY LAYOUT analysis produces.
+///
+/// A family is in this list when the analysis has a check behind it.
+pub fn memory_families() -> Array[FindingKind] {
+  [FUnboundedGrowth]
 }
 
 ///|
@@ -149,6 +167,7 @@ pub fn family_title(kind : FindingKind) -> String {
     FPointerArithmetic => "PointerArithmetic"
     FMemoryLeak => "MemoryLeak"
     FFormatString => "FormatString"
+    FUnboundedGrowth => "UnboundedGrowth"
     FFfiSignatureConflict => "FfiSignatureConflict"
     FFfiUnannotatedOwnership => "FfiUnannotatedOwnership"
     FFfiUseAfterMove => "FfiUseAfterMove"
@@ -158,6 +177,9 @@ pub fn family_title(kind : FindingKind) -> String {
     FFfiDoubleFree => "FfiDoubleFree"
     FFfiUseAfterFree => "FfiUseAfterFree"
     FFfiLengthMismatch => "FfiLengthMismatch"
+    FFfiAllocationNotReleased => "FfiAllocationNotReleased"
+    FFfiFormatString => "FfiFormatString"
+    FFfiAddressOob => "FfiAddressOob"
     FFconcLostUpdate => "ConcLostUpdate"
     FFconcStaleRead => "ConcStaleRead"
     FFconcDeadlockCycle => "ConcDeadlockCycle"
@@ -208,6 +230,8 @@ pub fn family_property(kind : FindingKind) -> String {
     FMemoryLeak => "storage may be allocated and never released"
     FFormatString =>
       "an attacker-controlled string may be interpreted as a format string"
+    FUnboundedGrowth =>
+      "a module-level collection is only ever added to, inside a loop whose trip count the analyzer cannot bound, so it holds every element it is given for as long as the module lives"
     FFfiSignatureConflict =>
       "one C symbol is declared with two different MoonBit signatures, so the C function cannot have both"
     FFfiUnannotatedOwnership =>
@@ -226,6 +250,12 @@ pub fn family_property(kind : FindingKind) -> String {
       "an object the C side has freed is used afterwards, so the use reads memory the allocator may have handed to someone else"
     FFfiLengthMismatch =>
       "a C call is given an object and a length that is not that object's length, so the C side may read or write outside the object"
+    FFfiAllocationNotReleased =>
+      "an allocation the C side handed back is never released by the module, so it is still held when the module ends"
+    FFfiFormatString =>
+      "a C function's format slot is handed a string the module did not write out, so the C side reads whatever the caller put there as a format"
+    FFfiAddressOob =>
+      "an address computed out of a region the module carved points past the end of that region, so the C side reads or writes outside it"
     FFconcLostUpdate =>
       "a task reads a shared cell and writes it back after an await point, so another task's write can land between the read and the write and the update is lost"
     FFconcStaleRead =>
@@ -282,13 +312,15 @@ pub fn family_assumption(kind : FindingKind) -> String {
     FInvalidCast =>
       "the source value's interval was known, and it leaves the target type's range"
     FUseAfterFree =>
-      "NOT APPLICABLE IN MOONBIT: safe MoonBit has no raw pointers, the collector owns the storage, and values are immutable -- there is nothing to free and nothing to dangle"
+      "NOT APPLICABLE IN MOONBIT: safe MoonBit has no raw pointers, the collector owns the storage, and values are immutable -- there is nothing to free and nothing to dangle. THE CLASS IS REAL ACROSS A C BOUNDARY, and there it is FFI-DOUBLE-FREE, FFI-USE-AFTER-FREE and FFI-USE-AFTER-MOVE"
     FPointerArithmetic =>
-      "NOT APPLICABLE IN MOONBIT: there is no pointer type in safe MoonBit, so there is no pointer arithmetic to be illegal"
+      "NOT APPLICABLE IN MOONBIT: there is no pointer type in safe MoonBit, so there is no pointer arithmetic to be illegal. THE CLASS IS REAL ACROSS A C BOUNDARY, and there it is FFI-ADDRESS-OOB"
     FMemoryLeak =>
-      "NOT APPLICABLE IN MOONBIT: the collector reclaims unreachable storage and there is no manual free, so storage cannot leak"
+      "NOT APPLICABLE IN MOONBIT: the collector reclaims unreachable storage and there is no manual free, so storage cannot leak. THE CLASS IS REAL ACROSS A C BOUNDARY, and there it is FFI-ALLOCATION-NOT-RELEASED; on the MoonBit side the nearest real exhaustion is UNBOUNDED-GROWTH"
     FFormatString =>
-      "NOT APPLICABLE IN MOONBIT: there are no format strings. The language interpolates with a typed syntax and the core has no printf-style formatting, so no string is ever interpreted as a format"
+      "NOT APPLICABLE IN MOONBIT: there are no format strings. The language interpolates with a typed syntax and the core has no printf-style formatting, so no string is ever interpreted as a format. THE CLASS IS REAL ACROSS A C BOUNDARY, and there it is FFI-FORMAT-STRING"
+    FUnboundedGrowth =>
+      "the collection is a TOP-LEVEL binding -- a global lives for as long as the module does -- and the loop's trip count is not a compile-time constant, so it can run any number of times; and the additions and the removals are read from the method names the module calls"
     FFfiSignatureConflict =>
       "the two declarations are in the same module and name the same C symbol, and the C function has ONE prototype -- so at least one of the two MoonBit claims is wrong"
     FFfiUnannotatedOwnership =>
@@ -307,6 +339,12 @@ pub fn family_assumption(kind : FindingKind) -> String {
       "the C symbol is recognised as a RELEASE BY ITS NAME -- the analyzer cannot see the C source, so the name is all it has -- and the use is after the call in the same function"
     FFfiLengthMismatch =>
       "the integer parameter is the LENGTH of the pointer parameter -- the analyzer reads that from the parameter's NAME, and the C source is not visible -- and the argument is a literal or the length of a DIFFERENT object, so the disagreement is a fact and not a guess"
+    FFfiAllocationNotReleased =>
+      "the C symbol is recognised as an ALLOCATOR by its name AND by the fact that it returns an address -- an integer, which may be one, or a foreign type, which is one by construction -- and the release is recognised the way the release list recognises it, by the symbol's name. The analyzer cannot see whether the C side frees the allocation by itself, so this is a MAY-claim"
+    FFfiFormatString =>
+      "the parameter's NAME says the C side interprets it -- the analyzer reads that from the name, and the C source is not visible -- and the slot holds a string; and the rule is the one GCC's -Wformat-security uses: a format slot with no OTHER argument after it; and the value comes from OUTSIDE the function that makes the call, which is the analyzer's proxy for 'untrusted', because the FFI model has no taint of its own"
+    FFfiAddressOob =>
+      "the REGION is nameable: the module asked for a BASE and a SIZE, both CONSTANTS, and the size came from the slot whose name says it is a length; and the ADDRESS is nameable: it is a constant BASE plus a constant OFFSET. A half that is computed is not nameable, and the finding is not claimed"
     FFconcLostUpdate =>
       "the two accesses are under a COMMON lock, and then they are ordered; and a task that does not yield between its read and its write, which cannot lose an update; and two tasks whose owners never call each other, which cannot interleave at all"
     FFconcStaleRead =>
@@ -362,13 +400,15 @@ pub fn family_excluded(kind : FindingKind) -> String {
     FInvalidCast =>
       "a conversion between integer types, which MoonBit makes explicit and total, and a narrowing between trait objects"
     FUseAfterFree =>
-      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect"
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect. Across a C boundary the class is FFI-USE-AFTER-FREE"
     FPointerArithmetic =>
-      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect"
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect. Across a C boundary the class is FFI-ADDRESS-OOB"
     FMemoryLeak =>
-      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect. The nearest real exhaustion is unbounded growth in a collection, which this analyzer does not measure"
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect. Across a C boundary the class is FFI-ALLOCATION-NOT-RELEASED, and on the MoonBit side the nearest real exhaustion is UNBOUNDED-GROWTH"
     FFormatString =>
-      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect"
+      "nothing -- and note the kind is RESERVED: safe MoonBit cannot express the defect. Across a C boundary the class is FFI-FORMAT-STRING"
+    FUnboundedGrowth =>
+      "a LOCAL collection, which dies with the function that made it; a collection that is trimmed somewhere, or replaced by a fresh one; and a collection filled once at start-up, or once per call -- the analyzer cannot see how often the module is called"
     FFfiSignatureConflict =>
       "a symbol declared in ANOTHER module: the analyzer sees one module at a time, so a conflict across modules is out of reach"
     FFfiUnannotatedOwnership =>
@@ -395,6 +435,12 @@ pub fn family_excluded(kind : FindingKind) -> String {
       "a use in ANOTHER function -- the analyzer follows one function at a time -- and a C function that frees under a name the analyzer does not recognise as a release"
     FFfiLengthMismatch =>
       "a length argument that is a VARIABLE -- the analyzer cannot prove what the variable holds -- and a C function whose length parameter is not named like one"
+    FFfiAllocationNotReleased =>
+      "an allocation the module HANDS ON -- returned, passed to a call, or stored into another object -- because whoever holds it now is responsible for it; and a C function that frees under a name the analyzer does not recognise as a release; and a C function that allocates under a name the analyzer does not recognise as an allocator"
+    FFfiFormatString =>
+      "a format slot the module fills with a literal -- the module wrote that string out itself -- and a C function that takes more arguments after the format, which is almost certainly using its format properly; and a value the module computed inside the function, which is the module's own"
+    FFfiAddressOob =>
+      "an offset smaller than the size -- the address is inside the region -- and an address whose base belongs to no region the analyzer can name; and a region whose size was not a constant, so the region is not nameable either"
     FIpcPartialRead =>
       "a read whose count the module DOES use, and a reader the analyzer does not recognise by name"
     FIpcReadEof =>

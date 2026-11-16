@@ -129,6 +129,46 @@ test "an index into a DIFFERENT array is still a tainted offset" {
 }
 
 ///|
+test "an index below TWO lengths is inside both arrays" {
+  // An index can be below more than one length at once. The loop says the
+  // index is below `xs`'s length, and the guard says it is below `other`'s
+  // length too -- and the index is inside BOTH. The relation kept one
+  // length and dropped the other, so an index that was provably inside the
+  // array it indexes was reported as an offset that untrusted input chose.
+  let src =
+    #|pub fn f(xs : Array[Int], other : Array[Int]) -> Int {
+    #|  let mut total = 0
+    #|  for i in 0..<xs.length() {
+    #|    if i >= other.length() {
+    #|      continue
+    #|    }
+    #|    total = total + xs[i]
+    #|  }
+    #|  total
+    #|}
+  inspect(rel_count(src, @app.FIndexOob), content="0")
+  inspect(rel_count(src, @app.FTaintIndex), content="0")
+}
+
+///|
+test "an index below two lengths is still reported in a DIFFERENT array" {
+  // The shape next to the one above: the same two lengths, but the array
+  // indexed is a third one, and no relation holds for it.
+  let src =
+    #|pub fn f(xs : Array[Int], other : Array[Int], third : Array[Int]) -> Int {
+    #|  let mut total = 0
+    #|  for i in 0..<xs.length() {
+    #|    if i >= other.length() {
+    #|      continue
+    #|    }
+    #|    total = total + third[i]
+    #|  }
+    #|  total
+    #|}
+  inspect(rel_count(src, @app.FIndexOob), content="1")
+}
+
+///|
 test "a comparison with an overlapping interval is not always false" {
   // `x` is in `[-1000000, 1000000]`, so `x < 0` can hold and can fail. It
   // used to read as neither: the condition was impossible, both branches

@@ -617,6 +617,38 @@ if (existsSync(join(ROOT, 'fixtures', 'memory_demo', 'lib.mbt'))) {
     'the stability check ran at more than one sample size',
     memRun.status === 0 && memText.includes('In every run'),
   );
+  // The GROWTH family: a module-level collection that only ever grows. The
+  // fixture carries the defect half AND the three safe halves: a collection
+  // that is trimmed, a LOCAL collection, and one filled in a bounded loop.
+  check(
+    'the report has the growth section',
+    memText.includes('#### 5.5.1 A collection that only grows'),
+  );
+  check(
+    'a global collection that only grows is reported',
+    (memText.match(/\| UNBOUNDED-GROWTH \|/g) || []).length === 1,
+  );
+  check(
+    'the global collection that is trimmed is not reported',
+    !/UNBOUNDED-GROWTH \| warning \|.*ring/.test(memText),
+  );
+  check(
+    'the local collection is not reported',
+    !/UNBOUNDED-GROWTH \| warning \|.*scratch/.test(memText),
+  );
+  check(
+    'the collection filled in a bounded loop is not reported',
+    !/UNBOUNDED-GROWTH \| warning \|.*few/.test(memText),
+  );
+  const growthContract = run(['--explain', 'UNBOUNDED-GROWTH']);
+  const growthText = growthContract.stdout ?? '';
+  check(
+    'the growth family states the limit of its claim',
+    growthContract.status === 0 &&
+      growthText.includes('cannot bound') &&
+      /local/i.test(growthText),
+    `exit=${growthContract.status}`,
+  );
 }
 
 // The FOREIGN ADDRESS SPACE model: the C boundary, the two address spaces and
@@ -704,21 +736,83 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   // The RELEASE families. The C side cannot be seen, so a release is
   // recognised by the SYMBOL's NAME -- and the fixture says so.
+  //
+  // The counts are of the TABLE ROWS, not of the text: the section's prose
+  // names the families too, and a count over the whole report would count
+  // the prose.
   check(
     'the same buffer released twice is reported as a double free',
-    (ffiText.match(/FFI-DOUBLE-FREE/g) || []).length === 1,
+    (ffiText.match(/\| FFI-DOUBLE-FREE \|/g) || []).length === 1,
   );
   check(
     'a buffer the C side released, used afterwards, is reported',
-    (ffiText.match(/FFI-USE-AFTER-FREE/g) || []).length === 1,
+    (ffiText.match(/\| FFI-USE-AFTER-FREE \|/g) || []).length === 1,
   );
   check(
     'a length that is not the object\'s length is reported',
-    (ffiText.match(/FFI-LENGTH-MISMATCH/g) || []).length === 1,
+    (ffiText.match(/\| FFI-LENGTH-MISMATCH \|/g) || []).length === 1,
   );
   check(
     'the length finding is on the call with the wrong length, not on the right one',
     /FFI-LENGTH-MISMATCH \| warning \| wrong_length/.test(ffiText),
+  );
+  // The classes safe MoonBit cannot express, and that the C boundary CAN.
+  // The fixture carries the defect half AND the safe half of each one, and
+  // the safe half is the half that must NOT be reported.
+  check(
+    'an allocation the module never releases is reported',
+    (ffiText.match(/\| FFI-ALLOCATION-NOT-RELEASED \|/g) || []).length === 1,
+  );
+  check(
+    'the allocation that is released is not reported as a leak',
+    !/FFI-ALLOCATION-NOT-RELEASED \| warning \| release_the_region/.test(
+      ffiText,
+    ),
+  );
+  check(
+    'the allocation that is handed back is not reported as a leak',
+    !/FFI-ALLOCATION-NOT-RELEASED \| warning \| hand_back_the_region/.test(
+      ffiText,
+    ),
+  );
+  check(
+    'a format slot handed a string from outside is reported',
+    (ffiText.match(/\| FFI-FORMAT-STRING \|/g) || []).length === 1,
+  );
+  check(
+    'the format slot filled with the module\'s own text is not reported',
+    !/FFI-FORMAT-STRING \| error \| log_own_text/.test(ffiText),
+  );
+  check(
+    'an address past the end of the region is reported',
+    (ffiText.match(/\| FFI-ADDRESS-OOB \|/g) || []).length === 1,
+  );
+  check(
+    'the address inside the region is not reported',
+    !/FFI-ADDRESS-OOB \| error \| write_inside_the_region/.test(ffiText),
+  );
+  // The reserved EVA families point at the boundary families that cover their
+  // class, so `--explain` answers the question the reader is asking.
+  const leakContract = run(['--explain', 'MEMORY-LEAK']);
+  check(
+    'the reserved MEMORY-LEAK contract names the boundary family that covers it',
+    leakContract.status === 0 &&
+      leakContract.stdout.includes('FFI-ALLOCATION-NOT-RELEASED'),
+    `exit=${leakContract.status}`,
+  );
+  const fmtContract = run(['--explain', 'FORMAT-STRING']);
+  check(
+    'the reserved FORMAT-STRING contract names the boundary family that covers it',
+    fmtContract.status === 0 &&
+      fmtContract.stdout.includes('FFI-FORMAT-STRING'),
+    `exit=${fmtContract.status}`,
+  );
+  const ptrContract = run(['--explain', 'POINTER-ARITHMETIC']);
+  check(
+    'the reserved POINTER-ARITHMETIC contract names the boundary family that covers it',
+    ptrContract.status === 0 &&
+      ptrContract.stdout.includes('FFI-ADDRESS-OOB'),
+    `exit=${ptrContract.status}`,
   );
 }
 

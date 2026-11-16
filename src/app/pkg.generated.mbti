@@ -10,6 +10,8 @@ pub fn analyze_conc(ModuleAst) -> ConcModel
 
 pub fn analyze_ffi(ModuleAst) -> FfiModel
 
+pub fn analyze_growth(ModuleAst) -> Array[Finding]
+
 pub fn analyze_ipc(ModuleAst) -> IpcModel
 
 pub fn array_candidates(String) -> Array[Value]
@@ -158,6 +160,8 @@ pub async fn load_module(String, String, String, Int32, excludes? : Array[String
 
 pub fn md_escape(String) -> String
 
+pub fn memory_families() -> Array[FindingKind]
+
 pub fn mermaid_id(String, Int32) -> String
 
 pub fn mermaid_label(String) -> String
@@ -198,7 +202,7 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], growth? : Array[Finding], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
@@ -677,6 +681,7 @@ pub(all) enum FindingKind {
   FNoneDeref
   FUninitRead
   FInvalidCast
+  FUnboundedGrowth
   FUseAfterFree
   FPointerArithmetic
   FMemoryLeak
@@ -690,6 +695,9 @@ pub(all) enum FindingKind {
   FFfiDoubleFree
   FFfiUseAfterFree
   FFfiLengthMismatch
+  FFfiAllocationNotReleased
+  FFfiFormatString
+  FFfiAddressOob
   FFconcLostUpdate
   FFconcStaleRead
   FFconcDeadlockCycle

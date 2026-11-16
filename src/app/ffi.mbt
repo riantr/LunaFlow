@@ -636,66 +636,6 @@ fn stmt_reads(s : Stmt, name : String) -> Bool {
 }
 
 ///|
-/// The foreign calls a statement makes.
-fn stmt_ffi_calls(
-  s : Stmt,
-  decls : Array[FfiDecl],
-  out : Array[(FfiDecl, Array[Expr])],
-) -> Unit {
-  match s.kind {
-    SLet(_, _, init) => expr_ffi_calls(init, decls, out)
-    SAssign(_, rhs) => expr_ffi_calls(rhs, decls, out)
-    SAssignOp(_, _, rhs) => expr_ffi_calls(rhs, decls, out)
-    SIf(cond, then_body, else_body) => {
-      expr_ffi_calls(cond, decls, out)
-      for x in then_body {
-        stmt_ffi_calls(x, decls, out)
-      }
-      for x in else_body {
-        stmt_ffi_calls(x, decls, out)
-      }
-    }
-    SWhile(cond, body) => {
-      expr_ffi_calls(cond, decls, out)
-      for x in body {
-        stmt_ffi_calls(x, decls, out)
-      }
-    }
-    SFor(_, from, to, step, body) => {
-      expr_ffi_calls(from, decls, out)
-      expr_ffi_calls(to, decls, out)
-      expr_ffi_calls(step, decls, out)
-      for x in body {
-        stmt_ffi_calls(x, decls, out)
-      }
-    }
-    SForIn(_, iter, body) => {
-      expr_ffi_calls(iter, decls, out)
-      for x in body {
-        stmt_ffi_calls(x, decls, out)
-      }
-    }
-    SReturn(e) =>
-      match e {
-        Some(x) => expr_ffi_calls(x, decls, out)
-        None => ()
-      }
-    SExpr(e) => expr_ffi_calls(e, decls, out)
-    SBlock(body) =>
-      for x in body {
-        stmt_ffi_calls(x, decls, out)
-      }
-    STry(body) =>
-      for x in body {
-        stmt_ffi_calls(x, decls, out)
-      }
-    SUnsupported(_) => ()
-    SBreak => ()
-    SContinue => ()
-  }
-}
-
-///|
 fn expr_ffi_calls(
   e : Expr,
   decls : Array[FfiDecl],
@@ -870,7 +810,28 @@ pub fn analyze_ffi(ast : ModuleAst) -> FfiModel {
   // The named addresses.
   ffi_collect_addresses(calls, registers, findings)
   ffi_check_address_conflicts(registers, findings)
+  // The classes safe MoonBit cannot express, and the C boundary can: the
+  // allocation the module never releases, and the address it computes out of
+  // a region it carved.
+  //
+  // The scan is only worth its three walks of the AST when the module HAS a
+  // C boundary: a module that declares no foreign function has no allocation
+  // to leak and no region to leave.
+  if ffi_has_c_decls(decls) {
+    ffi_scan_module(ast, decls, external_types, types, findings)
+  }
   { decls, external_types, types, calls, registers, findings, }
+}
+
+///|
+/// True when the module declares at least one C function.
+fn ffi_has_c_decls(decls : Array[FfiDecl]) -> Bool {
+  for d in decls {
+    if d.is_c && d.symbol != "" {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -1383,8 +1344,12 @@ fn ffi_visit_stmt(
   // The calls this statement makes, and the objects it releases. The release
   // is worked out BEFORE the use checks, because a call that FREES an object
   // is not itself a USE of the freed memory -- it IS the free.
+  //
+  // The collector is the one that does NOT descend: this walk descends
+  // itself, and a collector that descended as well would visit every nested
+  // statement twice -- one defect, reported once per visit.
   let found : Array[(FfiDecl, Array[Expr])] = []
-  stmt_ffi_calls(s, decls, found)
+  ffi_stmt_calls(s, decls, found)
   let freed_here : Array[String] = []
   for (d, args) in found {
     if d.is_c && d.symbol != "" && ffi_is_release_symbol(d.symbol) {
@@ -1556,6 +1521,8 @@ fn ffi_visit_stmt(
     }
     // The length the C side is told, and the object it is told it for.
     ffi_check_length_mismatch(d, args, f, s, findings)
+    // The FORMAT slot, handed a string the module did not write out.
+    ffi_check_format_string(d, args, f, s, findings)
     // The PROVENANCE of the value this call returns: the name it is bound
     // to now belongs to the C symbol that produced it.
     match s.kind {
@@ -1773,4 +1740,821 @@ fn ffi_check_address_conflicts(
       )
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// The classes that safe MoonBit cannot express, and that the C boundary CAN.
+//
+// MoonBit has no raw pointer, no free, no format string and no pointer
+// arithmetic, so the EVA layer can never produce USE-AFTER-FREE,
+// MEMORY-LEAK, POINTER-ARITHMETIC or FORMAT-STRING -- their contracts say
+// why. The C boundary is where all four are real, and the C source is not
+// visible, so each one is recognised by what the MOONBIT side does:
+//
+//   - FFI-ALLOCATION-NOT-RELEASED: an allocation the C side handed back, and
+//     nothing in the module ever releases;
+//   - FFI-FORMAT-STRING: a format slot handed a string the module did not
+//     write out;
+//   - FFI-ADDRESS-OOB: an address computed out of a region the module carved,
+//     past the end of that region.
+//
+// Every check here is a MAY-claim unless it says otherwise, and each
+// family's contract in `family.mbt` states what the analyzer cannot see.
+// ---------------------------------------------------------------------------
+
+///|
+/// The foreign calls ONE statement makes, without descending into the
+/// statements nested in it.
+///
+/// The descent is the caller's job, so that every statement is seen with the
+/// context it was written in -- a binding inside an `if` is the binding of
+/// that `if`, and not of the function. A collector that descends as well
+/// would visit every nested statement twice, and one defect would then be
+/// reported once per visit.
+fn ffi_stmt_calls(
+  s : Stmt,
+  decls : Array[FfiDecl],
+  out : Array[(FfiDecl, Array[Expr])],
+) -> Unit {
+  match s.kind {
+    SLet(_, _, init) => expr_ffi_calls(init, decls, out)
+    SAssign(_, rhs) => expr_ffi_calls(rhs, decls, out)
+    SAssignOp(_, _, rhs) => expr_ffi_calls(rhs, decls, out)
+    SIf(cond, _, _) => expr_ffi_calls(cond, decls, out)
+    SWhile(cond, _) => expr_ffi_calls(cond, decls, out)
+    SFor(_, from, to, step, _) => {
+      expr_ffi_calls(from, decls, out)
+      expr_ffi_calls(to, decls, out)
+      expr_ffi_calls(step, decls, out)
+    }
+    SForIn(_, iter, _) => expr_ffi_calls(iter, decls, out)
+    SReturn(e) =>
+      match e {
+        Some(x) => expr_ffi_calls(x, decls, out)
+        None => ()
+      }
+    SExpr(e) => expr_ffi_calls(e, decls, out)
+    _ => ()
+  }
+}
+
+///|
+/// True when the symbol's name is the WORD: the name is the word, or the
+/// word followed by the separator that ends it.
+///
+/// The name is read the way the C world spells one -- in lower case, with
+/// `_` between the words -- because that is the only shape the analyzer can
+/// rely on. "create_region" carries "create"; "created_at" does not, because
+/// the word there is "created".
+fn ffi_name_is_word(symbol : String, word : String) -> Bool {
+  let s = symbol.to_lower()
+  s == word || s.has_prefix(word + "_")
+}
+
+///|
+/// True when the symbol's name STARTS with the stem, whatever follows it.
+///
+/// Only the stems that legitimately extend are matched this way: "alloc"
+/// covers "alloc", "allocate", "allocation" and "allocator".
+fn ffi_name_starts_with(symbol : String, stem : String) -> Bool {
+  symbol.to_lower().has_prefix(stem)
+}
+
+///|
+/// True when the C symbol ALLOCATES: it hands back something the C side owns.
+///
+/// The analyzer cannot see the C source, so the NAME is all it has -- the
+/// same bargain the release list makes. Three things keep the set honest:
+///
+///   - the symbol must not be a release;
+///   - it must RETURN an address: a foreign type, which is one by
+///     construction, or an integer, which may be one. This is what keeps
+///     "unmap_page" out of the set even though it contains "map", and it is
+///     the difference between an allocation and a free;
+///   - an INTEGER return is weaker evidence than a foreign address, so then
+///     the name has to be one of the allocator names proper. A function
+///     called "created_at" that returns an Int32 is not an allocation.
+fn ffi_is_allocator_symbol(
+  symbol : String,
+  ret_ty : String,
+  external_types : Array[ExternalType],
+  types : Array[TypeDecl],
+) -> Bool {
+  if symbol == "" || ffi_is_release_symbol(symbol) {
+    return false
+  }
+  let foreign = space_of_type(ret_ty, external_types, types) == SExternal
+  let integer = is_integer_type(ret_ty)
+  if !foreign && !integer {
+    return false
+  }
+  if integer && !foreign {
+    return ffi_name_is_allocator_proper(symbol)
+  }
+  ffi_name_starts_with(symbol, "alloc") ||
+  ffi_name_is_word(symbol, "mmap") ||
+  ffi_name_is_word(symbol, "create") ||
+  ffi_name_is_word(symbol, "reserve") ||
+  ffi_name_is_word(symbol, "open") ||
+  ffi_name_is_word(symbol, "obtain") ||
+  ffi_name_is_word(symbol, "acquire") ||
+  ffi_name_is_word(symbol, "new") ||
+  ffi_name_is_word(symbol, "dup")
+}
+
+///|
+/// The allocator names proper: the ones that mean an allocation on their own,
+/// with no need for the type to say it too.
+fn ffi_name_is_allocator_proper(symbol : String) -> Bool {
+  ffi_name_starts_with(symbol, "alloc") ||
+  ffi_name_starts_with(symbol, "mmap") ||
+  ffi_name_starts_with(symbol, "malloc") ||
+  ffi_name_starts_with(symbol, "calloc") ||
+  ffi_name_starts_with(symbol, "realloc")
+}
+
+///|
+/// True when the parameter's NAME says it is a FORMAT.
+///
+/// The C source is not visible, so the name is the only signal there is --
+/// the same bargain the length slot makes. A format parameter is the one the
+/// C side INTERPRETS: a string with '%' in it is read as a format, so an
+/// untrusted string in that slot is read as a format too.
+fn ffi_is_format_name(name : String) -> Bool {
+  let n = name.to_lower()
+  n == "fmt" ||
+  n == "format" ||
+  n == "template" ||
+  n == "spec" ||
+  n == "pattern"
+}
+
+///|
+/// True when the type is a STRING the C side can read characters from.
+fn ffi_is_string_type(ty : String) -> Bool {
+  let t = ty.trim()
+  t == "String" || t == "Bytes"
+}
+
+///|
+/// True when the expression is a string the module WROTE OUT.
+fn ffi_is_string_literal(e : Expr) -> Bool {
+  match e.kind {
+    EString(_) => true
+    _ => false
+  }
+}
+
+///|
+/// True when the value comes from OUTSIDE the function: it is one of the
+/// function's parameters, or it is derived from one.
+///
+/// The FFI model is a static pass over the AST and it has no taint of its
+/// own, so "untrusted" here means "not computed inside the function". The
+/// family's contract says so, so the limit is stated rather than implied.
+fn ffi_comes_from_outside(f : Func, e : Expr) -> Bool {
+  for p in f.params {
+    if expr_mentions(e, p.name) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// One allocation the C side handed back.
+priv struct FfiAllocation {
+  name : String
+  symbol : String
+  ty : String
+  file : String
+  line : Int32
+  fn_name : String
+  escapes : Bool
+}
+
+///|
+/// One name handed to something that frees.
+priv struct FfiReleased {
+  name : String
+  ty : String
+  is_ptr : Bool
+}
+
+///|
+/// One address the module COMPUTED at a call site: a base and an offset.
+priv struct FfiComputed {
+  base : Int64
+  offset : Int64
+  symbol : String
+  param : String
+  file : String
+  line : Int32
+  fn_name : String
+}
+
+///|
+/// What the FFI model collects for the WHOLE MODULE while it walks it.
+///
+/// The arrays are the mutable part: the model hands this struct down the
+/// recursion and pushes into the arrays, so the module-wide facts survive
+/// the walk.
+priv struct FfiModuleScan {
+  /// The allocations the C side handed back, and the name each was bound to.
+  allocated : Array[FfiAllocation]
+  /// Every name handed to something that frees.
+  released : Array[FfiReleased]
+  /// The regions the module carved out: the base address and the size.
+  regions : Array[(Int64, Int64)]
+  /// The addresses the module computed at a call site.
+  computed : Array[FfiComputed]
+}
+
+///|
+/// The module-wide facts the FFI model needs.
+fn ffi_new_scan() -> FfiModuleScan {
+  { allocated: [], released: [], regions: [], computed: [], }
+}
+
+///|
+/// Walk the module and collect what the two module-wide checks need.
+///
+/// The scan is PER FUNCTION. The analyzer follows one function at a time --
+/// the release families say so in their contracts -- and a module-wide name
+/// table would mix two functions' bindings together: a function that releases
+/// a name would cancel an unrelated allocation of the SAME name in another
+/// function, and the finding would vanish.
+fn ffi_scan_module(
+  ast : ModuleAst,
+  decls : Array[FfiDecl],
+  external_types : Array[ExternalType],
+  types : Array[TypeDecl],
+  findings : Array[Finding],
+) -> Unit {
+  for f in ast.all_funcs() {
+    let escaped = ffi_escaped_names(f)
+    let scan = ffi_new_scan()
+    for s in f.body {
+      ffi_scan_stmt(f, s, decls, external_types, types, scan, escaped)
+    }
+    ffi_check_allocations(scan, findings)
+    ffi_check_address_bounds(scan, findings)
+  }
+}
+
+///|
+/// One statement: the foreign calls it makes, what it releases, what it binds
+/// to an allocation, and the addresses it computes.
+fn ffi_scan_stmt(
+  f : Func,
+  s : Stmt,
+  decls : Array[FfiDecl],
+  external_types : Array[ExternalType],
+  types : Array[TypeDecl],
+  scan : FfiModuleScan,
+  escaped : Array[String],
+) -> Unit {
+  let found : Array[(FfiDecl, Array[Expr])] = []
+  ffi_stmt_calls(s, decls, found)
+  for (d, args) in found {
+    if !d.is_c || d.symbol == "" {
+      continue
+    }
+    // What this call RELEASES.
+    if ffi_is_release_symbol(d.symbol) {
+      ffi_scan_release(d, args, external_types, types, scan)
+      continue
+    }
+    // What this call ALLOCATES: the region it carved out, and the name the
+    // allocation was bound to.
+    if ffi_is_allocator_symbol(d.symbol, d.ret_ty, external_types, types) {
+      ffi_scan_allocation(f, s, d, args, scan, escaped)
+    }
+    // The addresses the module computes at this call site.
+    ffi_scan_computed(f, s, d, args, scan)
+  }
+  // Descend, in order.
+  match s.kind {
+    SIf(_, then_body, else_body) => {
+      for x in then_body {
+        ffi_scan_stmt(f, x, decls, external_types, types, scan, escaped)
+      }
+      for x in else_body {
+        ffi_scan_stmt(f, x, decls, external_types, types, scan, escaped)
+      }
+    }
+    SWhile(_, body) =>
+      for x in body {
+        ffi_scan_stmt(f, x, decls, external_types, types, scan, escaped)
+      }
+    SFor(_, _, _, _, body) =>
+      for x in body {
+        ffi_scan_stmt(f, x, decls, external_types, types, scan, escaped)
+      }
+    SForIn(_, _, body) =>
+      for x in body {
+        ffi_scan_stmt(f, x, decls, external_types, types, scan, escaped)
+      }
+    SBlock(body) =>
+      for x in body {
+        ffi_scan_stmt(f, x, decls, external_types, types, scan, escaped)
+      }
+    STry(body) =>
+      for x in body {
+        ffi_scan_stmt(f, x, decls, external_types, types, scan, escaped)
+      }
+    _ => ()
+  }
+}
+
+///|
+/// What a release-shaped C call gives back: the name it is given, and the
+/// type of the slot it was given in.
+///
+/// The release is recognised by the SYMBOL's NAME, and the slot has to be
+/// one the C side can own: a POINTER, or a value of the foreign type the
+/// allocator handed back.
+fn ffi_scan_release(
+  d : FfiDecl,
+  args : Array[Expr],
+  external_types : Array[ExternalType],
+  types : Array[TypeDecl],
+  scan : FfiModuleScan,
+) -> Unit {
+  // The loop runs over the ARGUMENTS, not over the parameters: the arguments
+  // are what the call actually passed, and their length is a number the
+  // analyzer can see, while a parameter list is a field of a struct and its
+  // length is opaque. Iterating the arguments is also what makes the index
+  // provably inside them.
+  for i in 0..<args.length() {
+    if i >= d.params.length() {
+      continue
+    }
+    let name = root_name(args[i])
+    if name == "" {
+      continue
+    }
+    let is_ptr = is_pointer_type(d.params[i].ty, external_types, types)
+    let is_foreign = space_of_type(d.params[i].ty, external_types, types) ==
+      SExternal
+    if !is_ptr && !is_foreign {
+      continue
+    }
+    let ty = base_type_name(d.params[i].ty)
+    let mut known = false
+    for r in scan.released {
+      if r.name == name && r.ty == ty {
+        known = true
+        break
+      }
+    }
+    if !known {
+      scan.released.push({ name, ty, is_ptr, })
+    }
+  }
+}
+
+///|
+/// The allocation a call hands back: the region it carved out, and the name
+/// the result was bound to.
+fn ffi_scan_allocation(
+  f : Func,
+  s : Stmt,
+  d : FfiDecl,
+  args : Array[Expr],
+  scan : FfiModuleScan,
+  escaped : Array[String],
+) -> Unit {
+  // The REGION: the base address and the size the module asked for. The
+  // size is the argument whose parameter name says it is a length, and both
+  // have to be constants for the region to be nameable.
+  let base = ffi_region_base(d, args)
+  let size = ffi_region_size(d, args)
+  match (base, size) {
+    (Some(b), Some(sz)) => {
+      let mut known = false
+      for r in scan.regions {
+        if r.0 == b && r.1 == sz {
+          known = true
+          break
+        }
+      }
+      if !known {
+        scan.regions.push((b, sz))
+      }
+    }
+    _ => ()
+  }
+  // The NAME the allocation was bound to.
+  let bound = ffi_bound_name(s, d.name)
+  if bound != "" {
+    let ty = base_type_name(d.ret_ty)
+    scan.allocated.push({
+      name: bound,
+      symbol: d.symbol,
+      ty,
+      file: f.file,
+      line: s.span.start_line,
+      fn_name: f.name,
+      escapes: ffi_name_escapes(f, bound, ty, escaped),
+    })
+  }
+}
+
+///|
+/// The BASE of the region a call carved out: the argument in the slot whose
+/// name says it is an address, or the first argument when there is no such
+/// slot.
+fn ffi_region_base(d : FfiDecl, args : Array[Expr]) -> Int64? {
+  for i in 0..<args.length() {
+    if i >= d.params.length() {
+      continue
+    }
+    if !ffi_is_base_name(d.params[i].name) {
+      continue
+    }
+    match const_of_expr(args[i]) {
+      Some(v) => return Some(v)
+      None => return None
+    }
+  }
+  if args.length() == 0 {
+    return None
+  }
+  const_of_expr(args[0])
+}
+
+///|
+/// The SIZE of the region a call carved out: the argument in the slot whose
+/// name says it is a length, when it is a constant.
+fn ffi_region_size(d : FfiDecl, args : Array[Expr]) -> Int64? {
+  for i in 0..<args.length() {
+    if i >= d.params.length() {
+      continue
+    }
+    if !ffi_is_length_name(d.params[i].name) {
+      continue
+    }
+    match const_of_expr(args[i]) {
+      Some(v) => return Some(v)
+      None => return None
+    }
+  }
+  None
+}
+
+///|
+/// True when the parameter's NAME says it is the BASE of a region.
+fn ffi_is_base_name(name : String) -> Bool {
+  let n = name.to_lower()
+  n.contains("base") ||
+  n.contains("addr") ||
+  n.contains("start") ||
+  n.contains("origin") ||
+  n == "p"
+}
+
+///|
+/// The name a call's result is bound to, when the statement binds it.
+fn ffi_bound_name(s : Stmt, callee : String) -> String {
+  match s.kind {
+    SLet(n, _, init) =>
+      match init.kind {
+        ECall(c, _) => if norm_name(c) == norm_name(callee) { n } else { "" }
+        _ => ""
+      }
+    SAssign(lhs, rhs) =>
+      match (lhs.kind, rhs.kind) {
+        (EName(n), ECall(c, _)) =>
+          if norm_name(c) == norm_name(callee) {
+            n
+          } else {
+            ""
+          }
+        _ => ""
+      }
+    _ => ""
+  }
+}
+
+///|
+/// The address the module COMPUTES at a call site: a constant base and a
+/// constant offset, added together.
+///
+/// The address is only nameable when both halves are constants: a computed
+/// offset is a number the analyzer cannot compare against the region's size,
+/// and the family's contract says so.
+fn ffi_scan_computed(
+  f : Func,
+  s : Stmt,
+  d : FfiDecl,
+  args : Array[Expr],
+  scan : FfiModuleScan,
+) -> Unit {
+  for i in 0..<args.length() {
+    if i >= d.params.length() {
+      continue
+    }
+    if !is_integer_type(d.params[i].ty) {
+      continue
+    }
+    match args[i].kind {
+      EBin(OpAdd, l, r) =>
+        match (const_of_expr(l), const_of_expr(r)) {
+          (Some(a), Some(b)) =>
+            scan.computed.push({
+              base: a,
+              offset: b,
+              symbol: d.symbol,
+              param: d.params[i].name,
+              file: f.file,
+              line: s.span.start_line,
+              fn_name: f.name,
+            })
+          _ => ()
+        }
+      _ => ()
+    }
+  }
+}
+
+///|
+/// Whether the function HANDS the allocation ON.
+///
+/// Whoever holds it now is responsible for it, so it is not a leak. Two
+/// shapes hand it on: the function RETURNS it, and it is STORED into another
+/// object. A function whose OWN return type is the allocation's type is the
+/// common shape, `fn make() -> Reg`, and it is the caller of that function
+/// that holds it.
+///
+/// Passing it to a C call is NOT one of them: the C side may only read it,
+/// and the analyzer cannot see whether the C function takes it over.
+fn ffi_name_escapes(
+  f : Func,
+  name : String,
+  ty : String,
+  escaped : Array[String],
+) -> Bool {
+  if ty != "" && base_type_name(f.ret_ty) == ty {
+    return true
+  }
+  escaped.contains(name)
+}
+
+///|
+/// The names the function HANDS ON: the ones it returns, and the ones it
+/// stores into another object.
+///
+/// The set is computed ONCE per function. Asking the question per allocation
+/// would walk the function's body once per allocation, and a function with
+/// many allocations would cost its body length times over.
+fn ffi_escaped_names(f : Func) -> Array[String] {
+  let out : Array[String] = []
+  for s in f.body {
+    ffi_collect_escaped_stmt(s, out)
+  }
+  // The TAIL: a function body ends with its last expression, and that
+  // expression is the function's value.
+  if f.body.length() > 0 {
+    let last = f.body[f.body.length() - 1]
+    match last.kind {
+      SExpr(e) =>
+        match e.kind {
+          EName(n) => if !out.contains(n) { out.push(n) }
+          _ => ()
+        }
+      _ => ()
+    }
+  }
+  out
+}
+
+///|
+/// The names one statement hands on.
+///
+/// Only a BARE NAME counts. A method call on the allocation -- `r.push(x)` --
+/// mutates it in place and hands it to nobody, and the receiver of a method
+/// call is the same thing the receiver of any other call is.
+fn ffi_collect_escaped_stmt(s : Stmt, out : Array[String]) -> Unit {
+  match s.kind {
+    SReturn(e) =>
+      match e {
+        Some(x) =>
+          match x.kind {
+            EName(n) => if !out.contains(n) { out.push(n) }
+            _ => ()
+          }
+        None => ()
+      }
+    SAssign(lhs, rhs) =>
+      match (lhs.kind, rhs.kind) {
+        (EField(_, _) | EIndex(_, _), EName(n)) =>
+          if !out.contains(n) {
+            out.push(n)
+          }
+        _ => ()
+      }
+    SIf(_, then_body, else_body) => {
+      for x in then_body {
+        ffi_collect_escaped_stmt(x, out)
+      }
+      for x in else_body {
+        ffi_collect_escaped_stmt(x, out)
+      }
+    }
+    SWhile(_, body) =>
+      for x in body {
+        ffi_collect_escaped_stmt(x, out)
+      }
+    SFor(_, _, _, _, body) =>
+      for x in body {
+        ffi_collect_escaped_stmt(x, out)
+      }
+    SForIn(_, _, body) =>
+      for x in body {
+        ffi_collect_escaped_stmt(x, out)
+      }
+    SBlock(body) =>
+      for x in body {
+        ffi_collect_escaped_stmt(x, out)
+      }
+    STry(body) =>
+      for x in body {
+        ffi_collect_escaped_stmt(x, out)
+      }
+    _ => ()
+  }
+}
+
+///|
+/// An allocation the module never releases.
+///
+/// The C side owns what it allocated, and the C source is not visible: the
+/// analyzer can say that the module received an allocation and never handed
+/// it to anything that frees, so the allocation is still held when the
+/// module ends. It cannot say that the C side did not free it by itself, so
+/// the claim is a may-claim and the family is a warning.
+///
+/// The RELEASE is recognised the way the release list recognises it -- by the
+/// symbol's NAME -- and the ALLOCATION the way the allocator list recognises
+/// it: by the symbol's name AND by the fact that it returns an address.
+fn ffi_check_allocations(
+  scan : FfiModuleScan,
+  findings : Array[Finding],
+) -> Unit {
+  for a in scan.allocated {
+    if a.escapes {
+      continue
+    }
+    if ffi_allocation_released(scan, a) {
+      continue
+    }
+    findings.push(
+      Finding::new(
+        FFfiAllocationNotReleased,
+        a.file,
+        a.line,
+        a.fn_name,
+        "the C function '" +
+        a.symbol +
+        "' handed back an allocation, bound to '" +
+        a.name +
+        "', and nothing in the module ever releases it. The C side owns it, so it is still held when the module ends.",
+        "L2-FFI",
+        0.6,
+        a.name + " -> " + a.symbol,
+      ),
+    )
+  }
+}
+
+///|
+/// Whether something in the module released the allocation.
+fn ffi_allocation_released(scan : FfiModuleScan, a : FfiAllocation) -> Bool {
+  for r in scan.released {
+    if r.name != a.name {
+      continue
+    }
+    // The slot has to be one the C side can own: a POINTER, or a value of
+    // the foreign type the allocator handed back.
+    if r.is_ptr || r.ty == a.ty {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// An address that points outside the region it was carved from.
+///
+/// The module allocates a region -- a base address and a size -- and then
+/// hands the C side an address that is the base plus an offset. When the
+/// offset is not smaller than the size, the address is past the end of the
+/// region, and the C side reads or writes outside it.
+fn ffi_check_address_bounds(
+  scan : FfiModuleScan,
+  findings : Array[Finding],
+) -> Unit {
+  for c in scan.computed {
+    // The region the base belongs to. The base may be either half of the
+    // sum, so both are tried.
+    for r in scan.regions {
+      let mut offset : Int64 = 0
+      let mut matched = false
+      if r.0 == c.base {
+        offset = c.offset
+        matched = true
+      } else if r.0 == c.offset {
+        offset = c.base
+        matched = true
+      }
+      if !matched {
+        continue
+      }
+      if offset < r.1 {
+        continue
+      }
+      findings.push(
+        Finding::new(
+          FFfiAddressOob,
+          c.file,
+          c.line,
+          c.fn_name,
+          "the C function '" +
+          c.symbol +
+          "' is given the address " +
+          (c.base + c.offset).to_string() +
+          ", which is " +
+          offset.to_string() +
+          " bytes into a region of " +
+          r.1.to_string() +
+          " bytes. The address points past the end of the region, so the C side reads or writes outside it.",
+          "L2-FFI",
+          0.8,
+          c.symbol + "(" + c.param + ")",
+        ),
+      )
+      break
+    }
+  }
+}
+
+///|
+/// A FORMAT slot handed a string the module did not write out.
+///
+/// The C function's parameter NAME says the C side interprets it, and the
+/// value is not a literal, so the C side reads whatever the module's caller
+/// put there as a format -- and a '%' in it is a directive the C side
+/// follows.
+///
+/// The rule is the one GCC's -Wformat-security uses: a format slot with no
+/// OTHER argument after it. A C function that takes more arguments is
+/// almost certainly using its format properly, so the analyzer does not
+/// claim it. And the value has to come from OUTSIDE the function that makes
+/// the call: a string the module built itself is the module's own.
+fn ffi_check_format_string(
+  d : FfiDecl,
+  args : Array[Expr],
+  f : Func,
+  s : Stmt,
+  findings : Array[Finding],
+) -> Unit {
+  if d.params.length() != 1 {
+    return
+  }
+  let p = d.params[0]
+  if !ffi_is_format_name(p.name) {
+    return
+  }
+  if !ffi_is_string_type(p.ty) {
+    return
+  }
+  if args.length() == 0 {
+    return
+  }
+  let a = args[0]
+  if ffi_is_string_literal(a) {
+    return
+  }
+  if !ffi_comes_from_outside(f, a) {
+    return
+  }
+  findings.push(
+    Finding::new(
+      FFfiFormatString,
+      f.file,
+      s.span.start_line,
+      f.name,
+      "the C function '" +
+      d.symbol +
+      "' takes its format in the slot named '" +
+      p.name +
+      "', and it is given '" +
+      a.render() +
+      "', which comes from outside this function. The C side reads that string as a format, so a '%' in it is a directive the C side follows.",
+      "L2-FFI",
+      0.7,
+      d.symbol + "(" + p.name + ")",
+    ),
+  )
 }

@@ -2,6 +2,8 @@
 package "riantr/LunaFlow/fixtures/memory_demo"
 
 // Values
+pub fn collect_locally(Int32) -> Int32
+
 pub fn escaping_allocation() -> Array[Int32]
 
 pub fn frame_allocation() -> Int32
@@ -13,6 +15,12 @@ pub fn overflowing_global() -> Int32
 pub fn read_late_global() -> Int32
 
 pub fn read_through_global() -> Int32
+
+pub fn record_a_few() -> Unit
+
+pub fn record_and_trim(Int32) -> Unit
+
+pub fn record_every(Int32) -> Unit
 
 pub fn tail_value() -> Int32
 

@@ -448,6 +448,8 @@ pub(all) enum FindingKind {
   FNoneDeref
   FUninitRead
   FInvalidCast
+  // The MEMORY family's one finding: a collection that only ever grows.
+  FUnboundedGrowth
   // The RESERVED families: the defect classes MoonBit's type system makes
   // impossible in safe code. They are in the roster so that `--explain` can
   // answer for them, and their contracts say why they never fire.
@@ -466,6 +468,11 @@ pub(all) enum FindingKind {
   FFfiDoubleFree
   FFfiUseAfterFree
   FFfiLengthMismatch
+  // The classes that safe MoonBit cannot express, and that the C boundary
+  // CAN. See `ffi.mbt` for the model and the measurements it rests on.
+  FFfiAllocationNotReleased
+  FFfiFormatString
+  FFfiAddressOob
   // The CONCURRENCY families. See `conc.mbt` for the model and the
   // measurements every one of them rests on.
   FFconcLostUpdate
@@ -502,6 +509,7 @@ pub fn FindingKind::code(self : FindingKind) -> String {
     FNoneDeref => "NONE-DEREF"
     FUninitRead => "UNINITIALIZED-READ"
     FInvalidCast => "INVALID-CAST"
+    FUnboundedGrowth => "UNBOUNDED-GROWTH"
     FUseAfterFree => "USE-AFTER-FREE"
     FPointerArithmetic => "POINTER-ARITHMETIC"
     FMemoryLeak => "MEMORY-LEAK"
@@ -515,6 +523,9 @@ pub fn FindingKind::code(self : FindingKind) -> String {
     FFfiDoubleFree => "FFI-DOUBLE-FREE"
     FFfiUseAfterFree => "FFI-USE-AFTER-FREE"
     FFfiLengthMismatch => "FFI-LENGTH-MISMATCH"
+    FFfiAllocationNotReleased => "FFI-ALLOCATION-NOT-RELEASED"
+    FFfiFormatString => "FFI-FORMAT-STRING"
+    FFfiAddressOob => "FFI-ADDRESS-OOB"
     FFconcLostUpdate => "CONC-RACE-LOST-UPDATE"
     FFconcStaleRead => "CONC-RACE-STALE-READ"
     FFconcDeadlockCycle => "CONC-DEADLOCK-CYCLE"
@@ -540,6 +551,9 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     // A silent wrong value, not a crash: the program keeps running with a
     // value the author did not intend.
     FInvalidCast => "warning"
+    // A collection that only ever grows: the module holds every item it is
+    // given, for as long as it lives.
+    FUnboundedGrowth => "warning"
     // Reserved: never produced.
     FUseAfterFree | FPointerArithmetic | FMemoryLeak | FFormatString =>
       "warning"
@@ -561,6 +575,15 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
     // An address the analyzer cannot name: a limit of the analysis, not a
     // defect.
     FFfiAddressUnknown => "info"
+    // The classes safe MoonBit cannot express, and the C boundary can.
+    //
+    // A format string the untrusted input chooses, and an address that points
+    // outside the region it was carved from: both are errors.
+    FFfiFormatString | FFfiAddressOob => "error"
+    // An allocation the module never releases: the C side holds it for as
+    // long as the process lives. The C source is not visible, so this is a
+    // may-claim.
+    FFfiAllocationNotReleased => "warning"
     // The CONCURRENCY families.
     //
     // An update that is lost, and a deadlock in which no task can proceed:

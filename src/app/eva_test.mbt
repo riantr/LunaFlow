@@ -284,9 +284,10 @@ test "the RESERVED families are in the roster and are never produced" {
 ///|
 test "every family in the roster has a contract and a code" {
   let roster = @app.family_roster()
-  // 20 families up to the EVA roster, plus the 9 FOREIGN ADDRESS SPACE ones,
-  // the 4 CONCURRENCY ones and the 4 IPC AND BUFFER ones.
-  inspect(roster.length(), content="37")
+  // 20 families up to the EVA roster, plus the 12 FOREIGN ADDRESS SPACE ones,
+  // the 4 CONCURRENCY ones, the 4 IPC AND BUFFER ones and the 1 MEMORY LAYOUT
+  // one.
+  inspect(roster.length(), content="41")
   for k in roster {
     assert_true(k.code().length() > 0)
     assert_true(@app.family_title(k).length() > 0)

@@ -39,34 +39,50 @@ const IDXLEN_PREFIX : String = "@idxlen:"
 
 ///|
 /// Record that `index_name` is below the length of the array `base`.
+///
+/// An index can be below SEVERAL lengths at once, and the relation keeps all
+/// of them: `for i in 0..<xs.length()` says the index is below `xs`'s
+/// length, and a guard `if i >= other.length() { continue }` says it is
+/// below `other`'s length too. Keeping only one of them made the other
+/// disappear -- and an index that is provably inside the array it indexes was
+/// then reported as an offset that untrusted input chose.
 fn record_length_bound(
   st : AbsState,
   index_name : String,
   base : String,
 ) -> Unit {
-  st.env[IDXLEN_PREFIX + index_name] = AbsCell::new(AStr([base]), TClean)
+  let key = IDXLEN_PREFIX + index_name
+  let xs : Array[String] = []
+  match st.env.get(key) {
+    Some(cell) =>
+      match cell.v {
+        AStr(old) =>
+          for x in old {
+            if x != base {
+              xs.push(x)
+            }
+          }
+        _ => ()
+      }
+    None => ()
+  }
+  xs.push(base)
+  st.env[key] = AbsCell::new(AStr(xs), TClean)
 }
 
 ///|
-/// The array whose length bounds this index, when there is one.
-fn length_bound_of(st : AbsState, index_name : String) -> String? {
+/// The arrays whose length bounds this index.
+///
+/// It is a LIST and not a single one: the index may be below more than one
+/// length, and the relation has to be able to say so.
+fn length_bounds_of(st : AbsState, index_name : String) -> Array[String] {
   match st.env.get(IDXLEN_PREFIX + index_name) {
     Some(cell) =>
       match cell.v {
-        AStr(xs) => if xs.length() == 1 { Some(xs[0]) } else { None }
-        _ => None
+        AStr(xs) => xs.copy()
+        _ => []
       }
-    None => None
-  }
-}
-
-///|
-/// Do these two cells hold the SAME length bound?
-fn same_length_bound(a : AbsCell, b : AbsCell) -> Bool {
-  match (a.v, b.v) {
-    (AStr(xs), AStr(ys)) =>
-      xs.length() == 1 && ys.length() == 1 && xs[0] == ys[0]
-    _ => false
+    None => []
   }
 }
 
@@ -78,20 +94,37 @@ fn same_length_bound(a : AbsCell, b : AbsCell) -> Bool {
 /// array now, and the length that bounded the index is not its length any
 /// more. A chain of fields (`d.params`) names a parameter or a field, and
 /// neither can be rebound, so it needs no invalidation.
+///
+/// An index may be below several lengths, so dropping one of them leaves the
+/// others in place: the bound is dropped only when NOTHING is left.
 fn drop_length_bounds(st : AbsState, name : String) -> Unit {
   for pair in st.env.to_array() {
     let key = pair.0
     if key.has_prefix(IDXLEN_PREFIX) {
-      let drop = if key == IDXLEN_PREFIX + name {
-        true
+      if key == IDXLEN_PREFIX + name {
+        ignore(st.env.remove(key))
       } else {
         match pair.1.v {
-          AStr(xs) => xs.length() == 1 && xs[0] == name
-          _ => false
+          AStr(xs) => {
+            let kept : Array[String] = []
+            let mut dropped = false
+            for x in xs {
+              if x == name {
+                dropped = true
+              } else {
+                kept.push(x)
+              }
+            }
+            if dropped {
+              if kept.length() == 0 {
+                ignore(st.env.remove(key))
+              } else {
+                st.env[key] = AbsCell::new(AStr(kept), TClean)
+              }
+            }
+          }
+          _ => ()
         }
-      }
-      if drop {
-        ignore(st.env.remove(key))
       }
     }
   }
@@ -102,16 +135,38 @@ fn drop_length_bounds(st : AbsState, name : String) -> Unit {
 ///
 /// A relation that holds on one side of a branch and not on the other does
 /// not hold after the branch: the code after it may be reached either way.
+/// With several lengths per index, what survives is the INTERSECTION: the
+/// arrays whose length bounds the index on both sides.
 fn prune_length_bounds(out : AbsState, a : AbsState, b : AbsState) -> Unit {
   for pair in out.env.to_array() {
     let key = pair.0
     if key.has_prefix(IDXLEN_PREFIX) {
-      let same = match (a.env.get(key), b.env.get(key)) {
-        (Some(x), Some(y)) => same_length_bound(x, y)
-        _ => false
+      let xs = match a.env.get(key) {
+        Some(x) =>
+          match x.v {
+            AStr(p) => p
+            _ => []
+          }
+        None => []
       }
-      if !same {
+      let ys = match b.env.get(key) {
+        Some(x) =>
+          match x.v {
+            AStr(q) => q
+            _ => []
+          }
+        None => []
+      }
+      let kept : Array[String] = []
+      for x in xs {
+        if ys.contains(x) && !kept.contains(x) {
+          kept.push(x)
+        }
+      }
+      if kept.length() == 0 {
         ignore(out.env.remove(key))
+      } else {
+        out.env[key] = AbsCell::new(AStr(kept), TClean)
       }
     }
   }
@@ -133,11 +188,16 @@ fn index_is_bounded_by(
     return false
   }
   match idx.kind {
-    EName(i) =>
-      match length_bound_of(st, i) {
-        Some(bound) => bound == base.render()
-        None => false
+    EName(i) => {
+      let mut found = false
+      for b in length_bounds_of(st, i) {
+        if b == base.render() {
+          found = true
+          break
+        }
       }
+      found
+    }
     _ => false
   }
 }

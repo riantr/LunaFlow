@@ -887,3 +887,377 @@ pub fn compare_runs(
   }
   StabilityResult::new(sizes, rows)
 }
+
+///|
+/// A collection that only ever grows.
+///
+/// MoonBit's type system makes the MEMORY-LEAK class inexpressible in safe
+/// code: there is no `free`, and every allocation is the garbage
+/// collector's business. There is one shape the type system does NOT save
+/// the module from, and it is the one this family reports:
+///
+///   - a MODULE-LEVEL collection -- a top-level `let` -- lives for as long
+///     as the module does;
+///   - it is only ever ADDED to: nothing in the module ever removes an
+///     element from it, and nothing ever replaces it with a fresh one;
+///   - and it is added to inside a LOOP whose trip count the analyzer cannot
+///     bound.
+///
+/// The last clause is what makes the claim a proof rather than a guess: the
+/// loop can run any number of times, every iteration adds an element, and
+/// nothing ever takes one away, so the collection grows without bound.
+///
+/// What the family does NOT claim, and says so in its contract: a
+/// collection that is filled once at start-up, or once per call, is not
+/// reported -- the analyzer cannot see how often the module is called; a
+/// collection that is trimmed somewhere is not reported either; and a LOCAL
+/// collection is not reported, because it dies with the function that made
+/// it.
+pub fn analyze_growth(ast : ModuleAst) -> Array[Finding] {
+  let out : Array[Finding] = []
+  let table = globals_of(ast)
+  // A module with no top-level binding has no module-level collection, and
+  // the walk over every function would find nothing.
+  if table.length() == 0 {
+    return out
+  }
+  // What the module does to its globals, over the WHOLE module: the globals
+  // something is added to, the globals something is taken from, and the
+  // globals something is added to inside a loop the analyzer cannot bound.
+  let added : Array[String] = []
+  let removed : Array[String] = []
+  let in_loop : Array[String] = []
+  for f in ast.all_funcs() {
+    let ops = growth_ops(f)
+    for n in ops.added {
+      if !added.contains(n) {
+        added.push(n)
+      }
+    }
+    for n in ops.removed {
+      if !removed.contains(n) {
+        removed.push(n)
+      }
+    }
+    for n in ops.in_loop {
+      if !in_loop.contains(n) {
+        in_loop.push(n)
+      }
+    }
+  }
+  for name in table.keys().to_array() {
+    let g = match table.get(name) {
+      Some(x) => x
+      None => continue
+    }
+    if g.is_const {
+      continue
+    }
+    if !growth_is_collection(g) {
+      continue
+    }
+    if removed.contains(g.name) {
+      continue
+    }
+    if !in_loop.contains(g.name) {
+      continue
+    }
+    out.push(
+      Finding::new(
+        FUnboundedGrowth,
+        g.file,
+        g.line,
+        "",
+        "the module-level collection '" +
+        g.name +
+        "' is only ever added to, and it is added to inside a loop whose trip count the analyzer cannot bound. Nothing in the module ever removes an element from it, so it holds every element it is given for as long as the module lives.",
+        "L2-memory",
+        0.6,
+        g.name,
+      ),
+    )
+  }
+  out
+}
+
+///|
+/// What the module does to its globals, in one function.
+priv struct GrowthOps {
+  /// The globals something is ADDED to.
+  added : Array[String]
+  /// The globals something is TAKEN FROM.
+  removed : Array[String]
+  /// The globals something is ADDED to inside a loop the analyzer cannot
+  /// bound.
+  in_loop : Array[String]
+}
+
+///|
+fn growth_ops(f : Func) -> GrowthOps {
+  let out : GrowthOps = { added: [], removed: [], in_loop: [], }
+  for s in f.body {
+    growth_stmt(s, false, out)
+  }
+  out
+}
+
+///|
+/// One statement, with the loop context it was written in.
+///
+/// `unbounded` says that an enclosing loop can run any number of times.
+fn growth_stmt(s : Stmt, unbounded : Bool, out : GrowthOps) -> Unit {
+  match s.kind {
+    SExpr(e) => growth_expr(e, unbounded, out)
+    SLet(_, _, init) => growth_expr(init, unbounded, out)
+    SAssign(lhs, rhs) => {
+      growth_expr(rhs, unbounded, out)
+      // A global REPLACED by a fresh collection is not a growth: the old one
+      // is gone. (A top-level `let` is immutable in MoonBit, so the
+      // toolchain rejects this -- the analyzer does not compile the target,
+      // and it leaves the global's value unknown rather than guess.)
+      match lhs.kind {
+        EName(n) =>
+          if growth_is_fresh_collection(rhs) && !out.removed.contains(n) {
+            out.removed.push(n)
+          }
+        _ => ()
+      }
+    }
+    SAssignOp(_, _, rhs) => growth_expr(rhs, unbounded, out)
+    SReturn(e) =>
+      match e {
+        Some(x) => growth_expr(x, unbounded, out)
+        None => ()
+      }
+    SIf(cond, then_body, else_body) => {
+      growth_expr(cond, unbounded, out)
+      for x in then_body {
+        growth_stmt(x, unbounded, out)
+      }
+      for x in else_body {
+        growth_stmt(x, unbounded, out)
+      }
+    }
+    SWhile(cond, body) => {
+      growth_expr(cond, unbounded, out)
+      let un = unbounded || growth_while_unbounded(cond)
+      for x in body {
+        growth_stmt(x, un, out)
+      }
+    }
+    SFor(_, from, to, step, body) => {
+      growth_expr(from, unbounded, out)
+      growth_expr(to, unbounded, out)
+      growth_expr(step, unbounded, out)
+      let un = unbounded || !growth_for_bounded(from, to, step)
+      for x in body {
+        growth_stmt(x, un, out)
+      }
+    }
+    SForIn(_, iter, body) => {
+      growth_expr(iter, unbounded, out)
+      let un = unbounded || !growth_iterable_bounded(iter)
+      for x in body {
+        growth_stmt(x, un, out)
+      }
+    }
+    SBlock(body) =>
+      for x in body {
+        growth_stmt(x, unbounded, out)
+      }
+    STry(body) =>
+      for x in body {
+        growth_stmt(x, unbounded, out)
+      }
+    _ => ()
+  }
+}
+
+///|
+/// The names an expression ADDS to and TAKES FROM.
+fn growth_expr(e : Expr, unbounded : Bool, out : GrowthOps) -> Unit {
+  match e.kind {
+    EMethod(recv, name, args) => {
+      let n = root_name(recv)
+      if n != "" {
+        let m = name.to_lower()
+        if growth_is_add_method(m) {
+          if !out.added.contains(n) {
+            out.added.push(n)
+          }
+          if unbounded && !out.in_loop.contains(n) {
+            out.in_loop.push(n)
+          }
+        }
+        if growth_is_remove_method(m) && !out.removed.contains(n) {
+          out.removed.push(n)
+        }
+      }
+      for a in args {
+        growth_expr(a, unbounded, out)
+      }
+      growth_expr(recv, unbounded, out)
+    }
+    ECall(_, args) =>
+      for a in args {
+        growth_expr(a, unbounded, out)
+      }
+    EBin(_, a, b) => {
+      growth_expr(a, unbounded, out)
+      growth_expr(b, unbounded, out)
+    }
+    EUn(_, a) => growth_expr(a, unbounded, out)
+    EIndex(a, b) => {
+      growth_expr(a, unbounded, out)
+      growth_expr(b, unbounded, out)
+    }
+    EField(a, _) => growth_expr(a, unbounded, out)
+    EArray(xs) | ETuple(xs) =>
+      for x in xs {
+        growth_expr(x, unbounded, out)
+      }
+    _ => ()
+  }
+}
+
+///|
+/// True when the method ADDS an element to the collection it is called on.
+///
+/// The list is the growing methods of MoonBit's collections. `set` is NOT in
+/// it: `arr.set(i, v)` replaces an element and does not make the collection
+/// longer, and the analyzer cannot see the type of the receiver well enough
+/// to tell the two apart.
+fn growth_is_add_method(name : String) -> Bool {
+  name == "push" ||
+  name.has_prefix("push_") ||
+  name == "add" ||
+  name.has_prefix("add_") ||
+  name == "append" ||
+  name == "insert" ||
+  name.has_prefix("insert_") ||
+  name == "extend" ||
+  name == "concat"
+}
+
+///|
+/// True when the method TAKES an element out of the collection it is called
+/// on.
+///
+/// `filter`, `take` and `drop` are not in it: they RETURN a new collection
+/// and leave the original alone.
+fn growth_is_remove_method(name : String) -> Bool {
+  name == "pop" ||
+  name.has_prefix("pop_") ||
+  name == "popn" ||
+  name == "remove" ||
+  name.has_prefix("remove_") ||
+  name == "clear" ||
+  name == "shift" ||
+  name == "truncate" ||
+  name == "drain" ||
+  name == "delete" ||
+  name == "unset" ||
+  name == "retain"
+}
+
+///|
+/// True when the expression builds a FRESH collection, so that binding it to
+/// a global REPLACES what was there.
+fn growth_is_fresh_collection(e : Expr) -> Bool {
+  match e.kind {
+    EArray(_) => true
+    ECall(name, _) => {
+      let n = name.to_lower()
+      n.contains("new") &&
+      (
+        n.contains("array") ||
+        n.contains("map") ||
+        n.contains("set") ||
+        n.contains("list") ||
+        n.contains("buffer") ||
+        n.contains("builder")
+      )
+    }
+    _ => false
+  }
+}
+
+///|
+/// True when the global holds a COLLECTION: something that can hold more
+/// elements than it does now.
+fn growth_is_collection(g : Global) -> Bool {
+  let t = g.ty.to_lower()
+  for w in growth_collection_types() {
+    if t.has_prefix(w) {
+      return true
+    }
+  }
+  match g.init.kind {
+    EArray(_) => true
+    ECall(name, _) => {
+      let n = name.to_lower()
+      if !n.contains("new") {
+        return false
+      }
+      for w in growth_collection_types() {
+        if n.contains(w) {
+          return true
+        }
+      }
+      false
+    }
+    _ => false
+  }
+}
+
+///|
+/// The collection types the analyzer knows by name.
+fn growth_collection_types() -> Array[String] {
+  [
+    "array", "map", "set", "hashmap", "stringbuilder", "arraybuffer", "linkedlist",
+    "vec", "deque", "list", "queue", "stack", "buffer",
+  ]
+}
+
+///|
+/// True when the `while` loop can run any number of times.
+///
+/// A condition that is the literal `false` never runs the body; anything
+/// else is a loop the analyzer cannot bound.
+fn growth_while_unbounded(cond : Expr) -> Bool {
+  match cond.kind {
+    EBool(v) => v
+    _ => true
+  }
+}
+
+///|
+/// True when the `for` loop's trip count is a number the analyzer can name.
+///
+/// The count is known when the start, the bound and the step are all
+/// constants. A bound the module reads -- a parameter, a length -- is not.
+fn growth_for_bounded(from : Expr, to : Expr, step : Expr) -> Bool {
+  match (const_of_expr(from), const_of_expr(to), const_of_expr(step)) {
+    (Some(_), Some(_), Some(_)) => true
+    _ => false
+  }
+}
+
+///|
+/// True when the `for .. in` loop's trip count is a number the analyzer can
+/// name.
+///
+/// Three shapes have a length the analyzer knows: a literal list, a RANGE
+/// whose two ends are constants, and nothing else. Every other iterable's
+/// length is data, so the loop can run any number of times.
+fn growth_iterable_bounded(iter : Expr) -> Bool {
+  match iter.kind {
+    EArray(_) => true
+    ERange(a, b, _) =>
+      match (const_of_expr(a), const_of_expr(b)) {
+        (Some(_), Some(_)) => true
+        _ => false
+      }
+    _ => false
+  }
+}

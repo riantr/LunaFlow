@@ -749,6 +749,14 @@ fn ffi_section(model : FfiModel?) -> String {
         out.write_string(
           "A `#borrow` cannot be checked: the C side is invisible to the analyzer, and the compiler does not enforce it either -- what the analyzer CAN see is the MoonBit side of the contract, which is where the two checks above live. A `#owned` argument that is used after the call is a use of memory the C side now owns, and that is a defect the toolchain lets through.\n\n",
         )
+        out.write_string(
+          "Four defect classes are ones safe MoonBit cannot express at all -- there is no pointer, no `free`, no format string, and no pointer arithmetic to be wrong -- and all four are real on the **other** side of this boundary. The analyzer reports them there, from what the MOONBIT side does:\n\n" +
+          "- **FFI-ALLOCATION-NOT-RELEASED** -- a C function handed back an allocation and nothing in the module ever releases it. The release is recognised by the symbol's NAME and the allocation by the name AND by the fact that the function returns an address, because the C source is not visible and the name is all the analyzer has. An allocation the module HANDS ON -- returned, passed to a call, stored into another object -- is not a leak: whoever holds it now owns it.\n" +
+          "- **FFI-FORMAT-STRING** -- a C function's format slot handed a string the module did not write out, so the C side reads whatever the caller put there as a format. The slot is recognised by the parameter's NAME, and the rule is the one GCC's `-Wformat-security` uses: a format slot with no other argument after it, and a value that comes from outside the function that makes the call.\n" +
+          "- **FFI-ADDRESS-OOB** -- an address the module computes as a constant base plus a constant offset, past the end of the region it carved out. Only constant halves are nameable, so an address the module computes at run time is not claimed.\n" +
+          "- **FFI-DOUBLE-FREE**, **FFI-USE-AFTER-FREE** and **FFI-USE-AFTER-MOVE** -- the release families above, which are the same class seen from the other direction.\n\n" +
+          "The reserved families in §5.3 -- USE-AFTER-FREE, MEMORY-LEAK, POINTER-ARITHMETIC and FORMAT-STRING -- keep their contracts, and each contract now names the family that covers its class at this boundary.\n\n",
+        )
         out.write_string(findings_table(m.findings))
       }
     }
@@ -1203,6 +1211,7 @@ pub fn render_report(
   per_function~ : Bool = false,
   globals~ : Array[GlobalRow] = [],
   allocs~ : Array[AllocSite] = [],
+  growth~ : Array[Finding] = [],
   stability~ : StabilityResult? = None,
   issues~ : Array[ParseIssue] = [],
   ffi~ : FfiModel? = None,
@@ -1584,6 +1593,15 @@ pub fn render_report(
       out.write_string("\n")
     }
   }
+  out.write_string("\n#### 5.5.1 A collection that only grows\n\n")
+  out.write_string(
+    "MoonBit's type system makes the MEMORY-LEAK class inexpressible in safe code: there is no `free`, and every allocation is the garbage collector's business. One shape survives that, and this check reports it. A **module-level** collection -- a top-level `let`, which lives for as long as the module does -- that is only ever **added** to: nothing in the module ever removes an element from it, and nothing ever replaces it with a fresh one; and that is added to inside a **loop whose trip count the analyzer cannot bound**. The loop can run any number of times, every iteration adds an element, and nothing ever takes one away, so the collection grows without bound.\n\nWhat is NOT claimed: a collection filled once at start-up, or once per call -- the analyzer cannot see how often the module is called; a collection that is trimmed somewhere; and a **local** collection, which dies with the function that made it.\n\n",
+  )
+  if growth.length() == 0 {
+    out.write_string("_No collection grows without bound._\n\n")
+  } else {
+    out.write_string(findings_table(growth))
+  }
   out.write_string(
     "\n### 5.6 Layout stability: does the conclusion depend on the run?\n\n",
   )
@@ -1738,6 +1756,7 @@ pub fn render_report(
     "| Contracts (L3) | WP-style VC + interval decision | `proved` only from entailed preconditions; `unknown` when facts are insufficient |\n" +
     "| Evolved value analysis (L2-EVA) | the same fixpoint, asking what a value is USED FOR | may-analysis; a hit means the abstract state cannot exclude the defect, and the classes MoonBit cannot express are RESERVED and never fire |\n" +
     "| Foreign address space (L2-FFI) | static model of the C boundary | the C side is invisible; the checks are about the MoonBit side of the contract, and the report says which ones cannot be checked at all |\n" +
+    "| Memory layout (L2-memory) | static model of the module's globals | a collection that only grows is reported when the analyzer can PROVE the growth is unbounded: a loop it cannot bound, and no removal anywhere in the module |\n" +
     "| Concurrency (L2-CONC) | interleaving model over the tasks | MoonBit tasks run on one thread (measured), so the defect class is interleaving sensitivity; a hit means the read-modify-write is not atomic with its read |\n" +
     "| Slicing | dynamic dependence graph | exact for the recorded trace; not a static closure |\n\n",
   )
