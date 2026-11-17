@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.25
+moon add riantr/LunaFlow@0.1.26
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.25",
+  "riantr/LunaFlow@0.1.26",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.25](https://mooncakes.io/docs/riantr/LunaFlow@0.1.25).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.26](https://mooncakes.io/docs/riantr/LunaFlow@0.1.26).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -550,6 +550,33 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.26
+
+**A documentation release, and it exists because of how the registry fixes a
+page.**
+
+The registry takes a version's README **at the moment it publishes it**: the
+page for 0.1.25 is the README as it stood at that tag, and nothing afterwards
+can change it. The Verification table has one row that prints a copyable
+command with a version in it — `node scripts/qa/verify_published.mjs
+<version>` — and that row was corrected on master *after* the 0.1.25 publish,
+so the **0.1.25 page still names 0.1.24** in it. A reader copying that line
+there verifies the version before the one they installed.
+
+This release carries the correction, so the 0.1.26 page names **0.1.26** in that
+row, and the command it prints verifies the version the reader is looking at.
+
+**The row is measured, not asserted.** After the 0.1.25 publish,
+`node scripts/qa/verify_published.mjs 0.1.25` passes **4 of 4** from a clean
+consumer — `moon add` resolves and pins the version, the consumer builds and
+runs, and the published library API answers — and the same check runs the same
+way against this release.
+
+**Nothing else changed.** The analyser, the source and the three committed
+artefacts are byte-identical to 0.1.25, and the gate is the same 26 steps with
+the same counts: **173 / 173 / 198 warnings**, 0 errors, and **220 tests**
+passed on native, wasm and js.
 
 ### What changed in 0.1.25
 
@@ -2391,7 +2418,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.25` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.26` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
