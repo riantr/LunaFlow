@@ -1245,6 +1245,25 @@ fn abs_stmt(
         // state there is empty. The CFG reports that code as unreachable;
         // the abstract layer does not report defects inside it.
         rb
+      } else if branch_returns(b) {
+        // The else-branch RETURNS: the code after the `if` is reached only
+        // from the then branch, so the state there is the TRUE branch's
+        // state -- refined by the condition -- and not a join with a branch
+        // that left the function.
+        //
+        // This is the mirror of the rule above, and it is what makes a
+        // `guard` usable. MEASURED (2026-11-18): MoonBit's
+        //
+        //     guard total > 0 else { "0%" }
+        //
+        // never falls through when the condition is false -- the else
+        // block's value is the function's RETURN value (measured on the
+        // toolchain: `f(0)` returned "0%"), so the guard's else path leaves
+        // the function. The parser desugars the guard into exactly this
+        // shape, and without this rule the join threw the refinement away:
+        // the analyzer reported a division by zero on a divisor that
+        // `guard total > 0` had already excluded.
+        ra
       } else if may_true && may_false {
         abs_join_state(ra, rb)
       } else if may_true {

@@ -111,6 +111,48 @@ test "an index inside the array is not reported" {
 }
 
 ///|
+test "a guard that excludes a zero divisor is not a division by zero" {
+  // MEASURED (2026-11-18): `guard total > 0 else { 0 }` never falls through
+  // when the condition is false -- the else block's value is the function's
+  // RETURN value (measured on the toolchain: `f(0)` returned "0%") -- so the
+  // divisor is positive after the guard.
+  //
+  // Before the guard was modelled, the analyzer reported a division by zero
+  // HERE. That false positive was measured on `moonbitlang/quickcheck@0.15.1`,
+  // whose `format_percent` guards its divisor exactly this way.
+  let src =
+    #|pub fn f(total : Int32, count : Int32) -> Int32 {
+    #|  guard total > 0 else { 0 }
+    #|  count / total
+    #|}
+  inspect(eva_count(src, @app.FDivZero), content="0")
+}
+
+///|
+test "a divisor without a guard is still a division by zero" {
+  // The ordinary shape next to the guarded one: the analyzer must not have
+  // learned to ignore divisors.
+  let src =
+    #|pub fn f(total : Int32, count : Int32) -> Int32 {
+    #|  count / total
+    #|}
+  inspect(eva_count(src, @app.FDivZero), content="1")
+}
+
+///|
+test "the `if` spelling of the same guard excludes the zero divisor" {
+  // The property the guard has to match: the analyzer already knew this one.
+  let src =
+    #|pub fn f(total : Int32, count : Int32) -> Int32 {
+    #|  if total <= 0 {
+    #|    return 0
+    #|  }
+    #|  count / total
+    #|}
+  inspect(eva_count(src, @app.FDivZero), content="0")
+}
+
+///|
 test "an out-of-bounds index is filed as an evolved value finding" {
   let src =
     #|pub fn f() -> Int {

@@ -73,7 +73,7 @@ src/app/                     one library package (avoids cross-package plumbing)
   funnel.mbt                 L1 -> L2 -> L3 escalation, dedup, specification gaps
   report.mbt                 Markdown + Mermaid rendering and diagram validation
   scan.mbt    coverage.mbt   module acquisition, manifest parsing, Cobertura import
-  *_test.mbt                 215 tests in 19 files
+  *_test.mbt                 220 tests in 19 files
 src/cli/main.mbt             async CLI entrypoint; thin, over src/command
 fixtures/vuln_demo/          intentionally defective MoonBit package for acceptance
 scripts/verify.mjs           dependency-free acceptance checker
@@ -149,18 +149,23 @@ only hard limits are:
 
 ### 3.4 Syntax evolution and frontend coverage
 
-The frontend is a structural parser for the MoonBit subset needed by the analyses, not a full type-checking frontend. Supported: `fn` (including `Type::method` names), parameters and return annotations, `let`/`let mut`, assignments and compound assignments, `if/else if/else`, `while`, C-style `for` and `for … in` (including the destructuring `for k, v in entries`), `return`, `break`, `continue`, blocks, `try` bodies, array/tuple literals, struct and record literals, qualified paths (`CART::Leaf`, `Rec::{ … }`), named arguments, calls, method calls, field access, indexing, `if` and `match` expressions, function literals, unary/binary operations, multi-line `#|` strings.
+The frontend is a structural parser for the MoonBit subset needed by the analyses, not a full type-checking frontend. Supported: `fn` (including `Type::method` names), parameters and return annotations, `let`/`let mut`, assignments and compound assignments, `if/else if/else`, `guard`, `while`, C-style `for` and `for … in` (including the destructuring `for k, v in entries`), `return`, `break`, `continue`, blocks, `try` bodies, array/tuple literals, struct and record literals, qualified paths (`CART::Leaf`, `Rec::{ … }`), named arguments, calls, method calls, field access, indexing, `if` and `match` expressions, function literals, unary/binary operations, multi-line `#|` strings. Parameterised `test` blocks (`test (b : @bench.T) { … }`) are parsed as functions and named after the parameters they bind.
+
+**`guard` is desugared, and the desugaring is sound.** `guard c else { body }` becomes `if c { } else { body' }`, where `body'` ends in a `return` of the block's last expression — which is what the toolchain does, MEASURED: in a function declared `-> String`, `guard total > 0 else { "0%" }` returns **"0%"** when the condition is false, so the `else` block's value **is** the return value and the else path never falls through. The desugaring only works because the join rule is **symmetric**: a branch that **returns** contributes no join, on either side of the `if`. Without that, the state after `if c { } else { return }` would be joined with a branch that left the function, and the refinement the guard was written to give would be thrown away — which is exactly what happened before this release, and it made the analyser report a division by zero on a divisor a `guard` excludes.
 
 The `#|` string is modelled the way the toolchain builds it, and the semantics were measured **by value** rather than by acceptance -- `moon check` accepts every shape of this construct, so acceptance measures nothing here. `#|` opens the literal, the text after the marker is the first chunk, every following line whose first non-blank characters are `#|` is one more chunk, and the value is the chunks joined with `"\n"`. There is no `|#` terminator (a bare `#` is a lexing error in MoonBit), a bare `#|` line is an **empty chunk** rather than the closer, a chunk is not trimmed, and a blank line inside the literal is skipped. The newline that ends the last chunk line is the statement separator before whatever follows, so it is a token of its own; the newlines between chunk lines are string content.
 
 Unsupported constructs are counted, not hidden: `match` arms, `impl` bodies, functional `for`, and `loop` are recorded as `SUnsupported` / `EvUnsupported` and appear in the CFG as `unsupported: …` nodes. A construct the parser has no rule for at all — an operator it does not model — is folded into the statement it belongs to and counted as unsupported, so it cannot shred itself into statements of its own. Report §2 states statements-understood vs unsupported, so the reader can judge confidence per module. Measured frontend coverage:
 
 | Module | Statements understood | Unsupported | Coverage |
-| --- | --- | --- | --- |
+| --- | --- | --- | ---: |
 | doubleML 0.164.64 | 29,977 | 281 | **99.07 %** |
 | static_analysis 0.4.50 | 15,854 | 738 | **95.55 %** |
+| quickcheck 0.15.1 | 1,549 | 355 | **81.3 %** |
 
 The counts fell because the old ones were wrong: the parser shredded every construct it did not model into one statement per fragment, and a shredded fragment ate the closing brace of its function, so whole function bodies were truncated. The coverage number is *lower* than before because the analyzer now says what it does not understand instead of silently shredding it.
+
+The quickcheck row is the newest measurement, and it is the one that moved: against the published 0.1.24 artifact the same tree read **370** functions, **1,519** statements understood, **358** unsupported, **80.9 %** coverage and **5 parse issues**. With `guard` modelled and the parameterised `test` blocks parsed, it reads **375** functions, **1,549** understood, **355** unsupported, **81.3 %** and **0 parse issues** — five more functions, thirty more statements understood, three fewer gaps.
 
 Compatibility strategy: the parser is tolerant (it clamps brace depth and skips unparseable statements) so a new syntax form degrades to an explicit gap instead of aborting the file. When a module's coverage is low, the report says so, and the coverage bridge can still supply compiled-execution evidence.
 
@@ -779,6 +784,7 @@ when the array it names is bound again, it survives a join only when it holds on
 | a comparison of two **overlapping** intervals | `x < 0` with `x` in `[-1000000, 1000000]` read as **impossible**: both branches were "unreachable" and the code after them was analysed as dead | a comparison can hold when the smallest left value is below the largest right one, and can fail when the largest left value reaches the smallest right one |
 | the **widening** of a loop variable | a counter that starts at 0 lost its lower bound, so an index that cannot be negative became one that might be | only the bound that **moved** goes to the top; the other one stays where it was |
 | the state after a branch that **returns** | the state after `if cond { return }` was a **join** with a branch that left the function, so the narrowing the guard was written to give was thrown away | the state after the `if` is the **false** branch's state |
+| the same rule on the **other** side | the state after `if cond { … } else { return }` was joined with the branch that left the function, so a `guard` — which desugars to exactly that shape — lost its refinement | the rule is **symmetric**: a branch that returns contributes no join, so the state after the `if` is the **then** branch's state |
 | an index **inside** an array | the index's interval and the array's length interval are independent numbers | the relation above |
 
 **And the loop model itself was wrong in two ways.** The body of a `for .. in`
@@ -1145,6 +1151,15 @@ Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
 | LunaFlow's own line coverage (`moon coverage`) | **44.25 %** (2,046 / 4,624 coverable lines of `src/app`) |
 
+The coverage row is the **2026-11-11** measurement and has not been re-taken, because
+the route it uses is currently broken on this tree: `moon coverage analyze -p src/app`
+fails with *"cannot parse source file 'src/app/eva.mbt': 2 lexical error(s)"* and
+`moon coverage report -f cobertura` fails with *"invalid source range in
+'src/cli/main.mbt'"*. MEASURED as pre-existing: the **same two errors** come out of a
+pristine checkout of the 0.1.24 tree, so this is not a consequence of the parser
+change — it is the coverage tool's own parser meeting a file it does not accept, and
+it is a defect in the QA route, not in the analyser.
+
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the
 trace instead of buffering it.
@@ -1218,14 +1233,14 @@ Interpretation:
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 215 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 220 unit/integration tests | `src/app/*_test.mbt` |
 
 ### 10.2 Acceptance criteria (quantified, reproducible)
 
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 215 passed, 0 failed | 215/215 |
+| A2 | Tests | `moon test src/app --target native` ≥ 220 passed, 0 failed | 220/220 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.4.50 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.07 %, 95.55 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |

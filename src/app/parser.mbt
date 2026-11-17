@@ -1039,6 +1039,8 @@ fn parse_stmt(p : P) -> Stmt? {
     parse_let(p)
   } else if t.text == "if" {
     parse_if(p)
+  } else if t.text == "guard" {
+    parse_guard(p)
   } else if t.text == "while" {
     parse_while(p)
   } else if t.text == "for" {
@@ -1208,6 +1210,65 @@ fn parse_let(p : P) -> StmtKind {
         SLet(name.text, ty, e)
       }
     }
+  }
+}
+
+///|
+/// Parse a `guard` statement: `guard <cond> else { <body> }`.
+///
+/// MEASURED (2026-11-18): MoonBit's `guard` was not modelled at all. It fell
+/// through to the expression branch of `parse_stmt`, so the analyzer saw an
+/// unknown expression and LOST the refinement the guard establishes. The cost
+/// was measured on `moonbitlang/quickcheck@0.15.1`: `format_percent` guards
+/// its divisor with `guard total > 0 else { "0%" }`, and the analyzer
+/// reported a division by zero on BOTH divisions -- two false positives on
+/// code that cannot divide by zero.
+///
+/// The desugaring is exact: `guard c else { body }` IS `if c { } else {
+/// body }`, and the analyzer already refines the branch it falls through
+/// into. The `if` spelling of the same guard (`if total <= 0 { return 0 }`)
+/// was already clean, and that is the property this preserves.
+fn parse_guard(p : P) -> StmtKind {
+  ignore(p.bump())
+  let cond = parse_expr(p, 0)
+  ignore(p.swallow_expr_tail(true))
+  p.skip_all_newlines()
+  if !p.at("else") {
+    p.skip_to_line_end()
+    p.unsupported = p.unsupported + 1
+    return SUnsupported("guard")
+  }
+  ignore(p.bump())
+  p.skip_all_newlines()
+  let body = parse_block(p)
+  SIf(cond, [], guard_body_returns(body))
+}
+
+///|
+/// The else block of a `guard`, with its last expression turned into the
+/// RETURN it is.
+///
+/// MEASURED on the toolchain (2026-11-18): in a function returning `String`,
+/// `guard total > 0 else { "0%" }` returns "0%" when the condition is false
+/// -- the else block's value IS the function's return value, and the guard's
+/// else path never falls through. So the block's last expression is the
+/// return, and the block ends the function.
+///
+/// This is what lets the abstract layer keep the guard's refinement: the
+/// else branch leaves the function, so the state after the guard is the
+/// then-branch's state -- the one refined by the guard's condition.
+fn guard_body_returns(body : Array[Stmt]) -> Array[Stmt] {
+  if body.length() == 0 {
+    return body
+  }
+  let last = body[body.length() - 1]
+  match last.kind {
+    SExpr(e) => {
+      let ret = Stmt::new(last.id, last.span, SReturn(Some(e)), last.text)
+      body[body.length() - 1] = ret
+      body
+    }
+    _ => body
   }
 }
 
@@ -1458,6 +1519,38 @@ fn parse_params(p : P) -> Array[Param] {
     ignore(p.bump())
   }
   out
+}
+
+///|
+/// The parameter list that starts at the current position, rendered as TEXT
+/// and NOT consumed.
+///
+/// A parameterised test block (`test (b : @bench.T) { ... }`) has no name of
+/// its own, and the analyzer names a function after what it binds. The
+/// parameters themselves are parsed by `parse_fn_head`, so this only LOOKS at
+/// them.
+fn peek_params_text(p : P) -> String {
+  if !p.at_op("(") {
+    return ""
+  }
+  let start = p.i
+  let mut depth = 0
+  let mut i = start
+  let mut end = start
+  while i < p.toks.length() {
+    let tok = p.toks[i]
+    if tok.text == "(" {
+      depth = depth + 1
+    } else if tok.text == ")" {
+      depth = depth - 1
+      if depth == 0 {
+        end = i
+        break
+      }
+    }
+    i = i + 1
+  }
+  render_tokens(p.toks, start, end + 1)
 }
 
 ///|
@@ -1979,8 +2072,15 @@ pub fn parse_file(path : String, text : String) -> SourceFile {
         ignore(p.bump())
         nt.text
       } else {
-        ignore(p.bump())
-        nt.text
+        // A PARAMETERISED test block: `test (b : @bench.T) { ... }`.
+        //
+        // MEASURED (2026-11-18): the parameter list used to be consumed
+        // HERE, so the head was parsed without it -- the function came out
+        // named "test (" with no body, and the file was reported as
+        // "function 'test (' has no body (declaration or extern)". The
+        // parameter list is parsed by `parse_fn_head`, so it has to be left
+        // for it; the block is named after the parameters it binds.
+        peek_params_text(p)
       }
       p.skip_all_newlines()
       match parse_fn(p, true, tname) {

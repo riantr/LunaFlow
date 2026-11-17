@@ -5,7 +5,7 @@
 [![mooncakes](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmooncakes.io%2Fapi%2Fv0%2Fmodules%2Friantr%2FLunaFlow&query=%24.version&label=mooncakes&prefix=v)](https://mooncakes.io/docs/riantr/LunaFlow)
 [![release](https://img.shields.io/github/v/release/riantr/LunaFlow)](https://github.com/riantr/LunaFlow/releases)
 [![license](https://img.shields.io/github/license/riantr/LunaFlow)](LICENSE)
-[![tests](https://img.shields.io/badge/tests-73%2F73-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
+[![tests](https://img.shields.io/badge/tests-220%2F220-brightgreen)](https://mooncakes.io/docs/riantr/LunaFlow)
 
 Trace-driven, three-proof-strength control-flow, taint, value-range, slicing and
 contract analysis for MoonBit modules published on
@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.24
+moon add riantr/LunaFlow@0.1.25
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.24",
+  "riantr/LunaFlow@0.1.25",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.24](https://mooncakes.io/docs/riantr/LunaFlow@0.1.24).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.25](https://mooncakes.io/docs/riantr/LunaFlow@0.1.25).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -346,8 +346,10 @@ local path needs the `./`.
 ### What the release was checked on
 
 `moon 0.1.20261104`, carrying `moonc v0.10.20+65efd5b93` — the toolchain every
-number in this file was measured on, and the one the CI runner installs. The
-older `moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715`, is still
+number in this file was measured on. The CI runner installs the **newest** one,
+`moon 0.1.20261117`, carrying `moonc v0.10.21`, and this release is verified
+against that one as well — see [Verification](#verification). The older
+`moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715`, is still
 supported and is what the core-compatibility contract is measured against, so
 both build this module. The reason that is checked rather than hoped for is
 under [The core compatibility contract](#the-core-compatibility-contract).
@@ -381,11 +383,17 @@ package"*. On the pristine tree that was **11 errors** in `src/app/scan.mbt`
 **3 more** in `src/command/command.mbt` (`fs.write_text`, `fs.read_text`,
 `fs.mkdir`).
 
-Those guards are what this release adds, and they take the library all the way
-to wasm-gc: `moon check src/app --target wasm-gc` reports **0 errors** and
-`moon test src/app --target wasm-gc` runs **73/73**. The *executable* still
-cannot be built there, and the blocker is upstream: the core's wasm-gc async
-stub has no `run_async_main`, so
+Those guards are what took the library to wasm-gc in the first place. The module
+now **declares** its supported set — `supported_targets = "+native+wasm+js"` in
+`moon.mod` — so the toolchain refuses the backend before it compiles anything:
+
+```text
+Package 'riantr/LunaFlow/src/app' does not support target backend 'wasm-gc'.
+Supported backends: [js, native, wasm]
+```
+
+The *executable* still cannot be built there either, and that blocker is upstream:
+the core's wasm-gc async stub has no `run_async_main`, so
 
 ```
 Error: [4021] Value run_async_main not found in package `moonbitlang/core/async`.
@@ -542,6 +550,99 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.25
+
+**A QA pass over another module found two gaps in the parser, and this one closes
+them.**
+
+The pass starts from the command a user would type —
+
+```sh
+moonx moonbitlang/quickcheck@latest
+```
+
+— and it fails:
+
+```text
+Error: Prebuilt wasm asset does not exist
+```
+
+That is **not** a defect in quickcheck. It is a **library module**: it has no root
+executable, so the registry publishes no wasm artifact for it and `moonx` has
+nothing to run. The module itself is published and healthy (`build_status =
+success`); it is `moonx`'s *runner* that needs a root package, exactly as this
+module's own README says. The way in is its **source**, and analysing that source
+is what exposed the two gaps below.
+
+**Gap 1 — `guard` was not modelled at all.** MoonBit's `guard` is a statement that
+refines the state and, when the condition fails, runs an `else` block instead. The
+parser had no rule for it, so it fell through to the expression branch, the
+refinement was lost, and the analyser reported a division by zero on a divisor the
+guard excludes.
+
+The proof is a probe, not an argument. Three functions, each dividing `count` by
+`total`:
+
+| Function | Body | Reported before |
+|---|---|---|
+| `guarded` | `guard total > 0 else { return 0 }` … `count / total` | **DIVISION-BY-ZERO** |
+| `unguarded` | no guard … `count / total` | DIVISION-BY-ZERO |
+| `guarded_by_if` | `if total <= 0 { return 0 }` … `count / total` | clean |
+
+`guarded` and `unguarded` reported the **same** thing, and `guarded_by_if` was
+clean — so the analyser was blind to the refinement a `guard` writes, and only to
+that. After this release `guarded` is clean and `unguarded` still reports.
+
+**`guard`'s semantics were measured on the toolchain, not assumed.** In a function
+declared `-> String`, `guard total > 0 else { "0%" }` returns **"0%"** when the
+condition is false: the `else` block's value **is** the return value, and the else
+path never falls through. So `guard c else { body }` is an `if` whose *then* branch
+is empty and whose *else* branch returns.
+
+**Gap 2 — a parameterised `test` block was parsed wrongly.** MoonBit's benchmark-style
+blocks bind a parameter:
+
+```moonbit
+test (b : @bench.T) { ... }
+```
+
+The parser consumed the `(` and used it as the name, so the block was reported as
+*"function 'test (' has no body"* — **5 parse issues** in quickcheck, one per
+block. The parameter list is now left to the function head and rendered without
+being consumed, so the block is named `test (b : @bench.T)`.
+
+**The measured effect, over `moonbitlang/quickcheck` 0.15.1 — the published 0.1.24
+artifact and this build, same tree, same recipe:**
+
+| | published 0.1.24 | this build |
+|---|---:|---:|
+| Functions extracted | 370 | **375** |
+| Statements understood | 1,519 | **1,549** |
+| Statements unsupported | 358 | **355** |
+| Frontend coverage | 80.9 % | **81.3 %** |
+| Parse issues | 5 | **0** |
+| L2 findings | 4 | **2** |
+
+The two findings that disappeared were **false positives**: `format_percent` in
+`src/internal/state/coverage.mbt` divides by `total`, and guards it with
+`guard total > 0 else { "0%" }`. The two that remain are honest ones — an
+`INTEGER-OVERFLOW` on `count * 10000` (true as an abstraction, unreachable in
+practice: it needs 214,748 tests) and an `UNSUPPORTED` info row on
+`finish_report`, whose purpose *is* to abort on a tainted value.
+
+**The fix is parser-local.** `src/app/parser.mbt` gains the `guard` branch and the
+parameterised-`test` branch; `src/app/abs.mbt` gains the **symmetric** join rule
+that makes the desugaring sound — a branch that **returns** contributes no join, on
+either side of the `if`, so the state after `if c { } else { return }` is the
+then-branch's refined state rather than a join with a branch that left the
+function. No other analyser file changed, and five new tests pin the two gaps.
+
+**And the analyser still finds exactly what it found everywhere else.** The
+self-scan over this tree is **31 rows, 0 removed, 0 added** against the published
+0.1.24; the fixture's report and trace are **byte-identical**; doubleML's 38.5 MB
+trace is **byte-identical**; and the static-analysis module, at the version the
+registry serves now, gives the same **20 rows, 0 removed, 0 added**.
 
 ### What changed in 0.1.24
 
@@ -2220,7 +2321,7 @@ src/app/                   21 library files: parser, CFG, L1 interpreter,
                            analysis, memory layout model, foreign address
                            space model, concurrency model, IPC and buffer
                            model, index/length relation, report renderer
-src/app/*_test.mbt         215 tests in 19 files
+src/app/*_test.mbt         220 tests in 19 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -2269,12 +2370,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 171 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 171 warnings, 0 errors |
-| `moon check --target js` | exit 0, 196 warnings, 0 errors |
-| `moon test src/app --target native` | **215 passed, 0 failed** |
-| `moon test src/app --target wasm` | **215 passed, 0 failed** |
-| `moon test src/app --target js` | **215 passed, 0 failed** |
+| `moon check --target native` | exit 0, 173 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 173 warnings, 0 errors |
+| `moon check --target js` | exit 0, 198 warnings, 0 errors |
+| `moon test src/app --target native` | **220 passed, 0 failed** |
+| `moon test src/app --target wasm` | **220 passed, 0 failed** |
+| `moon test src/app --target js` | **220 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -2296,10 +2397,14 @@ The gate, and the result it produced for this version:
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
 `moon 0.1.20261117` (core 0.10.21+06da1ed44), installed into a scratch home next to
-the verified one: `moon check` gives **171 / 171 / 196 warnings, 0 errors** on native /
-wasm / js, `moon test src/app` gives **215 passed, 0 failed** on each of the three,
+the verified one: `moon check` gives **173 / 173 / 198 warnings, 0 errors** on native /
+wasm / js, `moon test src/app` gives **220 passed, 0 failed** on each of the three,
 `moon build src/cli --target native` and `moon build . --target wasm` are exit 0, and
-`moon fmt --check` is exit 0. The measured runs committed with the reports — the
+`moon fmt --check` is exit 0. The toolchain the CDN serves as `latest` is still that
+one — its binary has not been rebuilt since this release was verified — but the
+runner takes whatever `latest` is on the day it runs, so this row is a measurement
+of a moving target and is kept honest by re-running it against the newest one
+before every release. The measured runs committed with the reports — the
 **Time** column is the `elapsed_ms` of the committed artefact itself, so every cell is
 traceable to a file in `reports/`:
 
@@ -2308,17 +2413,26 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 (no specs) | 0 | 118 | 8.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 (no specs) | 0 | 9 | 1.3 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 49 | 6,022 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.44 s |
+| `LunaFlow` itself (`--dir .`) | 49 | 6,072 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.43 s |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** alternating runs, which is also
 how the deltas below are measured.
 
-The three committed artefacts are regenerated by this release's build, with
+The three committed artefacts are the ones the **0.1.24** build generated, with
 `--funnel --trials 4` and one slice each (`theta_hat@aggregate_coef_se` for doubleML,
 `buf@render_reports` for the static-analysis module, `i@copy_prefix` for the fixture).
 `node scripts/verify.mjs` checks all three, and the version in each file name is the
 version the registry served when it was generated.
+
+**This release reproduces them rather than replacing them**, because the change is in
+the parser and the parser's output on these three trees did not move: the fixture's
+report and trace are **byte-identical**, doubleML's 38.5 MB trace is
+**byte-identical** (only the wall-time cell of the report differs, and that cell is
+a timing measurement), and the static-analysis module — at the version the registry
+serves now — gives the same **20 rows, 0 removed, 0 added** against the published
+0.1.24 artifact. The committed files therefore stay as they are, and they remain
+measurements of the analyser that ships with this release.
 
 **The absolute times move with the machine, so the comparison that counts is the
 controlled one.** Over the same 220-file module, with the two builds alternating and
@@ -2345,14 +2459,18 @@ measured:
 The change removes one unused parameter and adds no work, so the deltas are the
 machine's noise, not the code's.
 
-**Reproduction status (2026-11-16).** The rows above are the committed
-artefacts, pinned to the versions resolved on the day they were generated, and they
-were **regenerated by this release's build**. Two things moved, and neither of them is a
-regression:
+**Reproduction status (2026-11-18).** The rows above are the committed
+artefacts, pinned to the versions resolved on the day they were generated. They were
+**regenerated by the 0.1.24 build**, and this release's build **reproduces them** —
+byte-identical traces for the fixture and for doubleML, and 0 row differences on the
+static-analysis module. What moved on the registry side is the static-analysis
+module's own version, and neither move is a regression:
 
 - the **static-analysis module** is now **0.4.50** — the registry served a newer version
   — and it is a bigger module than the 0.4.46 the previous artefacts were made from
-  (199 → 239 files, 12,970 → 16,592 statements);
+  (199 → 239 files, 12,970 → 16,592 statements). The registry serves **0.4.52** today;
+  analysed with this build it gives the same 20 rows the published 0.1.24 artifact
+  gives, so the analyser did not change on that tree either;
 - **doubleML** moved from 29,853 to **30,258** statements and from 166 to **187** L2
   findings. The reason is the **0.1.19 parser fix**: a range loop's body used to be
   left behind, and the statements in it were never counted.

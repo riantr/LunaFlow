@@ -48,6 +48,52 @@ test "parser extracts function shape" {
 }
 
 ///|
+test "a guard is parsed as an if whose else branch returns" {
+  // MEASURED (2026-11-18): `guard total > 0 else { "0%" }` in a function
+  // returning `String` returns "0%" when the condition is false -- the else
+  // block's value IS the return value, and the guard's else path never falls
+  // through. So the guard is modelled as `if cond { } else { return v }`, and
+  // that is what the parser produces.
+  let src =
+    #|fn f(total : Int32) -> String {
+    #|  guard total > 0 else { "0%" }
+    #|  "positive"
+    #|}
+  let f = parse_file("demo.mbt", src)
+  inspect(f.unsupported_stmts, content="0")
+  inspect(f.funcs.length(), content="1")
+  match f.funcs[0].body[0].kind {
+    SIf(_, then_body, else_body) => {
+      inspect(then_body.length(), content="0")
+      inspect(else_body.length(), content="1")
+      match else_body[0].kind {
+        SReturn(_) => inspect("returned", content="returned")
+        _ => fail("expected the guard's else block to return")
+      }
+    }
+    _ => fail("expected a guard to parse as an if")
+  }
+}
+
+///|
+test "a parameterised test block is parsed as a function" {
+  // MEASURED (2026-11-18): `test (b : @bench.T) { ... }` used to consume its
+  // parameter list before the head was parsed, and the file was reported as
+  // "function 'test (' has no body (declaration or extern)". The list is
+  // parsed by the head parser, and the block is named after what it binds.
+  let src =
+    #|test (b : Int) {
+    #|  b
+    #|}
+  let f = parse_file("demo.mbt", src)
+  inspect(f.issues.length(), content="0")
+  inspect(f.funcs.length(), content="1")
+  inspect(f.funcs[0].params.length(), content="1")
+  inspect(f.funcs[0].params[0].name, content="b")
+  inspect(f.funcs[0].params[0].ty, content="Int")
+}
+
+///|
 test "parser captures while and for forms" {
   let src =
     #|///|
