@@ -2391,7 +2391,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.24` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.25` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
