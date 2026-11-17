@@ -35,6 +35,11 @@
 // compared on the parameters the call sites actually use, plus the RETURN
 // TYPE, which is what the release failure turned out to be.
 //
+// AND THE LABELS. A parameter this module passes BY LABEL is not just a
+// type: the LABEL is part of the call, and a core that renames it breaks the
+// call site even when the type is unchanged. A label the module passes that a
+// core does not declare is therefore a break, and it is reported as one.
+//
 // Usage: node scripts/qa/core_compat.mjs
 
 import {
@@ -229,6 +234,15 @@ function pkgAliases(coreDir, pkg) {
 }
 
 ///| Split a parameter list into `{ name, text }` entries.
+///
+/// The NAME is what a call site passes by label, so it has to be the name and
+/// not the whole head. MEASURED BUG (2026-11-17): the head used to be taken
+/// as the name, and a head is `"recursive~ : Bool"`, so the name read as
+/// `"recursive~ : Bool"` and never matched the label a call site passes
+/// (`recursive`). The gate therefore compared no label at all.
+///
+/// `~` marks an optional parameter and `?` marks one without a default; a
+/// label is spelled without either, so both are stripped.
 function splitParams(text) {
   const out = [];
   let depth = 0;
@@ -250,7 +264,7 @@ function splitParams(text) {
     .map((p) => {
       const eq = p.indexOf("=");
       const head = (eq >= 0 ? p.slice(0, eq) : p).trim();
-      const name = head.replace(/~$/, "").trim();
+      const name = head.split(":")[0].trim().replace(/[~?]$/, "").trim();
       return { name, text: p.replace(/\s+/g, " ") };
     });
 }
@@ -383,8 +397,20 @@ function ourCallSites() {
       if (!PACKAGES[alias]) continue;
       const name = m[2];
       // The argument list: scan to the matching close paren.
-      let depth = 0;
-      let i = m.index + m[0].length - 1;
+      //
+      // The opening paren is already consumed by the match above, so the
+      // collected text is the ARGUMENTS WITHOUT the enclosing parentheses.
+      //
+      // MEASURED BUG (2026-11-17): the opening paren used to be collected as
+      // well, and then the first argument looked like a nested call -- its
+      // text carried a "(" -- so NO argument was ever recognised as a LABEL.
+      // Every call site therefore looked positional, the gate compared
+      // types only, and a core that had RENAMED a label was invisible to it.
+      // The proof is in its own output: `fs.mkdir` read as
+      // "path : StringView | -> Unit" for a call that passes
+      // `recursive=true, allow_exist=true`.
+      let depth = 1;
+      let i = m.index + m[0].length;
       let args = "";
       for (; i < text.length; i++) {
         const ch = text[i];
@@ -467,6 +493,47 @@ for (const [key, rec] of [...calls].sort()) {
   if (absent.length) {
     failures.push(`${key}: not declared in ${absent.map((d) => d.label).join(", ")}`);
     console.log(`  FAIL ${key} — absent in ${absent.map((d) => d.label).join(", ")}`);
+    continue;
+  }
+
+  // A LABEL the module passes is part of the call, and a core that does not
+  // declare it breaks the call site even when every TYPE still matches.
+  //
+  // MEASURED BUG (2026-11-17): this gate used to filter each core's
+  // parameters down to the labels the module passes, so a core that had
+  // RENAMED one produced a SHORTER signature -- which compared equal to the
+  // other cores and read as "identical". The registry's newest core renamed
+  // `fs.mkdir`'s `allow_exist` to `allow_existing`, and the release failed on
+  // the runner with
+  //
+  //   This function has no parameter with label allow_exist
+  //
+  // while this gate had reported "12 declaration(s) identical in every core".
+  // The rename was invisible here because the label the module passes was
+  // dropped from the signature of the core that no longer had it.
+  //
+  // So a label the core does not declare is reported as a break, naming the
+  // label and the parameters the core DOES declare.
+  const missing = decls
+    .map(({ label, decl }) => {
+      const params = decl.params ?? [];
+      return {
+        label,
+        missing: [...rec.labels].filter((l) => !params.some((p) => p.name === l)).sort(),
+        declared: params.map((p) => p.name).join(", "),
+      };
+    })
+    .filter((x) => x.missing.length);
+  if (missing.length) {
+    for (const x of missing) {
+      failures.push(
+        `${key}: label(s) ${x.missing.join(", ")} not declared in ${x.label} (declared: ${x.declared})`,
+      );
+    }
+    console.log(`  FAIL ${key} — a label it passes is not declared in every core`);
+    for (const x of missing) {
+      console.log(`         ${x.label}: no parameter with label ${x.missing.join(", ")} (declared: ${x.declared})`);
+    }
     continue;
   }
 

@@ -15,7 +15,7 @@ This document is the design record for the implementation in `src/app` and `src/
 | Analysis paradigm | Dynamic-first: concrete execution of parsed function bodies produces the trace that drives CFG coverage, taint, ranges and slicing; static syntax-directed CFG supplements it |
 | Visualization carrier | Markdown with embedded Mermaid diagrams only (no server, no HTML, no binary images) |
 | Version policy | `@latest` is resolved once by `moon fetch`, the resolved version is recorded in the report and pinned for every later stage |
-| Toolchain | `moon 0.1.20261104`, `moonc v0.10.20+65efd5b93`, native backend; the async runtime is the toolchain-bundled `moonbitlang/core/async` |
+| Toolchain | `moon 0.1.20261104`, `moonc v0.10.20+65efd5b93`, native backend — and the release is verified against the NEWEST toolchain as well (`moon 0.1.20261117`, `moonc v0.10.21+06da1ed44`), because the CI runner installs that one; the async runtime is the toolchain-bundled `moonbitlang/core/async` |
 
 The analyzer never mutates the analyzed module. It reads source files, executes a model of them, and writes only under `reports/`.
 

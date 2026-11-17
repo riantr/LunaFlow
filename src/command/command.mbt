@@ -1100,7 +1100,24 @@ pub async fn run(raw_args : Array[String]) -> Unit {
 ///|
 #cfg(any(target="native", target="wasm"))
 async fn ensure_dir(path : String) -> Unit {
-  @fs.mkdir(path, recursive=true, allow_exist=true) catch {
+  // NO `allow_exist` LABEL, and that is deliberate.
+  //
+  // MEASURED (2026-11-17): the registry's newest core -- 0.10.21, the one the
+  // CI runner's toolchain bundles -- RENAMED that label:
+  //
+  //   core 0.10.20:  allow_exist~    : Bool = false
+  //   core 0.10.21:  allow_existing~ : Bool = false
+  //
+  // so a call that passes `allow_exist=true` compiles against the old core
+  // and is REJECTED by the new one ("This function has no parameter with
+  // label allow_exist"). A module that has to build against every toolchain
+  // a user may have cannot pass a label that was renamed under it.
+  //
+  // The label is also REDUNDANT here: the error it suppresses is AlreadyExists,
+  // and this function swallows every error anyway. Without the label, an
+  // existing directory raises AlreadyExists, the catch below ignores it, and
+  // the directory is there exactly as before.
+  @fs.mkdir(path, recursive=true) catch {
     _ => ()
   }
 }

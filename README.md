@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.23
+moon add riantr/LunaFlow@0.1.24
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.23",
+  "riantr/LunaFlow@0.1.24",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.23](https://mooncakes.io/docs/riantr/LunaFlow@0.1.23).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.24](https://mooncakes.io/docs/riantr/LunaFlow@0.1.24).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -486,6 +486,43 @@ the fetched tree for **content**, clears an unusable one and fetches again, and
 reports a fetch that cannot obtain the core as *"the core's compatibility is
 UNKNOWN"*, never as an incompatible declaration.
 
+**And a LABEL is part of the API, not just a type.** MEASURED, the hard way: the
+release after that one failed on the CI runner at the very first check, with
+
+```text
+Error: [4085]
+  ╭─[ src/command/command.mbt:1103:35 ]
+ 1103 │   @fs.mkdir(path, recursive=true, allow_exist=true) catch {
+    │                                   ─────┬─────
+    │                                        ╰─────── This function has no parameter with label allow_exist~.
+```
+
+The newest core — 0.10.21, the one the runner's toolchain bundles — **renamed** that
+parameter: `allow_exist~` became `allow_existing~`. The *types* are unchanged, so a
+comparison that looked at types alone saw nothing, and this gate reported *"12
+declarations identical in every core"* on the very commit that could not compile.
+
+Two things were wrong, and both are fixed:
+
+- the **call** passed a label that one core no longer declares. It passes none now.
+  The label was redundant anyway: the error it suppresses is AlreadyExists, and the
+  call's `catch` swallows every error — so the behaviour is the same on every core,
+  and a label that was renamed under this module is never passed again;
+- the **gate** never compared a label at all. It collected a call's arguments with
+  the opening parenthesis still attached, so the first argument looked like a nested
+  call and *no* argument was ever recognised as a labelled one — `fs.mkdir` read as
+  `path : StringView | -> Unit` for a call that passes `recursive=true,
+  allow_exist=true`. And it took a parameter's whole head (`"recursive~ : Bool"`) as
+  its name, so no label could ever match a declared parameter. Both are fixed, and a
+  label the core does not declare is now **reported as a break**.
+
+The gate prints the labels it compares, so the difference is visible instead of
+inferred:
+
+```text
+  ok   fs.mkdir  path : StringView | recursive~ : Bool = false | -> Unit
+```
+
 **The release is CI-driven.** Pushing the release tag runs
 `.github/workflows/publish.yml`, which re-runs this gate, checks that the
 README names the released version, publishes to mooncakes with the
@@ -506,41 +543,66 @@ every package that uses it says so in
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
 
-### What changed in 0.1.23
+### What changed in 0.1.24
 
-**A documentation-only release, for the same reason 0.1.21 was one: the registry serves
-the README as it stood at the tag.**
+**A toolchain drift broke the 0.1.23 release, and this one fixes it.**
 
-The 0.1.22 release corrected the core-compatibility text in this file, but the
-correction landed **after** the tag was cut — so the page for 0.1.22, which is the
-release the registry still serves as `latest`, carried the old cells. MEASURED on that
-page before this release: the prose said *"identical in **3** cores (registry
-0.1.20261105, local 0.10.20, local 0.10.19)"* while the gate table on the same page
-said *"identical in **2** cores"* — one page contradicting itself about one measurement —
-and it named a core version two registry releases behind the current one
-(`moonbitlang/core@0.1.20261117+06da1ed44`).
+The 0.1.23 tag was cut, and the CI runner — which installs the **newest** MoonBit, not
+the one the gate was verified against — failed at the very first check:
 
-**What this page says now.** The invariant, not the machine's core count: **12
-declarations, identical in every core compared** — the registry's newest core plus every
-core on the machine. The count of cores is the machine's, and it moves; the 12
-declarations do not.
+```text
+Error: [4085]
+  ╭─[ src/command/command.mbt:1103:35 ]
+ 1103 │   @fs.mkdir(path, recursive=true, allow_exist=true) catch {
+    │                                   ─────┬─────
+    │                                        ╰─────── This function has no parameter with label allow_exist~.
+───╯
+Failed with 171 warnings, 1 errors.
+```
 
-**And the half of the correction the old page never had: a fetch that unpacked nothing
-is not a compatibility break.** `moon fetch` creates the destination directory before it
-unpacks, so an interrupted fetch leaves an **empty** tree, and the next fetch says
-*"already exists"* and unpacks nothing. The gate would then have compared this module's
-declarations against an empty tree and reported that the newest core declares **none**
-of them — which is not what happened. MEASURED: that happened on 2026-11-17, and the core
-was fine. The gate now checks the fetched tree for **content**, clears an unusable one and
-fetches again, and reports a core it cannot obtain as **UNKNOWN** — never as an
-incompatible declaration.
+**The core renamed a parameter.** The runner's toolchain was `moon 0.1.20261117`, whose
+core is 0.10.21; this module had been verified against `moon 0.1.20261104`, core
+0.10.20. Between them:
 
-**The analyser is unchanged.** `src/` and `reports/` are byte-identical to 0.1.22, where
-the three artefacts were verified to regenerate byte-identically, traces included. This
-release therefore moves no source file and finds exactly what 0.1.22 finds: **31 rows, 0
-removed, 0 added** over this tree. The published source does carry two corrections that
-are not the analyser's: `docs/design.md` now matches the committed artefacts, and
-`scripts/qa/core_compat.mjs` carries the fetch fix above.
+| Declaration | core 0.10.20 | core 0.10.21 |
+|---|---|---|
+| `fs.mkdir`'s last parameter | `allow_exist~ : Bool = false` | `allow_existing~ : Bool = false` |
+
+The types are identical. The **label** is not, and a label is part of the call.
+
+**The fix in the source is one argument.** The call passes no such label now: the
+parameter it suppressed raised AlreadyExists, and the call's `catch` swallows every
+error anyway, so the behaviour is the same on every core. That matters more than it
+looks — this module has to build against every toolchain a user may have, and a label
+that was renamed under it cannot be passed at all.
+
+**The fix in the gate is the one that matters.** The gate had reported *"12 declarations
+identical in every core"* on the very commit that could not compile, and it was wrong
+for a reason worth stating plainly: **it never compared a label.** It collected a
+call's arguments with the opening parenthesis still attached, so the first argument
+looked like a nested call and *no* argument was ever recognised as a labelled one —
+`fs.mkdir` read as `path : StringView | -> Unit` for a call that passes `recursive=true,
+allow_exist=true`. And it took a parameter's whole head (`"recursive~ : Bool"`) as its
+name, so no label could ever match a declared parameter. Both are fixed, and a label the
+core does not declare is now reported as a break.
+
+MEASURED, locally, on the runner's own toolchain (`moon 0.1.20261117`, core
+0.10.21+06da1ed44): a probe that passes `allow_exist=true` fails there with the same
+message the runner printed, and this module compiles with **171 / 171 / 196 warnings, 0
+errors** on native, wasm and js, with **215 tests passed on each of the three**.
+
+**The analyser is unchanged.** The change is in the CLI layer's `ensure_dir`, not in
+`src/app`, so the analyser finds exactly what it found: the self-scan over this tree
+is **31 rows, 0 removed, 0 added** against the published 0.1.22, and the three
+committed artefacts are unchanged.
+
+**And the core-compatibility text 0.1.23 was cut to publish finally reaches the page.**
+0.1.23 was tagged to carry it and never published, because the runner failed first, so
+the registry kept serving 0.1.22 — whose page said *"identical in **3** cores"* in the
+prose and *"identical in **2** cores"* in the gate table, and named a core version two
+registry releases behind the current one. This page now states the invariant — **12
+declarations, identical in every core compared** — and says that a fetch which unpacked
+nothing is **UNKNOWN**, never a compatibility break.
 
 ### What changed in 0.1.22
 
@@ -2228,18 +2290,25 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.23` | **4 passed, 0 failed** |
-`moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
-measured runs committed with the reports — the **Time** column is the
-`elapsed_ms` of the committed artefact itself, so every cell is traceable to a
-file in `reports/`:
+| `node scripts/qa/verify_published.mjs 0.1.24` | **4 passed, 0 failed** |
+`moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
+
+**The gate is run against the NEWEST toolchain too**, because the CI runner installs
+that one — the 0.1.23 release failed on the runner for exactly this reason. On
+`moon 0.1.20261117` (core 0.10.21+06da1ed44), installed into a scratch home next to
+the verified one: `moon check` gives **171 / 171 / 196 warnings, 0 errors** on native /
+wasm / js, `moon test src/app` gives **215 passed, 0 failed** on each of the three,
+`moon build src/cli --target native` and `moon build . --target wasm` are exit 0, and
+`moon fmt --check` is exit 0. The measured runs committed with the reports — the
+**Time** column is the `elapsed_ms` of the committed artefact itself, so every cell is
+traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 (no specs) | 0 | 118 | 8.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 (no specs) | 0 | 9 | 1.3 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 49 | 6,022 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.39 s |
+| `LunaFlow` itself (`--dir .`) | 49 | 6,022 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.44 s |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** alternating runs, which is also
