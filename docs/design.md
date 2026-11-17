@@ -73,7 +73,7 @@ src/app/                     one library package (avoids cross-package plumbing)
   funnel.mbt                 L1 -> L2 -> L3 escalation, dedup, specification gaps
   report.mbt                 Markdown + Mermaid rendering and diagram validation
   scan.mbt    coverage.mbt   module acquisition, manifest parsing, Cobertura import
-  *_test.mbt                 73 tests in 11 files
+  *_test.mbt                 215 tests in 19 files
 src/cli/main.mbt             async CLI entrypoint; thin, over src/command
 fixtures/vuln_demo/          intentionally defective MoonBit package for acceptance
 scripts/verify.mjs           dependency-free acceptance checker
@@ -157,8 +157,8 @@ Unsupported constructs are counted, not hidden: `match` arms, `impl` bodies, fun
 
 | Module | Statements understood | Unsupported | Coverage |
 | --- | --- | --- | --- |
-| doubleML 0.164.64 | 29,853 | 320 | **98.94 %** |
-| static_analysis 0.4.46 | 12,970 | 595 | **95.61 %** |
+| doubleML 0.164.64 | 29,977 | 281 | **99.07 %** |
+| static_analysis 0.4.50 | 15,854 | 738 | **95.55 %** |
 
 The counts fell because the old ones were wrong: the parser shredded every construct it did not model into one statement per fragment, and a shredded fragment ate the closing brace of its function, so whole function bodies were truncated. The coverage number is *lower* than before because the analyzer now says what it does not understand instead of silently shredding it.
 
@@ -194,7 +194,7 @@ State: `Map[var -> AbsCell{value, taint}]`. Transfer functions:
 - `assert`/`require`: "may fail" when the condition can be false;
 - loop condition taint propagates to numeric variables read by the condition (implicit flow), which is why `while i < len { a[i] }` is flagged even though `i` starts at 0.
 
-Cost: linear in the number of statements × fixpoint rounds; measured 127 findings from 120 doubleML functions in the same run as L1 (6 s total), and 47 findings from 200 static_analysis functions (3 s total).
+Cost: linear in the number of statements × fixpoint rounds; measured 187 findings from the 120 doubleML functions in the same run as L1 (8 s total), and 8 findings from 200 static_analysis functions (1.3 s total).
 
 Precision: sound relative to the abstract semantics, but joins and widening lose path and value precision; the default interval bound (`±1,000,000`) is a practical closure, not the mathematical top. Every L2 finding carries `mode = L2-abstract` so it is never confused with an observed L1 fact.
 
@@ -340,7 +340,7 @@ Sinks:
 
 MoonBit has no raw pointer arithmetic; "pointer" sinks in the TrustInSoft sense are represented by array indexing and `Ref` values. `Ref` reads/writes currently degrade to unknown (documented limitation).
 
-Imprecision: field-insensitive, container-index-insensitive, no alias analysis, depth-6 call cutoff, unsupported `match` arms break propagation, and the conservative loop-counter rule can produce false positives. On the validation modules this yields 73 sinks (doubleML) and 6 (static_analysis) — the count is the number of distinct sites, since one site observed in many trials is one sink — high by design because every parameter is treated as hostile input; the report exposes the rule and the observed value for triage.
+Imprecision: field-insensitive, container-index-insensitive, no alias analysis, depth-6 call cutoff, unsupported `match` arms break propagation, and the conservative loop-counter rule can produce false positives. On the validation modules this yields 118 sinks (doubleML) and 9 (static_analysis) — the count is the number of distinct sites, since one site observed in many trials is one sink — high by design because every parameter is treated as hostile input; the report exposes the rule and the observed value for triage.
 
 ### 5.6 Value ranges
 
@@ -1094,8 +1094,8 @@ sees on the finding's row is one less thing to look up.
 enters functions rather than executing module-level statements, so the
 counterpart of the peer's toggle is the `--max-functions` cap, and the option
 lifts it. The cost is real — measured on `riantr/moonbit_doubleML@0.164.64`
-(2,520 functions), 4.1 s capped against 65 s uncapped, 218,391 trace events
-against 2,150,934 — so it stays opt-in.
+(2,529 functions), 9.2 s capped against 127.9 s uncapped, 193,906 trace events
+against 2,069,372 — so it stays opt-in.
 
 Outputs, all deterministic except `elapsed_ms`:
 
@@ -1140,7 +1140,7 @@ Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `
 | doubleML full run (`@latest` → 0.164.64), wall time | 8.5–9 s |
 | doubleML full run, peak working set (sampled) | 295.9 MB |
 | doubleML full run, trace size / events | 70.3 MB / 387,638 (default `--trials 8`) |
-| doubleML documented parameters (`--trials 4 --max-functions 120`) | 218,391 events, 73 sinks, 0 dead, 3.9 s |
+| doubleML with a `--max-functions 120` cap (`--trials 4`, no slice) | 193,906 events, 85 sinks, 0 dead, 9.2 s |
 | fixture run, peak working set | 7.5 MB |
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
 | LunaFlow's own line coverage (`moon coverage`) | **44.25 %** (2,046 / 4,624 coverable lines of `src/app`) |
@@ -1212,49 +1212,51 @@ Interpretation:
 | # | Artifact | Location |
 | --- | --- | --- |
 | D1 | Design document (this file) | `docs/design.md` |
-| D2 | MoonBit implementation (14 library files + 4 test files) | `src/app`, `src/cli` |
+| D2 | MoonBit implementation (21 library files + 19 test files) | `src/app`, `src/cli` |
 | D3 | Validation fixture with taint/dead-code/infinite-loop defects | `fixtures/vuln_demo` |
 | D4 | Generated reports for the two required modules | `reports/riantr_*.md` |
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 24 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 215 unit/integration tests | `src/app/*_test.mbt` |
 
 ### 10.2 Acceptance criteria (quantified, reproducible)
 
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 24 passed, 0 failed | 24/24 |
-| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.62, 0.4.43 |
-| A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.87 %, 97.32 % |
+| A2 | Tests | `moon test src/app --target native` ≥ 215 passed, 0 failed | 215/215 |
+| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.4.50 |
+| A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.07 %, 95.55 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
 | A6 | Dead code | fixture reports exactly 3 `DEAD-CODE` + 1 `UNREACHABLE` | 3 / 1 |
 | A7 | Infinite loop | fixture `spin` yields ≥ 1 `INFINITE-LOOP`; unit test pins it | 1 |
-| A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 28; doubleML 102; static 103 |
+| A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 6; doubleML 118; static 9 |
 | A9 | Ranges | per-point table non-empty; ≥ 1 numeric variable per module | non-empty on all reports |
 | A10 | Slicing | doubleML `theta_hat@aggregate_coef_se` ≥ 4 nodes; static `buf@render_reports` ≥ 1 node | 4, 1 |
-| A11 | Runtime | ≤ 60 s per module on a warm cache | 6.0 s, 3.0 s |
-| A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 124 KB / 27.4 MB; 78 KB / 4.2 MB |
+| A11 | Runtime | ≤ 60 s per module on a warm cache | 8.0 s, 1.3 s |
+| A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 130 KB / 36.8 MB; 81 KB / 2.5 MB |
 | A13 | Determinism | two runs produce identical `summary.json` except `elapsed_ms` | verified |
 | A14 | Verifier | `node scripts/verify.mjs` exits 0 | 87/87 checks pass |
-| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 127 / 47 / 11 |
+| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 187 / 8 / 10 |
 | A16 | L3 on fixture | ≥ 1 `proved` and ≥ 1 `failed` VC | 2 proved, 1 failed, 3 unknown |
 | A17 | Funnel report | every report contains the funnel Mermaid diagram and L1/L2/L3 rows | present in all three |
 | A18 | Cumulative levels | `--level N` runs levels 1..N; `--funnel` runs all three | covered by unit + E2E runs |
 
 A6/A7 are pinned by unit tests rather than by the report, so they remain valid even if the fixture changes; A8–A10 and A15–A17 are checked from the generated reports by `scripts/verify.mjs`.
 
-**Re-measurement note (2026-11-10 deep QA).** The "Measured" column records the
-committed artefacts, generated when `@latest` resolved to 0.164.62 / 0.4.43.
-Today it resolves to 0.164.64 / 0.4.46, so A3/A4/A11/A12 are re-measured
-separately by `scripts/qa/e2e.mjs` (fresh runs) and `scripts/verify.mjs` (committed
-artefacts, pinned by file name). Current fresh-run values: A2 = 33/33, A4 =
-99.87 % / 97.28 %, A10 = 4 / 3 nodes, A11 = 5.7 s / 1.0 s, A12 = 141.7 KB + 56.5
-MB trace / 52.7 KB + small trace, A13 = summaries and traces identical across two
-runs, A14 = 87/87. A12's trace ceiling (64 MB) is the tightest margin: the
-default `--trials 8` on doubleML already produces 56.5 MB, so the documented
-`--trials 4` recipe is what keeps it inside the threshold.
+**Where the "Measured" column comes from.** It records the **committed artefacts** in
+`reports/`, regenerated at 0.1.22 with the release recipe — `--funnel --trials 4` and
+one slice each, with **no** `--max-functions` cap — when `@latest` resolved to
+**0.164.64** and **0.4.50**. Every cell is that artefact's own counter, so it is
+traceable to a file: A4 is `(statements − unsupported) / statements`, A11 is the
+artefact's `elapsed_ms`, A12 is the artefact's size on disk, and A10 is the node
+count of the slice section. `scripts/qa/e2e.mjs` re-measures the same thresholds
+against **fresh** runs.
+
+A12's trace ceiling (64 MB) is the tightest margin: the doubleML trace is **36.8 MB**
+at `--trials 4`, and the default `--trials 8` produces a larger one, so the
+**documented `--trials 4` recipe** is what keeps it inside the threshold.
 
 ---
 

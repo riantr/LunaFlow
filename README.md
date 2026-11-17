@@ -470,8 +470,21 @@ class of bug is gone by construction.
 finds every core on the machine, and compares the declarations this module
 actually uses — the parameters it passes and the return type, because a
 parameter it does not pass may change shape without breaking anything, while
-a return type that changes always does. MEASURED: **12 declarations,
-identical in 3 cores** (registry 0.1.20261105, local 0.10.20, local 0.10.19).
+a return type that changes always does. MEASURED: **12 declarations, identical in
+every core compared** — the registry's newest (`moonbitlang/core@0.1.20261117+06da1ed44`
+at the time of writing) plus every core on the machine. **The count of cores is the
+machine's, and it moves**; the invariant is the 12 declarations, all of them
+identical.
+
+**And a fetch that unpacked nothing is not a compatibility break.** `moon fetch`
+creates the destination directory before it unpacks, so an interrupted fetch leaves
+an **empty** tree — and the next fetch says *"already exists"* and unpacks nothing.
+The gate would then compare the module's declarations against an empty tree and
+report that the newest core declares **none** of them, which is not what happened.
+MEASURED: this happened on 2026-11-17, and the core was fine. The gate now checks
+the fetched tree for **content**, clears an unusable one and fetches again, and
+reports a fetch that cannot obtain the core as *"the core's compatibility is
+UNKNOWN"*, never as an incompatible declaration.
 
 **The release is CI-driven.** Pushing the release tag runs
 `.github/workflows/publish.yml`, which re-runs this gate, checks that the
@@ -2178,7 +2191,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
-| `node scripts/qa/core_compat.mjs` | **12 declarations identical in 2 cores** |
+| `node scripts/qa/core_compat.mjs` | **12 declarations identical in every core compared** |
 | `node scripts/qa/verify_published.mjs 0.1.22` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports — the **Time** column is the

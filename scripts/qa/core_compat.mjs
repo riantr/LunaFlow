@@ -42,6 +42,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -112,6 +113,28 @@ function coreVersion(dir) {
   }
 }
 
+///| Is a fetched core tree actually USABLE?
+///
+/// MEASURED BUG (2026-11-17): `moon fetch` creates the destination directory
+/// BEFORE it unpacks the package, so an interrupted fetch leaves an EMPTY
+/// directory behind. The next fetch then says "already exists" and does
+/// nothing, and the gate compares the module's declarations against an EMPTY
+/// tree -- which reads as "the newest core does not declare any of them", a
+/// compatibility break that does not exist. The core was fine; the extraction
+/// was not.
+///
+/// So the tree is checked for CONTENT, not for existence: it has to carry the
+/// packages the comparison reads. An empty or package-less tree is cleared and
+/// fetched again once; if it is still unusable, that is reported as a FETCH
+/// failure and never as an incompatible declaration.
+function coreIsUsable(dir) {
+  const expected = ["async", "env"];
+  return (
+    existsSync(dir) &&
+    expected.every((pkg) => existsSync(join(dir, pkg)) && readdirSync(join(dir, pkg)).length > 0)
+  );
+}
+
 ///| The registry's newest `moonbitlang/core`, fetched and extracted.
 async function fetchNewestCore() {
   const res = await fetch("https://mooncakes.io/api/v0/modules/moonbitlang/core");
@@ -129,19 +152,38 @@ async function fetchNewestCore() {
     'name = "probe/core_compat"\n\nversion = "0.1.0"\n',
     "utf8",
   );
-  const run = spawnSync("moon", ["-C", probe, "fetch", `moonbitlang/core@${version}`], {
-    cwd: ROOT,
-    encoding: "utf8",
-    timeout: 900000,
-  });
-  if (run.status !== 0) {
-    throw new Error(
-      `moon fetch moonbitlang/core@${version} failed:\n${run.stdout}\n${run.stderr}`,
-    );
-  }
   const extracted = join(probe, ".repos", "moonbitlang", "core", version);
-  if (!existsSync(extracted)) throw new Error(`moon fetch did not extract ${extracted}`);
-  return { version, dir: extracted };
+
+  // An empty tree from an interrupted fetch is cleared first: `moon fetch`
+  // would otherwise say "already exists" and unpack nothing.
+  if (existsSync(extracted) && !coreIsUsable(extracted)) {
+    rmSync(extracted, { recursive: true, force: true });
+  }
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const run = spawnSync("moon", ["-C", probe, "fetch", `moonbitlang/core@${version}`], {
+      cwd: ROOT,
+      encoding: "utf8",
+      timeout: 900000,
+    });
+    if (run.status !== 0) {
+      throw new Error(
+        `moon fetch moonbitlang/core@${version} failed:\n${run.stdout}\n${run.stderr}`,
+      );
+    }
+    if (coreIsUsable(extracted)) return { version, dir: extracted };
+    // A fetch that "succeeded" but unpacked nothing: clear it and try once
+    // more, because the second attempt is the one that actually downloads.
+    if (existsSync(extracted)) rmSync(extracted, { recursive: true, force: true });
+    if (attempt === 2) {
+      throw new Error(
+        `moon fetch moonbitlang/core@${version} reported success but unpacked no packages ` +
+          `at ${extracted}; the registry's newest core could not be obtained, so its ` +
+          `compatibility is UNKNOWN rather than broken`,
+      );
+    }
+  }
+  throw new Error(`could not obtain moonbitlang/core@${version}`);
 }
 
 // ------------------------------------------------------- the declarations
