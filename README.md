@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.22
+moon add riantr/LunaFlow@0.1.23
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.22",
+  "riantr/LunaFlow@0.1.23",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.22](https://mooncakes.io/docs/riantr/LunaFlow@0.1.22).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.23](https://mooncakes.io/docs/riantr/LunaFlow@0.1.23).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -505,6 +505,42 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.23
+
+**A documentation-only release, for the same reason 0.1.21 was one: the registry serves
+the README as it stood at the tag.**
+
+The 0.1.22 release corrected the core-compatibility text in this file, but the
+correction landed **after** the tag was cut — so the page for 0.1.22, which is the
+release the registry still serves as `latest`, carried the old cells. MEASURED on that
+page before this release: the prose said *"identical in **3** cores (registry
+0.1.20261105, local 0.10.20, local 0.10.19)"* while the gate table on the same page
+said *"identical in **2** cores"* — one page contradicting itself about one measurement —
+and it named a core version two registry releases behind the current one
+(`moonbitlang/core@0.1.20261117+06da1ed44`).
+
+**What this page says now.** The invariant, not the machine's core count: **12
+declarations, identical in every core compared** — the registry's newest core plus every
+core on the machine. The count of cores is the machine's, and it moves; the 12
+declarations do not.
+
+**And the half of the correction the old page never had: a fetch that unpacked nothing
+is not a compatibility break.** `moon fetch` creates the destination directory before it
+unpacks, so an interrupted fetch leaves an **empty** tree, and the next fetch says
+*"already exists"* and unpacks nothing. The gate would then have compared this module's
+declarations against an empty tree and reported that the newest core declares **none**
+of them — which is not what happened. MEASURED: that happened on 2026-11-17, and the core
+was fine. The gate now checks the fetched tree for **content**, clears an unusable one and
+fetches again, and reports a core it cannot obtain as **UNKNOWN** — never as an
+incompatible declaration.
+
+**The analyser is unchanged.** `src/` and `reports/` are byte-identical to 0.1.22, where
+the three artefacts were verified to regenerate byte-identically, traces included. This
+release therefore moves no source file and finds exactly what 0.1.22 finds: **31 rows, 0
+removed, 0 added** over this tree. The published source does carry two corrections that
+are not the analyser's: `docs/design.md` now matches the committed artefacts, and
+`scripts/qa/core_compat.mjs` carries the fetch fix above.
 
 ### What changed in 0.1.22
 
@@ -2192,7 +2228,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 declarations identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.22` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.23` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache. The
 measured runs committed with the reports — the **Time** column is the
 `elapsed_ms` of the committed artefact itself, so every cell is traceable to a
