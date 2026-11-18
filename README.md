@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.26
+moon add riantr/LunaFlow@0.1.27
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.26",
+  "riantr/LunaFlow@0.1.27",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.26](https://mooncakes.io/docs/riantr/LunaFlow@0.1.26).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.27](https://mooncakes.io/docs/riantr/LunaFlow@0.1.27).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -484,6 +484,32 @@ at the time of writing) plus every core on the machine. **The count of cores is 
 machine's, and it moves**; the invariant is the 12 declarations, all of them
 identical.
 
+**And ONE MORE declaration, which is TEST-ONLY.** The property-based tests import
+the toolchain's own `moonbitlang/core/quickcheck` — the package inside the
+`moonbitlang/core` the toolchain bundles — and nothing else:
+
+```moonbit
+import {
+  "moonbitlang/core/quickcheck" @coreqc
+} for "test"
+```
+
+So the gate compares a **13th** declaration, `quickcheck.check`, and it is counted
+separately because the two contracts are different:
+
+| | what it is | what a core without it means |
+|---|---|---|
+| the **12** | dependencies of the published library | the library does not build there |
+| the **1** | a dependency of this module's **tests** only | the library still builds there; only the tests do not |
+
+The gate therefore reports a missing **test-only** declaration as a NOTE, not as a
+break, and still reports a *renamed* one as a break — a core that declares
+`check` with a different signature would break the tests, and that is real.
+MEASURED: the `count` label the tests pass is compared, every core in the
+contract declares it with the same signature, and a core with `count` renamed to
+`cases` is reported as *"no parameter with label count"* — the gate catches the
+rename that let 0.1.23 fail on the runner.
+
 **And a fetch that unpacked nothing is not a compatibility break.** `moon fetch`
 creates the destination directory before it unpacks, so an interrupted fetch leaves
 an **empty** tree — and the next fetch says *"already exists"* and unpacks nothing.
@@ -550,6 +576,87 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.27
+
+**The analyser now tests itself with generated programs, and the core
+compatibility contract covers the new import.**
+
+**Property-based tests over the analyser.** The hand-written tests in this
+package state **one case each**: *"a division by a divisor that is not zero is
+not reported"* pins one program, and the guard tests pin one guarded program. A
+property states the **invariant** once and checks it over generated inputs, so
+it covers the shape space a hand-written case cannot. Three properties now run
+on every target:
+
+| Property | What it states |
+|---|---|
+| a literal divisor is a division by zero **exactly when the literal is zero** | the generated value decides the expected verdict |
+| a guarded divisor is **never** a division by zero, whatever the shape | paired with the unguarded twin, which always is one |
+| the analyser produces a verdict for **every generated shape** | no parse issue, no missing function, no crash |
+
+**MEASURED, and this is the part that matters: the properties catch the defect
+class.** Run against the **pre-fix** parser — the tree at v0.1.24, before
+`guard` was modelled — they **fail**:
+
+```text
+test "PROBE: a guarded divisor is never a division by zero" failed
+QuickCheck falsified after 1 test(s)
+counterexample: (0, 0)
+```
+
+The hand-written test caught that defect too. What the property adds is that the
+invariant now holds for **every generated divisor and program shape**, and that
+the **shrink** reports the *smallest* failing input rather than the one that was
+written down.
+
+**The generator is bounded, and that is not a detail.** `Arbitrary for Int32`
+draws from the whole 32-bit range, so the first version of this file sized work
+from a generated count, built a program with **billions** of statements, and
+**never finished**. Every generated *count* is clamped; the generated *values*
+are not, because the analyser reads a literal's value and the whole range is
+meaningful — MEASURED: `count / 0` reports one division by zero, `count / 10`
+reports none, `count / -5` reports none, and the extremes (`2147483647`,
+`-2147483648`) report none and parse without an issue.
+
+**The driver is the toolchain's own core, not the registry module.**
+`moonbitlang/core/quickcheck` ships inside the `moonbitlang/core` every
+toolchain bundles, so it is imported **for tests only**:
+
+```moonbit
+import {
+  "moonbitlang/core/quickcheck" @coreqc
+} for "test"
+```
+
+`moon.mod` keeps its **empty** import block, the published library declares no
+dependency, and the published artifact is **byte-identical** with and without
+these tests (2,041,711 bytes, the same SHA256). The registry module
+`moonbitlang/quickcheck` would have needed an import block in `moon.mod` —
+which is the one thing this module's architecture is built to avoid. The cost
+is **within noise**: three properties over 300 generated cases measure 3.91 s
+against 4.01 s for the same suite without them, alternating and minimum of four.
+
+**And the core-compatibility contract now covers that import.** The gate
+compares a **13th** declaration, `quickcheck.check`, and counts it separately
+from the 12 the published library depends on — because a core without the
+package breaks this module's **tests**, not its library. Two things had to be
+fixed in the gate for it to see the declaration at all, and both were real:
+
+- a declaration with **type parameters** was invisible — the core spells it
+  `pub fn[A : Arbitrary + @shrink.Shrink] check(...)`, and the pattern required
+  the name to follow `fn` directly;
+- a parameter whose **type contains parentheses** ended the parameter scan
+  early — `property : (A) -> Bool raise?` is the first parameter, and the scan
+  stopped at its `)`, so the whole signature read as one parameter named
+  `property : (A` and the `count` label was reported as a label no core
+  declares.
+
+MEASURED: the gate now reports *"12 library + 1 test-only declaration(s)
+identical in every core compared"*, and it **catches a rename** — a core with
+`count` renamed to `cases` is reported as *"no parameter with label count"*.
+Every core in the contract, including the oldest one the README supports
+(`0.1.20261102`), declares it with the same signature.
 
 ### What changed in 0.1.26
 
@@ -2348,7 +2455,7 @@ src/app/                   21 library files: parser, CFG, L1 interpreter,
                            analysis, memory layout model, foreign address
                            space model, concurrency model, IPC and buffer
                            model, index/length relation, report renderer
-src/app/*_test.mbt         220 tests in 19 files
+src/app/*_test.mbt         223 tests in 20 files
 src/command/                the CLI implementation, as a library
 src/cli/main.mbt           the published CLI entrypoint
 fixtures/vuln_demo/        taint / dead-code / infinite-loop / contract fixture
@@ -2400,9 +2507,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 173 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 173 warnings, 0 errors |
 | `moon check --target js` | exit 0, 198 warnings, 0 errors |
-| `moon test src/app --target native` | **220 passed, 0 failed** |
-| `moon test src/app --target wasm` | **220 passed, 0 failed** |
-| `moon test src/app --target js` | **220 passed, 0 failed** |
+| `moon test src/app --target native` | **223 passed, 0 failed** |
+| `moon test src/app --target wasm` | **223 passed, 0 failed** |
+| `moon test src/app --target js` | **223 passed, 0 failed** |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -2417,15 +2524,15 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
-| `node scripts/qa/core_compat.mjs` | **12 declarations identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.26` | **4 passed, 0 failed** |
+| `node scripts/qa/core_compat.mjs` | **12 library + 1 test-only declaration(s) identical in every core compared** |
+| `node scripts/qa/verify_published.mjs 0.1.27` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
 `moon 0.1.20261117` (core 0.10.21+06da1ed44), installed into a scratch home next to
 the verified one: `moon check` gives **173 / 173 / 198 warnings, 0 errors** on native /
-wasm / js, `moon test src/app` gives **220 passed, 0 failed** on each of the three,
+wasm / js, `moon test src/app` gives **223 passed, 0 failed** on each of the three,
 `moon build src/cli --target native` and `moon build . --target wasm` are exit 0, and
 `moon fmt --check` is exit 0. The toolchain the CDN serves as `latest` is still that
 one — its binary has not been rebuilt since this release was verified — but the
@@ -2440,7 +2547,7 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 (no specs) | 0 | 118 | 8.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 (no specs) | 0 | 9 | 1.3 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 49 | 6,072 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.43 s |
+| `LunaFlow` itself (`--dir .`) | 50 | 6,104 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.39 s |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** alternating runs, which is also

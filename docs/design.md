@@ -73,7 +73,7 @@ src/app/                     one library package (avoids cross-package plumbing)
   funnel.mbt                 L1 -> L2 -> L3 escalation, dedup, specification gaps
   report.mbt                 Markdown + Mermaid rendering and diagram validation
   scan.mbt    coverage.mbt   module acquisition, manifest parsing, Cobertura import
-  *_test.mbt                 220 tests in 19 files
+  *_test.mbt                 223 tests in 20 files
 src/cli/main.mbt             async CLI entrypoint; thin, over src/command
 fixtures/vuln_demo/          intentionally defective MoonBit package for acceptance
 scripts/verify.mjs           dependency-free acceptance checker
@@ -168,6 +168,27 @@ The counts fell because the old ones were wrong: the parser shredded every const
 The quickcheck row is the newest measurement, and it is the one that moved: against the published 0.1.24 artifact the same tree read **370** functions, **1,519** statements understood, **358** unsupported, **80.9 %** coverage and **5 parse issues**. With `guard` modelled and the parameterised `test` blocks parsed, it reads **375** functions, **1,549** understood, **355** unsupported, **81.3 %** and **0 parse issues** — five more functions, thirty more statements understood, three fewer gaps.
 
 Compatibility strategy: the parser is tolerant (it clamps brace depth and skips unparseable statements) so a new syntax form degrades to an explicit gap instead of aborting the file. When a module's coverage is low, the report says so, and the coverage bridge can still supply compiled-execution evidence.
+
+### 3.5 Property-based tests over the analyzer
+
+A hand-written test states **one case**; a property states the **invariant** once and checks it over generated inputs. The analyzer is the thing most worth testing that way, because its failure mode is a class of defect rather than a single bug: a construct the parser does not model loses its refinement, and the analyzer then reports something the runtime would never do.
+
+Three properties run on every target, driven by the toolchain's own `moonbitlang/core/quickcheck` — the package inside the bundled `moonbitlang/core`, imported **for tests only**, so `moon.mod` keeps its empty import block and the published artifact is byte-identical with and without them:
+
+| Property | Invariant |
+|---|---|
+| a literal divisor is a division by zero **exactly when the literal is zero** | the generated value decides the expected verdict |
+| a guarded divisor is **never** a division by zero, whatever the shape | paired with the unguarded twin, which always is one |
+| the analyzer produces a verdict for **every generated shape** | no parse issue, no missing function, no crash |
+
+**MEASURED, and this is why they exist.** Against the **pre-fix** parser (the tree at v0.1.24, before `guard` was modelled) the guarded property **fails**, with a shrunk counterexample `(0, 0)`; against the fixed parser it passes. The hand-written test caught that defect too — what the property adds is coverage of the whole shape space, and a **shrunk** counterexample rather than a written-down one.
+
+Two rules follow from the measurement, and both are enforced by the properties themselves:
+
+- **The generated input must be bounded.** `Arbitrary for Int32` draws from the whole 32-bit range, so a property that sized work from a generated count built a program with billions of statements and **never finished**. Counts are clamped; values are not, because the analyzer reads a literal's value and the whole range is meaningful.
+- **The assertion must be paired.** A property that checked only the "must not be reported" half would also pass if the analyzer stopped reporting every division by zero. Each property states both directions.
+
+**Apply when** → Any change to the parser, the abstract layer or the value analysis: the property that covers the changed family is the regression test, and the hand-written case is the minimal reproduction beside it.
 
 ---
 
@@ -1233,14 +1254,14 @@ Interpretation:
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 220 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 223 unit/integration tests | `src/app/*_test.mbt` |
 
 ### 10.2 Acceptance criteria (quantified, reproducible)
 
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 220 passed, 0 failed | 220/220 |
+| A2 | Tests | `moon test src/app --target native` ≥ 223 passed, 0 failed | 223/223 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.4.50 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.07 %, 95.55 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |

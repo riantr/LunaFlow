@@ -58,13 +58,33 @@ const ROOT = resolve(new URL("../../", import.meta.url).pathname.replace(/^\/([A
 const SCRATCH = join(ROOT, "_build", "qa", "core_compat");
 
 // The core packages this module imports, and the alias each is used under.
+//
+// `testOnly` marks a package that is imported FOR TESTS ONLY. Such a package
+// is not a dependency of the PUBLISHED library: the library still builds
+// against a core that does not declare it, and only this module's own test
+// build needs it. So a core that does not declare it is reported as a
+// NOTE, not as a break -- and a core that declares it with a DIFFERENT
+// signature is still a break, because the tests would not compile against
+// it.
+//
+// The `moonbitlang/core/quickcheck` package is the first one: it is the
+// property-test driver, and it is imported as
+//
+//   import { "moonbitlang/core/quickcheck" @coreqc } for "test"
+//
+// so `moon.mod` keeps its empty import block and the published artifact is
+// byte-identical with and without the tests. MEASURED (2026-11-18): every
+// core in the compatibility contract declares it, with the SAME `check`
+// signature -- including the `count` LABEL the tests pass, which is why the
+// label rule below applies to it as well.
 const PACKAGES = {
-  async: "async",
-  fs: "async/fs",
-  process: "async/process",
-  env: "env",
-  io: "async/io",
-  stdio: "async/stdio",
+  async: { pkg: "async" },
+  fs: { pkg: "async/fs" },
+  process: { pkg: "async/process" },
+  env: { pkg: "env" },
+  io: { pkg: "async/io" },
+  stdio: { pkg: "async/stdio" },
+  coreqc: { pkg: "quickcheck", testOnly: true },
 };
 
 // --------------------------------------------------------------- the cores
@@ -269,6 +289,33 @@ function splitParams(text) {
     });
 }
 
+///| The parameter list of a function declaration, scanned with BALANCED
+/// parentheses.
+///
+/// MEASURED (2026-11-18): the parameter list used to be taken with a
+/// non-greedy scan up to the FIRST `)`, so a parameter whose TYPE contains
+/// parentheses ended the scan early. The core's `quickcheck.check` takes
+///
+///   property : (A) -> Bool raise?
+///
+/// so the whole signature read as ONE parameter named "property : (A", and
+/// the `count` label the tests pass was reported as a label no core
+/// declares -- a break that did not exist.
+function scanParams(text, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") {
+      depth--;
+      if (depth === 0) {
+        return { params: text.slice(openIdx + 1, i), end: i };
+      }
+    }
+  }
+  return null;
+}
+
 ///| The declaration of `name` in a core package.
 ///
 /// Returns `{ kind, params, ret, text }` for a function, `{ kind: "enum",
@@ -282,17 +329,35 @@ function findDecl(coreDir, pkg, name) {
   for (const file of pkgFiles(coreDir, pkg)) {
     const text = readFileSync(file, "utf8");
 
+    // A function declaration, WITH OR WITHOUT TYPE PARAMETERS:
+    //
+    //   pub fn check(property : (A) -> Bool raise?, ...) -> Unit raise
+    //   pub fn[A : Arbitrary + @shrink.Shrink] check(...) -> Unit raise
+    //
+    // MEASURED (2026-11-18): the pattern required the name to follow `fn`
+    // directly, so a declaration with type parameters was not found at all
+    // -- and the core's `quickcheck.check` has them. The core also spells
+    // the return type `-> Unit raise`, which the pattern reads as the
+    // return type.
     const fnRe = new RegExp(
-      `^pub (?:async )?fn ${esc}\\s*\\(([\\s\\S]*?)\\)\\s*(->[^\\n{]*)?\\{`,
+      `^pub (?:async )?fn\\s*(?:\\[[^\\]]*\\])?\\s*${esc}\\s*\\(`,
       "m",
     );
     const fn = text.match(fnRe);
     if (fn) {
-      return {
-        kind: "fn",
-        params: splitParams(fn[1] || ""),
-        ret: (fn[2] || "").replace(/\s+/g, " ").trim(),
-      };
+      const openIdx = fn.index + fn[0].length - 1;
+      const scanned = scanParams(text, openIdx);
+      if (scanned) {
+        // The return type: what is between the closing parenthesis and the
+        // body.
+        const after = text.slice(scanned.end + 1);
+        const ret = after.match(/^\s*(->[^\n{]*)?\{/)?.[1] ?? "";
+        return {
+          kind: "fn",
+          params: splitParams(scanned.params),
+          ret: ret.replace(/\s+/g, " ").trim(),
+        };
+      }
     }
 
     // A re-export: `pub using @event_loop {now}`.
@@ -433,7 +498,14 @@ function ourCallSites() {
       }
       const key = `${alias}.${name}`;
       if (!calls.has(key)) {
-        calls.set(key, { pkg: PACKAGES[alias], name, positional: 0, labels: new Set(), variant: true });
+        calls.set(key, {
+          pkg: PACKAGES[alias].pkg,
+          testOnly: PACKAGES[alias].testOnly === true,
+          name,
+          positional: 0,
+          labels: new Set(),
+          variant: true,
+        });
       }
       const rec = calls.get(key);
       rec.positional = Math.max(rec.positional, positional.length);
@@ -448,7 +520,14 @@ function ourCallSites() {
       if (!PACKAGES[alias]) continue;
       const key = `${alias}.${m[2]}`;
       if (!calls.has(key)) {
-        calls.set(key, { pkg: PACKAGES[alias], name: m[2], positional: 0, labels: new Set(), variant: true });
+        calls.set(key, {
+          pkg: PACKAGES[alias].pkg,
+          testOnly: PACKAGES[alias].testOnly === true,
+          name: m[2],
+          positional: 0,
+          labels: new Set(),
+          variant: true,
+        });
       }
     }
   }
@@ -486,11 +565,29 @@ const cores = [
 const calls = ourCallSites();
 console.log(`call sites:    ${calls.size}\n`);
 
+// How many declarations were compared in EVERY core, split by whether they
+// are a dependency of the PUBLISHED library or of the TESTS only.
+let libraryCompared = 0;
+let testOnlyCompared = 0;
+const notes = [];
+
 for (const [key, rec] of [...calls].sort()) {
   const decls = cores.map((core) => ({ label: core.label, decl: findDecl(core.dir, rec.pkg, rec.name) }));
 
   const absent = decls.filter((d) => !d.decl);
   if (absent.length) {
+    if (rec.testOnly) {
+      // A TEST-ONLY import: the published library declares no dependency on
+      // this package, so a core that does not have it still builds the
+      // library. It cannot build this module's TESTS, which is information
+      // and not a break in the shipped artefact.
+      const note =
+        `${key}: not declared in ${absent.map((d) => d.label).join(", ")} — a TEST-ONLY import, ` +
+        `so the published library still builds against that core, but this module's tests do not`;
+      notes.push(note);
+      console.log(`  note ${key} — absent in ${absent.map((d) => d.label).join(", ")} (test-only import)`);
+      continue;
+    }
     failures.push(`${key}: not declared in ${absent.map((d) => d.label).join(", ")}`);
     console.log(`  FAIL ${key} — absent in ${absent.map((d) => d.label).join(", ")}`);
     continue;
@@ -561,6 +658,8 @@ for (const [key, rec] of [...calls].sort()) {
     for (const p of parts) console.log(`         ${p.label}: ${p.sig}`);
     continue;
   }
+  if (rec.testOnly) testOnlyCompared += 1;
+  else libraryCompared += 1;
   console.log(`  ok   ${key}  ${parts[0].sig}`);
 }
 
@@ -571,4 +670,10 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`\nRESULT: PASS (${calls.size} declaration(s) identical in every core)`);
+for (const n of notes) console.log(`\nNOTE: ${n}`);
+
+console.log(
+  `\nRESULT: PASS (${libraryCompared} declaration(s) identical in every core` +
+    (testOnlyCompared ? `, ${testOnlyCompared} test-only declaration(s) identical in every core` : "") +
+    `)`,
+);

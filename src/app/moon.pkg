@@ -3,6 +3,19 @@ import {
   "moonbitlang/core/async/process",
 }
 
+// The property-based tests import the toolchain's OWN `quickcheck` package --
+// the one inside the `moonbitlang/core` the toolchain bundles -- and nothing
+// else. It is imported FOR TESTS ONLY, so `moon.mod` keeps its empty import
+// block, the published library declares no dependency, and the published
+// artifact is byte-identical with and without these tests.
+//
+// The registry module `moonbitlang/quickcheck` would have needed an import
+// block in `moon.mod`, which is the thing this module's whole architecture
+// avoids: the runtime comes from the toolchain, so nothing can drift.
+import {
+  "moonbitlang/core/quickcheck" @coreqc,
+} for "test"
+
 // The async runtime comes from the toolchain-bundled `moonbitlang/core`
 // module, and `moonbitlang/core/async` is EXPERIMENTAL there: using it has
 // to be acknowledged, or the build refuses it.
