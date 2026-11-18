@@ -1196,14 +1196,17 @@ report format, `simp_caret`, is the only one that lexes and parses the source, a
 the reporter's frontend (`moon_cove@0.3.6`, which pins `moonbitlang/lexer@0.4.4`
 and `moonbitlang/parser@0.4.4`) cannot read this tree. Its lexer **reserves**
 `method` and `abstract` — identifiers the MoonBit compiler accepts — so
-`src/app/eva.mbt` (a parameter named `method`) reports **2 lexical errors** and
-`src/app/report.mbt` (a field named `abstract`) reports **1**. Past the lexer, the
-peer parser rejects a tuple-destructuring `let` bound to an `if`/`match`
-expression. The other **8 of the 9** formats read the same data without parsing
-the source — `bisect`, `caret`, `summary`, `full_summary`, `sorted_summary`,
-`cobertura`, `html`, `coveralls` — and the tool's own hint says so: *"use -f caret
-to report coverage without parsing"*. This is a limitation of the **peer tooling**,
-not of the analyser: the same tree compiles, tests and publishes.
+`src/app/eva.mbt` (a parameter named `method`) reports **2 lexical errors**,
+`src/app/report.mbt` (the `abstract` field of `ReportInput`) **1**, and
+`src/command/command.mbt` (the same field in a struct literal) **1**. Renaming
+those three identifiers in a scratch copy of the tree makes the **whole tree
+parse** and the format work, so the blocker is the peer's reserved-word list and
+not this module's syntax. The other **8 of the 9** formats read the same data
+without parsing the source — `bisect`, `caret`, `summary`, `full_summary`,
+`sorted_summary`, `cobertura`, `html`, `coveralls` — and the tool's own hint says
+so: *"use -f caret to report coverage without parsing"*. This is a limitation of
+the **peer tooling**, not of the analyser: the same tree compiles, tests and
+publishes.
 
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the

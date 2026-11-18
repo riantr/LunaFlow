@@ -2883,8 +2883,9 @@ moon run src/cli --target native -- analyze <coord> --coverage cov.xml --out rep
 The `-- -f summary` is not decoration. The default report format (`simp_caret`) is
 the only one that **parses** the covered sources, and the reporter's own lexer
 reserves a few identifiers that the MoonBit compiler accepts — `method` and
-`abstract` are the two this module itself hits. A module that uses one of them
-makes the default format fail with *"cannot parse source file '…': N lexical
+`abstract` are the two this module itself hits, in `src/app/eva.mbt`,
+`src/app/report.mbt` and `src/command/command.mbt`. A module that uses one of
+them makes the default format fail with *"cannot parse source file '…': N lexical
 error(s)"*, and then the run produces no coverage data at all. The other **8 of
 the 9** formats read the same data without parsing the source, so
 `-- -f summary` (or `-f caret`, `-f cobertura`, …) is the route that works for

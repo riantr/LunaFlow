@@ -270,9 +270,11 @@ fixed in the tool's favour rather than in the analyser's:
 * the default report format (`simp_caret`) still cannot read this tree, and the
   reason is now known: the reporter's lexer **reserves** `method` and `abstract`,
   which the MoonBit compiler accepts — `src/app/eva.mbt` has a parameter named
-  `method` and `src/app/report.mbt` a field named `abstract`. Past the lexer, the
-  peer parser also rejects a tuple-destructuring `let` bound to an `if`/`match`.
-  The other 8 of the 9 formats read the same data without parsing the source.
+  `method`, `src/app/report.mbt` a field named `abstract`, and
+  `src/command/command.mbt` the same field in a struct literal. Renaming those
+  three in a scratch copy makes the whole tree parse, so the blocker is the
+  peer's reserved-word list and not this module's syntax. The other 8 of the 9
+  formats read the same data without parsing the source.
 
 See design §7.2 for the measurement and the route.
 
