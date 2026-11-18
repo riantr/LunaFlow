@@ -254,6 +254,28 @@ and 3,497 statements.
 * `src/cli` is not covered at all (it is not part of the instrumented package) —
   which is exactly where M1 lived.
 
+**Re-measured 2026-11-18: 57.35 % (4,052/7,065)**, twice, on a clean trace set.
+The number above is this QA pass's own measurement, on a smaller `src/app` and a
+smaller suite; both grew since. Two things were wrong with the route and both are
+fixed in the tool's favour rather than in the analyser's:
+
+* the *"coverage only works with the fallback `-- -f caret`"* note (L6) was
+  right about the symptom and wrong about the scope — the Cobertura route itself
+  was broken by a **stale `_build/native` tree** from the pre-rename era, whose
+  `.trace.source` files pointed at lines of `src/cli/main.mbt` that no longer
+  exist. The reporter discovers traces **recursively from the current directory**,
+  so any stale trace under the repository poisons every run, and
+  `moon coverage clean` does not remove them. Moving the tree out fixed the
+  Cobertura route;
+* the default report format (`simp_caret`) still cannot read this tree, and the
+  reason is now known: the reporter's lexer **reserves** `method` and `abstract`,
+  which the MoonBit compiler accepts — `src/app/eva.mbt` has a parameter named
+  `method` and `src/app/report.mbt` a field named `abstract`. Past the lexer, the
+  peer parser also rejects a tuple-destructuring `let` bound to an `if`/`match`.
+  The other 8 of the 9 formats read the same data without parsing the source.
+
+See design §7.2 for the measurement and the route.
+
 ### 3.10 Fuzz
 
 `scripts/qa/fuzz.mjs`: 110 cases, seeded (`--seed 20261110`), each executed in a

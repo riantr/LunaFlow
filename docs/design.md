@@ -463,10 +463,12 @@ source is inside the noise of the run.
 Mermaid does not need a compiler, but real compiled evidence strengthens the dynamic story. `parse_cobertura` reads a Cobertura XML produced by:
 
 ```
-moon coverage analyze
+moon coverage analyze -- -f summary
 moon coverage report -f cobertura -o cov.xml
 LunaFlow analyze <coord> --coverage cov.xml
 ```
+
+The `-- -f summary` is not decoration: the default report format (`simp_caret`) is the only one that **parses** the covered sources, and the reporter's own lexer reserves a few identifiers the MoonBit compiler accepts (`method`, `abstract`). A module that uses one of them makes the default format fail with *"cannot parse source file '…': N lexical error(s)"*, and then no coverage data is produced at all. The other **8 of the 9** formats read the same data without parsing the source, so the bridge above works for every module — §7.2 measures it.
 
 Hit counts are mapped onto CFG nodes by `(file, line)`; report §3.4 shows per-function node coverage and every zero-hit line is labelled *uncovered by the observed suite*, never *dead*. A Cobertura fixture is unit-tested (`pipeline_test.mbt`). This bridge requires the target to build; it is optional so heavy modules remain analyzable.
 
@@ -1170,16 +1172,38 @@ Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `
 | doubleML with a `--max-functions 120` cap (`--trials 4`, no slice) | 193,906 events, 85 sinks, 0 dead, 9.2 s |
 | fixture run, peak working set | 7.5 MB |
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
-| LunaFlow's own line coverage (`moon coverage`) | **44.25 %** (2,046 / 4,624 coverable lines of `src/app`) |
+| LunaFlow's own line coverage (`moon coverage`, `src/app` scope) | **57.35 %** (4,052 / 7,065 coverable lines of `src/app`) |
 
-The coverage row is the **2026-11-11** measurement and has not been re-taken, because
-the route it uses is currently broken on this tree: `moon coverage analyze -p src/app`
-fails with *"cannot parse source file 'src/app/eva.mbt': 2 lexical error(s)"* and
-`moon coverage report -f cobertura` fails with *"invalid source range in
-'src/cli/main.mbt'"*. MEASURED as pre-existing: the **same two errors** come out of a
-pristine checkout of the 0.1.24 tree, so this is not a consequence of the parser
-change — it is the coverage tool's own parser meeting a file it does not accept, and
-it is a defect in the QA route, not in the analyser.
+The coverage row is the **2026-11-18** measurement, re-taken on a CLEAN trace set
+with `moon coverage analyze -p src/app -- -f caret` followed by
+`moon coverage report -p src/app -f cobertura`; two independent test runs produced
+the same **4,052 / 7,065**. The older **44.25 %** row was a defect in the QA ROUTE,
+not a property of the tree, and the footnote that excused it was wrong twice.
+
+The first failure — *"invalid source range in 'src/cli/main.mbt'"* — was a **stale
+build tree**, not a source defect. `_build/native` still held the `.trace.source`
+files of the **2026-11-10** build, written when the module was called
+`moonflow/moonflow` and `src/cli/main.mbt` still held the whole CLI: 368 coverage
+points, every one of them invalid, the first at line 23 of a file that now has ten
+lines. The reporter discovers trace sources **recursively from the current
+directory**, so any stale trace under the repository poisons every run, and
+`moon coverage clean` does **not** remove them. Moving that tree out of the
+repository fixed it and the Cobertura route then worked — so the old claim that
+*"the Cobertura route fails"* was false.
+
+The second failure is real and it belongs to the **coverage tool**: the default
+report format, `simp_caret`, is the only one that lexes and parses the source, and
+the reporter's frontend (`moon_cove@0.3.6`, which pins `moonbitlang/lexer@0.4.4`
+and `moonbitlang/parser@0.4.4`) cannot read this tree. Its lexer **reserves**
+`method` and `abstract` — identifiers the MoonBit compiler accepts — so
+`src/app/eva.mbt` (a parameter named `method`) reports **2 lexical errors** and
+`src/app/report.mbt` (a field named `abstract`) reports **1**. Past the lexer, the
+peer parser rejects a tuple-destructuring `let` bound to an `if`/`match`
+expression. The other **8 of the 9** formats read the same data without parsing
+the source — `bisect`, `caret`, `summary`, `full_summary`, `sorted_summary`,
+`cobertura`, `html`, `coveralls` — and the tool's own hint says so: *"use -f caret
+to report coverage without parsing"*. This is a limitation of the **peer tooling**,
+not of the analyser: the same tree compiles, tests and publishes.
 
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the

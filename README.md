@@ -2875,10 +2875,21 @@ moon run src/cli --target native -- analyze riantr/moonbit_static_analysis@lates
   --function render_reports --slice "buf@render_reports" --out reports
 
 # compiled coverage, when the target builds
-moon coverage analyze
+moon coverage analyze -- -f summary
 moon coverage report -f cobertura -o cov.xml
 moon run src/cli --target native -- analyze <coord> --coverage cov.xml --out reports
 ```
+
+The `-- -f summary` is not decoration. The default report format (`simp_caret`) is
+the only one that **parses** the covered sources, and the reporter's own lexer
+reserves a few identifiers that the MoonBit compiler accepts — `method` and
+`abstract` are the two this module itself hits. A module that uses one of them
+makes the default format fail with *"cannot parse source file '…': N lexical
+error(s)"*, and then the run produces no coverage data at all. The other **8 of
+the 9** formats read the same data without parsing the source, so
+`-- -f summary` (or `-f caret`, `-f cobertura`, …) is the route that works for
+every module. The Cobertura bridge is one of them, so the compiled-coverage path
+above is unaffected.
 
 The binary is `_build/native/debug/build/src/cli/cli.exe`, and the root
 package's is `_build/native/debug/build/LunaFlow.exe`.

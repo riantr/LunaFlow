@@ -22,3 +22,11 @@ __pycache__/
 # `qa/` would also match `scripts/qa/`, and the harness has to be committed.
 # The harnesses write their working directories under `_build/qa/`.
 /qa/
+
+# The coverage reporter writes its report into the CURRENT directory, so a
+# `moon coverage report -f <format>` run leaves these at the repository root.
+# They are outputs, not sources, and they are not worth reviewing.
+/bisect.coverage
+/cobertura.xml
+/coveralls.json
+/_coverage/
