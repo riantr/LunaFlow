@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.27
+moon add riantr/LunaFlow@0.1.28
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.27",
+  "riantr/LunaFlow@0.1.28",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.27](https://mooncakes.io/docs/riantr/LunaFlow@0.1.27).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.28](https://mooncakes.io/docs/riantr/LunaFlow@0.1.28).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -576,6 +576,53 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.28
+
+**`moon coverage analyze` works again — with the DEFAULT report format — and a
+gate holds it there.**
+
+**The coverage route had two independent causes, and the note that excused it
+was wrong twice.**
+
+The first was a **stale build tree**, not a source defect. `_build/native` still
+held the `.trace.source` files of the 2026-11-10 build, written before the
+module was renamed, and their 368 coverage points pointed at lines of
+`src/cli/main.mbt` that no longer exist. The reporter discovers trace sources
+**recursively from the current directory**, so any stale trace under the
+repository poisons every report — and `moon coverage clean` does not remove
+them. Moving that tree out fixed it, and the Cobertura route then worked: the
+old claim that *"the Cobertura route fails"* was false.
+
+The second was **this tree's**. The default report format (`simp_caret`) is the
+only one that *parses* the covered sources, and the reporter's lexer
+**reserves** identifiers the MoonBit compiler accepts — `method` and
+`abstract` among them. One parameter named `method` and one field named
+`abstract` made three files unreadable to it. They are renamed now: `method`
+became `conv_method`, and `ReportInput.abstract` became
+**`ReportInput.abstract_result`** — the name the deep-QA report had already
+asked for, while it was still only a compiler warning. The bare
+`moon coverage analyze` now runs, exit 0, and the whole tree parses.
+
+**One published field was renamed.** `ReportInput.abstract` is now
+`ReportInput.abstract_result`. It is the only API-visible change in this
+release: a consumer that constructs a `ReportInput` renames that one field,
+and everything else stays source-compatible.
+
+**A gate holds the route.** `scripts/qa/coverage_route.mjs` fails on a reserved
+identifier and on a stale trace tree, and CI runs it — together with the
+coverage route itself, so a reserved word the peer adds later is caught too.
+The gate is **falsified** against both failure modes: it is proved to fail, not
+assumed to.
+
+**The coverage number is re-measured.** On a clean trace set it is **57.35 %**
+(4,052 / 7,065 coverable lines of `src/app`), the same figure in two
+independent test runs. The old **44.25 %** row was a measurement of a smaller
+tree, taken through a route that was broken.
+
+**The analyser is unchanged in behaviour.** The source change is a rename; the
+committed artefacts still reproduce exactly (`scripts/verify.mjs` 87/87,
+`e2e.mjs` 56/56), and the finding counts are the same as 0.1.27's.
 
 ### What changed in 0.1.27
 
@@ -2510,6 +2557,8 @@ The gate, and the result it produced for this version:
 | `moon test src/app --target native` | **223 passed, 0 failed** |
 | `moon test src/app --target wasm` | **223 passed, 0 failed** |
 | `moon test src/app --target js` | **223 passed, 0 failed** |
+| `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
+| `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
 | `moon build src/cli --target js` | exit 0 |
 | `moon build . --target wasm` | exit 0 |
@@ -2525,7 +2574,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **12 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.27` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.28` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
@@ -2685,7 +2734,11 @@ declaration this module uses has to be the same in every core a user may
 have) and `verify_published.mjs` (install
 the **published** version from a clean consumer and call its API — the check
 that a green gate cannot give you, because the gate checks the commit and this
-checks what the registry serves). The report of the last deep QA pass is
+checks what the registry serves). `coverage_route.mjs` is the coverage gate: it
+fails on an identifier the coverage reporter **reserves** (the reporter's lexer
+is stricter than the compiler) and on a **stale trace tree** under the
+repository, either of which makes `moon coverage analyze` fail outright. The
+report of the last deep QA pass is
 `docs/qa/REPORT.md` — it covers 0.1.3 and is dated 2026-11-10, so it is a
 record of that pass and not a claim about this version.
 
@@ -2880,17 +2933,17 @@ moon coverage report -f cobertura -o cov.xml
 moon run src/cli --target native -- analyze <coord> --coverage cov.xml --out reports
 ```
 
-The `-- -f summary` is not decoration. The default report format (`simp_caret`) is
-the only one that **parses** the covered sources, and the reporter's own lexer
-reserves a few identifiers that the MoonBit compiler accepts — `method` and
-`abstract` are the two this module itself hits, in `src/app/eva.mbt`,
-`src/app/report.mbt` and `src/command/command.mbt`. A module that uses one of
-them makes the default format fail with *"cannot parse source file '…': N lexical
-error(s)"*, and then the run produces no coverage data at all. The other **8 of
-the 9** formats read the same data without parsing the source, so
-`-- -f summary` (or `-f caret`, `-f cobertura`, …) is the route that works for
-every module. The Cobertura bridge is one of them, so the compiled-coverage path
-above is unaffected.
+The `-- -f summary` is not decoration for a module that uses a **reserved word**.
+The default report format (`simp_caret`) is the only one that **parses** the
+covered sources, and the reporter's own lexer reserves a few identifiers that
+the MoonBit compiler accepts — `method` and `abstract` are two of them. A module
+that uses one of them makes the default format fail with *"cannot parse source
+file '…': N lexical error(s)"*, and then the run produces no coverage data at
+all. This module's own tree avoids them, so the bare `moon coverage analyze`
+works here; the other **8 of the 9** formats read the same data without parsing
+the source, so `-- -f summary` (or `-f caret`, `-f cobertura`, …) is the route
+that works for every module. The Cobertura bridge is one of them, so the
+compiled-coverage path above is unaffected.
 
 The binary is `_build/native/debug/build/src/cli/cli.exe`, and the root
 package's is `_build/native/debug/build/LunaFlow.exe`.

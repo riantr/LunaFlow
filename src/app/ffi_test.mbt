@@ -376,7 +376,7 @@ test "the report has the foreign address space section" {
     elapsed_ms: 0,
     level: 1,
     funnel: None,
-    abstract: None,
+    abstract_result: None,
     proof: None,
   }
   let md = @app.render_report(input, ffi=Some(ffi_model(src)))

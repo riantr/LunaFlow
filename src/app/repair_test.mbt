@@ -311,7 +311,7 @@ fn report_for(coord : String) -> String {
     elapsed_ms: 0,
     level: 1,
     funnel: None,
-    abstract: None,
+    abstract_result: None,
     proof: None,
   }
   @app.render_report(input)

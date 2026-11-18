@@ -468,7 +468,15 @@ moon coverage report -f cobertura -o cov.xml
 LunaFlow analyze <coord> --coverage cov.xml
 ```
 
-The `-- -f summary` is not decoration: the default report format (`simp_caret`) is the only one that **parses** the covered sources, and the reporter's own lexer reserves a few identifiers the MoonBit compiler accepts (`method`, `abstract`). A module that uses one of them makes the default format fail with *"cannot parse source file '…': N lexical error(s)"*, and then no coverage data is produced at all. The other **8 of the 9** formats read the same data without parsing the source, so the bridge above works for every module — §7.2 measures it.
+The `-- -f summary` is not decoration for a module that uses a **reserved word**:
+the default report format (`simp_caret`) is the only one that **parses** the
+covered sources, and the reporter's own lexer reserves a few identifiers the
+MoonBit compiler accepts (`method`, `abstract`). A module that uses one of them
+makes the default format fail with *"cannot parse source file '…': N lexical
+error(s)"*, and then no coverage data is produced at all. This module's own tree
+avoids them (§7.2), so the bare `moon coverage analyze` works here; the other
+**8 of the 9** formats read the same data without parsing the source, so the
+bridge above works for every module.
 
 Hit counts are mapped onto CFG nodes by `(file, line)`; report §3.4 shows per-function node coverage and every zero-hit line is labelled *uncovered by the observed suite*, never *dead*. A Cobertura fixture is unit-tested (`pipeline_test.mbt`). This bridge requires the target to build; it is optional so heavy modules remain analyzable.
 
@@ -1191,22 +1199,28 @@ directory**, so any stale trace under the repository poisons every run, and
 repository fixed it and the Cobertura route then worked — so the old claim that
 *"the Cobertura route fails"* was false.
 
-The second failure is real and it belongs to the **coverage tool**: the default
-report format, `simp_caret`, is the only one that lexes and parses the source, and
-the reporter's frontend (`moon_cove@0.3.6`, which pins `moonbitlang/lexer@0.4.4`
-and `moonbitlang/parser@0.4.4`) cannot read this tree. Its lexer **reserves**
-`method` and `abstract` — identifiers the MoonBit compiler accepts — so
-`src/app/eva.mbt` (a parameter named `method`) reports **2 lexical errors**,
-`src/app/report.mbt` (the `abstract` field of `ReportInput`) **1**, and
-`src/command/command.mbt` (the same field in a struct literal) **1**. Renaming
-those three identifiers in a scratch copy of the tree makes the **whole tree
-parse** and the format work, so the blocker is the peer's reserved-word list and
-not this module's syntax. The other **8 of the 9** formats read the same data
+The second failure was real, and it was **this tree's**, not the tooling's: the
+default report format, `simp_caret`, is the only one that lexes and parses the
+source, and the reporter's frontend (`moon_cove@0.3.6`, which pins
+`moonbitlang/lexer@0.4.4`) **reserves** identifiers the MoonBit compiler
+accepts. `src/app/eva.mbt` (a parameter named `method`) reported **2 lexical
+errors**, `src/app/report.mbt` (the `abstract` field of `ReportInput`) **1**, and
+`src/command/command.mbt` (the same field in a struct literal) **1**. The three
+identifiers are **renamed** — `method` became `conv_method`, and the field became
+`abstract_result`, the name the QA report had already asked for — so
+`moon coverage analyze` now runs with the **default** format, exit 0, and the
+whole tree parses. The compiler had been warning about `abstract` since the QA
+pass; the coverage tooling is simply stricter.
+
+`scripts/qa/coverage_route.mjs` keeps it that way, and CI runs it. It fails on a
+reserved identifier and on a **stale trace tree** — a `.trace.source` written
+before the module was renamed, which makes every report fail with *"invalid
+source range"* — and it is falsified against both failure modes, so it is a gate
+and not a decoration. The other **8 of the 9** formats read the same data
 without parsing the source — `bisect`, `caret`, `summary`, `full_summary`,
-`sorted_summary`, `cobertura`, `html`, `coveralls` — and the tool's own hint says
-so: *"use -f caret to report coverage without parsing"*. This is a limitation of
-the **peer tooling**, not of the analyser: the same tree compiles, tests and
-publishes.
+`sorted_summary`, `cobertura`, `html`, `coveralls` — so a module that *does* use
+a reserved word still has a route: *"use -f caret to report coverage without
+parsing"*.
 
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the

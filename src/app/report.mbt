@@ -34,7 +34,7 @@ pub(all) struct ReportInput {
   elapsed_ms : Int32
   level : Int32
   funnel : FunnelResult?
-  abstract : AbsResult?
+  abstract_result : AbsResult?
   proof : ProofResult?
 }
 
@@ -1478,7 +1478,7 @@ pub fn render_report(
   out.write_string("### 5.1 Taint sinks\n\n")
   out.write_string(findings_table(input.taint.sinks))
   out.write_string("\n### 5.2 L2 abstract findings (may-analysis)\n\n")
-  if input.abstract is Some(abs) {
+  if input.abstract_result is Some(abs) {
     out.write_string(
       "Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Two rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. And a tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose.\n\n",
     )
@@ -1489,7 +1489,7 @@ pub fn render_report(
     )
   }
   out.write_string("\n### 5.3 EVA findings (evolved value analysis)\n\n")
-  if input.abstract is Some(abs) {
+  if input.abstract_result is Some(abs) {
     let eva = eva_findings(abs.findings)
     if eva.length() == 0 {
       out.write_string(
@@ -1667,7 +1667,7 @@ pub fn render_report(
   out.write_string("\n### 6.2 Function-level range union (L1)\n\n")
   out.write_string(ranges_table(input.run.ranges))
   out.write_string("\n### 6.3 Abstract may-ranges (L2)\n\n")
-  if input.abstract is Some(abs) {
+  if input.abstract_result is Some(abs) {
     out.write_string(
       "These intervals are the abstract interpreter's fixpoint approximation at widening, not observed samples; they cover the whole input abstraction and therefore over-approximate.\n\n",
     )

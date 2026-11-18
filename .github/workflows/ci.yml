@@ -138,6 +138,21 @@ jobs:
       - name: Test package (js)
         run: moon test src/app --target js
 
+      # THE COVERAGE ROUTE. `simp_caret` is the DEFAULT report format and the
+      # only one that PARSES the covered sources, so a source file the
+      # reporter's lexer cannot read breaks `moon coverage analyze` outright.
+      # The reporter's lexer RESERVES identifiers the MoonBit compiler accepts
+      # (`method`, `abstract`, ...), so this is a property of the tree, not of
+      # the tooling. The static gate knows the reserved words; the report step
+      # proves the route works and would catch a word the peer adds later.
+      - name: Check the coverage route
+        run: |
+          node scripts/qa/coverage_route.mjs
+          moon test --enable-coverage
+          mkdir -p _build/qa
+          moon coverage report -f simp_caret > _build/qa/simp_caret.txt
+          tail -n 1 _build/qa/simp_caret.txt
+
       - name: Check formatting
         run: moon fmt --check
 

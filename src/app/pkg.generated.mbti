@@ -905,7 +905,7 @@ pub(all) struct ReportInput {
   elapsed_ms : Int32
   level : Int32
   funnel : FunnelResult?
-  abstract : AbsResult?
+  abstract_result : AbsResult?
   proof : ProofResult?
 }
 

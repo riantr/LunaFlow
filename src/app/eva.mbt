@@ -835,12 +835,12 @@ fn eva_check_index_oob(
 /// number the author did not intend, and nothing says so.
 fn eva_check_invalid_cast(
   ctx : AbsContext,
-  method : String,
+  conv_method : String,
   lo : Double,
   hi : Double,
   line : Int32,
 ) -> Unit {
-  let (b_lo, b_hi) = if method == "to_int64" {
+  let (b_lo, b_hi) = if conv_method == "to_int64" {
     (-9223372036854775808.0, 9223372036854775807.0)
   } else {
     (-2147483648.0, 2147483647.0)

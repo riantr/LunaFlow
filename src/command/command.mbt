@@ -495,7 +495,7 @@ fn summary_json(input : @app.ReportInput, report_path : String) -> String {
   out.write_string(
     "  \"range_vars\": " + input.run.ranges.stats.length().to_string() + ",\n",
   )
-  let abs_count = match input.abstract {
+  let abs_count = match input.abstract_result {
     Some(a) => a.findings.length()
     None => 0
   }
@@ -863,7 +863,7 @@ async fn analyze(opts : Opts) -> Unit {
     elapsed_ms: elapsed,
     level,
     funnel: funnel_result,
-    abstract: abs_result,
+    abstract_result: abs_result,
     proof: proof_result,
   }
   ensure_dir(opts.out)
@@ -916,7 +916,7 @@ async fn analyze(opts : Opts) -> Unit {
   )
   println("taint_sinks\t" + input.taint.sinks.length().to_string())
   println("level\t" + level.to_string())
-  match input.abstract {
+  match input.abstract_result {
     Some(a) => println("abstract_findings\t" + a.findings.length().to_string())
     None => ()
   }
@@ -1009,7 +1009,7 @@ fn metrics_lines(
   for f in input.taint.sinks {
     reportable.push(f)
   }
-  match input.abstract {
+  match input.abstract_result {
     Some(a) =>
       for f in a.findings {
         reportable.push(f)
