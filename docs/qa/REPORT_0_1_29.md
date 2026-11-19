@@ -56,8 +56,8 @@ layer's scope) and **S1** (87 deprecated core APIs) — and then re-measured
 everything on the changed tree. Every number in §1 and §3 is the **post-fix**
 measurement, and the "before" numbers survive in §2's table. Two further
 defects surfaced during the re-measurement and are registered as **S12** (the
-E2E harness could read a stale artefact) and **S13** (the abstract layer's
-universe includes test functions, which the code comment denied).
+E2E harness could read a stale artefact) and **S13** (the scope's boundary was
+described twice, and both descriptions were wrong).
 
 The register's remaining shape is unchanged: nothing here breaks a gate today,
 and nothing here is a defect in this module except the three that are fixed.
@@ -109,7 +109,7 @@ have rewritten the wrong thing.
 | S10 | Low | **The abstract layer's volume is dominated by one may-family.** On doubleML, 824 of the 1,282 L2 findings are `RANGE-VIOLATION` — *"assertion may fail on some inputs"* — because the interval domain cannot prove an `assert` holds. At module scale that family is mostly noise, and the report's §5.2 is now dominated by it. | the family table in `reports/…doubleML….md` |
 | S11 | Low | **The E2E harness could test a stale binary.** It resolves `cli.exe` from the build tree and never rebuilds it, so it measured the analyser as it *was*: the abstract layer's scope change was measured against the old build and reported the old scope. The harness now **builds what it tests**, before any timed run. | `scripts/qa/e2e.mjs` |
 | S12 | Medium | **The E2E harness could read a stale artefact** — the same shape as S11, one layer further out. The artefact file names carry the resolved version, so the output directory accumulates one set of files per version, and the harness picked the report with `readdirSync().find()`, which returns the **first** match. MEASURED: the run wrote `…_0.5.0.md` and the harness measured `…_0.4.45.md`, dated **nine days earlier**, because that name sorted first. Every count it reported for that module — statement count, report size, L2 finding count, even the "resolved version" — was a week-old number, and the run still passed 56/56. | `scripts/qa/e2e.mjs` |
-| S13 | Low | **The abstract layer's universe includes test functions, and the code comment said it did not.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt`. The D4 fix's comment claimed the universe was "the module's functions that are **not** in test files". It is not, and the difference is not small: for doubleML, **129 of its 220 `.mbt` files are test files**. The comment now says what the code does. The finding split is what says how much of the output is about test code — measured on the committed doubleML artefact, **24 of the 926 findings shown in §5.2 (2.6 %) are in test files**, so the output is overwhelmingly about production code. | `src/command/command.mbt`; `_build/qa/l2_test_split.mjs` |
+| S13 | Low | **The scope's boundary was described twice, and both descriptions were wrong.** The D4 fix's code comment claimed the abstract layer's universe was "the module's functions that are **not** in test files", and the follow-up documentation claimed the opposite — that the universe *includes* the module's test code. Neither is true: `ModuleAst::all_funcs()` filters on the **function** (`fn.is_test`), not on the file, so the universe drops the `test "..." { }` **blocks** and keeps the ordinary **helpers** that live in a `_test.mbt` file. MEASURED on the committed doubleML artefact: **24 of the 926 findings shown in §5.2 (2.6 %) are in test files, and every one of them is in a helper** (`v120_check_enet`, `count_eq`, `expand_v091_iivm_data`, …), not in a test block. The comment, `docs/design.md` and the README now say that. | `src/command/command.mbt`; `src/app/model.mbt:341`; `_build/qa/l2_test_split.mjs` |
 
 ### Registered to another owner
 
@@ -432,10 +432,11 @@ Harness and documentation changes:
   not about whether the L2 should be replaced.
 * **The coverage measurement covers `src/` only.** The fixtures are instrumented and
   report 0 %, and `src/app/ifds_spike_wbtest.mbt` reports `n/a`.
-* **The abstract layer's universe includes test functions** (S13). The split is
-  measured on the committed doubleML artefact — 24 of 926 findings in §5.2 are in
-  test files — but it is measured on **one** module, not on every module the tool
-  will ever see.
+* **The scope's boundary is a filter on the FUNCTION, not on the file** (S13): the
+  universe drops the `test` blocks and keeps the helpers in test files. The split
+  is measured on the committed doubleML artefact — 24 of 926 findings in §5.2 are
+  in test files, and every one of them is in a helper — but it is measured on
+  **one** module, not on every module the tool will ever see.
 
 ---
 

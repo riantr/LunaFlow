@@ -2800,11 +2800,14 @@ L2 row of the funnel reads **1282 findings, 1411 functions, 167271 steps**. Repo
 §5.2 states that scope in words, so a reader can tell a complete analysis from a
 truncated one instead of having to infer it.
 
-**"The whole module" includes the module's test code**, because the scanner reads
-every `.mbt` file it finds — it excludes build and vendored trees, not `_test.mbt`.
-For doubleML that is **129 of 220 files**. What says how much of the output is about
-test code is the finding split: on the committed doubleML artefact, **24 of the 926
-findings in §5.2 (2.6 %) are in test files**.
+**"The whole module" includes the module's test files' HELPERS, but not its
+`test` blocks.** The scanner reads every `.mbt` file it finds — it excludes build
+and vendored trees, not `_test.mbt` — and the abstract layer's universe filters
+on the **function**, so a plain helper in a test file is analysed and a
+`test "..." { }` block is not. For doubleML that is **129 of 220 files**. What says
+how much of the output is about test code is the finding split: on the committed
+doubleML artefact, **24 of the 926 findings in §5.2 (2.6 %) are in test files** —
+and every one of them is in a helper, not in a test block.
 
 The committed artefacts are the **no-cap** run, and re-running the recipe above with
 this release's build reproduces all three of them **byte-identically** — traces

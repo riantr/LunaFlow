@@ -744,14 +744,19 @@ async fn analyze(opts : Opts) -> Unit {
   // bounds the abstract analysis.
   //
   // The universe is every function the module's AST holds that has a body --
-  // and the module's AST holds EVERY `.mbt` file the scanner found, TEST FILES
-  // INCLUDED (the scanner excludes build and vendored trees, not `_test.mbt`).
-  // So the abstract layer reads a module's test code too. That is deliberate:
-  // the layer's claim is "exhaustive over the input abstraction", and the
-  // input abstraction is the module as it was scanned. It is worth knowing
-  // that for a module whose tests are most of its code (doubleML: 129 of its
-  // 220 `.mbt` files are test files) -- but the finding split is what says
-  // how much of the output is about test code rather than production code.
+  // and `ast.all_funcs()` EXCLUDES THE `test` BLOCKS, because the filter is
+  // on the FUNCTION (`fn.is_test`), not on the FILE. A plain helper that
+  // happens to live in a `_test.mbt` file is not a test block and stays in the
+  // universe: the scanner reads every `.mbt` file it finds (it excludes build
+  // and vendored trees, not `_test.mbt`), so a module's test files' HELPERS
+  // are analysed while its `test "..." { }` blocks are not.
+  //
+  // That is deliberate: the layer's claim is "exhaustive over the input
+  // abstraction", and the input abstraction is the module as it was scanned.
+  // It is worth knowing for a module whose tests are most of its code
+  // (doubleML: 129 of its 220 `.mbt` files are test files) -- and the finding
+  // split is what says how much of the output is about test code rather than
+  // production code.
   let mut abs_universe = 0
   for f in ast.all_funcs() {
     if f.body.length() > 0 {
