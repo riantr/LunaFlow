@@ -4,11 +4,25 @@ pub(all) struct ReportOptions {
   max_taint_nodes : Int32
   max_slice_nodes : Int32
   max_path_events : Int32
+  /// The rows a findings table may show. The findings table is the report's
+  /// only section that used to grow with the MODULE rather than with the
+  /// reader: a module with many findings produced a report nobody could
+  /// scroll. Every other section has a legible element count (design.md
+  /// §6.3); this one now has one too, and the findings it does not show are
+  /// in the report's `_findings.jsonl` sidecar, so the bound costs no
+  /// finding.
+  max_findings : Int32
 }
 
 ///|
 pub fn ReportOptions::default() -> ReportOptions {
-  { max_cfg: 8, max_taint_nodes: 40, max_slice_nodes: 40, max_path_events: 24, }
+  {
+    max_cfg: 8,
+    max_taint_nodes: 40,
+    max_slice_nodes: 40,
+    max_path_events: 24,
+    max_findings: 300,
+  }
 }
 
 ///|
@@ -314,17 +328,126 @@ fn finding_row(f : Finding) -> String {
 }
 
 ///|
-fn findings_table(fs : Array[Finding]) -> String {
+/// The findings table, BOUNDED.
+///
+/// Every findings table in the report goes through here, and every one of
+/// them is bounded: the table shows at most `cap` rows. When there are more
+/// findings than that, the table says so -- how many rows were left out,
+/// how many findings of each family there are in the WHOLE set, and where
+/// the rest of them are.
+///
+/// The count table is what makes the truncation honest. Without it a reader
+/// sees 300 rows and cannot tell whether the module has 300 problems or
+/// 2,357; with it, the shape of the whole set is stated and the rows are
+/// the detail.
+///
+/// `sink` receives every finding the table was given, BEFORE the bound is
+/// applied. It is how the `_findings.jsonl` sidecar stays lossless: the
+/// report decides what a finding is, and the sidecar is what the report
+/// decided -- not a second, drifting copy of the same rule.
+fn findings_table(
+  fs : Array[Finding],
+  cap : Int32,
+  sink : Array[Finding],
+) -> String {
   if fs.length() == 0 {
     return "_No findings._\n"
   }
+  for f in fs {
+    sink.push(f)
+  }
   let out = StringBuilder()
+  let truncated = fs.length() > cap
+  if truncated {
+    out.write_string(family_count_table(fs))
+    out.write_string("\n")
+  }
   out.write_string(
     "| Rule | Severity | Function | Location | Message | Method | Confidence |\n",
   )
   out.write_string("| --- | --- | --- | --- | --- | --- | --- |\n")
+  let mut shown = 0
   for f in fs {
+    if shown >= cap {
+      out.write_string(
+        "| ... | ... | ... | ... | (truncated at " +
+        cap.to_string() +
+        " of " +
+        fs.length().to_string() +
+        " rows) | ... | ... |\n",
+      )
+      break
+    }
     out.write_string(finding_row(f))
+    shown = shown + 1
+  }
+  if truncated {
+    out.write_string(
+      "\n_This table shows the first " +
+      cap.to_string() +
+      " of " +
+      fs.length().to_string() +
+      " findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the " +
+      (fs.length() - cap).to_string() +
+      " not shown here among them -- is in the report's `_findings.jsonl` sidecar._\n\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
+/// How many findings there are of each family.
+///
+/// The table is sorted by count, then by family code, so it is the same on
+/// every run and the biggest family is first.
+fn family_count_table(fs : Array[Finding]) -> String {
+  let codes : Array[String] = []
+  let counts : Array[Int32] = []
+  for f in fs {
+    let code = f.kind.code()
+    let mut at = -1
+    let mut i = 0
+    while i < codes.length() {
+      if codes[i] == code {
+        at = i
+        break
+      }
+      i = i + 1
+    }
+    if at < 0 {
+      codes.push(code)
+      counts.push(1)
+    } else {
+      counts[at] = counts[at] + 1
+    }
+  }
+  // Insertion sort: the biggest family first, and the families with the same
+  // count in code order, so the table does not depend on the order the
+  // findings arrived in.
+  let mut i = 1
+  while i < codes.length() {
+    let mut j = i
+    while j > 0 &&
+          (
+            counts[j] > counts[j - 1] ||
+            (counts[j] == counts[j - 1] && codes[j] < codes[j - 1])
+          ) {
+      let tc = codes[j]
+      codes[j] = codes[j - 1]
+      codes[j - 1] = tc
+      let tn = counts[j]
+      counts[j] = counts[j - 1]
+      counts[j - 1] = tn
+      j = j - 1
+    }
+    i = i + 1
+  }
+  let out = StringBuilder()
+  out.write_string("| Family | Findings |\n| --- | ---: |\n")
+  let mut k = 0
+  while k < codes.length() {
+    out.write_string("| " + codes[k] + " | " + counts[k].to_string() + " |\n")
+    k = k + 1
   }
   out.to_string()
 }
@@ -750,7 +873,7 @@ pub fn proof_counts(vcs : Array[VC]) -> (Int32, Int32, Int32) {
 ///   - The toolchain does NOT enforce the annotation, and does NOT notice
 ///     two declarations claiming the same C symbol with different
 ///     signatures. Those two are this analyzer's own checks.
-fn ffi_section(model : FfiModel?) -> String {
+fn ffi_section(model : FfiModel?, cap : Int32, sink : Array[Finding]) -> String {
   let out = StringBuilder()
   out.write_string("\n### 5.7 The foreign address space\n\n")
   match model {
@@ -783,7 +906,7 @@ fn ffi_section(model : FfiModel?) -> String {
           "- **FFI-DOUBLE-FREE**, **FFI-USE-AFTER-FREE** and **FFI-USE-AFTER-MOVE** -- the release families above, which are the same class seen from the other direction.\n\n" +
           "The reserved families in §5.3 -- USE-AFTER-FREE, MEMORY-LEAK, POINTER-ARITHMETIC and FORMAT-STRING -- keep their contracts, and each contract now names the family that covers its class at this boundary.\n\n",
         )
-        out.write_string(findings_table(m.findings))
+        out.write_string(findings_table(m.findings, cap, sink))
       }
     }
   }
@@ -792,7 +915,11 @@ fn ffi_section(model : FfiModel?) -> String {
 
 ///|
 /// The CONCURRENCY section: the tasks, the shared cells, the conflicts.
-fn conc_section(model : ConcModel?) -> String {
+fn conc_section(
+  model : ConcModel?,
+  cap : Int32,
+  sink : Array[Finding],
+) -> String {
   let out = StringBuilder()
   out.write_string("\n### 5.8 Concurrency: the tasks and the shared state\n\n")
   match model {
@@ -826,7 +953,7 @@ fn conc_section(model : ConcModel?) -> String {
           "- **A `Ref` the model cannot trace.** The shared cells are the `Ref`s a task CAPTURES from the function that spawned it, and the `Ref` parameters a function is handed -- the caller's binding is substituted for the parameter, so the two are one cell. A `Ref` reached through a field, a container or an array is not tracked.\n" +
           "- **The C side.** A lock held across a C call is invisible on the other side of the boundary, exactly as §5.7 says.\n\n",
         )
-        out.write_string(findings_table(m.findings))
+        out.write_string(findings_table(m.findings, cap, sink))
       }
     }
   }
@@ -949,7 +1076,7 @@ fn conc_edge_table(m : ConcModel) -> String {
 ///|
 /// The IPC AND BUFFERS section: the reads that can come back short, the
 /// views that go stale, and the buffers two sides write.
-fn ipc_section(model : IpcModel?) -> String {
+fn ipc_section(model : IpcModel?, cap : Int32, sink : Array[Finding]) -> String {
   let out = StringBuilder()
   out.write_string(
     "\n### 5.9 IPC and buffers: the reads that can come back short\n\n",
@@ -984,7 +1111,7 @@ fn ipc_section(model : IpcModel?) -> String {
         "- **A count that is used but an offset that is not advanced.** `read_into(buf, offset=k)` does not move `k` for you (measured). The model reports a DISCARDED count; a count that is used but an offset that is not advanced is not judged.\n" +
         "- **The C side of a socket.** What arrives is whatever the peer sent. §5.7 says the same about the other side of a C boundary.\n\n",
       )
-      out.write_string(findings_table(m.findings))
+      out.write_string(findings_table(m.findings, cap, sink))
     }
   }
   out.to_string()
@@ -1243,9 +1370,11 @@ pub fn render_report(
   ffi~ : FfiModel? = None,
   conc~ : ConcModel? = None,
   ipc~ : IpcModel? = None,
+  findings_out~ : Array[Finding] = [],
 ) -> String {
   let out = StringBuilder()
   let md = "docs/design.md"
+  let cap = input.opts.max_findings
   out.write_string(
     "# LunaFlow analysis report — " +
     coord_without_version(input.coord) +
@@ -1487,7 +1616,7 @@ pub fn render_report(
       cfg_only.push(f)
     }
   }
-  out.write_string(findings_table(cfg_only))
+  out.write_string(findings_table(cfg_only, cap, findings_out))
   out.write_string("\n### 4.3 Static vs dynamic attribution\n\n")
   out.write_string(
     "| Signal | Method | What a hit means | Known limitation |\n| --- | --- | --- | --- |\n" +
@@ -1508,7 +1637,7 @@ pub fn render_report(
   out.write_string(taint_mermaid(input.taint, input.opts.max_taint_nodes))
   out.write_string("```\n\n")
   out.write_string("### 5.1 Taint sinks\n\n")
-  out.write_string(findings_table(input.taint.sinks))
+  out.write_string(findings_table(input.taint.sinks, cap, findings_out))
   out.write_string("\n### 5.2 L2 abstract findings (may-analysis)\n\n")
   if input.abstract_result is Some(abs) {
     out.write_string(
@@ -1521,7 +1650,9 @@ pub fn render_report(
       abs.steps.to_string() +
       " steps.\n\n",
     )
-    out.write_string(findings_table(abstract_findings(abs.findings)))
+    out.write_string(
+      findings_table(abstract_findings(abs.findings), cap, findings_out),
+    )
   } else {
     out.write_string(
       "_Level 2 was not executed._ Run with `--level 2` or `--funnel`.\n\n",
@@ -1538,7 +1669,7 @@ pub fn render_report(
       out.write_string(
         "The evolved value analysis rides on the same fixpoint and asks the second question about a value: not *what is its range* but *what happens when it is used*. These are the memory-safety and undefined-behaviour classes, mapped onto what MoonBit actually does — MoonBit's integer arithmetic WRAPS instead of trapping, so an overflow here is a silent wrong value and not a crash.\n\nThe index class is proved by the interval the abstract domain already computes — the array's length and the index's range are both known, so the comparison covers the whole input abstraction — and it is filed here because an index is a value USED to address storage.\n\n",
       )
-      out.write_string(findings_table(eva))
+      out.write_string(findings_table(eva, cap, findings_out))
     }
   } else {
     out.write_string("_Level 2 was not executed._\n\n")
@@ -1639,7 +1770,7 @@ pub fn render_report(
   if growth.length() == 0 {
     out.write_string("_No collection grows without bound._\n\n")
   } else {
-    out.write_string(findings_table(growth))
+    out.write_string(findings_table(growth, cap, findings_out))
   }
   out.write_string(
     "\n### 5.6 Layout stability: does the conclusion depend on the run?\n\n",
@@ -1691,9 +1822,9 @@ pub fn render_report(
         "_The stability self-check was not run._ Pass `--stability` to re-sample the analysis and compare the findings.\n\n",
       )
   }
-  out.write_string(ffi_section(ffi))
-  out.write_string(conc_section(conc))
-  out.write_string(ipc_section(ipc))
+  out.write_string(ffi_section(ffi, cap, findings_out))
+  out.write_string(conc_section(conc, cap, findings_out))
+  out.write_string(ipc_section(ipc, cap, findings_out))
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",
@@ -1813,6 +1944,9 @@ pub fn render_report(
     "@latest --out reports/ --funnel\n",
   )
   out.write_string("```\n\n")
+  out.write_string(
+    "The findings tables above are bounded, so this report may not carry every finding. The ones it does not carry are in the `_findings.jsonl` sidecar beside this file -- one JSON object per finding, with the family, the severity, the function, the file, the line, the message, the method and the confidence. The sidecar holds EVERY finding the report rendered, so nothing is lost to the bound.\n\n",
+  )
   out.write_string(
     "Full method description, comparison with Frama-C/TIS, Joern, CodeQL, SVF and Soot, and the acceptance tests are in `" +
     md +

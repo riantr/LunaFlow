@@ -192,14 +192,15 @@ The module is a library plus an executable, so "what you get" is a set of
 
 | You call | You get back | Shape |
 |---|---|---|
-| `LunaFlow analyze <coord>` | report, trace, summary | `.md`, `_trace.jsonl`, `_summary.json` |
-| `LunaFlow analyze --funnel` | the same three artefacts plus L2 alarms and L3 VCs | report §3 / §5.2 / §6.3 / §8 |
+| `LunaFlow analyze <coord>` | report, trace, findings, summary | `.md`, `_trace.jsonl`, `_findings.jsonl`, `_summary.json` |
+| `LunaFlow analyze --funnel` | the same four artefacts plus L2 alarms and L3 VCs | report §3 / §5.2 / §6.3 / §8 |
 | `LunaFlow analyze --level 2` | L1 baseline + abstract may-analysis | report §5.2, §6.3 |
 | `LunaFlow analyze --level 3` | L1 + L2 + contract VCs | report §8 |
 | `LunaFlow analyze --slice "<crit>"` | dynamic backward/forward slice | Mermaid graph + statement table |
 | `LunaFlow analyze --coverage cov.xml` | compiled-suite coverage mapped onto CFG nodes | report §4.4 |
 | `LunaFlow analyze --list-functions` | function, file, statement count | `FUNCTION<TAB>FILE<TAB>STATEMENTS` |
 | `LunaFlow analyze --max-cfg-functions <n>` | how many functions the CFG pass covers (default 600) | report §2 states what was not covered |
+| `LunaFlow analyze --max-findings <n>` | how many rows a findings table may show (default 300) | the rest are in `_findings.jsonl`, and the table states the family mix of the whole set |
 | `LunaFlow analyze --families <codes>` | only the finding families named, by code | the same report, filtered |
 | `LunaFlow analyze --exclude-families <codes>` | everything *except* the families named | the same report, filtered |
 | `LunaFlow analyze --exclude <name>` | skip a directory name while walking (repeatable) | the same report |
@@ -2528,6 +2529,7 @@ moonx riantr/moonbit_static_analysis@latest <target> [flags]
 | `--max-cfg-functions <n>` | how many functions get a CFG (default `600`). |
 | `--max-taint <n>` | how many taint sinks are rendered (default `40`). |
 | `--max-slice <n>` | how many slice rows are rendered (default `40`). |
+| `--max-findings <n>` | how many rows a findings table may show (default `300`). The findings the table does not show are in the report's `_findings.jsonl` sidecar, and a truncated table states the family mix of the whole set, so the bound costs no finding. |
 | `--function <name>` | focus on one function in a large module. |
 | `--list-functions` | list the functions the target exposes, then stop. |
 | `--exclude <dir>` | a directory name to skip. Repeatable. It exists because a dot-directory rule cannot catch everything. |

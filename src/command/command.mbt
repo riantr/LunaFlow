@@ -58,6 +58,10 @@ struct Opts {
   mut max_cfg_functions : Int32
   mut max_taint : Int32
   mut max_slice : Int32
+  /// The rows a findings table may show. The findings the table does not
+  /// show are in the report's `_findings.jsonl` sidecar, so the bound costs
+  /// the reader nothing.
+  mut max_findings : Int32
   mut quiet : Bool
   mut function_name : String
   mut list_functions : Bool
@@ -95,6 +99,7 @@ fn Opts::default() -> Opts {
     max_cfg_functions: 600,
     max_taint: 40,
     max_slice: 40,
+    max_findings: 300,
     quiet: false,
     function_name: "",
     list_functions: false,
@@ -148,6 +153,10 @@ fn usage() -> String {
     #|                      FIRST ones in file order, so a larger module
     #|                      leaves the rest with no CFG and no CFG finding)
     #|  --exclude <name>    a directory name to skip, repeatable
+    #|  --max-findings <n>  rows a findings table may show (default: 300); the
+    #|                      findings it does not show are in the report's
+    #|                      _findings.jsonl sidecar, and the table says how
+    #|                      many of each family there are in the whole set
     #|  --families <codes>  report ONLY these finding codes (comma or space
     #|                      separated); --exclude-families drops them instead
     #|  --explain <code>    print one family's contract and STOP -- no scan
@@ -302,6 +311,9 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
     } else if a == "--max-slice" {
       o.max_slice = @app.parse_int(arg_value(args, i), o.max_slice)
       i = i + 2
+    } else if a == "--max-findings" {
+      o.max_findings = @app.parse_int(arg_value(args, i), o.max_findings)
+      i = i + 2
     } else if a == "--quiet" {
       o.quiet = true
       i = i + 1
@@ -444,6 +456,68 @@ fn traces_jsonl(events : Array[@app.TraceEvent]) -> String {
 }
 
 ///|
+/// The findings of the report, each ONCE.
+///
+/// A finding that appears in two of the report's tables appears ONCE here.
+/// The key is the finding's identity -- its family, its place, its function
+/// and its message -- and not its position, so a reader can count the
+/// findings without counting a table twice.
+fn unique_findings(fs : Array[@app.Finding]) -> Array[@app.Finding] {
+  let out : Array[@app.Finding] = []
+  let seen : Map[String, Bool] = Map([])
+  for f in fs {
+    let key = f.kind.code() +
+      "|" +
+      f.file +
+      "|" +
+      f.line.to_string() +
+      "|" +
+      f.fn_name +
+      "|" +
+      f.message
+    if seen.get_or_default(key, false) {
+      continue
+    }
+    seen[key] = true
+    out.push(f)
+  }
+  out
+}
+
+///|
+/// Every finding the report shows, one JSON object per line.
+///
+/// The report's findings tables are bounded, so the Markdown alone no longer
+/// holds every finding. This is where the rest of them are, and it is
+/// LOSSLESS: the set is exactly the set the report rendered, because the
+/// report filled the list.
+fn findings_jsonl(fs : Array[@app.Finding]) -> String {
+  let out = StringBuilder()
+  for f in fs {
+    out.write_string("{\"rule\":\"")
+    out.write_string(f.kind.code())
+    out.write_string("\",\"severity\":\"")
+    out.write_string(f.kind.severity())
+    out.write_string("\",\"fn\":\"")
+    out.write_string(@app.json_escape(f.fn_name))
+    out.write_string("\",\"file\":\"")
+    out.write_string(@app.json_escape(f.file))
+    out.write_string("\",\"line\":")
+    out.write_string(f.line.to_string())
+    out.write_string(",\"message\":\"")
+    out.write_string(@app.json_escape(f.message))
+    out.write_string("\",\"method\":\"")
+    out.write_string(@app.json_escape(f.mode))
+    out.write_string("\",\"confidence\":")
+    out.write_string(@app.format_double(f.confidence))
+    out.write_string(",\"evidence\":\"")
+    out.write_string(@app.json_escape(f.evidence))
+    out.write_string("\"}\n")
+  }
+  out.to_string()
+}
+
+///|
 fn count_kind(fs : Array[@app.Finding], kind : @app.FindingKind) -> Int32 {
   let mut n = 0
   for f in fs {
@@ -455,7 +529,12 @@ fn count_kind(fs : Array[@app.Finding], kind : @app.FindingKind) -> Int32 {
 }
 
 ///|
-fn summary_json(input : @app.ReportInput, report_path : String) -> String {
+fn summary_json(
+  input : @app.ReportInput,
+  report_path : String,
+  findings_path : String,
+  findings_count : Int32,
+) -> String {
   let out = StringBuilder()
   out.write_string("{\n")
   out.write_string("  \"module\": \"" + @app.json_escape(input.coord) + "\",\n")
@@ -463,6 +542,9 @@ fn summary_json(input : @app.ReportInput, report_path : String) -> String {
     "  \"version\": \"" + @app.json_escape(input.version) + "\",\n",
   )
   out.write_string("  \"report\": \"" + @app.json_escape(report_path) + "\",\n")
+  out.write_string(
+    "  \"findings_jsonl\": \"" + @app.json_escape(findings_path) + "\",\n",
+  )
   out.write_string("  \"files\": " + input.files.to_string() + ",\n")
   out.write_string("  \"functions\": " + input.funcs.to_string() + ",\n")
   out.write_string("  \"statements\": " + input.stmts.to_string() + ",\n")
@@ -508,7 +590,8 @@ fn summary_json(input : @app.ReportInput, report_path : String) -> String {
   out.write_string("  \"vcs_proved\": " + proved.to_string() + ",\n")
   out.write_string("  \"vcs_failed\": " + failed.to_string() + ",\n")
   out.write_string("  \"vcs_unknown\": " + unknown.to_string() + ",\n")
-  out.write_string("  \"slices\": " + input.slices.length().to_string() + "\n")
+  out.write_string("  \"slices\": " + input.slices.length().to_string() + ",\n")
+  out.write_string("  \"findings\": " + findings_count.to_string() + "\n")
   out.write_string("}\n")
   out.to_string()
 }
@@ -868,6 +951,7 @@ async fn analyze(opts : Opts) -> Unit {
     max_taint_nodes: opts.max_taint,
     max_slice_nodes: opts.max_slice,
     max_path_events: 24,
+    max_findings: opts.max_findings,
   }
   let elapsed = (@async.now() - t0).to_int()
   let input : @app.ReportInput = {
@@ -901,6 +985,12 @@ async fn analyze(opts : Opts) -> Unit {
   let report_path = @app.path_join(opts.out, stem + ".md")
   let trace_path = @app.path_join(opts.out, stem + "_trace.jsonl")
   let summary_path = @app.path_join(opts.out, stem + "_summary.json")
+  let findings_path = @app.path_join(opts.out, stem + "_findings.jsonl")
+  // The report's findings tables are BOUNDED, so the report alone no longer
+  // holds every finding. The sidecar does, and the report is what decides
+  // what a finding is -- the sink is filled by the report itself, so the
+  // sidecar cannot drift from the tables it complements.
+  let rendered : Array[@app.Finding] = []
   let md = @app.render_report(
     input,
     per_function=opts.per_function,
@@ -912,14 +1002,20 @@ async fn analyze(opts : Opts) -> Unit {
     ffi=Some(ffi_model),
     conc=Some(conc_model),
     ipc=Some(ipc_model),
+    findings_out=rendered,
   )
   let _ = write_text(report_path, md) catch { _ => false }
   let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {
     _ => false
   }
-  let _ = write_text(summary_path, summary_json(input, report_path)) catch {
+  let uniq = unique_findings(rendered)
+  let _ = write_text(
+    summary_path,
+    summary_json(input, report_path, findings_path, uniq.length()),
+  ) catch {
     _ => false
   }
+  let _ = write_text(findings_path, findings_jsonl(uniq)) catch { _ => false }
   if opts.metrics {
     for line in metrics_lines(input, ast) {
       println(line)
@@ -962,6 +1058,7 @@ async fn analyze(opts : Opts) -> Unit {
   println("elapsed_ms\t" + elapsed.to_string())
   println("REPORT\t" + report_path)
   println("TRACE\t" + trace_path)
+  println("FINDINGS\t" + findings_path)
   println("SUMMARY\t" + summary_path)
 }
 

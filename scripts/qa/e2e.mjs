@@ -81,9 +81,66 @@ const sliceNodes = (md) => {
 };
 
 function assertArtefacts(label, dir, stem) {
-  for (const suffix of ['.md', '_summary.json', '_trace.jsonl']) {
+  for (const suffix of ['.md', '_summary.json', '_trace.jsonl', '_findings.jsonl']) {
     check(`${label}: artefact ${stem}${suffix}`, existsSync(join(dir, stem + suffix)));
   }
+}
+
+// The findings tables are BOUNDED, so the report no longer holds every
+// finding: the `_findings.jsonl` sidecar does. These two read the two
+// artefacts and check they agree -- every finding the report SHOWS must be
+// in the sidecar -- because a sidecar that disagreed with the report would
+// be worse than no sidecar at all.
+//
+// A findings row is a seven-column table row whose first column is a family
+// code and whose fourth is `file:line`. The count table above a truncated
+// table is two columns, the header and the separator are not family codes,
+// and the truncation marker starts with `...`, so none of them is mistaken
+// for a finding.
+function findingsRows(md) {
+  const rows = [];
+  for (const line of md.split('\n')) {
+    if (!line.startsWith('| ')) continue;
+    const cells = line.slice(1, -1).split('|').map((c) => c.trim());
+    if (cells.length !== 7) continue;
+    if (!/^[A-Z][A-Z-]+$/.test(cells[0])) continue;
+    const at = /^(.+):(\d+)$/.exec(cells[3]);
+    if (!at) continue;
+    rows.push({ rule: cells[0], fn: cells[2], file: at[1], line: Number(at[2]) });
+  }
+  return rows;
+}
+
+function sidecarEntries(dir, stem) {
+  const p = join(dir, `${stem}_findings.jsonl`);
+  if (!existsSync(p)) return [];
+  return readFileSync(p, 'utf8')
+    .split('\n')
+    .filter((l) => l.trim() !== '')
+    .map((l) => JSON.parse(l));
+}
+
+function checkSidecar(label, dir, stem, md, summary) {
+  const rows = findingsRows(md);
+  const entries = sidecarEntries(dir, stem);
+  const key = (r) => `${r.rule}|${r.fn}|${r.file}|${r.line}`;
+  const have = new Set(entries.map((e) => `${e.rule}|${e.fn}|${e.file}|${e.line}`));
+  const missing = rows.filter((r) => !have.has(key(r)));
+  check(
+    `${label}: every finding the report shows is in the findings sidecar`,
+    missing.length === 0,
+    missing.length ? `${missing.length} missing, first: ${key(missing[0])}` : `${rows.length} rows, ${entries.length} entries`,
+  );
+  check(
+    `${label}: the sidecar's count agrees with the summary`,
+    summary.findings === entries.length,
+    `summary ${summary.findings} vs sidecar ${entries.length}`,
+  );
+  check(
+    `${label}: every sidecar entry names a family and a location`,
+    entries.every((e) => typeof e.rule === 'string' && e.rule !== '' && typeof e.file === 'string' && Number.isInteger(e.line)),
+    `${entries.length} entries`,
+  );
 }
 
 // --- fixture, twice into the same dir, for determinism -------------------
@@ -122,6 +179,7 @@ if (existsSync(join(f1, `${stem}_summary.json`))) {
   check('A16 L3 failed >= 1', s1.vcs_failed >= 1, `${s1.vcs_failed}`);
   check('A18 funnel implies level 3', s1.level === 3, `L${s1.level}`);
   check('A4 frontend coverage >= 95%', s1.statements / (s1.statements + s1.unsupported_statements) >= 0.95);
+  checkSidecar('fixture', f1, stem, detReport1, s1);
 }
 const fixtureMd = join(f1, `${stem}.md`);
 if (existsSync(fixtureMd)) {
@@ -217,6 +275,7 @@ for (const mod of modules) {
   check(`${mod.label} A15: abstract findings >= 1`, summary.abstract_findings >= 1, `${summary.abstract_findings}`);
   check(`${mod.label} A17: funnel diagram present`, /flowchart LR[\s\S]*L1\[/.test(md));
   check(`${mod.label} A9: per-point table non-empty`, /### 6\.1 Per-program-point observations[\s\S]*?\n\| /.test(md));
+  checkSidecar(mod.label, dir, mdName.slice(0, -3), md, summary);
 }
 
 // --- full-size run (no --function): A11/A12 at documented scale ----------
@@ -262,6 +321,7 @@ if (!skipModules) {
       // cap and became the WHOLE module: the committed artefact is the
       // full-scope run, and 1282 is its number.
       check('doubleML full: L2 findings within 50% of documented 1282', Math.abs(summary.abstract_findings - 1282) <= 641, `${summary.abstract_findings}`);
+      checkSidecar('doubleML full', full, mdName.slice(0, -3), readFileSync(join(full, mdName), 'utf8'), summary);
     }
   }
 }

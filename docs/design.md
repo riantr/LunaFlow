@@ -1072,6 +1072,7 @@ Labels are sanitized: quotes → `#quot;`, angle brackets → `#lt;`/`#gt;`, pip
 | Slice nodes | 40 (render cap), 160 traversal cap | same |
 | Observed path events | 24 | shows the shape without the full 1000-event stream |
 | Per-point range rows | 300 | bounded table |
+| Findings rows | 300 | bounded table; the count table above it states the family mix of the WHOLE set, and the findings the table does not show are in the report's `_findings.jsonl` sidecar, so the bound costs no finding |
 | Files walked | 2,000 | stated in the report if the cap is hit |
 | Syntactic nesting depth | 256 | beyond this the construct is a recorded parse gap; protects the native stack on hostile input |
 

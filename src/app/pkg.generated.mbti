@@ -202,7 +202,7 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], growth? : Array[Finding], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], growth? : Array[Finding], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?, findings_out? : Array[Finding]) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
@@ -915,6 +915,7 @@ pub(all) struct ReportOptions {
   max_taint_nodes : Int32
   max_slice_nodes : Int32
   max_path_events : Int32
+  max_findings : Int32
 }
 pub fn ReportOptions::default() -> Self
 
