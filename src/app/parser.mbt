@@ -423,11 +423,21 @@ fn parse_unary(p : P) -> Expr {
   }
   p.depth = p.depth + 1
   let t = p.peek()
-  let out = if t.text == "-" {
+  // The operator is matched by KIND as well as by text. The lexer keeps a
+  // string literal's CONTENT as the token's text, so the literal `"!"` has
+  // the text `!` -- the same text as the negation operator. Matching on the
+  // text alone made the parser read the string as an operator, which shredded
+  // the expression it belonged to: `return "!" + f(x)` became a return with an
+  // unmodelled expression plus a leftover fragment, and the fragment that
+  // followed the exit was then reported as unreachable code. MEASURED on
+  // `riantr/moonbit_static_analysis@0.5.0`: `d_goal_text` in
+  // `src/flow/datalog_parse.mbt:612` was reported as DEAD-CODE, and the
+  // statement is reachable -- it is the `return` inside the `if`.
+  let out = if is_op(t, "-") {
     let start = p.bump()
     let e = parse_unary(p)
     Expr::new(span_from(start, p.last_tok(), p.file), EUn(UnNeg, e))
-  } else if t.text == "!" {
+  } else if is_op(t, "!") {
     let start = p.bump()
     let e = parse_unary(p)
     Expr::new(span_from(start, p.last_tok(), p.file), EUn(UnNot, e))

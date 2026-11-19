@@ -37,6 +37,42 @@ fn dead_in(src : String) -> Int32 {
 }
 
 ///|
+/// A string literal whose CONTENT spells an operator is not that operator.
+///
+/// The lexer keeps a string literal's CONTENT as the token's text, so the
+/// literal `"!"` has the text `!` -- the same text as the negation operator,
+/// and the same as `-` for the minus operator. The parser matched the unary
+/// operators by text alone, so `return "!" + f(x)` was read as a negation
+/// whose operand was the rest of the expression: the return lost its
+/// expression, a fragment was left behind, and the fragment that followed the
+/// exit was reported as unreachable code.
+///
+/// MEASURED on `riantr/moonbit_static_analysis@0.5.0`: `d_goal_text` at
+/// `src/flow/datalog_parse.mbt:612` was reported as DEAD-CODE. The statement
+/// is reachable -- it is the `return` INSIDE the `if`, on the path where the
+/// goal is negated.
+///
+/// The test is falsifiable: it fails on the parser as it was before the
+/// repair, and the repair is the kind check that `is_op` already applies
+/// everywhere else.
+test "a string literal that spells an operator is not that operator" {
+  let bang =
+    #|fn f(g : G) -> String {
+    #|  return "!" + d_atom_text(g.atom)
+    #|}
+  let minus =
+    #|fn f(g : G) -> String {
+    #|  return "-" + d_atom_text(g.atom)
+    #|}
+  // ONE statement each: the return owns its expression.
+  inspect(stmts_of(bang).length(), content="1")
+  inspect(stmts_of(minus).length(), content="1")
+  // And no dead code: the fragment that followed the exit is gone.
+  inspect(dead_in(bang), content="0")
+  inspect(dead_in(minus), content="0")
+}
+
+///|
 test "a qualified path is one statement" {
   let stmts = stmts_of(
     (
