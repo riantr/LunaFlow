@@ -228,7 +228,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.28
+moon add riantr/LunaFlow@0.1.29
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -236,7 +236,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.28",
+  "riantr/LunaFlow@0.1.29",
 }
 ```
 
@@ -287,7 +287,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.28](https://mooncakes.io/docs/riantr/LunaFlow@0.1.28).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.29](https://mooncakes.io/docs/riantr/LunaFlow@0.1.29).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -576,6 +576,78 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.29
+
+**The abstract layer now analyses the WHOLE module, and the 87 deprecated core
+APIs are gone. Both were found by a deep QA pass over this module's own source,
+and both are measurements rather than opinions.**
+
+**The scope.** `--max-functions` (default **150**) capped the **dynamic** layer's
+entry points, and it used to cap the **abstract** layer too: the two took the same
+number, so on a 957-function module the L2 analysed 150 functions — **16 %** — and
+report §5.2 printed `_No findings._` with no scope caveat. A reader could not tell
+that 84 % of the module had never been looked at. The two caps now bound different
+things: `--max-functions` still bounds the dynamic layer and therefore the trace
+(which is what it was always for), and the abstract layer is bounded by its own
+**total** step budget instead. Measured on this module's own source:
+
+| | before | after |
+|---|---:|---:|
+| L2 abstract findings (default scope) | **1** | **46** |
+| L2 abstract findings (`--max-functions 1000`) | 46 | **46** |
+
+The second row is the fix: the L2 reads the same on both sides, and the cap moves
+the dynamic layer alone. On doubleML the L2 goes from **187** findings to **1,282**
+(220 files, 30,258 statements), and report §5.2 now states the scope in words — *"The
+abstract layer analysed 1411 of 1411 — every function the abstract layer can
+analyse, in 167271 steps."* The cost is registered, not hidden: the doubleML report
+grows from **134 KB to 445 KB** (87 % of the documented A12 limit) and the run from
+8.0 s to **10.8 s**. The L1 trace is **byte-identical** — the same 38,549,443 bytes,
+the same SHA256 — so nothing about the dynamic layer moved.
+
+**The deprecations.** 87 warnings were calls to core APIs the toolchain has marked
+deprecated: 36 × `StringBuilder::new()`, 28 × `Map::new()`, 17 × `String::to_string()`,
+4 × `not(x)`, 1 × `Show`, 1 × `Ref::new`. All 87 are migrated to the forms the
+compiler names. The migration was driven by **the compiler's own site list**, not by
+a blanket replace — only 17 of the 37 `.to_string()` calls were deprecated, because
+the other 20 are on a `String` and only a `StringView` receiver is — and it had to be
+a **loop**: the compiler flags a deprecated *impl* at one site, so fixing that site
+moves the warning to the next one. `moon check` goes from **167 to 80 warnings** on
+native and wasm (105 on js), and **`deprecated` is 0** — on this toolchain *and* on
+the newest one (`moon 0.1.20261117`), where the whole gate was re-run side by side.
+
+**One published-interface change**, declared here: `ReportInput` — a `pub(all)`
+struct no consumer can construct — gains the field `abs_universe : Int32`, which
+carries the module's analysable-function count to the report. It is one line in
+`src/app/pkg.generated.mbti`.
+
+**What else is in this release.** A **Phase-0 IFDS spike** (`docs/qa/IFDS_SPIKE.md`):
+a flow-sensitive, kill-exact, labelled taint fixpoint over the module's own CFG,
+measured against the L2 on three corpora. It loses **no sink** on any of them, and
+it found **three real defects in this module** — the allocation-size family is dead
+code, the finding de-duplication omits the file, and an exact array length prunes
+loop bodies. It is a **measurement, not a feature**: no CLI flag, no report line, no
+funnel place, and **zero** published declarations.
+
+A **deep QA report for this tree** (`docs/qa/REPORT_0_1_29.md`) — sixteen dimensions
+plus a registry self-check and a peer scan, with every finding attributed. Two of
+the harness defects it records were fixed in the same pass, and both are the same
+shape: **a harness that measures something other than what it just produced.** The
+E2E harness ran whatever `cli.exe` was on disk, so it measured the analyser as it
+*was*; it now **builds what it tests**. And it read the **first** file matching the
+artefact's name prefix, in a directory that accumulates one set of files per resolved
+version — so it measured a **nine-day-old** artefact while the run had just written a
+new one. It now empties the directory before each run.
+
+The committed `riantr/moonbit_static_analysis` artefact moved with that module's own
+release, **0.4.50 → 0.5.0** (254 files, 17,428 statements, 184 L2 findings), and the
+acceptance verifier's pin follows it.
+
+**The gate is 28 steps and the deep-QA driver is 30, both green, on this toolchain
+and on the newest one. 229/229 tests on native, wasm and js.** The committed
+artefacts are regenerated by this release's build, and the recipe in
+[Verification](#verification) reproduces all three of them.
 
 ### What changed in 0.1.28
 
@@ -2580,7 +2652,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.28` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.29` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
