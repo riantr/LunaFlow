@@ -26,7 +26,7 @@ pub struct DepGraph {
 
 ///|
 pub fn DepGraph::new() -> DepGraph {
-  { nodes: [], edges: [], index: Map::new(), }
+  { nodes: [], edges: [], index: Map([]), }
 }
 
 ///|
@@ -103,7 +103,7 @@ fn use_names(detail : String) -> Array[String] {
 ///|
 pub fn build_dep_graph(events : Array[TraceEvent]) -> DepGraph {
   let g = DepGraph::new()
-  let last_def : Map[String, String] = Map::new()
+  let last_def : Map[String, String] = Map([])
   for ev in events {
     let uses = use_names(ev.detail)
     match ev.kind {
@@ -182,7 +182,7 @@ pub fn build_taint(
   findings : Array[Finding],
 ) -> TaintGraph {
   let g = TaintGraph::new()
-  let known : Map[String, Int32] = Map::new()
+  let known : Map[String, Int32] = Map([])
   for ev in events {
     let k = ev.fn_name + "::" + ev.name
     if ev.kind == EvSource {
@@ -294,7 +294,7 @@ fn taint_site_key(f : Finding) -> String {
 
 ///|
 pub fn stmt_index(ast : ModuleAst) -> Map[String, String] {
-  let m : Map[String, String] = Map::new()
+  let m : Map[String, String] = Map([])
   for f in ast.files {
     for fn_name in f.funcs {
       index_stmts(m, fn_name.name, fn_name.body)
@@ -381,13 +381,13 @@ pub fn slice_graph(
       }
     }
   }
-  let node_by_key : Map[String, Int32] = Map::new()
+  let node_by_key : Map[String, Int32] = Map([])
   let mut i = 0
   while i < graph.nodes.length() {
     node_by_key[graph.nodes[i].key] = i
     i = i + 1
   }
-  let seen : Map[String, Bool] = Map::new()
+  let seen : Map[String, Bool] = Map([])
   let queue : Array[(String, Int32)] = []
   for s in starts {
     queue.push((s, 0))
@@ -456,7 +456,7 @@ pub fn slice_graph(
 
 ///|
 pub fn count_calls(f : Func) -> Int32 {
-  let r = Ref::new(0)
+  let r = Ref(0)
   count_calls_in(f.body, r)
   r.val
 }

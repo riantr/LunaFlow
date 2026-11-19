@@ -957,7 +957,7 @@ pub struct Coverage {
 
 ///|
 pub fn Coverage::new(source : String) -> Coverage {
-  { hits: Map::new(), covered: 0, total: 0, source, }
+  { hits: Map([]), covered: 0, total: 0, source, }
 }
 
 ///|
@@ -970,7 +970,7 @@ pub fn Coverage::add(
   match self.hits.get(file) {
     Some(m) => m[line] = count
     None => {
-      let m : Map[Int32, Int32] = Map::new()
+      let m : Map[Int32, Int32] = Map([])
       m[line] = count
       self.hits[file] = m
     }

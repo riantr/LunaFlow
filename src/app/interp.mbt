@@ -886,7 +886,7 @@ fn call_user(p : Interp, target : Func, args : Array[Val], span : Span) -> Val {
   p.func_name = target.name
   p.file = target.file
   p.reads.clear()
-  let env : Map[String, Val] = Map::new()
+  let env : Map[String, Val] = Map([])
   let mut i = 0
   while i < target.params.length() && i < args.length() {
     env[target.params[i].name] = args[i]
@@ -1335,7 +1335,7 @@ pub fn run_function(
   p.func_name = fn_name.name
   p.file = fn_name.file
   p.global_values = global_values
-  let env : Map[String, Val] = Map::new()
+  let env : Map[String, Val] = Map([])
   let trials = synthesize(fn_name, opts.trials)
   let mut i = 0
   let mut run = 0
@@ -1419,7 +1419,7 @@ pub fn run_function_by_name(
   name : String,
   opts : RunOptions,
 ) -> RunResult {
-  let funcs : Map[String, Func] = Map::new()
+  let funcs : Map[String, Func] = Map([])
   for f in ast.all_funcs_including_tests() {
     if !funcs.contains(f.name) {
       funcs[f.name] = f
@@ -1460,7 +1460,7 @@ pub fn run_module(
   opts : RunOptions,
   per_function~ : Bool = false,
 ) -> RunResult {
-  let funcs : Map[String, Func] = Map::new()
+  let funcs : Map[String, Func] = Map([])
   for f in ast.all_funcs_including_tests() {
     if !funcs.contains(f.name) {
       funcs[f.name] = f

@@ -149,10 +149,11 @@ jobs:
       # there at all. Naming the supported set makes check/test SKIP that
       # backend instead of failing with a wall of errors.
       #
-      # No --deny-warn either: the warnings are outstanding (the deprecated
-      # `Map::new()` calls, the `test_unqualified_package` notices in the
-      # tests, and a handful of unused values). They are catalogued as a
-      # finding in docs/qa/REPORT.md, not hidden behind a flag.
+      # No --deny-warn either: the warnings are outstanding (the
+      # `test_unqualified_package` notices in the tests, and a handful of
+      # unused values). They are catalogued as a finding in
+      # docs/qa/REPORT_0_1_29.md, not hidden behind a flag. The deprecated
+      # core APIs were migrated in 0.1.29, so the census reads 0 deprecated.
       - name: Check package (native)
         run: moon check --target native
 

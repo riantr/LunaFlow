@@ -3,6 +3,20 @@ import {
   "moonbitlang/core/async/process",
 }
 
+// The IFDS SPIKE's driver (`src/app/ifds_spike_wbtest.mbt`) needs the async
+// runtime -- to read a module tree from a test, which is the only way in this
+// core to touch the filesystem -- and the environment, to name the corpus and
+// to time the run.
+//
+// They are imported FOR THE WBTEST ONLY, so the published library declares no
+// dependency it does not use: a white-box test file is not part of the
+// published library, and a package only it uses would otherwise be reported
+// as unused by the library build.
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/env",
+} for "wbtest"
+
 // The property-based tests import the toolchain's OWN `quickcheck` package --
 // the one inside the `moonbitlang/core` the toolchain bundles -- and nothing
 // else. It is imported FOR TESTS ONLY, so `moon.mod` keeps its empty import

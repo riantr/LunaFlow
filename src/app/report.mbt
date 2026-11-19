@@ -36,6 +36,12 @@ pub(all) struct ReportInput {
   funnel : FunnelResult?
   abstract_result : AbsResult?
   proof : ProofResult?
+  /// The number of functions the abstract layer was GIVEN: the module's
+  /// functions that are not in test files and have a body. It is the
+  /// denominator of the abstract layer's scope, and the difference between it
+  /// and the number the layer actually analysed is a truncation that has to
+  /// be stated rather than left for a reader to infer.
+  abs_universe : Int32
 }
 
 ///|
@@ -53,7 +59,7 @@ fn cfg_shape(kind : NodeKind) -> (String, String, String) {
 
 ///|
 pub fn cfg_mermaid(cfg : Cfg) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("flowchart TD\n")
   out.write_string(
     "  classDef entryNode fill:#dcedc8,stroke:#33691e,stroke-width:2px\n",
@@ -105,7 +111,7 @@ pub fn cfg_mermaid(cfg : Cfg) -> String {
 
 ///|
 pub fn taint_mermaid(g : TaintGraph, cap : Int32) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("flowchart LR\n")
   out.write_string(
     "  classDef src fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px\n",
@@ -114,7 +120,7 @@ pub fn taint_mermaid(g : TaintGraph, cap : Int32) -> String {
   out.write_string(
     "  classDef sink fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px\n",
   )
-  let keep : Map[Int32, Bool] = Map::new()
+  let keep : Map[Int32, Bool] = Map([])
   let mut count = 0
   for n in g.nodes {
     if count < cap {
@@ -155,10 +161,10 @@ pub fn taint_mermaid(g : TaintGraph, cap : Int32) -> String {
 
 ///|
 pub fn slice_mermaid(s : SliceResult, cap : Int32) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("flowchart TD\n")
   out.write_string("  classDef sliceNode fill:#e3f2fd,stroke:#1565c0\n")
-  let ids : Map[String, Int32] = Map::new()
+  let ids : Map[String, Int32] = Map([])
   let mut i = 0
   for n in s.nodes {
     if i >= cap {
@@ -234,6 +240,26 @@ pub fn validate_mermaid(text : String) -> Array[String] {
 }
 
 ///|
+/// How much of the module the ABSTRACT LAYER covered. The layer's claim is
+/// "exhaustive over the input abstraction", and that claim is only true of
+/// the functions it actually analysed. Saying so is the difference between
+/// "this module is clean" and "this module was not looked at".
+fn abstract_coverage(analysed : Int32, universe : Int32) -> String {
+  if analysed >= universe {
+    return universe.to_string() +
+      " of " +
+      universe.to_string() +
+      " — every function the abstract layer can analyse"
+  }
+  analysed.to_string() +
+  " of " +
+  universe.to_string() +
+  " — the abstract layer's budget stopped it, and the other " +
+  (universe - analysed).to_string() +
+  " functions were NOT analysed"
+}
+
+///|
 /// How much of the module the CFG pass covered. The pass takes the FIRST
 /// functions in file order, so a module with more functions than the window
 /// leaves the rest with NO CFG -- and a file's findings then depend on how
@@ -292,7 +318,7 @@ fn findings_table(fs : Array[Finding]) -> String {
   if fs.length() == 0 {
     return "_No findings._\n"
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string(
     "| Rule | Severity | Function | Location | Message | Method | Confidence |\n",
   )
@@ -345,7 +371,7 @@ fn path_of(
 
 ///|
 fn site_table(events : Array[TraceEvent], cap : Int32) -> String {
-  let m : Map[String, Array[String]] = Map::new()
+  let m : Map[String, Array[String]] = Map([])
   let order : Array[String] = []
   for ev in events {
     if ev.kind == EvDef && ev.name != "<ret>" {
@@ -368,7 +394,7 @@ fn site_table(events : Array[TraceEvent], cap : Int32) -> String {
   if keys.length() == 0 {
     return "_No definition events recorded._\n"
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("| Function | Line | Variable | Observed values |\n")
   out.write_string("| --- | --- | --- | --- |\n")
   let mut i = 0
@@ -412,7 +438,7 @@ fn ranges_table(ranges : Ranges) -> String {
   if sorted.length() == 0 {
     return "_No numeric observations were recorded._\n"
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string(
     "| Function | Variable | Min | Max | Samples | Observed values | First site |\n",
   )
@@ -474,7 +500,7 @@ fn top_funcs(cfgs : Array[Cfg], n : Int32) -> Array[Cfg] {
 
 ///|
 fn coverage_table(cov : Coverage, cfgs : Array[Cfg]) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string(
     "Imported coverage: **" + cov.ratio() + "** of instrumented lines hit",
   )
@@ -518,7 +544,7 @@ fn coverage_table(cov : Coverage, cfgs : Array[Cfg]) -> String {
 
 ///|
 fn funcs_with_findings(cfgs : Array[Cfg], findings : Array[Finding]) -> Int32 {
-  let m : Map[String, Bool] = Map::new()
+  let m : Map[String, Bool] = Map([])
   for f in findings {
     m[f.fn_name] = true
   }
@@ -560,7 +586,7 @@ fn level_definitions_table() -> String {
 
 ///|
 fn funnel_mermaid(f : FunnelResult) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("flowchart LR\n")
   out.write_string("  classDef l1 fill:#dcedc8,stroke:#33691e\n")
   out.write_string("  classDef l2 fill:#fff9c4,stroke:#f9a825\n")
@@ -619,7 +645,7 @@ fn abstract_ranges_table(ranges : Map[String, AbsRange]) -> String {
   if keys.length() == 0 {
     return "_No abstract numeric ranges recorded._\n"
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("| Function | Variable | May-range | Observations |\n")
   out.write_string("| --- | --- | --- | --- |\n")
   for key in keys {
@@ -653,7 +679,7 @@ fn vc_table(vcs : Array[VC]) -> String {
   if vcs.length() == 0 {
     return "_No verification condition generated._\n"
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string(
     "| Function | VC kind | Location | Status | Goal | Detail |\n",
   )
@@ -725,7 +751,7 @@ pub fn proof_counts(vcs : Array[VC]) -> (Int32, Int32, Int32) {
 ///     two declarations claiming the same C symbol with different
 ///     signatures. Those two are this analyzer's own checks.
 fn ffi_section(model : FfiModel?) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("\n### 5.7 The foreign address space\n\n")
   match model {
     None =>
@@ -767,7 +793,7 @@ fn ffi_section(model : FfiModel?) -> String {
 ///|
 /// The CONCURRENCY section: the tasks, the shared cells, the conflicts.
 fn conc_section(model : ConcModel?) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("\n### 5.8 Concurrency: the tasks and the shared state\n\n")
   match model {
     None => out.write_string("_The concurrency model was not analysed._\n\n")
@@ -810,7 +836,7 @@ fn conc_section(model : ConcModel?) -> String {
 ///|
 /// The tasks: what was spawned, by which API, and where its body is.
 fn conc_task_table(m : ConcModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.tasks.length() == 0 {
     out.write_string("_No task._\n")
     return out.to_string()
@@ -843,7 +869,7 @@ fn conc_task_table(m : ConcModel) -> String {
 ///|
 /// The shared cells: the `Ref`s that more than one task reaches.
 fn conc_cell_table(m : ConcModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.cells.length() == 0 {
     out.write_string("_No shared cell._\n")
     return out.to_string()
@@ -882,7 +908,7 @@ fn conc_cell_table(m : ConcModel) -> String {
 /// wanted. The last of those is the edge of the resource ordering graph, and
 /// a cycle in that graph is a deadlock.
 fn conc_edge_table(m : ConcModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.edges.length() == 0 {
     out.write_string("_No wait._\n")
     return out.to_string()
@@ -924,7 +950,7 @@ fn conc_edge_table(m : ConcModel) -> String {
 /// The IPC AND BUFFERS section: the reads that can come back short, the
 /// views that go stale, and the buffers two sides write.
 fn ipc_section(model : IpcModel?) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string(
     "\n### 5.9 IPC and buffers: the reads that can come back short\n\n",
   )
@@ -967,7 +993,7 @@ fn ipc_section(model : IpcModel?) -> String {
 ///|
 /// The calls the module makes on its readers and writers.
 fn ipc_call_table(m : IpcModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.calls.length() == 0 {
     out.write_string("_No call on a reader or a writer._\n")
     return out.to_string()
@@ -998,7 +1024,7 @@ fn ipc_call_table(m : IpcModel) -> String {
 ///|
 /// The views that were read after the reader had reused their buffer.
 fn ipc_view_table(m : IpcModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.views.length() == 0 {
     out.write_string("_No stale view._\n")
     return out.to_string()
@@ -1029,7 +1055,7 @@ fn ipc_view_table(m : IpcModel) -> String {
 ///|
 /// The buffers a task body and the function that started it both write.
 fn ipc_shared_table(m : IpcModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.shared.length() == 0 {
     out.write_string("_No shared buffer._\n")
     return out.to_string()
@@ -1061,7 +1087,7 @@ fn ipc_shared_table(m : IpcModel) -> String {
 /// The foreign declarations: what the module depends on, and in which
 /// space each value lands.
 fn ffi_decl_table(m : FfiModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.decls.length() == 0 {
     out.write_string("_No foreign declaration._\n")
     return out.to_string()
@@ -1124,7 +1150,7 @@ fn ffi_decl_table(m : FfiModel) -> String {
 /// every fixed number that crosses the boundary, and the other fixed
 /// numbers it travels with.
 fn ffi_register_table(m : FfiModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.registers.length() == 0 {
     out.write_string(
       "_No constant crosses the boundary._ Every integer the module hands to C is computed at the call site, so there is no fixed address to name.\n",
@@ -1157,7 +1183,7 @@ fn ffi_register_table(m : FfiModel) -> String {
 ///|
 /// The calls that cross the boundary.
 fn ffi_call_table(m : FfiModel) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   if m.calls.length() == 0 {
     out.write_string("_No call crosses the boundary._\n")
     return out.to_string()
@@ -1218,7 +1244,7 @@ pub fn render_report(
   conc~ : ConcModel? = None,
   ipc~ : IpcModel? = None,
 ) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   let md = "docs/design.md"
   out.write_string(
     "# LunaFlow analysis report — " +
@@ -1358,7 +1384,13 @@ pub fn render_report(
       f.abstract_functions.to_string() +
       " functions, " +
       f.abstract_steps.to_string() +
-      " steps | exhaustive over the input abstraction |\n",
+      " steps | " +
+      (if f.abstract_functions >= input.abs_universe {
+        "exhaustive over the input abstraction"
+      } else {
+        "exhaustive over the input abstraction, over the analysed functions only"
+      }) +
+      " |\n",
     )
     out.write_string(
       "| L3 contracts | " +
@@ -1481,6 +1513,13 @@ pub fn render_report(
   if input.abstract_result is Some(abs) {
     out.write_string(
       "Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Two rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. And a tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose.\n\n",
+    )
+    out.write_string(
+      "**Scope.** The abstract layer analysed " +
+      abstract_coverage(abs.functions, input.abs_universe) +
+      ", in " +
+      abs.steps.to_string() +
+      " steps.\n\n",
     )
     out.write_string(findings_table(abstract_findings(abs.findings)))
   } else {

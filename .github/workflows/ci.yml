@@ -153,6 +153,22 @@ jobs:
           moon coverage report -f simp_caret > _build/qa/simp_caret.txt
           tail -n 1 _build/qa/simp_caret.txt
 
+      # THE IFDS SPIKE. A MEASUREMENT, not a feature: the spike lives in
+      # `src/app/ifds_spike_wbtest.mbt` and is not reachable from the CLI. The
+      # harness drives it over the fixture corpus and checks the four
+      # measurements of `docs/qa/IFDS_SPIKE.md` -- no lost sink, the blanket
+      # rule's contribution accounted for, the model's gaps counted, the scale
+      # reported. The run ALSO proves the corpus loader works: it is the only
+      # thing in the tree that reads a module tree from inside a test, and it
+      # does it through the toolchain's async runtime.
+      #
+      # The `--falsify` run breaks each check on purpose and asserts that the
+      # check then fails. A check that cannot fail is not a check.
+      - name: Check the IFDS spike
+        run: |
+          node scripts/qa/ifds_spike.mjs --corpus fixtures --label fixtures
+          node scripts/qa/ifds_spike.mjs --corpus fixtures --label fixtures-falsify --falsify
+
       - name: Check formatting
         run: moon fmt --check
 

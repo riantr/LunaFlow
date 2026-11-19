@@ -28,7 +28,7 @@
 | Interpreted steps | 47835 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 7955 ms |
+| Wall time (analyzer) | 10753 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -51,7 +51,7 @@ flowchart LR
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
   L1["L1 concrete: 152 findings"]:::l1
-  L2["L2 abstract: 187 findings, 186 new"]:::l2
+  L2["L2 abstract: 1282 findings, 1281 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -60,14 +60,14 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 152 findings | — | 150 functions | observed facts |
-| L2 abstract | 187 findings | 186 | 150 functions, 11189 steps | exhaustive over the input abstraction |
-| L3 contracts | 0 VCs | 0 failed, 0 unknown | 101 critical functions | specs required |
+| L2 abstract | 1282 findings | 1281 | 1411 functions, 167271 steps | exhaustive over the input abstraction |
+| L3 contracts | 0 VCs | 0 failed, 0 unknown | 536 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
 
-Escalated functions (have at least one L1/L2 finding or a contract): `clip_vec`, `normalize_ipw`, `slice_matrix_rows`, `unique_units`, `build_row_unit_map`, `DoubleMLAPO::fit_cluster`, `kfold`, `psi_at`, `cluster_sandwich_variance`, `draw_bootstrap_weights`, `DoubleMLAPO::sensitivity_nu2_elements`, `DoubleMLAPO::sensitivity_analysis`, `irm_style_sensitivity_from_elements`, `DoubleMLAPO::sensitivity_analysis_cluster`, `irm_style_sensitivity_cluster_from_elements`, `DoubleMLAPOS::psi_b_row_at`, `DoubleMLAPOS::sandwich_se_at`, `DoubleMLAPOS::cluster_sandwich_se_at`, `DoubleMLAPOS::bias_corrected_coef_at`, `DoubleMLAPOS::confint`, `DoubleMLAPOS::causal_contrast`, `check_sample_splitting`, `DoubleMLDIDData::new`, `DoubleMLDID::fit`, `generic_bootstrap_t_stat`, `DoubleMLDID::sensitivity_nu2_elements`, `DoubleMLDID::sensitivity_analysis`, `DoubleMLDID::sensitivity_analysis_cluster`, `GBLearner::fit_weighted`, `cross_fit_irm`, `DoubleMLIRM::fit_cluster`, `DoubleMLIRM::sensitivity_nu2_elements`, `vector_subtract`, `DoubleMLIRM::sensitivity_analysis`, `DoubleMLIRM::sensitivity_analysis_cluster`, `mean`, `sample_sd`, `percentile_sorted`, `lpq_score`, `lpq_score_ipw`, `generic_bootstrap_single_psi`, `single_psi_sensitivity`, `DoubleMLLPQ::sensitivity_analysis_cluster`, `irm_style_sensitivity_cluster`, `aggregate_coef_se`, `DoubleMLAPO::new`, `DoubleMLAPO::coef`, `DoubleMLAPO::se`, `DoubleMLAPO::confint`, `DoubleMLAPO::predictions_g`, `DoubleMLAPO::predictions_m`, `DoubleMLAPO::sandwich_se`, `DoubleMLAPO::cluster_sandwich_se`, `DoubleMLAPO::bias_corrected_coef`, `DoubleMLAPO::bootstrap`, `DoubleMLAPO::tune`, `DoubleMLAPOS::tune`, `DoubleMLAPOS::new`, `DoubleMLAPOS::fit`, `DoubleMLAPOS::coefs`, `DoubleMLAPOS::ses`, `DoubleMLAPOS::psi_a_row_at`, `DoubleMLAPOS::m_inv_1x1_at`, `DoubleMLAPOS::bootstrap`, `DoubleMLAPOS::boot_t_stats`, `DoubleMLAPOS::sensitivity_analysis`, `DoubleMLAPOS::sensitivity_analysis_cluster`, `DoubleMLDID::new`, `DoubleMLDID::coef`, `DoubleMLDID::se`, `DoubleMLDID::confint`, `DoubleMLDID::bootstrap`, `DoubleMLDID::sandwich_se`, `DoubleMLDID::cluster_sandwich_se`, `DoubleMLDID::bias_corrected_coef`, `DoubleMLDID::tune`, `DoubleMLIRM::new`, `DoubleMLIRM::coef`, `DoubleMLIRM::se`, `DoubleMLIRM::confint`, `filter_indices`, `DoubleMLIRM::fit`, `DoubleMLIRM::bootstrap`, `DoubleMLIRM::tune`, `DoubleMLIRM::sandwich_se`, `DoubleMLIRM::cluster_sandwich_se`, `DoubleMLIRM::bias_corrected_coef`, `silverman_bandwidth`, `gaussian_kde`, `gaussian_kde_weighted`, `DoubleMLLPQData::new`, `DoubleMLLPQ::new`, `DoubleMLLPQ::fit`, `DoubleMLLPQ::bootstrap`, `DoubleMLLPQ::sensitivity_analysis`, `DoubleMLLPQ::confint`, `DoubleMLLPQ::coef`, `DoubleMLLPQ::se`, `DoubleMLLPQ::predictions_g0`, `DoubleMLLPQ::predictions_g1`, `DoubleMLLPQ::predictions_m`
+Escalated functions (have at least one L1/L2 finding or a contract): `clip_vec`, `normalize_ipw`, `slice_matrix_rows`, `unique_units`, `build_row_unit_map`, `DoubleMLAPO::fit_cluster`, `kfold`, `psi_at`, `cluster_sandwich_variance`, `draw_bootstrap_weights`, `DoubleMLAPO::sensitivity_nu2_elements`, `DoubleMLAPO::sensitivity_analysis`, `irm_style_sensitivity_from_elements`, `DoubleMLAPO::sensitivity_analysis_cluster`, `irm_style_sensitivity_cluster_from_elements`, `DoubleMLAPOS::psi_b_row_at`, `DoubleMLAPOS::sandwich_se_at`, `DoubleMLAPOS::cluster_sandwich_se_at`, `DoubleMLAPOS::bias_corrected_coef_at`, `DoubleMLAPOS::confint`, `DoubleMLAPOS::causal_contrast`, `check_sample_splitting`, `DoubleMLDIDData::new`, `DoubleMLDID::fit`, `generic_bootstrap_t_stat`, `DoubleMLDID::sensitivity_nu2_elements`, `DoubleMLDID::sensitivity_analysis`, `DoubleMLDID::sensitivity_analysis_cluster`, `GBLearner::fit_weighted`, `cross_fit_irm`, `DoubleMLIRM::fit_cluster`, `DoubleMLIRM::sensitivity_nu2_elements`, `vector_subtract`, `DoubleMLIRM::sensitivity_analysis`, `DoubleMLIRM::sensitivity_analysis_cluster`, `mean`, `sample_sd`, `percentile_sorted`, `lpq_score`, `lpq_score_ipw`, `generic_bootstrap_single_psi`, `single_psi_sensitivity`, `DoubleMLLPQ::sensitivity_analysis_cluster`, `irm_style_sensitivity_cluster`, `aggregate_coef_se`, `DoubleMLAPO::new`, `DoubleMLAPO::coef`, `DoubleMLAPO::se`, `DoubleMLAPO::confint`, `DoubleMLAPO::predictions_g`, `DoubleMLAPO::predictions_m`, `DoubleMLAPO::sandwich_se`, `DoubleMLAPO::cluster_sandwich_se`, `DoubleMLAPO::bias_corrected_coef`, `DoubleMLAPO::bootstrap`, `DoubleMLAPO::tune`, `DoubleMLAPOS::tune`, `DoubleMLAPOS::new`, `DoubleMLAPOS::fit`, `DoubleMLAPOS::coefs`, `DoubleMLAPOS::ses`, `DoubleMLAPOS::psi_a_row_at`, `DoubleMLAPOS::m_inv_1x1_at`, `DoubleMLAPOS::bootstrap`, `DoubleMLAPOS::boot_t_stats`, `DoubleMLAPOS::sensitivity_analysis`, `DoubleMLAPOS::sensitivity_analysis_cluster`, `DoubleMLDID::new`, `DoubleMLDID::coef`, `DoubleMLDID::se`, `DoubleMLDID::confint`, `DoubleMLDID::bootstrap`, `DoubleMLDID::sandwich_se`, `DoubleMLDID::cluster_sandwich_se`, `DoubleMLDID::bias_corrected_coef`, `DoubleMLDID::tune`, `DoubleMLIRM::new`, `DoubleMLIRM::coef`, `DoubleMLIRM::se`, `DoubleMLIRM::confint`, `filter_indices`, `DoubleMLIRM::fit`, `DoubleMLIRM::bootstrap`, `DoubleMLIRM::tune`, `DoubleMLIRM::sandwich_se`, `DoubleMLIRM::cluster_sandwich_se`, `DoubleMLIRM::bias_corrected_coef`, `silverman_bandwidth`, `gaussian_kde`, `gaussian_kde_weighted`, `DoubleMLLPQData::new`, `DoubleMLLPQ::new`, `DoubleMLLPQ::fit`, `DoubleMLLPQ::bootstrap`, `DoubleMLLPQ::sensitivity_analysis`, `DoubleMLLPQ::confint`, `DoubleMLLPQ::coef`, `DoubleMLLPQ::se`, `DoubleMLLPQ::predictions_g0`, `DoubleMLLPQ::predictions_g1`, `DoubleMLLPQ::predictions_m`, `DoubleMLLPQ::m_inv_1x1`, `DoubleMLLPQ::sandwich_se`, `DoubleMLLPQ::cluster_sandwich_se`, `DoubleMLLPQ::bias_corrected_coef`, `DoubleMLPLR::new`, `DoubleMLPLR::coef`, `DoubleMLPLR::se`, `DoubleMLPLR::confint`, `plr_score_elements`, `DoubleMLPLR::fit`, `DoubleMLPLR::fit_cluster`, `DoubleMLPLR::bootstrap`, `DoubleMLPLR::sensitivity_analysis`, `DoubleMLPLR::sensitivity_analysis_cluster`, `DoubleMLPLR::sandwich_se`, `DoubleMLPLR::cluster_sandwich_se`, `DoubleMLPLR::bias_corrected_coef`, `DoubleMLRDDData::new`, `DoubleMLRDD::new`, `weighted_xtx_transpose`, `DoubleMLRDD::fit`, `DoubleMLRDD::coef`, `DoubleMLRDD::se`, `DoubleMLRDD::confint`, `rdd_hac_require_df`, `DoubleMLRDD::hac_se`, `DoubleMLRDD::cluster_hac_se`, `DoubleMLRDD::sensitivity_analysis`, `DoubleMLRDD::sensitivity_analysis_cluster`, `DoubleMLRDD::bootstrap`, `DoubleMLRDD::tune`, `DoubleMLRDD::bias`, `DoubleMLRDD::tau_bc`, `DoubleMLRDD::tau_bc_collapsed`, `DoubleMLRDD::tau_bc_se`, `DoubleMLRDD::bandwidth_mse`, `DoubleMLRDD::bandwidth_variance_term`, `rdd_pilot_stage`, `rdd_nn_matched_sigma4`, `nn_residual`, `rdd_rb_side`, `DoubleMLRDD::tau_bc_se_rb`, `cart_fit`, `cart_leaf_value`, `RFLearner::fit_weighted`, `DoubleMLSSMData::new`, `DoubleMLSSM::new`, `DoubleMLSSM::coef`, `DoubleMLSSM::se`, `DoubleMLSSM::confint`, `DoubleMLSSM::bootstrap`, `DoubleMLSSM::tune`, `DoubleMLSSM::psi_a`, `DoubleMLSSM::psi_b`, `DoubleMLSSM::sensitivity_analysis`, `DoubleMLSSM::sensitivity_analysis_cluster`, `augment_one_col`, `filter_two_values`, `DoubleMLSSM::fit`, `DoubleMLSSM::sandwich_se`, `DoubleMLSSM::cluster_sandwich_se`, `DoubleMLSSM::bias_corrected_coef`, `DoubleMLCVAR::new`, `DoubleMLCVAR::se`, `DoubleMLCVAR::confint`, `DoubleMLCVAR::predictions_g`, `DoubleMLCVAR::predictions_m`, `DoubleMLCVAR::sensitivity_analysis`, `DoubleMLCVAR::sensitivity_analysis_cluster`, `stratified_half_split`, `cvar_ipw_score`, `solve_ipw_root`, `DoubleMLCVAR::fit`, `DoubleMLCVAR::tune`, `DoubleMLCVAR::bootstrap`, `DoubleMLCVAR::sandwich_se`, `DoubleMLCVAR::cluster_sandwich_se`, `DoubleMLCVAR::bias_corrected_coef`, `DoubleMLData::new`, `DoubleMLIIVMData::new`, `DoubleMLIIVM::new`, `DoubleMLIIVM::se`, `DoubleMLIIVM::confint`, `filter_by_value`, `cross_fit_iivm`, `DoubleMLIIVM::fit`, `DoubleMLIIVM::fit_cluster`, `DoubleMLIIVM::bootstrap`, `DoubleMLIIVM::tune`, `DoubleMLIIVM::sensitivity_analysis`, `DoubleMLIIVM::sensitivity_analysis_cluster`, `DoubleMLIIVM::sandwich_se`, `DoubleMLIIVM::cluster_sandwich_se`, `DoubleMLIIVM::bias_corrected_coef`, `DoubleMLBinaryData::new`, `prelim_beta_per_fold`, `lplr_score_at`, `newton_solve_score`, `DoubleMLLPLR::new`, `DoubleMLLPLR::confint`, `DoubleMLLPLR::predictions_t`, `DoubleMLLPLR::predictions_m`, `DoubleMLLPLR::predictions_a`, `concat_d_x`, `DoubleMLLPLR::bootstrap`, `DoubleMLLPLR::tune`, `cross_fit_predict_inner`, `DoubleMLLPLR::sensitivity_analysis`, `DoubleMLLPLR::sensitivity_analysis_cluster`, `DoubleMLLPLR::sandwich_se`, `DoubleMLLPLR::cluster_sandwich_se`, `DoubleMLLPLR::bias_corrected_coef`, `DoubleMLPLIVData::new`, `DoubleMLPLIV::new`, `DoubleMLPLIV::coef`, `DoubleMLPLIV::se`, `DoubleMLPLIV::confint`, `DoubleMLPLIV::fit`, `DoubleMLPLIV::fit_cluster`, `DoubleMLPLIV::bootstrap`, `DoubleMLPLIV::tune`, `DoubleMLPLIV::sandwich_se`, `DoubleMLPLIV::cluster_sandwich_se`, `DoubleMLPLIV::bias_corrected_coef`, `DoubleMLPanelData::new`, `sort_rows_by_id_time`, `unit_means`, `est_coef_cluster`, `var_est_cluster`, `transform_panel`, `DoubleMLPLPR::new`, `DoubleMLPLPR::coef`, `DoubleMLPLPR::predictions_l`, `DoubleMLPLPR::predictions_m`, `DoubleMLPLPR::sensitivity_analysis`, `DoubleMLPLPR::fit`, `DoubleMLPLPR::bootstrap`, `DoubleMLPLPR::tune`, `DoubleMLPLPR::sensitivity_analysis_cluster`, `DoubleMLPLPR::sandwich_se`, `DoubleMLPLPR::cluster_sandwich_se`, `DoubleMLPLPR::bias_corrected_coef`, `tune_score_outcome`, `tune_argmin`, `DoubleMLPLR::tune`, `GBClassifier::fit_weighted`, `Fold::new`, `kfold_stratified`, `slice_vector`, `expand_unit_folds_to_rows`, `cluster_causal_param_and_se`, `cross_fit_predict`, `double_cross_fit_predict`, `RFClassifier::fit_weighted`, `DoubleMLDIDCSData::new`, `discover_groups_times`, `DoubleMLDIDCS::new`, `DoubleMLDIDCS::coef_at`, `DoubleMLDIDCS::se_at`, `DoubleMLDIDCS::period_at`, `DoubleMLDIDCS::cell_flat_at`, `DoubleMLDIDCS::cell_psi_a_row_at`, `DoubleMLDIDCS::cell_psi_b_row_at`, `DoubleMLDIDCS::m_inv_1x1_at`, `DoubleMLDIDCS::sandwich_se_at`, `DoubleMLDIDCS::cluster_sandwich_se_at`, `DoubleMLDIDCS::fit`, `DoubleMLDIDCS::bootstrap`, `DoubleMLDIDCS::sensitivity_analysis`, `DoubleMLDIDCS::confint`, `DoubleMLDIDCS::sensitivity_analysis_cluster`, `DoubleMLDIDCS::tune`, `cholesky`, `solve_spd`, `inv_spd`, `LinearRegression::fit`, `LinearRegression::fit_weighted`, `LinearRegression::predict`, `LinearRegression::sandwich_se_weighted`, `LinearRegression::sandwich_se`, `Matrix::zeros`, `Matrix::ones`, `Matrix::from_array`, `Matrix::from_rows`, `matvec`, `dot`, `make_irm_data`, `make_ssm_data`, `cross_fit_predict_conditional_dispatch`, `var_est`, `var_est_with_jacobian`, `count_eq`, `make_iivm_data`, `make_pliv_CHS2015`, `make_plpr_CP2025`, `LogisticRegression::fit`, `LogisticRegression::predict`, `argsort_asc`, `romano_wolf_p_adjust`, `bonferroni_p_adjust`, `bh_fdr_p_adjust`, `by_fdr_p_adjust`, `bh_step_up_sorted`, `tsbh_p_adjust`, `tsby_p_adjust`, `array_min`, `array_max`, `pq_score_ipw`, `pq_score_orthogonal`, `DoubleMLPQ::new`, `DoubleMLPQ::fit_cluster`, `DoubleMLPQ::coef`, `DoubleMLPQ::confint`, `DoubleMLPQ::bootstrap`, `DoubleMLPQ::sensitivity_analysis`, `DoubleMLPQ::sensitivity_analysis_cluster`, `DoubleMLPQ::m_inv_1x1`, `DoubleMLPQ::sandwich_se`, `DoubleMLPQ::tune`, `DoubleMLQTE::fit_cluster`, `DoubleMLQTE::confint`, `DoubleMLQTE::bootstrap`, `DoubleMLQTE::sensitivity_analysis`, `DoubleMLQTE::sensitivity_analysis_cluster`, `DoubleMLQTE::m_inv_1x1_at`, `DoubleMLQTE::psi_row`, `DoubleMLQTE::sandwich_se_at`, `DoubleMLQTE::cluster_sandwich_se_at`, `DoubleMLQTE::bias_corrected_coef_at`, `DoubleMLQTE::joint_covariance`, `DoubleMLQTE::cluster_joint_covariance`, `DoubleMLQTE::tune`, `sandwich_variance_hc0`, `sandwich_variance_hc1`, `sandwich_variance_hc2`, `sandwich_variance_hc3`, `bias_corrected_theta`, `did_bootstrap_t_stat`, `DoubleMLDIDMulti::new`, `expand_gt_keyword`, `DoubleMLDIDMulti::coef_at_idx`, `DoubleMLDIDMulti::se_at_idx`, `did_multi_inner_cell_at_idx`, `DoubleMLDIDMulti::sandwich_se_at_idx`, `DoubleMLDIDMulti::cluster_sandwich_se_at_idx`, `DoubleMLDIDMulti::bias_corrected_coef_at_idx`, `DoubleMLDIDMulti::tune`, `DoubleMLDIDMulti::bootstrap`, `DoubleMLDIDMulti::t_stats`, `DoubleMLDIDMulti::p_values`, `DoubleMLDIDMulti::p_adjust`, `DoubleMLDIDMulti::confint`, `DoubleMLDIDMulti::aggregate_time`, `DoubleMLDIDMulti::sensitivity_analysis_cluster`, `build_lzz2020_dgp`, `build_panel_dgp`, `DoubleMLBLP::new`, `DoubleMLBLP::bootstrap`, `DoubleMLBLP::rss`, `DoubleMLBLP::sensitivity_analysis_cluster`, `DoubleMLBLP::var_y`, `DoubleMLBLP::orth_signal`, `DoubleMLBLP::basis`, `DoubleMLBLP::predictions`, `DoubleMLBLP::confint_joint`, `DoubleMLBLP::leverage`, `blp_hac_require_df`, `DoubleMLBLP::hac_se`, `DoubleMLBLP::cluster_hac_se`, `policy_tree_build`, `DoubleMLPolicyTree::new`, `policy_tree_ints_to_doubles`, `policy_tree_ints_from_doubles`, `policy_tree_cache_decode`, `policy_tree_honest_leaf_se`, `DoubleMLPolicyTree::set_min_leaf_n`, `DoubleMLPolicyTree::predict`, `DoubleMLPolicyTree::split_feature`, `DoubleMLPolicyTree::leaf_se`, `DoubleMLPolicyTree::leaf_se_reliable`, `DoubleMLPolicyTree::unreliable_leaves`, `DoubleMLPolicyTree::smallest_leaf_count`, `DoubleMLPolicyTree::policy_value`, `DoubleMLPolicyTree::policy_value_se`, `DoubleMLPolicyTree::leaf_influence`, `DoubleMLPolicyTree::leaf_psi_a`, `DoubleMLPolicyTree::sensitivity_analysis`, `DoubleMLDIDBinaryData::new`, `preprocess_did_binary`, `DoubleMLDIDBinary::new`, `DoubleMLDIDBinary::coef`, `DoubleMLDIDBinary::se`, `DoubleMLDIDBinary::predictions_g0`, `DoubleMLDIDBinary::predictions_g1`, `DoubleMLDIDBinary::sandwich_se`, `DoubleMLDIDBinary::cluster_sandwich_se`, `DoubleMLDIDBinary::bias_corrected_coef`, `DoubleMLDIDBinary::psi_a_long`, `DoubleMLDIDBinary::psi_b_long`, `DoubleMLDIDBinary::inner_psi_b`, `DoubleMLDIDBinary::fit`, `DoubleMLDIDBinary::sensitivity_analysis`, `DoubleMLDIDBinary::sensitivity_analysis_cluster`, `DoubleMLDIDBinary::tune`, `matrix_predict`, `vector_add`, `vector_scale`, `vector_divide`, `reg_fit_means`, `reg_mean_one_weights`, `enet_coordinate_descent`, `Ridge::fit_weighted`, `Ridge::predict`, `Lasso::coefficients`, `Lasso::fit_weighted`, `Lasso::predict`, `ElasticNet::coefficients`, `ElasticNet::intercept`, `ElasticNet::fit_weighted`, `ElasticNet::predict`, `enet_objective`, `irm_style_sensitivity`, `empirical_quantile`, `irm_style_sensitivity_cluster_multi`, `compute_sensitivity_bias`, `gain_statistics`, `GainStatsSource::new`, `GainStatsSource::from_blp`, `GainStatsSource::from_blp_cv`, `GainStatsSource::from_blp_cv_repeated`, `GainStatsSource::from_blp_hc0`, `median_sorted`, `joint_sensitivity`, `build_irm_tune_data`, `build_dgp_data`, `PSProcessorConfig::new`, `PSProcessor::adjust_ps`, `pava`, `pool_tied_x`, `fit_isotonic`, `predict_isotonic`, `isotonic_calibrate_cv`, `cs_bin_panel_subset`, `cs_bin_crossfit_nuisance`, `fit_cs_bin_g`, `cs_bin_score_obs`, `DoubleMLDIDCSBinary::new`, `DoubleMLDIDCSBinary::coef`, `DoubleMLDIDCSBinary::confint`, `DoubleMLDIDCSBinary::predictions_g_d1_t0`, `DoubleMLDIDCSBinary::predictions_g_d1_t1`, `DoubleMLDIDCSBinary::predictions_m`, `DoubleMLDIDCSBinary::bootstrap`, `DoubleMLDIDCSBinary::cs_bin_sensitivity_nu2_elements`, `DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals`, `DoubleMLDIDCSBinary::sensitivity_analysis_cluster`, `DoubleMLDIDCSBinary::sandwich_se`, `DoubleMLDIDCSBinary::cluster_sandwich_se`, `DoubleMLDIDCSBinary::bias_corrected_coef`, `DoubleMLDIDCSBinary::tune`, `make_did_CS2021`, `make_did_SZ2020`, `make_plr_CCDDHNR2018`, `aggregate_group`, `aggregate_time`, `aggregate_event`, `generic_bootstrap_ols_per_coef`, `make_irm_discrete_treatments`, `make_pliv_multiway_cluster`, `expand_v086_psi`, `expand_v086_ref_hc0`, `expand_v087_psi`, `expand_v087_ssm_data`, `expand_v087_cs_binary_data`, `expand_v089_ref_hc0`, `expand_v089_ref_leverage`, `expand_v089_ref_cluster`, `expand_v089_apo_data`, `expand_v090_data`, `expand_v091_data`, `expand_v091_iivm_data`, `expand_v092_lplr_data`, `expand_v093_lpq_data`, `expand_v094_pq_data_scaled`, `expand_v095_row`, `expand_v095_qte_data_wide`, `v096_side_wls`, `v096_meat`, `v096_meat_leverage`, `v097_reference`, `v098_dbl_array_eq_nan_aware`, `v099_dgp`, `v099_identical`, `expand_v101_row`, `v106_build_panel`, `v107_ssm_dgp`, `v116_assert_exact`, `v117_prob_dev`, `v118_mean`, `v120_max_abs_diff`, `v120_expect`, `v120_kfold_folds`, `v120_check_ridge`, `v120_check_enet`, `v121_max_abs_diff`, `v121_expect`, `v122_expect_bool`, `v128_cs_data`, `v130_cs_data`, `v1316_did_data`, `v1317_data`, `v1330_data`, `v1350_data`, `v1380_data`, `v1480_corr`, `build_clustered_dgp`, `build_row_dgp`, `make_did_cs_CS2021`, `DoubleMLDIDCrossSectionData::new`, `DoubleMLDIDCrossSection::psi_a`, `DoubleMLDIDCrossSection::psi_b`, `DoubleMLDIDCrossSection::predictions_g_d0_t1`, `DoubleMLDIDCrossSection::predictions_g_d1_t1`, `DoubleMLDIDCrossSection::confint`, `fit_g_subset_predict`, `norm_ppf`, `compute_score`, `DoubleMLDIDCrossSection::tune`, `DoubleMLDIDCrossSection::bootstrap`, `DoubleMLDIDCrossSection::sensitivity_analysis`, `DoubleMLDIDCrossSection::sensitivity_analysis_cluster`, `DoubleMLDIDCrossSection::sandwich_se`, `DoubleMLDIDCrossSection::cluster_sandwich_se`, `DoubleMLDIDCrossSection::bias_corrected_coef`, `build_iv_clustered_dgp`
 
-Functions escalated without any contract (spec gap at L3): `DoubleMLAPO::new (apo.mbt:101)`, `DoubleMLAPO::coef (apo.mbt:196)`, `DoubleMLAPO::se (apo.mbt:207)`, `DoubleMLAPO::confint (apo.mbt:218)`, `DoubleMLAPO::predictions_g (apo.mbt:229)`, `DoubleMLAPO::predictions_m (apo.mbt:240)`, `DoubleMLAPO::fit_cluster (apo.mbt:549)`, `DoubleMLAPO::sandwich_se (apo.mbt:766)`, `DoubleMLAPO::cluster_sandwich_se (apo.mbt:799)`, `DoubleMLAPO::bias_corrected_coef (apo.mbt:858)`, `DoubleMLAPO::bootstrap (apo.mbt:895)`, `DoubleMLAPO::tune (apo.mbt:968)`, `DoubleMLAPOS::tune (apo.mbt:1024)`, `DoubleMLAPO::sensitivity_nu2_elements (apo.mbt:1094)`, `DoubleMLAPO::sensitivity_analysis (apo.mbt:1127)`, `DoubleMLAPO::sensitivity_analysis_cluster (apo.mbt:1157)`, `DoubleMLAPOS::new (apo.mbt:1282)`, `DoubleMLAPOS::fit (apo.mbt:1379)`, `DoubleMLAPOS::coefs (apo.mbt:1693)`, `DoubleMLAPOS::ses (apo.mbt:1704)`, `DoubleMLAPOS::psi_b_row_at (apo.mbt:1808)`, `DoubleMLAPOS::psi_a_row_at (apo.mbt:1838)`, `DoubleMLAPOS::m_inv_1x1_at (apo.mbt:1868)`, `DoubleMLAPOS::sandwich_se_at (apo.mbt:1919)`, `DoubleMLAPOS::cluster_sandwich_se_at (apo.mbt:1965)`, `DoubleMLAPOS::bias_corrected_coef_at (apo.mbt:2019)`, `DoubleMLAPOS::bootstrap (apo.mbt:2045)`, `DoubleMLAPOS::confint (apo.mbt:2094)`, `DoubleMLAPOS::boot_t_stats (apo.mbt:2148)`, `DoubleMLAPOS::causal_contrast (apo.mbt:2200)`, `DoubleMLAPOS::sensitivity_analysis (apo.mbt:2266)`, `DoubleMLAPOS::sensitivity_analysis_cluster (apo.mbt:2314)`, `DoubleMLDIDData::new (did.mbt:31)`, `DoubleMLDID::new (did.mbt:252)`, `DoubleMLDID::coef (did.mbt:345)`, `DoubleMLDID::se (did.mbt:356)`, `DoubleMLDID::confint (did.mbt:369)`, `DoubleMLDID::fit (did.mbt:483)`, `DoubleMLDID::bootstrap (did.mbt:793)`, `DoubleMLDID::sensitivity_nu2_elements (did.mbt:873)`, `DoubleMLDID::sensitivity_analysis (did.mbt:940)`, `DoubleMLDID::sensitivity_analysis_cluster (did.mbt:975)`, `DoubleMLDID::sandwich_se (did.mbt:1027)`, `DoubleMLDID::cluster_sandwich_se (did.mbt:1057)`, `DoubleMLDID::bias_corrected_coef (did.mbt:1114)`, `DoubleMLDID::tune (did.mbt:1196)`, `GBLearner::fit_weighted (gbl.mbt:125)`, `DoubleMLIRM::new (irm.mbt:109)`, `DoubleMLIRM::coef (irm.mbt:184)`, `DoubleMLIRM::se (irm.mbt:195)`, `DoubleMLIRM::confint (irm.mbt:209)`, `filter_indices (irm.mbt:314)`, `clip_vec (irm.mbt:327)`, `cross_fit_irm (irm.mbt:352)`, `DoubleMLIRM::fit (irm.mbt:462)`, `DoubleMLIRM::fit_cluster (irm.mbt:730)`, `DoubleMLIRM::bootstrap (irm.mbt:935)`, `DoubleMLIRM::tune (irm.mbt:1014)`, `DoubleMLIRM::sensitivity_nu2_elements (irm.mbt:1089)`, `DoubleMLIRM::sensitivity_analysis (irm.mbt:1116)`, `DoubleMLIRM::sensitivity_analysis_cluster (irm.mbt:1154)`, `DoubleMLIRM::sandwich_se (irm.mbt:1197)`, `DoubleMLIRM::cluster_sandwich_se (irm.mbt:1238)`, `DoubleMLIRM::bias_corrected_coef (irm.mbt:1296)`, `silverman_bandwidth (kde.mbt:14)`, `sample_sd (kde.mbt:32)`, `percentile_sorted (kde.mbt:65)`, `gaussian_kde (kde.mbt:88)`, `gaussian_kde_weighted (kde.mbt:125)`, `DoubleMLLPQData::new (lpq.mbt:14)`, `lpq_score (lpq.mbt:37)`, `lpq_score_ipw (lpq.mbt:68)`, `DoubleMLLPQ::new (lpq.mbt:178)`, `DoubleMLLPQ::fit (lpq.mbt:236)`, `DoubleMLLPQ::bootstrap (lpq.mbt:536)`, `DoubleMLLPQ::sensitivity_analysis (lpq.mbt:580)`, `DoubleMLLPQ::sensitivity_analysis_cluster (lpq.mbt:608)`, `DoubleMLLPQ::confint (lpq.mbt:655)`, `DoubleMLLPQ::coef (lpq.mbt:677)`, `DoubleMLLPQ::se (lpq.mbt:688)`, `DoubleMLLPQ::predictions_g0 (lpq.mbt:701)`, `DoubleMLLPQ::predictions_g1 (lpq.mbt:714)`, `DoubleMLLPQ::predictions_m (lpq.mbt:727)`, `unique_units (plpr.mbt:172)`, `check_sample_splitting (kfold.mbt:288)`, `kfold (kfold.mbt:439)`, `slice_matrix_rows (kfold.mbt:487)`, `build_row_unit_map (kfold.mbt:584)`, `mean (matrix.mbt:245)`, `psi_at (sandwich.mbt:215)`, `cluster_sandwich_variance (sandwich.mbt:534)`, `draw_bootstrap_weights (did_multi.mbt:1126)`, `aggregate_coef_se (aggregator.mbt:33)`, `vector_subtract (vectorized.mbt:77)`, `irm_style_sensitivity_from_elements (sensitivity.mbt:78)`, `irm_style_sensitivity_cluster_from_elements (sensitivity.mbt:233)`, `irm_style_sensitivity_cluster (sensitivity.mbt:317)`, `single_psi_sensitivity (sensitivity.mbt:489)`, `normalize_ipw (ps_processor.mbt:910)`, `generic_bootstrap_t_stat (bootstrap_helper.mbt:47)`, `generic_bootstrap_single_psi (bootstrap_helper.mbt:104)`
+Functions escalated without any contract (spec gap at L3): `DoubleMLAPO::new (apo.mbt:101)`, `DoubleMLAPO::coef (apo.mbt:196)`, `DoubleMLAPO::se (apo.mbt:207)`, `DoubleMLAPO::confint (apo.mbt:218)`, `DoubleMLAPO::predictions_g (apo.mbt:229)`, `DoubleMLAPO::predictions_m (apo.mbt:240)`, `DoubleMLAPO::fit_cluster (apo.mbt:549)`, `DoubleMLAPO::sandwich_se (apo.mbt:766)`, `DoubleMLAPO::cluster_sandwich_se (apo.mbt:799)`, `DoubleMLAPO::bias_corrected_coef (apo.mbt:858)`, `DoubleMLAPO::bootstrap (apo.mbt:895)`, `DoubleMLAPO::tune (apo.mbt:968)`, `DoubleMLAPOS::tune (apo.mbt:1024)`, `DoubleMLAPO::sensitivity_nu2_elements (apo.mbt:1094)`, `DoubleMLAPO::sensitivity_analysis (apo.mbt:1127)`, `DoubleMLAPO::sensitivity_analysis_cluster (apo.mbt:1157)`, `DoubleMLAPOS::new (apo.mbt:1282)`, `DoubleMLAPOS::fit (apo.mbt:1379)`, `DoubleMLAPOS::coefs (apo.mbt:1693)`, `DoubleMLAPOS::ses (apo.mbt:1704)`, `DoubleMLAPOS::psi_b_row_at (apo.mbt:1808)`, `DoubleMLAPOS::psi_a_row_at (apo.mbt:1838)`, `DoubleMLAPOS::m_inv_1x1_at (apo.mbt:1868)`, `DoubleMLAPOS::sandwich_se_at (apo.mbt:1919)`, `DoubleMLAPOS::cluster_sandwich_se_at (apo.mbt:1965)`, `DoubleMLAPOS::bias_corrected_coef_at (apo.mbt:2019)`, `DoubleMLAPOS::bootstrap (apo.mbt:2045)`, `DoubleMLAPOS::confint (apo.mbt:2094)`, `DoubleMLAPOS::boot_t_stats (apo.mbt:2148)`, `DoubleMLAPOS::causal_contrast (apo.mbt:2200)`, `DoubleMLAPOS::sensitivity_analysis (apo.mbt:2266)`, `DoubleMLAPOS::sensitivity_analysis_cluster (apo.mbt:2314)`, `DoubleMLDIDData::new (did.mbt:31)`, `DoubleMLDID::new (did.mbt:252)`, `DoubleMLDID::coef (did.mbt:345)`, `DoubleMLDID::se (did.mbt:356)`, `DoubleMLDID::confint (did.mbt:369)`, `DoubleMLDID::fit (did.mbt:483)`, `DoubleMLDID::bootstrap (did.mbt:793)`, `DoubleMLDID::sensitivity_nu2_elements (did.mbt:873)`, `DoubleMLDID::sensitivity_analysis (did.mbt:940)`, `DoubleMLDID::sensitivity_analysis_cluster (did.mbt:975)`, `DoubleMLDID::sandwich_se (did.mbt:1027)`, `DoubleMLDID::cluster_sandwich_se (did.mbt:1057)`, `DoubleMLDID::bias_corrected_coef (did.mbt:1114)`, `DoubleMLDID::tune (did.mbt:1196)`, `GBLearner::fit_weighted (gbl.mbt:125)`, `DoubleMLIRM::new (irm.mbt:109)`, `DoubleMLIRM::coef (irm.mbt:184)`, `DoubleMLIRM::se (irm.mbt:195)`, `DoubleMLIRM::confint (irm.mbt:209)`, `filter_indices (irm.mbt:314)`, `clip_vec (irm.mbt:327)`, `cross_fit_irm (irm.mbt:352)`, `DoubleMLIRM::fit (irm.mbt:462)`, `DoubleMLIRM::fit_cluster (irm.mbt:730)`, `DoubleMLIRM::bootstrap (irm.mbt:935)`, `DoubleMLIRM::tune (irm.mbt:1014)`, `DoubleMLIRM::sensitivity_nu2_elements (irm.mbt:1089)`, `DoubleMLIRM::sensitivity_analysis (irm.mbt:1116)`, `DoubleMLIRM::sensitivity_analysis_cluster (irm.mbt:1154)`, `DoubleMLIRM::sandwich_se (irm.mbt:1197)`, `DoubleMLIRM::cluster_sandwich_se (irm.mbt:1238)`, `DoubleMLIRM::bias_corrected_coef (irm.mbt:1296)`, `silverman_bandwidth (kde.mbt:14)`, `sample_sd (kde.mbt:32)`, `percentile_sorted (kde.mbt:65)`, `gaussian_kde (kde.mbt:88)`, `gaussian_kde_weighted (kde.mbt:125)`, `DoubleMLLPQData::new (lpq.mbt:14)`, `lpq_score (lpq.mbt:37)`, `lpq_score_ipw (lpq.mbt:68)`, `DoubleMLLPQ::new (lpq.mbt:178)`, `DoubleMLLPQ::fit (lpq.mbt:236)`, `DoubleMLLPQ::bootstrap (lpq.mbt:536)`, `DoubleMLLPQ::sensitivity_analysis (lpq.mbt:580)`, `DoubleMLLPQ::sensitivity_analysis_cluster (lpq.mbt:608)`, `DoubleMLLPQ::confint (lpq.mbt:655)`, `DoubleMLLPQ::coef (lpq.mbt:677)`, `DoubleMLLPQ::se (lpq.mbt:688)`, `DoubleMLLPQ::predictions_g0 (lpq.mbt:701)`, `DoubleMLLPQ::predictions_g1 (lpq.mbt:714)`, `DoubleMLLPQ::predictions_m (lpq.mbt:727)`, `DoubleMLLPQ::m_inv_1x1 (lpq.mbt:838)`, `DoubleMLLPQ::sandwich_se (lpq.mbt:872)`, `DoubleMLLPQ::cluster_sandwich_se (lpq.mbt:911)`, `DoubleMLLPQ::bias_corrected_coef (lpq.mbt:956)`, `DoubleMLPLR::new (plr.mbt:98)`, `DoubleMLPLR::coef (plr.mbt:158)`, `DoubleMLPLR::se (plr.mbt:171)`, `DoubleMLPLR::confint (plr.mbt:187)`, `plr_score_elements (plr.mbt:348)`, `DoubleMLPLR::fit (plr.mbt:414)`, `DoubleMLPLR::fit_cluster (plr.mbt:673)`, `DoubleMLPLR::bootstrap (plr.mbt:976)`, `DoubleMLPLR::sensitivity_analysis (plr.mbt:1086)`, `DoubleMLPLR::sensitivity_analysis_cluster (plr.mbt:1129)`, `DoubleMLPLR::sandwich_se (plr.mbt:1179)`, `DoubleMLPLR::cluster_sandwich_se (plr.mbt:1214)`, `DoubleMLPLR::bias_corrected_coef (plr.mbt:1271)`, `DoubleMLRDDData::new (rdd.mbt:15)`, `DoubleMLRDD::new (rdd.mbt:160)`, `weighted_xtx_transpose (rdd.mbt:405)`, `DoubleMLRDD::fit (rdd.mbt:663)`, `DoubleMLRDD::coef (rdd.mbt:1001)`, `DoubleMLRDD::se (rdd.mbt:1012)`, `DoubleMLRDD::confint (rdd.mbt:1023)`, `rdd_hac_require_df (rdd.mbt:1261)`, `DoubleMLRDD::hac_se (rdd.mbt:1321)`, `DoubleMLRDD::cluster_hac_se (rdd.mbt:1462)`, `DoubleMLRDD::sensitivity_analysis (rdd.mbt:1556)`, `DoubleMLRDD::sensitivity_analysis_cluster (rdd.mbt:1593)`, `DoubleMLRDD::bootstrap (rdd.mbt:1720)`, `DoubleMLRDD::tune (rdd.mbt:1831)`, `DoubleMLRDD::bias (rdd.mbt:2089)`, `DoubleMLRDD::tau_bc (rdd.mbt:2228)`, `DoubleMLRDD::tau_bc_collapsed (rdd.mbt:2290)`, `DoubleMLRDD::tau_bc_se (rdd.mbt:2343)`, `DoubleMLRDD::bandwidth_mse (rdd.mbt:2414)`, `DoubleMLRDD::bandwidth_variance_term (rdd.mbt:2487)`, `rdd_pilot_stage (rdd.mbt:2580)`, `rdd_nn_matched_sigma4 (rdd.mbt:2658)`, `nn_residual (rdd.mbt:2806)`, `rdd_rb_side (rdd.mbt:2982)`, `DoubleMLRDD::tau_bc_se_rb (rdd.mbt:3199)`, `cart_fit (rfl.mbt:202)`, `cart_leaf_value (rfl.mbt:495)`, `RFLearner::fit_weighted (rfl.mbt:610)`, `DoubleMLSSMData::new (ssm.mbt:18)`, `DoubleMLSSM::new (ssm.mbt:152)`, `DoubleMLSSM::coef (ssm.mbt:286)`, `DoubleMLSSM::se (ssm.mbt:297)`, `DoubleMLSSM::confint (ssm.mbt:308)`, `DoubleMLSSM::bootstrap (ssm.mbt:356)`, `DoubleMLSSM::tune (ssm.mbt:438)`, `DoubleMLSSM::psi_a (ssm.mbt:469)`, `DoubleMLSSM::psi_b (ssm.mbt:480)`, `DoubleMLSSM::sensitivity_analysis (ssm.mbt:498)`, `DoubleMLSSM::sensitivity_analysis_cluster (ssm.mbt:526)`, `augment_one_col (ssm.mbt:553)`, `filter_two_values (ssm.mbt:570)`, `DoubleMLSSM::fit (ssm.mbt:692)`, `DoubleMLSSM::sandwich_se (ssm.mbt:957)`, `DoubleMLSSM::cluster_sandwich_se (ssm.mbt:988)`, `DoubleMLSSM::bias_corrected_coef (ssm.mbt:1047)`, `DoubleMLCVAR::new (cvar.mbt:128)`, `DoubleMLCVAR::se (cvar.mbt:292)`, `DoubleMLCVAR::confint (cvar.mbt:304)`, `DoubleMLCVAR::predictions_g (cvar.mbt:317)`, `DoubleMLCVAR::predictions_m (cvar.mbt:333)`, `DoubleMLCVAR::sensitivity_analysis (cvar.mbt:376)`, `DoubleMLCVAR::sensitivity_analysis_cluster (cvar.mbt:431)`, `stratified_half_split (cvar.mbt:465)`, `cvar_ipw_score (cvar.mbt:535)`, `solve_ipw_root (cvar.mbt:573)`, `DoubleMLCVAR::fit (cvar.mbt:841)`, `DoubleMLCVAR::tune (cvar.mbt:1213)`, `DoubleMLCVAR::bootstrap (cvar.mbt:1265)`, `DoubleMLCVAR::sandwich_se (cvar.mbt:1328)`, `DoubleMLCVAR::cluster_sandwich_se (cvar.mbt:1356)`, `DoubleMLCVAR::bias_corrected_coef (cvar.mbt:1414)`, `DoubleMLData::new (data.mbt:42)`, `DoubleMLIIVMData::new (iivm.mbt:18)`, `DoubleMLIIVM::new (iivm.mbt:178)`, `DoubleMLIIVM::se (iivm.mbt:303)`, `DoubleMLIIVM::confint (iivm.mbt:316)`, `filter_by_value (iivm.mbt:400)`, `cross_fit_iivm (iivm.mbt:434)`, `DoubleMLIIVM::fit (iivm.mbt:550)`, `DoubleMLIIVM::fit_cluster (iivm.mbt:817)`, `DoubleMLIIVM::bootstrap (iivm.mbt:1035)`, `DoubleMLIIVM::tune (iivm.mbt:1111)`, `DoubleMLIIVM::sensitivity_analysis (iivm.mbt:1156)`, `DoubleMLIIVM::sensitivity_analysis_cluster (iivm.mbt:1181)`, `DoubleMLIIVM::sandwich_se (iivm.mbt:1230)`, `DoubleMLIIVM::cluster_sandwich_se (iivm.mbt:1258)`, `DoubleMLIIVM::bias_corrected_coef (iivm.mbt:1315)`, `DoubleMLBinaryData::new (lplr.mbt:46)`, `prelim_beta_per_fold (lplr.mbt:76)`, `lplr_score_at (lplr.mbt:184)`, `newton_solve_score (lplr.mbt:236)`, `DoubleMLLPLR::new (lplr.mbt:354)`, `DoubleMLLPLR::confint (lplr.mbt:552)`, `DoubleMLLPLR::predictions_t (lplr.mbt:565)`, `DoubleMLLPLR::predictions_m (lplr.mbt:578)`, `DoubleMLLPLR::predictions_a (lplr.mbt:593)`, `concat_d_x (lplr.mbt:608)`, `DoubleMLLPLR::bootstrap (lplr.mbt:1452)`, `DoubleMLLPLR::tune (lplr.mbt:1535)`, `cross_fit_predict_inner (lplr.mbt:1618)`, `DoubleMLLPLR::sensitivity_analysis (lplr.mbt:1750)`, `DoubleMLLPLR::sensitivity_analysis_cluster (lplr.mbt:1782)`, `DoubleMLLPLR::sandwich_se (lplr.mbt:1886)`, `DoubleMLLPLR::cluster_sandwich_se (lplr.mbt:1922)`, `DoubleMLLPLR::bias_corrected_coef (lplr.mbt:1968)`, `DoubleMLPLIVData::new (pliv.mbt:23)`, `DoubleMLPLIV::new (pliv.mbt:155)`, `DoubleMLPLIV::coef (pliv.mbt:206)`, `DoubleMLPLIV::se (pliv.mbt:217)`, `DoubleMLPLIV::confint (pliv.mbt:230)`, `DoubleMLPLIV::fit (pliv.mbt:310)`, `DoubleMLPLIV::fit_cluster (pliv.mbt:539)`, `DoubleMLPLIV::bootstrap (pliv.mbt:733)`, `DoubleMLPLIV::tune (pliv.mbt:811)`, `DoubleMLPLIV::sandwich_se (pliv.mbt:943)`, `DoubleMLPLIV::cluster_sandwich_se (pliv.mbt:971)`, `DoubleMLPLIV::bias_corrected_coef (pliv.mbt:1028)`, `DoubleMLPanelData::new (plpr.mbt:51)`, `sort_rows_by_id_time (plpr.mbt:95)`, `unit_means (plpr.mbt:116)`, `unique_units (plpr.mbt:172)`, `est_coef_cluster (plpr.mbt:198)`, `var_est_cluster (plpr.mbt:252)`, `transform_panel (plpr.mbt:319)`, `DoubleMLPLPR::new (plpr.mbt:554)`, `DoubleMLPLPR::coef (plpr.mbt:655)`, `DoubleMLPLPR::predictions_l (plpr.mbt:690)`, `DoubleMLPLPR::predictions_m (plpr.mbt:703)`, `DoubleMLPLPR::sensitivity_analysis (plpr.mbt:763)`, `DoubleMLPLPR::fit (plpr.mbt:801)`, `DoubleMLPLPR::bootstrap (plpr.mbt:1181)`, `DoubleMLPLPR::tune (plpr.mbt:1277)`, `DoubleMLPLPR::sensitivity_analysis_cluster (plpr.mbt:1330)`, `DoubleMLPLPR::sandwich_se (plpr.mbt:1401)`, `DoubleMLPLPR::cluster_sandwich_se (plpr.mbt:1437)`, `DoubleMLPLPR::bias_corrected_coef (plpr.mbt:1495)`, `tune_score_outcome (tune.mbt:175)`, `tune_argmin (tune.mbt:215)`, `DoubleMLPLR::tune (tune.mbt:352)`, `GBClassifier::fit_weighted (gbclf.mbt:163)`, `Fold::new (kfold.mbt:225)`, `check_sample_splitting (kfold.mbt:288)`, `kfold_stratified (kfold.mbt:346)`, `kfold (kfold.mbt:439)`, `slice_matrix_rows (kfold.mbt:487)`, `slice_vector (kfold.mbt:501)`, `expand_unit_folds_to_rows (kfold.mbt:536)`, `build_row_unit_map (kfold.mbt:584)`, `cluster_causal_param_and_se (kfold.mbt:640)`, `cross_fit_predict (kfold.mbt:675)`, `double_cross_fit_predict (kfold.mbt:731)`, `RFClassifier::fit_weighted (rfclf.mbt:148)`, `DoubleMLDIDCSData::new (did_cs.mbt:37)`, `discover_groups_times (did_cs.mbt:85)`, `DoubleMLDIDCS::new (did_cs.mbt:322)`, `DoubleMLDIDCS::coef_at (did_cs.mbt:446)`, `DoubleMLDIDCS::se_at (did_cs.mbt:491)`, `DoubleMLDIDCS::period_at (did_cs.mbt:789)`, `DoubleMLDIDCS::cell_flat_at (did_cs.mbt:941)`, `DoubleMLDIDCS::cell_psi_a_row_at (did_cs.mbt:969)`, `DoubleMLDIDCS::cell_psi_b_row_at (did_cs.mbt:995)`, `DoubleMLDIDCS::m_inv_1x1_at (did_cs.mbt:1030)`, `DoubleMLDIDCS::sandwich_se_at (did_cs.mbt:1092)`, `DoubleMLDIDCS::cluster_sandwich_se_at (did_cs.mbt:1161)`, `DoubleMLDIDCS::fit (did_cs.mbt:1244)`, `DoubleMLDIDCS::bootstrap (did_cs.mbt:1871)`, `DoubleMLDIDCS::sensitivity_analysis (did_cs.mbt:1953)`, `DoubleMLDIDCS::confint (did_cs.mbt:1999)`, `DoubleMLDIDCS::sensitivity_analysis_cluster (did_cs.mbt:2071)`, `DoubleMLDIDCS::tune (did_cs.mbt:2201)`, `cholesky (linalg.mbt:12)`, `solve_spd (linalg.mbt:74)`, `inv_spd (linalg.mbt:141)`, `LinearRegression::fit (linear.mbt:96)`, `LinearRegression::fit_weighted (linear.mbt:197)`, `LinearRegression::predict (linear.mbt:257)`, `LinearRegression::sandwich_se_weighted (linear.mbt:287)`, `LinearRegression::sandwich_se (linear.mbt:350)`, `Matrix::zeros (matrix.mbt:20)`, `Matrix::ones (matrix.mbt:27)`, `Matrix::from_array (matrix.mbt:35)`, `Matrix::from_rows (matrix.mbt:109)`, `matvec (matrix.mbt:167)`, `dot (matrix.mbt:220)`, `mean (matrix.mbt:245)`, `make_irm_data (dgp_irm.mbt:41)`, `make_ssm_data (dgp_ssm.mbt:38)`, `cross_fit_predict_conditional_dispatch (learner.mbt:383)`, `var_est (var_est.mbt:24)`, `var_est_with_jacobian (var_est.mbt:76)`, `count_eq (apo_test.mbt:22)`, `make_iivm_data (dgp_iivm.mbt:40)`, `make_pliv_CHS2015 (dgp_pliv.mbt:28)`, `make_plpr_CP2025 (dgp_plpr.mbt:42)`, `LogisticRegression::fit (logistic.mbt:105)`, `LogisticRegression::predict (logistic.mbt:218)`, `argsort_asc (p_adjust.mbt:91)`, `romano_wolf_p_adjust (p_adjust.mbt:128)`, `bonferroni_p_adjust (p_adjust.mbt:254)`, `bh_fdr_p_adjust (p_adjust.mbt:287)`, `by_fdr_p_adjust (p_adjust.mbt:331)`, `bh_step_up_sorted (p_adjust.mbt:388)`, `tsbh_p_adjust (p_adjust.mbt:484)`, `tsby_p_adjust (p_adjust.mbt:609)`, `array_min (quantile.mbt:7)`, `array_max (quantile.mbt:26)`, `pq_score_ipw (quantile.mbt:116)`, `pq_score_orthogonal (quantile.mbt:156)`, `DoubleMLPQ::new (quantile.mbt:479)`, `DoubleMLPQ::fit_cluster (quantile.mbt:759)`, `DoubleMLPQ::coef (quantile.mbt:913)`, `DoubleMLPQ::confint (quantile.mbt:976)`, `DoubleMLPQ::bootstrap (quantile.mbt:1006)`, `DoubleMLPQ::sensitivity_analysis (quantile.mbt:1050)`, `DoubleMLPQ::sensitivity_analysis_cluster (quantile.mbt:1072)`, `DoubleMLPQ::m_inv_1x1 (quantile.mbt:1176)`, `DoubleMLPQ::sandwich_se (quantile.mbt:1217)`, `DoubleMLPQ::tune (quantile.mbt:1342)`, `DoubleMLQTE::fit_cluster (quantile.mbt:1848)`, `DoubleMLQTE::confint (quantile.mbt:2075)`, `DoubleMLQTE::bootstrap (quantile.mbt:2137)`, `DoubleMLQTE::sensitivity_analysis (quantile.mbt:2215)`, `DoubleMLQTE::sensitivity_analysis_cluster (quantile.mbt:2271)`, `DoubleMLQTE::m_inv_1x1_at (quantile.mbt:2442)`, `DoubleMLQTE::psi_row (quantile.mbt:2470)`, `DoubleMLQTE::sandwich_se_at (quantile.mbt:2536)`, `DoubleMLQTE::cluster_sandwich_se_at (quantile.mbt:2574)`, `DoubleMLQTE::bias_corrected_coef_at (quantile.mbt:2628)`, `DoubleMLQTE::joint_covariance (quantile.mbt:2740)`, `DoubleMLQTE::cluster_joint_covariance (quantile.mbt:2814)`, `DoubleMLQTE::tune (quantile.mbt:2901)`, `psi_at (sandwich.mbt:215)`, `sandwich_variance_hc0 (sandwich.mbt:273)`, `sandwich_variance_hc1 (sandwich.mbt:317)`, `sandwich_variance_hc2 (sandwich.mbt:366)`, `sandwich_variance_hc3 (sandwich.mbt:416)`, `cluster_sandwich_variance (sandwich.mbt:534)`, `bias_corrected_theta (sandwich.mbt:646)`, `did_bootstrap_t_stat (bootstrap.mbt:66)`, `DoubleMLDIDMulti::new (did_multi.mbt:83)`, `expand_gt_keyword (did_multi.mbt:211)`, `DoubleMLDIDMulti::coef_at_idx (did_multi.mbt:305)`, `DoubleMLDIDMulti::se_at_idx (did_multi.mbt:337)`, `did_multi_inner_cell_at_idx (did_multi.mbt:381)`, `DoubleMLDIDMulti::sandwich_se_at_idx (did_multi.mbt:459)`, `DoubleMLDIDMulti::cluster_sandwich_se_at_idx (did_multi.mbt:515)`, `DoubleMLDIDMulti::bias_corrected_coef_at_idx (did_multi.mbt:560)`, `DoubleMLDIDMulti::tune (did_multi.mbt:682)`, `DoubleMLDIDMulti::bootstrap (did_multi.mbt:732)`, `DoubleMLDIDMulti::t_stats (did_multi.mbt:826)`, `DoubleMLDIDMulti::p_values (did_multi.mbt:856)`, `DoubleMLDIDMulti::p_adjust (did_multi.mbt:942)`, `DoubleMLDIDMulti::confint (did_multi.mbt:1029)`, `draw_bootstrap_weights (did_multi.mbt:1126)`, `DoubleMLDIDMulti::aggregate_time (did_multi.mbt:1196)`, `DoubleMLDIDMulti::sensitivity_analysis_cluster (did_multi.mbt:1333)`, `build_lzz2020_dgp (lplr_test.mbt:21)`, `build_panel_dgp (plpr_test.mbt:12)`, `aggregate_coef_se (aggregator.mbt:33)`, `DoubleMLBLP::new (blp_policy.mbt:68)`, `DoubleMLBLP::bootstrap (blp_policy.mbt:409)`, `DoubleMLBLP::rss (blp_policy.mbt:462)`, `DoubleMLBLP::sensitivity_analysis_cluster (blp_policy.mbt:564)`, `DoubleMLBLP::var_y (blp_policy.mbt:620)`, `DoubleMLBLP::orth_signal (blp_policy.mbt:635)`, `DoubleMLBLP::basis (blp_policy.mbt:650)`, `DoubleMLBLP::predictions (blp_policy.mbt:670)`, `DoubleMLBLP::confint_joint (blp_policy.mbt:721)`, `DoubleMLBLP::leverage (blp_policy.mbt:958)`, `blp_hac_require_df (blp_policy.mbt:986)`, `DoubleMLBLP::hac_se (blp_policy.mbt:1032)`, `DoubleMLBLP::cluster_hac_se (blp_policy.mbt:1175)`, `policy_tree_build (blp_policy.mbt:1276)`, `DoubleMLPolicyTree::new (blp_policy.mbt:1585)`, `policy_tree_ints_to_doubles (blp_policy.mbt:1707)`, `policy_tree_ints_from_doubles (blp_policy.mbt:1721)`, `policy_tree_cache_decode (blp_policy.mbt:1782)`, `policy_tree_honest_leaf_se (blp_policy.mbt:1840)`, `DoubleMLPolicyTree::set_min_leaf_n (blp_policy.mbt:2227)`, `DoubleMLPolicyTree::predict (blp_policy.mbt:2289)`, `DoubleMLPolicyTree::split_feature (blp_policy.mbt:2307)`, `DoubleMLPolicyTree::leaf_se (blp_policy.mbt:2408)`, `DoubleMLPolicyTree::leaf_se_reliable (blp_policy.mbt:2438)`, `DoubleMLPolicyTree::unreliable_leaves (blp_policy.mbt:2459)`, `DoubleMLPolicyTree::smallest_leaf_count (blp_policy.mbt:2483)`, `DoubleMLPolicyTree::policy_value (blp_policy.mbt:2537)`, `DoubleMLPolicyTree::policy_value_se (blp_policy.mbt:2605)`, `DoubleMLPolicyTree::leaf_influence (blp_policy.mbt:2668)`, `DoubleMLPolicyTree::leaf_psi_a (blp_policy.mbt:2709)`, `DoubleMLPolicyTree::sensitivity_analysis (blp_policy.mbt:2785)`, `DoubleMLDIDBinaryData::new (did_binary.mbt:30)`, `preprocess_did_binary (did_binary.mbt:111)`, `DoubleMLDIDBinary::new (did_binary.mbt:355)`, `DoubleMLDIDBinary::coef (did_binary.mbt:515)`, `DoubleMLDIDBinary::se (did_binary.mbt:527)`, `DoubleMLDIDBinary::predictions_g0 (did_binary.mbt:572)`, `DoubleMLDIDBinary::predictions_g1 (did_binary.mbt:586)`, `DoubleMLDIDBinary::sandwich_se (did_binary.mbt:655)`, `DoubleMLDIDBinary::cluster_sandwich_se (did_binary.mbt:681)`, `DoubleMLDIDBinary::bias_corrected_coef (did_binary.mbt:703)`, `DoubleMLDIDBinary::psi_a_long (did_binary.mbt:724)`, `DoubleMLDIDBinary::psi_b_long (did_binary.mbt:744)`, `DoubleMLDIDBinary::inner_psi_b (did_binary.mbt:782)`, `DoubleMLDIDBinary::fit (did_binary.mbt:806)`, `DoubleMLDIDBinary::sensitivity_analysis (did_binary.mbt:980)`, `DoubleMLDIDBinary::sensitivity_analysis_cluster (did_binary.mbt:1000)`, `DoubleMLDIDBinary::tune (did_binary.mbt:1080)`, `matrix_predict (vectorized.mbt:50)`, `vector_subtract (vectorized.mbt:77)`, `vector_add (vectorized.mbt:96)`, `vector_scale (vectorized.mbt:115)`, `vector_divide (vectorized.mbt:165)`, `reg_fit_means (regularized.mbt:119)`, `reg_mean_one_weights (regularized.mbt:152)`, `enet_coordinate_descent (regularized.mbt:200)`, `Ridge::fit_weighted (regularized.mbt:421)`, `Ridge::predict (regularized.mbt:479)`, `Lasso::coefficients (regularized.mbt:576)`, `Lasso::fit_weighted (regularized.mbt:612)`, `Lasso::predict (regularized.mbt:650)`, `ElasticNet::coefficients (regularized.mbt:749)`, `ElasticNet::intercept (regularized.mbt:761)`, `ElasticNet::fit_weighted (regularized.mbt:784)`, `ElasticNet::predict (regularized.mbt:828)`, `enet_objective (regularized.mbt:879)`, `irm_style_sensitivity (sensitivity.mbt:31)`, `irm_style_sensitivity_from_elements (sensitivity.mbt:78)`, `irm_style_sensitivity_cluster_from_elements (sensitivity.mbt:233)`, `irm_style_sensitivity_cluster (sensitivity.mbt:317)`, `empirical_quantile (sensitivity.mbt:402)`, `irm_style_sensitivity_cluster_multi (sensitivity.mbt:448)`, `single_psi_sensitivity (sensitivity.mbt:489)`, `compute_sensitivity_bias (sensitivity.mbt:566)`, `gain_statistics (sensitivity.mbt:689)`, `GainStatsSource::new (sensitivity.mbt:859)`, `GainStatsSource::from_blp (sensitivity.mbt:905)`, `GainStatsSource::from_blp_cv (sensitivity.mbt:974)`, `GainStatsSource::from_blp_cv_repeated (sensitivity.mbt:1094)`, `GainStatsSource::from_blp_hc0 (sensitivity.mbt:1220)`, `median_sorted (sensitivity.mbt:1342)`, `joint_sensitivity (sensitivity.mbt:1516)`, `build_irm_tune_data (v065_wbtest.mbt:67)`, `build_dgp_data (v066_wbtest.mbt:21)`, `PSProcessorConfig::new (ps_processor.mbt:38)`, `PSProcessor::adjust_ps (ps_processor.mbt:248)`, `pava (ps_processor.mbt:440)`, `pool_tied_x (ps_processor.mbt:541)`, `fit_isotonic (ps_processor.mbt:581)`, `predict_isotonic (ps_processor.mbt:654)`, `isotonic_calibrate_cv (ps_processor.mbt:748)`, `normalize_ipw (ps_processor.mbt:910)`, `cs_bin_panel_subset (did_cs_binary.mbt:97)`, `cs_bin_crossfit_nuisance (did_cs_binary.mbt:219)`, `fit_cs_bin_g (did_cs_binary.mbt:391)`, `cs_bin_score_obs (did_cs_binary.mbt:441)`, `DoubleMLDIDCSBinary::new (did_cs_binary.mbt:718)`, `DoubleMLDIDCSBinary::coef (did_cs_binary.mbt:807)`, `DoubleMLDIDCSBinary::confint (did_cs_binary.mbt:832)`, `DoubleMLDIDCSBinary::predictions_g_d1_t0 (did_cs_binary.mbt:969)`, `DoubleMLDIDCSBinary::predictions_g_d1_t1 (did_cs_binary.mbt:984)`, `DoubleMLDIDCSBinary::predictions_m (did_cs_binary.mbt:1000)`, `DoubleMLDIDCSBinary::bootstrap (did_cs_binary.mbt:1193)`, `DoubleMLDIDCSBinary::cs_bin_sensitivity_nu2_elements (did_cs_binary.mbt:1263)`, `DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals (did_cs_binary.mbt:1382)`, `DoubleMLDIDCSBinary::sensitivity_analysis_cluster (did_cs_binary.mbt:1465)`, `DoubleMLDIDCSBinary::sandwich_se (did_cs_binary.mbt:1521)`, `DoubleMLDIDCSBinary::cluster_sandwich_se (did_cs_binary.mbt:1554)`, `DoubleMLDIDCSBinary::bias_corrected_coef (did_cs_binary.mbt:1612)`, `DoubleMLDIDCSBinary::tune (did_cs_binary.mbt:1704)`, `make_did_CS2021 (dgp_did_CS2021.mbt:43)`, `make_did_SZ2020 (dgp_did_SZ2020.mbt:19)`, `make_plr_CCDDHNR2018 (dgp_plr_CCDDHNR.mbt:45)`, `aggregate_group (did_aggregation.mbt:41)`, `aggregate_time (did_aggregation.mbt:107)`, `aggregate_event (did_aggregation.mbt:168)`, `generic_bootstrap_t_stat (bootstrap_helper.mbt:47)`, `generic_bootstrap_single_psi (bootstrap_helper.mbt:104)`, `generic_bootstrap_ols_per_coef (bootstrap_helper.mbt:165)`, `make_irm_discrete_treatments (dgp_irm_discrete.mbt:24)`, `make_pliv_multiway_cluster (dgp_pliv_cluster.mbt:35)`, `expand_v086_psi (expand_v086_test.mbt:72)`, `expand_v086_ref_hc0 (expand_v086_test.mbt:96)`, `expand_v087_psi (expand_v087_test.mbt:99)`, `expand_v087_ssm_data (expand_v087_test.mbt:207)`, `expand_v087_cs_binary_data (expand_v087_test.mbt:260)`, `expand_v089_ref_hc0 (expand_v089_test.mbt:111)`, `expand_v089_ref_leverage (expand_v089_test.mbt:137)`, `expand_v089_ref_cluster (expand_v089_test.mbt:171)`, `expand_v089_apo_data (expand_v089_test.mbt:273)`, `expand_v090_data (expand_v090_test.mbt:85)`, `expand_v091_data (expand_v091_test.mbt:92)`, `expand_v091_iivm_data (expand_v091_test.mbt:119)`, `expand_v092_lplr_data (expand_v092_test.mbt:74)`, `expand_v093_lpq_data (expand_v093_test.mbt:83)`, `expand_v094_pq_data_scaled (expand_v094_test.mbt:82)`, `expand_v095_row (expand_v095_test.mbt:159)`, `expand_v095_qte_data_wide (expand_v095_test.mbt:928)`, `v096_side_wls (expand_v096_test.mbt:166)`, `v096_meat (expand_v096_test.mbt:246)`, `v096_meat_leverage (expand_v096_test.mbt:262)`, `v097_reference (expand_v097_test.mbt:79)`, `v098_dbl_array_eq_nan_aware (expand_v098_test.mbt:121)`, `v099_dgp (expand_v099_test.mbt:61)`, `v099_identical (expand_v099_test.mbt:84)`, `expand_v101_row (expand_v101_test.mbt:99)`, `v106_build_panel (expand_v106_test.mbt:52)`, `v107_ssm_dgp (expand_v107_test.mbt:26)`, `v116_assert_exact (expand_v116_test.mbt:134)`, `v117_prob_dev (expand_v117_test.mbt:82)`, `v118_mean (expand_v118_test.mbt:94)`, `v120_max_abs_diff (expand_v120_test.mbt:54)`, `v120_expect (expand_v120_test.mbt:160)`, `v120_kfold_folds (expand_v120_test.mbt:6692)`, `v120_check_ridge (expand_v120_test.mbt:6717)`, `v120_check_enet (expand_v120_test.mbt:6749)`, `v121_max_abs_diff (expand_v121_test.mbt:50)`, `v121_expect (expand_v121_test.mbt:72)`, `v122_expect_bool (expand_v122_test.mbt:257)`, `v128_cs_data (expand_v128_test.mbt:31)`, `v130_cs_data (expand_v130_test.mbt:36)`, `v1316_did_data (expand_v131_test.mbt:18)`, `v1317_data (expand_v131_test.mbt:177)`, `v1330_data (expand_v133_test.mbt:37)`, `v1350_data (expand_v135_test.mbt:42)`, `v1380_data (expand_v138_test.mbt:99)`, `v1480_corr (expand_v148_test.mbt:57)`, `build_clustered_dgp (plr_cluster_test.mbt:10)`, `build_row_dgp (plr_cluster_test.mbt:57)`, `make_did_cs_CS2021 (dgp_did_cs_CS2021.mbt:56)`, `DoubleMLDIDCrossSectionData::new (did_cross_section.mbt:35)`, `DoubleMLDIDCrossSection::psi_a (did_cross_section.mbt:252)`, `DoubleMLDIDCrossSection::psi_b (did_cross_section.mbt:286)`, `DoubleMLDIDCrossSection::predictions_g_d0_t1 (did_cross_section.mbt:316)`, `DoubleMLDIDCrossSection::predictions_g_d1_t1 (did_cross_section.mbt:346)`, `DoubleMLDIDCrossSection::confint (did_cross_section.mbt:451)`, `fit_g_subset_predict (did_cross_section.mbt:630)`, `norm_ppf (did_cross_section.mbt:711)`, `compute_score (did_cross_section.mbt:738)`, `DoubleMLDIDCrossSection::tune (did_cross_section.mbt:1143)`, `DoubleMLDIDCrossSection::bootstrap (did_cross_section.mbt:1191)`, `DoubleMLDIDCrossSection::sensitivity_analysis (did_cross_section.mbt:1291)`, `DoubleMLDIDCrossSection::sensitivity_analysis_cluster (did_cross_section.mbt:1323)`, `DoubleMLDIDCrossSection::sandwich_se (did_cross_section.mbt:1400)`, `DoubleMLDIDCrossSection::cluster_sandwich_se (did_cross_section.mbt:1436)`, `DoubleMLDIDCrossSection::bias_corrected_coef (did_cross_section.mbt:1510)`, `build_iv_clustered_dgp (pliv_cluster_test.mbt:10)`
 
 ## 4. Control-flow analysis
 
@@ -783,6 +783,8 @@ flowchart LR
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Two rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. And a tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose.
 
+**Scope.** The abstract layer analysed 1411 of 1411 — every function the abstract layer can analyse, in 167271 steps.
+
 | Rule | Severity | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | RANGE-VIOLATION | warning | DoubleMLAPO::new | apo.mbt:116 | assertion may fail on some inputs | L2-abstract | 0.6 |
@@ -958,6 +960,758 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | RANGE-VIOLATION | warning | DoubleMLLPQ::predictions_g0 | lpq.mbt:703 | assertion may fail on some inputs | L2-abstract | 0.6 |
 | RANGE-VIOLATION | warning | DoubleMLLPQ::predictions_g1 | lpq.mbt:716 | assertion may fail on some inputs | L2-abstract | 0.6 |
 | RANGE-VIOLATION | warning | DoubleMLLPQ::predictions_m | lpq.mbt:729 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:840 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:841 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:842 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:844 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::sandwich_se | lpq.mbt:887 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::cluster_sandwich_se | lpq.mbt:918 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::cluster_sandwich_se | lpq.mbt:926 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPQ::bias_corrected_coef | lpq.mbt:958 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::new | plr.mbt:107 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::new | plr.mbt:108 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::new | plr.mbt:109 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::coef | plr.mbt:160 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::se | plr.mbt:173 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::confint | plr.mbt:193 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::confint | plr.mbt:194 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::fit | plr.mbt:423 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::fit | plr.mbt:424 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::fit | plr.mbt:431 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::fit_cluster | plr.mbt:682 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::fit_cluster | plr.mbt:688 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::fit_cluster | plr.mbt:695 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::bootstrap | plr.mbt:983 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::bootstrap | plr.mbt:984 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::bootstrap | plr.mbt:987 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::sensitivity_analysis | plr.mbt:1091 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::sensitivity_analysis_cluster | plr.mbt:1135 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::sensitivity_analysis_cluster | plr.mbt:1139 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::sensitivity_analysis_cluster | plr.mbt:1147 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::sandwich_se | plr.mbt:1184 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::sandwich_se | plr.mbt:1188 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::sandwich_se | plr.mbt:1196 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::cluster_sandwich_se | plr.mbt:1219 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::cluster_sandwich_se | plr.mbt:1224 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::cluster_sandwich_se | plr.mbt:1233 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::bias_corrected_coef | plr.mbt:1273 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDDData::new | rdd.mbt:24 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::new | rdd.mbt:174 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::fit | rdd.mbt:668 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::coef | rdd.mbt:1003 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::se | rdd.mbt:1014 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::confint | rdd.mbt:1025 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | rdd_hac_require_df | rdd.mbt:1268 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | rdd_hac_require_df | rdd.mbt:1279 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::hac_se | rdd.mbt:1323 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::hac_se | rdd.mbt:1326 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::hac_se | rdd.mbt:1327 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::hac_se | rdd.mbt:1328 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::hac_se | rdd.mbt:1335 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | DoubleMLRDD::hac_se | rdd.mbt:1369 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::hac_se | rdd.mbt:1418 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1467 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1470 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1471 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1472 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1479 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1482 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1487 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::cluster_hac_se | rdd.mbt:1517 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::sensitivity_analysis | rdd.mbt:1561 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::sensitivity_analysis_cluster | rdd.mbt:1599 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::sensitivity_analysis_cluster | rdd.mbt:1601 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::sensitivity_analysis_cluster | rdd.mbt:1602 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::sensitivity_analysis_cluster | rdd.mbt:1615 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bootstrap | rdd.mbt:1727 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bootstrap | rdd.mbt:1728 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bootstrap | rdd.mbt:1731 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bootstrap | rdd.mbt:1733 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bootstrap | rdd.mbt:1734 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tune | rdd.mbt:1839 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tune | rdd.mbt:1840 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bias | rdd.mbt:2097 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bias | rdd.mbt:2098 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bias | rdd.mbt:2099 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bias | rdd.mbt:2102 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc | rdd.mbt:2236 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc | rdd.mbt:2237 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc | rdd.mbt:2238 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc | rdd.mbt:2239 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc | rdd.mbt:2241 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc_collapsed | rdd.mbt:2297 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc_collapsed | rdd.mbt:2299 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc_se | rdd.mbt:2350 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc_se | rdd.mbt:2352 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bandwidth_mse | rdd.mbt:2422 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bandwidth_mse | rdd.mbt:2423 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bandwidth_variance_term | rdd.mbt:2496 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::bandwidth_variance_term | rdd.mbt:2497 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | rdd_pilot_stage | rdd.mbt:2586 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | rdd_pilot_stage | rdd.mbt:2587 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | rdd_pilot_stage | rdd.mbt:2589 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | rdd_nn_matched_sigma4 | rdd.mbt:2692 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | rdd_nn_matched_sigma4 | rdd.mbt:2725 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | rdd_nn_matched_sigma4 | rdd.mbt:2730 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | nn_residual | rdd.mbt:2813 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | nn_residual | rdd.mbt:2814 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | nn_residual | rdd.mbt:2815 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | nn_residual | rdd.mbt:2826 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | nn_residual | rdd.mbt:2849 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | nn_residual | rdd.mbt:2850 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | nn_residual | rdd.mbt:2869 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | rdd_rb_side | rdd.mbt:2995 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | rdd_rb_side | rdd.mbt:3015 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc_se_rb | rdd.mbt:3208 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLRDD::tau_bc_se_rb | rdd.mbt:3210 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_fit | rfl.mbt:232 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_fit | rfl.mbt:237 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_fit | rfl.mbt:240 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_leaf_value | rfl.mbt:510 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_leaf_value | rfl.mbt:521 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_leaf_value | rfl.mbt:522 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_leaf_value | rfl.mbt:533 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cart_leaf_value | rfl.mbt:542 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFLearner::fit_weighted | rfl.mbt:617 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFLearner::fit_weighted | rfl.mbt:618 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFLearner::fit_weighted | rfl.mbt:619 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFLearner::fit_weighted | rfl.mbt:620 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFLearner::fit_weighted | rfl.mbt:621 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFLearner::fit_weighted | rfl.mbt:623 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSMData::new | ssm.mbt:25 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSMData::new | ssm.mbt:26 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSMData::new | ssm.mbt:27 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::new | ssm.mbt:165 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::new | ssm.mbt:166 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::new | ssm.mbt:167 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::new | ssm.mbt:168 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::new | ssm.mbt:169 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::coef | ssm.mbt:288 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::se | ssm.mbt:299 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::confint | ssm.mbt:310 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::bootstrap | ssm.mbt:363 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::bootstrap | ssm.mbt:364 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::bootstrap | ssm.mbt:367 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::tune | ssm.mbt:446 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::tune | ssm.mbt:447 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::psi_a | ssm.mbt:471 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::psi_b | ssm.mbt:482 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::sensitivity_analysis | ssm.mbt:503 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::sensitivity_analysis_cluster | ssm.mbt:532 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::sensitivity_analysis_cluster | ssm.mbt:535 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | filter_two_values | ssm.mbt:579 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::fit | ssm.mbt:706 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::sandwich_se | ssm.mbt:962 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::sandwich_se | ssm.mbt:964 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::sandwich_se | ssm.mbt:967 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::sandwich_se | ssm.mbt:970 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::cluster_sandwich_se | ssm.mbt:993 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::cluster_sandwich_se | ssm.mbt:995 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::cluster_sandwich_se | ssm.mbt:996 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::cluster_sandwich_se | ssm.mbt:999 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::cluster_sandwich_se | ssm.mbt:1008 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLSSM::bias_corrected_coef | ssm.mbt:1049 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:149 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:150 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:151 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:152 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:153 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:154 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:155 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::new | cvar.mbt:156 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::se | cvar.mbt:294 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::confint | cvar.mbt:306 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::predictions_g | cvar.mbt:319 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::predictions_m | cvar.mbt:335 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::sensitivity_analysis | cvar.mbt:381 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::sensitivity_analysis_cluster | cvar.mbt:437 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::sensitivity_analysis_cluster | cvar.mbt:442 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | stratified_half_split | cvar.mbt:475 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::fit | cvar.mbt:847 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::tune | cvar.mbt:1222 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::tune | cvar.mbt:1223 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::bootstrap | cvar.mbt:1272 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::bootstrap | cvar.mbt:1276 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::sandwich_se | cvar.mbt:1333 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::sandwich_se | cvar.mbt:1337 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::sandwich_se | cvar.mbt:1340 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::cluster_sandwich_se | cvar.mbt:1361 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::cluster_sandwich_se | cvar.mbt:1363 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::cluster_sandwich_se | cvar.mbt:1366 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::cluster_sandwich_se | cvar.mbt:1375 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLCVAR::bias_corrected_coef | cvar.mbt:1416 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLData::new | data.mbt:50 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLData::new | data.mbt:51 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLData::new | data.mbt:53 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLData::new | data.mbt:56 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVMData::new | iivm.mbt:28 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVMData::new | iivm.mbt:30 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::new | iivm.mbt:210 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::new | iivm.mbt:211 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::new | iivm.mbt:212 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::new | iivm.mbt:213 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::new | iivm.mbt:214 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::se | iivm.mbt:305 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::confint | iivm.mbt:322 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::confint | iivm.mbt:323 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | filter_by_value | iivm.mbt:407 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | cross_fit_iivm | iivm.mbt:457 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | cross_fit_iivm | iivm.mbt:458 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::fit | iivm.mbt:558 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::fit_cluster | iivm.mbt:825 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::fit_cluster | iivm.mbt:831 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::bootstrap | iivm.mbt:1042 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::bootstrap | iivm.mbt:1043 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::bootstrap | iivm.mbt:1046 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::tune | iivm.mbt:1119 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::tune | iivm.mbt:1120 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::sensitivity_analysis | iivm.mbt:1161 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::sensitivity_analysis_cluster | iivm.mbt:1187 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::sensitivity_analysis_cluster | iivm.mbt:1192 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::sandwich_se | iivm.mbt:1235 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::sandwich_se | iivm.mbt:1239 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::sandwich_se | iivm.mbt:1242 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::cluster_sandwich_se | iivm.mbt:1263 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::cluster_sandwich_se | iivm.mbt:1265 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::cluster_sandwich_se | iivm.mbt:1268 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::cluster_sandwich_se | iivm.mbt:1277 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLIIVM::bias_corrected_coef | iivm.mbt:1317 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBinaryData::new | lplr.mbt:54 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBinaryData::new | lplr.mbt:55 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBinaryData::new | lplr.mbt:57 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | prelim_beta_per_fold | lplr.mbt:95 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | prelim_beta_per_fold | lplr.mbt:99 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | newton_solve_score | lplr.mbt:245 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::new | lplr.mbt:368 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::new | lplr.mbt:369 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::new | lplr.mbt:370 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::confint | lplr.mbt:554 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::predictions_t | lplr.mbt:567 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::predictions_m | lplr.mbt:580 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::predictions_a | lplr.mbt:595 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::bootstrap | lplr.mbt:1459 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::bootstrap | lplr.mbt:1460 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::bootstrap | lplr.mbt:1463 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::tune | lplr.mbt:1543 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::tune | lplr.mbt:1544 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::sensitivity_analysis | lplr.mbt:1755 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::sensitivity_analysis_cluster | lplr.mbt:1788 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::sensitivity_analysis_cluster | lplr.mbt:1794 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::sandwich_se | lplr.mbt:1891 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::sandwich_se | lplr.mbt:1895 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::sandwich_se | lplr.mbt:1898 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::cluster_sandwich_se | lplr.mbt:1927 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::cluster_sandwich_se | lplr.mbt:1929 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::cluster_sandwich_se | lplr.mbt:1941 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLLPLR::bias_corrected_coef | lplr.mbt:1970 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIVData::new | pliv.mbt:31 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIVData::new | pliv.mbt:32 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIVData::new | pliv.mbt:33 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIVData::new | pliv.mbt:35 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::new | pliv.mbt:163 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::new | pliv.mbt:164 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::coef | pliv.mbt:208 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::se | pliv.mbt:219 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::confint | pliv.mbt:236 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::confint | pliv.mbt:237 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::fit | pliv.mbt:316 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::fit_cluster | pliv.mbt:545 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::fit_cluster | pliv.mbt:551 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::bootstrap | pliv.mbt:740 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::bootstrap | pliv.mbt:741 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::bootstrap | pliv.mbt:744 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::tune | pliv.mbt:820 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::tune | pliv.mbt:821 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::sandwich_se | pliv.mbt:948 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::sandwich_se | pliv.mbt:952 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::sandwich_se | pliv.mbt:955 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::cluster_sandwich_se | pliv.mbt:978 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::cluster_sandwich_se | pliv.mbt:990 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLIV::bias_corrected_coef | pliv.mbt:1030 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPanelData::new | plpr.mbt:60 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPanelData::new | plpr.mbt:61 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPanelData::new | plpr.mbt:62 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPanelData::new | plpr.mbt:63 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPanelData::new | plpr.mbt:64 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | sort_rows_by_id_time | plpr.mbt:102 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | sort_rows_by_id_time | plpr.mbt:103 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | est_coef_cluster | plpr.mbt:205 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | est_coef_cluster | plpr.mbt:214 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | est_coef_cluster | plpr.mbt:215 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | var_est_cluster | plpr.mbt:274 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | var_est_cluster | plpr.mbt:286 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | var_est_cluster | plpr.mbt:287 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | transform_panel | plpr.mbt:353 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | transform_panel | plpr.mbt:429 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | transform_panel | plpr.mbt:489 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::new | plpr.mbt:564 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::new | plpr.mbt:570 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::new | plpr.mbt:571 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::new | plpr.mbt:572 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::coef | plpr.mbt:657 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::predictions_l | plpr.mbt:692 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::predictions_m | plpr.mbt:705 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::sensitivity_analysis | plpr.mbt:768 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::fit | plpr.mbt:808 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::bootstrap | plpr.mbt:1189 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::tune | plpr.mbt:1285 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::tune | plpr.mbt:1286 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::sensitivity_analysis_cluster | plpr.mbt:1336 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::sensitivity_analysis_cluster | plpr.mbt:1342 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::sandwich_se | plpr.mbt:1406 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::sandwich_se | plpr.mbt:1408 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::sandwich_se | plpr.mbt:1411 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::sandwich_se | plpr.mbt:1414 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::cluster_sandwich_se | plpr.mbt:1442 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::cluster_sandwich_se | plpr.mbt:1444 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::cluster_sandwich_se | plpr.mbt:1445 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::cluster_sandwich_se | plpr.mbt:1448 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::cluster_sandwich_se | plpr.mbt:1457 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLPR::bias_corrected_coef | plpr.mbt:1497 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::tune | tune.mbt:361 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPLR::tune | tune.mbt:374 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GBClassifier::fit_weighted | gbclf.mbt:170 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GBClassifier::fit_weighted | gbclf.mbt:171 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GBClassifier::fit_weighted | gbclf.mbt:172 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GBClassifier::fit_weighted | gbclf.mbt:175 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GBClassifier::fit_weighted | gbclf.mbt:176 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GBClassifier::fit_weighted | gbclf.mbt:178 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GBClassifier::fit_weighted | gbclf.mbt:181 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Fold::new | kfold.mbt:227 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Fold::new | kfold.mbt:228 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:292 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:293 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:295 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:297 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:303 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:304 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:308 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | check_sample_splitting | kfold.mbt:312 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | kfold_stratified | kfold.mbt:354 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | kfold_stratified | kfold.mbt:355 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | kfold_stratified | kfold.mbt:356 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | kfold | kfold.mbt:441 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | kfold | kfold.mbt:443 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | slice_vector | kfold.mbt:504 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| UNSUPPORTED | info | cross_fit_predict | kfold.mbt:686 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | double_cross_fit_predict | kfold.mbt:743 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | RFClassifier::fit_weighted | rfclf.mbt:157 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFClassifier::fit_weighted | rfclf.mbt:158 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFClassifier::fit_weighted | rfclf.mbt:159 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | RFClassifier::fit_weighted | rfclf.mbt:161 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSData::new | did_cs.mbt:47 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSData::new | did_cs.mbt:48 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSData::new | did_cs.mbt:49 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::new | did_cs.mbt:382 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::new | did_cs.mbt:383 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::new | did_cs.mbt:384 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::new | did_cs.mbt:385 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::new | did_cs.mbt:388 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::coef_at | did_cs.mbt:452 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::coef_at | did_cs.mbt:453 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::coef_at | did_cs.mbt:454 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::se_at | did_cs.mbt:497 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::se_at | did_cs.mbt:498 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::se_at | did_cs.mbt:499 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::period_at | did_cs.mbt:794 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::cell_flat_at | did_cs.mbt:947 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::cell_flat_at | did_cs.mbt:949 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | DoubleMLDIDCS::cell_psi_a_row_at | did_cs.mbt:977 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | DoubleMLDIDCS::cell_psi_b_row_at | did_cs.mbt:1003 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | DoubleMLDIDCS::m_inv_1x1_at | did_cs.mbt:1038 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::sandwich_se_at | did_cs.mbt:1102 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::sandwich_se_at | did_cs.mbt:1107 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::cluster_sandwich_se_at | did_cs.mbt:1171 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::cluster_sandwich_se_at | did_cs.mbt:1173 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::cluster_sandwich_se_at | did_cs.mbt:1179 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::fit | did_cs.mbt:1267 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::fit | did_cs.mbt:1707 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::bootstrap | did_cs.mbt:1878 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::bootstrap | did_cs.mbt:1879 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::bootstrap | did_cs.mbt:1882 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::sensitivity_analysis | did_cs.mbt:1958 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::confint | did_cs.mbt:2005 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::confint | did_cs.mbt:2006 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::confint | did_cs.mbt:2008 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::sensitivity_analysis_cluster | did_cs.mbt:2077 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::sensitivity_analysis_cluster | did_cs.mbt:2079 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::tune | did_cs.mbt:2209 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCS::tune | did_cs.mbt:2210 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | cholesky | linalg.mbt:14 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | solve_spd | linalg.mbt:77 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | solve_spd | linalg.mbt:78 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | inv_spd | linalg.mbt:144 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LinearRegression::fit | linear.mbt:102 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LinearRegression::fit_weighted | linear.mbt:204 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LinearRegression::predict | linear.mbt:262 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LinearRegression::predict | linear.mbt:263 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LinearRegression::sandwich_se_weighted | linear.mbt:296 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LinearRegression::sandwich_se | linear.mbt:357 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Matrix::from_array | matrix.mbt:41 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Matrix::from_rows | matrix.mbt:112 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | dot | matrix.mbt:222 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cross_fit_predict_conditional_dispatch | learner.mbt:419 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | var_est | var_est.mbt:29 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | var_est_with_jacobian | var_est.mbt:79 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | count_eq | apo_test.mbt:29 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LogisticRegression::predict | logistic.mbt:223 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | LogisticRegression::predict | logistic.mbt:224 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | argsort_asc | p_adjust.mbt:99 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | romano_wolf_p_adjust | p_adjust.mbt:177 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | bh_fdr_p_adjust | p_adjust.mbt:297 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | by_fdr_p_adjust | p_adjust.mbt:346 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | tsbh_p_adjust | p_adjust.mbt:494 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | tsby_p_adjust | p_adjust.mbt:627 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::new | quantile.mbt:493 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::new | quantile.mbt:494 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::fit_cluster | quantile.mbt:769 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::coef | quantile.mbt:915 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::confint | quantile.mbt:982 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::bootstrap | quantile.mbt:1013 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::bootstrap | quantile.mbt:1017 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::sensitivity_analysis | quantile.mbt:1055 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::sensitivity_analysis_cluster | quantile.mbt:1078 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::sensitivity_analysis_cluster | quantile.mbt:1081 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::m_inv_1x1 | quantile.mbt:1178 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::m_inv_1x1 | quantile.mbt:1180 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::m_inv_1x1 | quantile.mbt:1182 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::sandwich_se | quantile.mbt:1232 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::tune | quantile.mbt:1350 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::tune | quantile.mbt:1351 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPQ::tune | quantile.mbt:1352 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::fit_cluster | quantile.mbt:1858 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::confint | quantile.mbt:2081 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::confint | quantile.mbt:2082 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::confint | quantile.mbt:2084 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::bootstrap | quantile.mbt:2144 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::bootstrap | quantile.mbt:2145 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::bootstrap | quantile.mbt:2148 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::sensitivity_analysis | quantile.mbt:2224 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::sensitivity_analysis_cluster | quantile.mbt:2277 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::sensitivity_analysis_cluster | quantile.mbt:2281 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2448 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2449 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2450 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2451 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2452 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2453 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2454 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2456 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2457 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2458 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::m_inv_1x1_at | quantile.mbt:2459 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::psi_row | quantile.mbt:2476 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::psi_row | quantile.mbt:2477 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::psi_row | quantile.mbt:2478 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::psi_row | quantile.mbt:2480 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::psi_row | quantile.mbt:2481 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::sandwich_se_at | quantile.mbt:2547 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_sandwich_se_at | quantile.mbt:2582 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_sandwich_se_at | quantile.mbt:2588 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::bias_corrected_coef_at | quantile.mbt:2633 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::bias_corrected_coef_at | quantile.mbt:2634 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::bias_corrected_coef_at | quantile.mbt:2635 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::joint_covariance | quantile.mbt:2746 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::joint_covariance | quantile.mbt:2748 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::joint_covariance | quantile.mbt:2749 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2820 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2822 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2823 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2824 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2827 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2832 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::tune | quantile.mbt:2909 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::tune | quantile.mbt:2910 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLQTE::tune | quantile.mbt:2911 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | psi_at | sandwich.mbt:221 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc0 | sandwich.mbt:283 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc0 | sandwich.mbt:285 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc1 | sandwich.mbt:325 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc1 | sandwich.mbt:326 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc1 | sandwich.mbt:327 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc1 | sandwich.mbt:328 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc1 | sandwich.mbt:329 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc1 | sandwich.mbt:330 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc2 | sandwich.mbt:377 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc2 | sandwich.mbt:378 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc3 | sandwich.mbt:425 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc3 | sandwich.mbt:426 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc3 | sandwich.mbt:427 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | sandwich_variance_hc3 | sandwich.mbt:428 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | cluster_sandwich_variance | sandwich.mbt:542 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | bias_corrected_theta | sandwich.mbt:651 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | did_bootstrap_t_stat | bootstrap.mbt:90 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | did_bootstrap_t_stat | bootstrap.mbt:91 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::new | did_multi.mbt:98 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::new | did_multi.mbt:100 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::new | did_multi.mbt:101 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::new | did_multi.mbt:139 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::coef_at_idx | did_multi.mbt:311 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::se_at_idx | did_multi.mbt:342 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | did_multi_inner_cell_at_idx | did_multi.mbt:399 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::sandwich_se_at_idx | did_multi.mbt:465 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::sandwich_se_at_idx | did_multi.mbt:466 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::cluster_sandwich_se_at_idx | did_multi.mbt:521 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::cluster_sandwich_se_at_idx | did_multi.mbt:522 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::bias_corrected_coef_at_idx | did_multi.mbt:565 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::bias_corrected_coef_at_idx | did_multi.mbt:566 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::tune | did_multi.mbt:691 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::bootstrap | did_multi.mbt:739 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::t_stats | did_multi.mbt:828 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::p_values | did_multi.mbt:858 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::p_adjust | did_multi.mbt:963 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::confint | did_multi.mbt:1035 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::aggregate_time | did_multi.mbt:1200 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDMulti::sensitivity_analysis_cluster | did_multi.mbt:1339 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | build_lzz2020_dgp | lplr_test.mbt:51 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | aggregate_coef_se | aggregator.mbt:38 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | aggregate_coef_se | aggregator.mbt:39 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::new | blp_policy.mbt:75 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::new | blp_policy.mbt:76 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::bootstrap | blp_policy.mbt:416 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::bootstrap | blp_policy.mbt:417 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::bootstrap | blp_policy.mbt:420 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::rss | blp_policy.mbt:464 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::sensitivity_analysis_cluster | blp_policy.mbt:573 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::var_y | blp_policy.mbt:622 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::orth_signal | blp_policy.mbt:637 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::basis | blp_policy.mbt:652 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::predictions | blp_policy.mbt:672 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::confint_joint | blp_policy.mbt:727 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::confint_joint | blp_policy.mbt:728 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::confint_joint | blp_policy.mbt:731 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::leverage | blp_policy.mbt:960 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | blp_hac_require_df | blp_policy.mbt:988 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::hac_se | blp_policy.mbt:1037 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::hac_se | blp_policy.mbt:1084 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | DoubleMLBLP::hac_se | blp_policy.mbt:1089 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1183 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1246 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::new | blp_policy.mbt:1594 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::new | blp_policy.mbt:1595 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::new | blp_policy.mbt:1600 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | policy_tree_cache_decode | blp_policy.mbt:1787 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | policy_tree_cache_decode | blp_policy.mbt:1788 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | policy_tree_cache_decode | blp_policy.mbt:1790 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | policy_tree_cache_decode | blp_policy.mbt:1791 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | policy_tree_cache_decode | blp_policy.mbt:1792 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | policy_tree_honest_leaf_se | blp_policy.mbt:1853 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::set_min_leaf_n | blp_policy.mbt:2232 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::predict | blp_policy.mbt:2294 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::split_feature | blp_policy.mbt:2309 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_se | blp_policy.mbt:2410 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_se | blp_policy.mbt:2411 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_se_reliable | blp_policy.mbt:2440 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_se_reliable | blp_policy.mbt:2441 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::unreliable_leaves | blp_policy.mbt:2463 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::unreliable_leaves | blp_policy.mbt:2464 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::smallest_leaf_count | blp_policy.mbt:2487 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::smallest_leaf_count | blp_policy.mbt:2488 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::policy_value | blp_policy.mbt:2539 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::policy_value | blp_policy.mbt:2540 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::policy_value_se | blp_policy.mbt:2607 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::policy_value_se | blp_policy.mbt:2608 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::policy_value_se | blp_policy.mbt:2609 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_influence | blp_policy.mbt:2673 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_influence | blp_policy.mbt:2674 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_influence | blp_policy.mbt:2675 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_psi_a | blp_policy.mbt:2714 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_psi_a | blp_policy.mbt:2715 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::leaf_psi_a | blp_policy.mbt:2716 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLPolicyTree::sensitivity_analysis | blp_policy.mbt:2790 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinaryData::new | did_binary.mbt:42 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinaryData::new | did_binary.mbt:43 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinaryData::new | did_binary.mbt:44 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | preprocess_did_binary | did_binary.mbt:238 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | preprocess_did_binary | did_binary.mbt:240 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | preprocess_did_binary | did_binary.mbt:241 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | preprocess_did_binary | did_binary.mbt:246 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::new | did_binary.mbt:389 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::new | did_binary.mbt:390 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::new | did_binary.mbt:391 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::new | did_binary.mbt:392 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::new | did_binary.mbt:395 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::new | did_binary.mbt:396 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::coef | did_binary.mbt:517 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::se | did_binary.mbt:529 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::predictions_g0 | did_binary.mbt:576 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::predictions_g1 | did_binary.mbt:590 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::sandwich_se | did_binary.mbt:660 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::cluster_sandwich_se | did_binary.mbt:686 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::bias_corrected_coef | did_binary.mbt:707 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::psi_a_long | did_binary.mbt:726 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::psi_b_long | did_binary.mbt:746 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::inner_psi_b | did_binary.mbt:786 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::fit | did_binary.mbt:823 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::sensitivity_analysis | did_binary.mbt:985 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::sensitivity_analysis_cluster | did_binary.mbt:1006 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::tune | did_binary.mbt:1088 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDBinary::tune | did_binary.mbt:1089 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | vector_subtract | vectorized.mbt:80 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Ridge::fit_weighted | regularized.mbt:430 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Ridge::fit_weighted | regularized.mbt:432 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Ridge::fit_weighted | regularized.mbt:434 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Ridge::predict | regularized.mbt:481 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Lasso::coefficients | regularized.mbt:578 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Lasso::fit_weighted | regularized.mbt:624 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Lasso::fit_weighted | regularized.mbt:625 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | Lasso::predict | regularized.mbt:653 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::coefficients | regularized.mbt:751 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::intercept | regularized.mbt:763 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:791 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:792 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:793 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:795 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:796 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:797 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:798 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::fit_weighted | regularized.mbt:799 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | ElasticNet::predict | regularized.mbt:830 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_from_elements | sensitivity.mbt:87 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_from_elements | sensitivity.mbt:88 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_from_elements | sensitivity.mbt:89 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:244 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:249 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:257 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_cluster | sensitivity.mbt:332 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | irm_style_sensitivity_cluster | sensitivity.mbt:343 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | empirical_quantile | sensitivity.mbt:403 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | empirical_quantile | sensitivity.mbt:404 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | gain_statistics | sensitivity.mbt:694 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | gain_statistics | sensitivity.mbt:696 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | gain_statistics | sensitivity.mbt:697 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | gain_statistics | sensitivity.mbt:708 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | gain_statistics | sensitivity.mbt:710 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::new | sensitivity.mbt:868 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::new | sensitivity.mbt:869 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::new | sensitivity.mbt:870 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::new | sensitivity.mbt:871 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp | sensitivity.mbt:910 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp | sensitivity.mbt:935 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp | sensitivity.mbt:936 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_cv | sensitivity.mbt:980 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_cv_repeated | sensitivity.mbt:1101 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_cv_repeated | sensitivity.mbt:1103 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_cv_repeated | sensitivity.mbt:1105 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_hc0 | sensitivity.mbt:1226 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_hc0 | sensitivity.mbt:1227 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_hc0 | sensitivity.mbt:1229 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | GainStatsSource::from_blp_hc0 | sensitivity.mbt:1237 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | median_sorted | sensitivity.mbt:1348 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | median_sorted | sensitivity.mbt:1350 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | joint_sensitivity | sensitivity.mbt:1520 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | joint_sensitivity | sensitivity.mbt:1526 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | joint_sensitivity | sensitivity.mbt:1527 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | joint_sensitivity | sensitivity.mbt:1528 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | PSProcessorConfig::new | ps_processor.mbt:66 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | PSProcessorConfig::new | ps_processor.mbt:72 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | PSProcessor::adjust_ps | ps_processor.mbt:273 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | PSProcessor::adjust_ps | ps_processor.mbt:275 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | pool_tied_x | ps_processor.mbt:552 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | pool_tied_x | ps_processor.mbt:553 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | pool_tied_x | ps_processor.mbt:554 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | pool_tied_x | ps_processor.mbt:558 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | fit_isotonic | ps_processor.mbt:587 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | fit_isotonic | ps_processor.mbt:588 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | fit_isotonic | ps_processor.mbt:596 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | fit_isotonic | ps_processor.mbt:597 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | predict_isotonic | ps_processor.mbt:663 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | predict_isotonic | ps_processor.mbt:665 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | predict_isotonic | ps_processor.mbt:682 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | predict_isotonic | ps_processor.mbt:687 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | predict_isotonic | ps_processor.mbt:690 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | isotonic_calibrate_cv | ps_processor.mbt:762 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cs_bin_panel_subset | did_cs_binary.mbt:182 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cs_bin_crossfit_nuisance | did_cs_binary.mbt:265 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cs_bin_crossfit_nuisance | did_cs_binary.mbt:277 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:748 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:749 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:750 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:753 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:754 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:755 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:756 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:757 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::new | did_cs_binary.mbt:758 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::coef | did_cs_binary.mbt:809 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::confint | did_cs_binary.mbt:838 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::confint | did_cs_binary.mbt:839 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::predictions_g_d1_t0 | did_cs_binary.mbt:973 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::predictions_g_d1_t1 | did_cs_binary.mbt:988 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::predictions_m | did_cs_binary.mbt:1004 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::bootstrap | did_cs_binary.mbt:1201 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_nu2_elements | did_cs_binary.mbt:1266 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_nu2_elements | did_cs_binary.mbt:1271 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals | did_cs_binary.mbt:1385 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals | did_cs_binary.mbt:1396 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals | did_cs_binary.mbt:1397 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals | did_cs_binary.mbt:1398 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals | did_cs_binary.mbt:1399 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals | did_cs_binary.mbt:1400 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals | did_cs_binary.mbt:1401 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::sensitivity_analysis_cluster | did_cs_binary.mbt:1473 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::sandwich_se | did_cs_binary.mbt:1531 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::sandwich_se | did_cs_binary.mbt:1534 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cluster_sandwich_se | did_cs_binary.mbt:1559 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cluster_sandwich_se | did_cs_binary.mbt:1562 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cluster_sandwich_se | did_cs_binary.mbt:1565 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::cluster_sandwich_se | did_cs_binary.mbt:1574 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::bias_corrected_coef | did_cs_binary.mbt:1616 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::tune | did_cs_binary.mbt:1712 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCSBinary::tune | did_cs_binary.mbt:1713 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | aggregate_group | did_aggregation.mbt:52 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | aggregate_group | did_aggregation.mbt:59 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | aggregate_group | did_aggregation.mbt:79 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | aggregate_time | did_aggregation.mbt:140 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | aggregate_time | did_aggregation.mbt:142 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | aggregate_event | did_aggregation.mbt:179 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | aggregate_event | did_aggregation.mbt:180 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | generic_bootstrap_t_stat | bootstrap_helper.mbt:57 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | generic_bootstrap_ols_per_coef | bootstrap_helper.mbt:177 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| TAINT-INDEX | error | expand_v087_ssm_data | expand_v087_test.mbt:226 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | expand_v091_iivm_data | expand_v091_test.mbt:139 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | expand_v091_iivm_data | expand_v091_test.mbt:143 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | expand_v092_lplr_data | expand_v092_test.mbt:96 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v107_ssm_dgp | expand_v107_test.mbt:48 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v107_ssm_dgp | expand_v107_test.mbt:55 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v107_ssm_dgp | expand_v107_test.mbt:57 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| UNSUPPORTED | info | v116_assert_exact | expand_v116_test.mbt:142 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| TAINT-INDEX | error | v118_mean | expand_v118_test.mbt:97 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| UNSUPPORTED | info | v120_max_abs_diff | expand_v120_test.mbt:56 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | v120_expect | expand_v120_test.mbt:162 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| TAINT-INDEX | error | v120_check_ridge | expand_v120_test.mbt:6727 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v120_check_ridge | expand_v120_test.mbt:6730 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v120_check_ridge | expand_v120_test.mbt:6738 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v120_check_enet | expand_v120_test.mbt:6759 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v120_check_enet | expand_v120_test.mbt:6760 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v120_check_enet | expand_v120_test.mbt:6763 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v120_check_enet | expand_v120_test.mbt:6765 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | v120_check_enet | expand_v120_test.mbt:6766 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| UNSUPPORTED | info | v121_max_abs_diff | expand_v121_test.mbt:52 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | v121_expect | expand_v121_test.mbt:74 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| UNSUPPORTED | info | v122_expect_bool | expand_v122_test.mbt:259 | tainted value may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSectionData::new | did_cross_section.mbt:45 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::psi_a | did_cross_section.mbt:256 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::psi_b | did_cross_section.mbt:290 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::predictions_g_d0_t1 | did_cross_section.mbt:320 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::predictions_g_d1_t1 | did_cross_section.mbt:350 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::confint | did_cross_section.mbt:460 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::confint | did_cross_section.mbt:461 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | norm_ppf | did_cross_section.mbt:713 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::tune | did_cross_section.mbt:1151 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::tune | did_cross_section.mbt:1152 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::bootstrap | did_cross_section.mbt:1198 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::bootstrap | did_cross_section.mbt:1199 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::sensitivity_analysis | did_cross_section.mbt:1296 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::sensitivity_analysis_cluster | did_cross_section.mbt:1329 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::sensitivity_analysis_cluster | did_cross_section.mbt:1334 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::sandwich_se | did_cross_section.mbt:1405 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::sandwich_se | did_cross_section.mbt:1407 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::sandwich_se | did_cross_section.mbt:1413 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::cluster_sandwich_se | did_cross_section.mbt:1441 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::cluster_sandwich_se | did_cross_section.mbt:1443 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::cluster_sandwich_se | did_cross_section.mbt:1450 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | DoubleMLDIDCrossSection::bias_corrected_coef | did_cross_section.mbt:1514 | assertion may fail on some inputs | L2-abstract | 0.6 |
 
 ### 5.3 EVA findings (evolved value analysis)
 
@@ -981,6 +1735,349 @@ The index class is proved by the interval the abstract domain already computes �
 | INDEX-OOB | error | lpq_score | lpq.mbt:54 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | lpq_score_ipw | lpq.mbt:81 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | lpq_score_ipw | lpq.mbt:82 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | plr_score_elements | plr.mbt:364 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | plr_score_elements | plr.mbt:365 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | plr_score_elements | plr.mbt:370 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | plr_score_elements | plr.mbt:371 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | weighted_xtx_transpose | rdd.mbt:413 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1482 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1483 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1484 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1492 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2697 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2725 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2730 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | nn_residual | rdd.mbt:2826 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | nn_residual | rdd.mbt:2849 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | nn_residual | rdd.mbt:2850 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | nn_residual | rdd.mbt:2871 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | nn_residual | rdd.mbt:2872 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3039 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3041 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cart_fit | rfl.mbt:232 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cart_fit | rfl.mbt:237 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cart_fit | rfl.mbt:240 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cart_leaf_value | rfl.mbt:510 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cart_leaf_value | rfl.mbt:520 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cart_leaf_value | rfl.mbt:533 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cart_leaf_value | rfl.mbt:542 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | augment_one_col | ssm.mbt:561 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cvar_ipw_score | cvar.mbt:548 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cvar_ipw_score | cvar.mbt:551 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | solve_ipw_root | cvar.mbt:580 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | solve_ipw_root | cvar.mbt:581 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | prelim_beta_per_fold | lplr.mbt:95 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | lplr_score_at | lplr.mbt:199 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | lplr_score_at | lplr.mbt:200 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | newton_solve_score | lplr.mbt:252 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | newton_solve_score | lplr.mbt:253 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | concat_d_x | lplr.mbt:613 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cross_fit_predict_inner | lplr.mbt:1629 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | unit_means | plpr.mbt:123 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | unit_means | plpr.mbt:138 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | unit_means | plpr.mbt:149 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | est_coef_cluster | plpr.mbt:209 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | var_est_cluster | plpr.mbt:269 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | var_est_cluster | plpr.mbt:281 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | var_est_cluster | plpr.mbt:282 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | tune_score_outcome | tune.mbt:191 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | tune_argmin | tune.mbt:217 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | GBClassifier::fit_weighted | gbclf.mbt:189 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | check_sample_splitting | kfold.mbt:294 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | kfold_stratified | kfold.mbt:368 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| DIVISION-BY-ZERO | error | kfold | kfold.mbt:458 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INDEX-OOB | error | slice_matrix_rows | kfold.mbt:491 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_unit_folds_to_rows | kfold.mbt:557 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | build_row_unit_map | kfold.mbt:592 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | build_row_unit_map | kfold.mbt:595 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cluster_causal_param_and_se | kfold.mbt:654 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | discover_groups_times | did_cs.mbt:91 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | discover_groups_times | did_cs.mbt:93 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | discover_groups_times | did_cs.mbt:94 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | discover_groups_times | did_cs.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | discover_groups_times | did_cs.mbt:118 | abstract interval proves the index is out of bounds | L2-EVA | 0.95 |
+| INDEX-OOB | error | discover_groups_times | did_cs.mbt:125 | abstract interval proves the index is out of bounds | L2-EVA | 0.95 |
+| INDEX-OOB | error | solve_spd | linalg.mbt:83 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | LinearRegression::fit_weighted | linear.mbt:220 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | LinearRegression::fit_weighted | linear.mbt:222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | LinearRegression::sandwich_se_weighted | linear.mbt:318 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | LinearRegression::sandwich_se_weighted | linear.mbt:319 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | LinearRegression::sandwich_se | linear.mbt:379 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | Matrix::zeros | matrix.mbt:21 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | Matrix::ones | matrix.mbt:28 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | Matrix::from_array | matrix.mbt:41 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | Matrix::from_rows | matrix.mbt:113 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | matvec | matrix.mbt:175 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | dot | matrix.mbt:226 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | make_irm_data | dgp_irm.mbt:49 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_irm_data | dgp_irm.mbt:51 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_ssm_data | dgp_ssm.mbt:46 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_ssm_data | dgp_ssm.mbt:48 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | var_est | var_est.mbt:43 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | var_est_with_jacobian | var_est.mbt:84 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | make_iivm_data | dgp_iivm.mbt:50 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_iivm_data | dgp_iivm.mbt:52 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_pliv_CHS2015 | dgp_pliv.mbt:36 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_pliv_CHS2015 | dgp_pliv.mbt:38 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_plpr_CP2025 | dgp_plpr.mbt:53 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_plpr_CP2025 | dgp_plpr.mbt:55 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | LogisticRegression::fit | logistic.mbt:168 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| DIVISION-BY-ZERO | error | romano_wolf_p_adjust | p_adjust.mbt:135 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:145 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | bonferroni_p_adjust | p_adjust.mbt:258 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | bh_step_up_sorted | p_adjust.mbt:399 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | bh_step_up_sorted | p_adjust.mbt:402 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | array_min | quantile.mbt:11 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | array_max | quantile.mbt:30 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pq_score_ipw | quantile.mbt:127 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pq_score_orthogonal | quantile.mbt:167 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2827 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2828 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2829 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2838 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | sandwich_variance_hc0 | sandwich.mbt:291 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | sandwich_variance_hc2 | sandwich.mbt:390 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | sandwich_variance_hc3 | sandwich.mbt:438 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:550 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:562 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:563 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | did_bootstrap_t_stat | bootstrap.mbt:74 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | did_bootstrap_t_stat | bootstrap.mbt:79 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | did_bootstrap_t_stat | bootstrap.mbt:90 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_gt_keyword | did_multi.mbt:233 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | draw_bootstrap_weights | did_multi.mbt:1132 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:44 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | build_panel_dgp | plpr_test.mbt:22 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | aggregate_coef_se | aggregator.mbt:46 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_coef_se | aggregator.mbt:57 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1187 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1188 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1189 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1218 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1318 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1319 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1322 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1323 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1361 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1364 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1373 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1379 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_ints_to_doubles | blp_policy.mbt:1711 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_ints_from_doubles | blp_policy.mbt:1725 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_cache_decode | blp_policy.mbt:1787 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_cache_decode | blp_policy.mbt:1788 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_cache_decode | blp_policy.mbt:1790 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_cache_decode | blp_policy.mbt:1791 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_cache_decode | blp_policy.mbt:1792 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_honest_leaf_se | blp_policy.mbt:1852 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_honest_leaf_se | blp_policy.mbt:1853 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | policy_tree_honest_leaf_se | blp_policy.mbt:1858 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | matrix_predict | vectorized.mbt:62 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | vector_add | vectorized.mbt:102 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | vector_scale | vectorized.mbt:119 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | vector_divide | vectorized.mbt:176 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | vector_divide | vectorized.mbt:184 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | reg_fit_means | regularized.mbt:136 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | reg_mean_one_weights | regularized.mbt:166 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | enet_coordinate_descent | regularized.mbt:227 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | enet_coordinate_descent | regularized.mbt:267 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | Ridge::fit_weighted | regularized.mbt:444 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | enet_objective | regularized.mbt:895 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | enet_objective | regularized.mbt:897 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | enet_objective | regularized.mbt:904 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | enet_objective | regularized.mbt:905 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity | sensitivity.mbt:42 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_from_elements | sensitivity.mbt:103 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_from_elements | sensitivity.mbt:104 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_from_elements | sensitivity.mbt:112 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:254 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:265 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:268 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:273 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:274 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:275 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:276 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:295 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:299 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:300 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:339 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:340 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:350 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:352 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:353 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:357 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:358 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:359 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster | sensitivity.mbt:378 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_multi | sensitivity.mbt:469 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_multi | sensitivity.mbt:470 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | irm_style_sensitivity_cluster_multi | sensitivity.mbt:471 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | single_psi_sensitivity | sensitivity.mbt:503 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | single_psi_sensitivity | sensitivity.mbt:504 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | single_psi_sensitivity | sensitivity.mbt:517 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | single_psi_sensitivity | sensitivity.mbt:518 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_sensitivity_bias | sensitivity.mbt:587 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| DIVISION-BY-ZERO | error | GainStatsSource::new | sensitivity.mbt:871 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INDEX-OOB | error | median_sorted | sensitivity.mbt:1348 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | median_sorted | sensitivity.mbt:1350 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | joint_sensitivity | sensitivity.mbt:1525 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | joint_sensitivity | sensitivity.mbt:1554 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | build_irm_tune_data | v065_wbtest.mbt:73 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | build_dgp_data | v066_wbtest.mbt:27 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | pava | ps_processor.mbt:473 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pava | ps_processor.mbt:480 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pava | ps_processor.mbt:488 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pava | ps_processor.mbt:489 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pool_tied_x | ps_processor.mbt:552 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pool_tied_x | ps_processor.mbt:553 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pool_tied_x | ps_processor.mbt:554 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | pool_tied_x | ps_processor.mbt:558 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | predict_isotonic | ps_processor.mbt:664 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | predict_isotonic | ps_processor.mbt:665 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | predict_isotonic | ps_processor.mbt:679 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | predict_isotonic | ps_processor.mbt:680 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | predict_isotonic | ps_processor.mbt:682 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | predict_isotonic | ps_processor.mbt:687 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | predict_isotonic | ps_processor.mbt:690 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | normalize_ipw | ps_processor.mbt:935 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | normalize_ipw | ps_processor.mbt:936 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | normalize_ipw | ps_processor.mbt:942 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | normalize_ipw | ps_processor.mbt:943 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_crossfit_nuisance | did_cs_binary.mbt:255 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | fit_cs_bin_g | did_cs_binary.mbt:409 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | fit_cs_bin_g | did_cs_binary.mbt:412 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:461 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:462 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:492 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:509 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:531 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:532 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:534 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:589 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:590 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | cs_bin_score_obs | did_cs_binary.mbt:591 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | make_did_CS2021 | dgp_did_CS2021.mbt:56 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_did_CS2021 | dgp_did_CS2021.mbt:58 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | make_did_CS2021 | dgp_did_CS2021.mbt:150 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | make_did_CS2021 | dgp_did_CS2021.mbt:151 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_did_CS2021 | dgp_did_CS2021.mbt:169 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_did_SZ2020 | dgp_did_SZ2020.mbt:35 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_did_SZ2020 | dgp_did_SZ2020.mbt:37 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | make_did_SZ2020 | dgp_did_SZ2020.mbt:102 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | make_did_SZ2020 | dgp_did_SZ2020.mbt:103 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_did_SZ2020 | dgp_did_SZ2020.mbt:123 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_plr_CCDDHNR2018 | dgp_plr_CCDDHNR.mbt:59 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_plr_CCDDHNR2018 | dgp_plr_CCDDHNR.mbt:61 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | aggregate_group | did_aggregation.mbt:66 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_group | did_aggregation.mbt:77 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_time | did_aggregation.mbt:122 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_time | did_aggregation.mbt:129 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_time | did_aggregation.mbt:134 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_time | did_aggregation.mbt:139 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_time | did_aggregation.mbt:142 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_event | did_aggregation.mbt:185 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | aggregate_event | did_aggregation.mbt:187 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | generic_bootstrap_ols_per_coef | bootstrap_helper.mbt:198 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | make_irm_discrete_treatments | dgp_irm_discrete.mbt:32 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_irm_discrete_treatments | dgp_irm_discrete.mbt:34 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_pliv_multiway_cluster | dgp_pliv_cluster.mbt:45 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_pliv_multiway_cluster | dgp_pliv_cluster.mbt:47 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | expand_v086_psi | expand_v086_test.mbt:80 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v086_ref_hc0 | expand_v086_test.mbt:105 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v087_psi | expand_v087_test.mbt:107 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | expand_v087_ssm_data | expand_v087_test.mbt:210 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v087_ssm_data | expand_v087_test.mbt:219 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v087_ssm_data | expand_v087_test.mbt:220 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | expand_v087_ssm_data | expand_v087_test.mbt:221 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | expand_v087_ssm_data | expand_v087_test.mbt:224 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v087_ssm_data | expand_v087_test.mbt:227 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v087_cs_binary_data | expand_v087_test.mbt:267 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | expand_v087_cs_binary_data | expand_v087_test.mbt:275 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INDEX-OOB | error | expand_v089_ref_hc0 | expand_v089_test.mbt:120 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v089_ref_leverage | expand_v089_test.mbt:155 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v089_ref_cluster | expand_v089_test.mbt:181 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v089_ref_cluster | expand_v089_test.mbt:182 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v089_ref_cluster | expand_v089_test.mbt:190 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | expand_v089_apo_data | expand_v089_test.mbt:274 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v089_apo_data | expand_v089_test.mbt:275 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v090_data | expand_v090_test.mbt:86 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v090_data | expand_v090_test.mbt:87 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v091_data | expand_v091_test.mbt:93 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v091_data | expand_v091_test.mbt:94 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v091_iivm_data | expand_v091_test.mbt:122 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v091_iivm_data | expand_v091_test.mbt:131 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v091_iivm_data | expand_v091_test.mbt:132 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | expand_v091_iivm_data | expand_v091_test.mbt:133 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | expand_v091_iivm_data | expand_v091_test.mbt:135 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v091_iivm_data | expand_v091_test.mbt:140 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | expand_v091_iivm_data | expand_v091_test.mbt:143 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | expand_v091_iivm_data | expand_v091_test.mbt:144 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v092_lplr_data | expand_v092_test.mbt:75 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v092_lplr_data | expand_v092_test.mbt:79 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v092_lplr_data | expand_v092_test.mbt:90 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | expand_v092_lplr_data | expand_v092_test.mbt:96 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | expand_v092_lplr_data | expand_v092_test.mbt:96 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v093_lpq_data | expand_v093_test.mbt:101 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | expand_v094_pq_data_scaled | expand_v094_test.mbt:99 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | expand_v095_row | expand_v095_test.mbt:162 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | expand_v095_qte_data_wide | expand_v095_test.mbt:945 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v096_side_wls | expand_v096_test.mbt:192 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v096_side_wls | expand_v096_test.mbt:206 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v096_side_wls | expand_v096_test.mbt:238 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v096_meat | expand_v096_test.mbt:250 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v096_meat_leverage | expand_v096_test.mbt:272 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v097_reference | expand_v097_test.mbt:124 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v098_dbl_array_eq_nan_aware | expand_v098_test.mbt:126 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | v099_dgp | expand_v099_test.mbt:62 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | v099_identical | expand_v099_test.mbt:89 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | expand_v101_row | expand_v101_test.mbt:102 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | v106_build_panel | expand_v106_test.mbt:60 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | v107_ssm_dgp | expand_v107_test.mbt:33 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | v107_ssm_dgp | expand_v107_test.mbt:48 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v107_ssm_dgp | expand_v107_test.mbt:55 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | v107_ssm_dgp | expand_v107_test.mbt:57 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | v116_assert_exact | expand_v116_test.mbt:147 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v117_prob_dev | expand_v117_test.mbt:85 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v120_max_abs_diff | expand_v120_test.mbt:65 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| DIVISION-BY-ZERO | error | v120_kfold_folds | expand_v120_test.mbt:6695 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | v120_kfold_folds | expand_v120_test.mbt:6696 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INDEX-OOB | error | v121_max_abs_diff | expand_v121_test.mbt:61 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | v128_cs_data | expand_v128_test.mbt:40 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | v128_cs_data | expand_v128_test.mbt:48 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | v130_cs_data | expand_v130_test.mbt:53 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | v1316_did_data | expand_v131_test.mbt:20 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | v1317_data | expand_v131_test.mbt:179 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | v1330_data | expand_v133_test.mbt:39 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | v1350_data | expand_v135_test.mbt:44 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | v1380_data | expand_v138_test.mbt:107 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | v1480_corr | expand_v148_test.mbt:63 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v1480_corr | expand_v148_test.mbt:64 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v1480_corr | expand_v148_test.mbt:72 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | v1480_corr | expand_v148_test.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | build_clustered_dgp | plr_cluster_test.mbt:17 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | build_clustered_dgp | plr_cluster_test.mbt:18 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | build_row_dgp | plr_cluster_test.mbt:76 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_did_cs_CS2021 | dgp_did_cs_CS2021.mbt:71 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | make_did_cs_CS2021 | dgp_did_cs_CS2021.mbt:167 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | make_did_cs_CS2021 | dgp_did_cs_CS2021.mbt:168 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | make_did_cs_CS2021 | dgp_did_cs_CS2021.mbt:189 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | fit_g_subset_predict | did_cross_section.mbt:648 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | fit_g_subset_predict | did_cross_section.mbt:651 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:760 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:761 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:792 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:810 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:811 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:870 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:871 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:872 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:873 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:976 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:977 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:978 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | compute_score | did_cross_section.mbt:979 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | build_iv_clustered_dgp | pliv_cluster_test.mbt:19 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
 
 ### 5.4 The global region
 
@@ -1545,111 +2642,1423 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 
 | Function | Variable | May-range | Observations |
 | --- | --- | --- | --- |
+| dot | c | [0, 0] | 1 |
+| dot | s | [0, 0] | 1 |
 | iqr | n | [0, 64] | 1 |
+| mean | c | [0, 0] | 1 |
+| mean | s | [0, 0] | 1 |
+| pava | k | [0, 1000004] | 11 |
+| pava | n | [0, 64] | 1 |
+| expit | x | [-1000000, 1000000] | 1 |
+| logit | p | [-1000000, 1000000] | 1 |
+| pava | _i | [0, 1000001] | 12 |
+| matmul | c | [0, 0] | 3 |
+| matvec | c | [0, 0] | 2 |
+| matvec | s | [0, 0] | 2 |
+| psi_at | n | [0, 64] | 1 |
+| inv_spd | s | [0, 0] | 3 |
+| mean_at | s | [0, 0] | 1 |
+| norm_sf | p | [0.2316419, 0.2316419] | 1 |
+| norm_sf | x | [-1000000, 1000000] | 1 |
+| permute | n | [-1000000, 1000000] | 1 |
+| predict | s | [0, 0] | 4 |
+| sigmoid | x | [-1000000, 1000000] | 1 |
+| v097_xa | a | [-1000000, 1000000] | 1 |
+| v097_xa | i | [-1000000, 1000000] | 1 |
+| var_est | n | [0, 64] | 1 |
+| cart_fit | n | [0, 64] | 1 |
+| cholesky | s | [0, 0] | 2 |
+| cholesky | t | [0, 0] | 3 |
 | clip_vec | n | [0, 64] | 1 |
+| count_eq | n | [0, 1000001] | 6 |
+| exp_safe | x | [-1000000, 1000000] | 1 |
+| fold_mix | h | [-1000000, 1000000] | 1 |
+| fold_mix | v | [-1000000, 1000000] | 1 |
+| kfold | seed | [-1000000, 1000000] | 1 |
+| logit | eps~ | [-1000000, 1000000] | 1 |
+| matmul | sum | [0, 0] | 3 |
+| matvec_t | s | [0, 0] | 2 |
+| norm_cdf | x | [-1000000, 1000000] | 1 |
+| norm_ppf | p | [-1000000, 1000000] | 1 |
+| norm_sf | b1 | [0.31938153, 0.31938153] | 1 |
+| norm_sf | b2 | [-0.356563782, -0.356563782] | 1 |
+| norm_sf | b3 | [1.781477937, 1.781477937] | 1 |
+| norm_sf | b4 | [-1.821255978, -1.821255978] | 1 |
+| norm_sf | b5 | [1.330274429, 1.330274429] | 1 |
+| rdd_side | h | [-1000000, 1000000] | 1 |
+| rdd_side | v | [0, 0] | 1 |
+| sin_safe | x | [-1000000, 1000000] | 1 |
+| solve_pq | q | [-1000000, 1000000] | 1 |
+| v096_dgp | n | [-1000000, 1000000] | 1 |
+| v097_dgp | n | [-1000000, 1000000] | 1 |
+| v098_dgp | n | [-1000000, 1000000] | 1 |
+| v098_dgp | p | [3, 3] | 1 |
+| v099_dgp | n | [-1000000, 1000000] | 1 |
+| v099_dgp | p | [-1000000, 1000000] | 1 |
+| v099_dgp | s | [0, 0] | 2 |
+| v108_dgp | n | [-1000000, 1000000] | 1 |
+| v108_dgp | p | [-1000000, 1000000] | 1 |
+| v116_dgp | n | [240, 240] | 1 |
+| v116_lcg | i | [-1000000, 1000000] | 1 |
+| v116_rel | a | [-1000000, 1000000] | 1 |
+| v116_rel | b | [-1000000, 1000000] | 1 |
+| v127_raw | n | [-1000000, 1000000] | 1 |
+| variance | c | [0, 0] | 1 |
+| variance | s | [0, 0] | 1 |
 | clip_vec | hi | [-1000000, 1000000] | 1 |
 | clip_vec | lo | [-1000000, 1000000] | 1 |
+| kahan_sum | c | [0, 0] | 1 |
+| kfold | n_obs | [-1000000, 1000000] | 1 |
 | lpq_score | q | [-1000000, 1000000] | 1 |
+| norm_cdf | b1 | [0.31938153, 0.31938153] | 1 |
+| norm_cdf | b2 | [-0.356563782, -0.356563782] | 1 |
+| norm_cdf | b3 | [1.781477937, 1.781477937] | 1 |
+| norm_cdf | b4 | [-1.821255978, -1.821255978] | 1 |
+| norm_cdf | b5 | [1.330274429, 1.330274429] | 1 |
+| norm_ppf | hi | [-1000000, 1000000] | 6 |
+| norm_ppf | lo | [-1000000, 1000000] | 6 |
+| psi_at | coef | [-1000000, 1000000] | 1 |
+| rdd_limit | h | [-1000000, 1000000] | 1 |
+| rdd_limit | m | [-1000000, 1000000] | 1 |
 | sample_sd | n | [0, 64] | 1 |
+| solve_spd | c | [0, 0] | 4 |
+| v118_data | n | [-1000000, 1000000] | 1 |
+| v118_mean | s | [0, 0] | 1 |
+| v1320_dgp | n | [-1000000, 1000000] | 1 |
+| v1320_dgp | p | [-1000000, 1000000] | 1 |
+| v1510_dot | s | [0, 0] | 1 |
+| cholesky | s_c | [0, 0] | 2 |
+| cholesky | t_c | [0, 0] | 3 |
+| grand_mean | s | [0, 0] | 1 |
+| kfold | offset | [0, 0] | 1 |
+| matvec_t | s_c | [0, 0] | 2 |
+| norm_ppf | mid | [-1000000, 1000000] | 6 |
+| permute | seed | [-1000000, 1000000] | 1 |
+| rdd_design | h | [-1000000, 1000000] | 1 |
+| rdd_side | mjx | [0, 0] | 2 |
+| rng_double | _ | [0, 0] | 1 |
+| unit_means | n | [0, 64] | 1 |
+| v097_hc_se | j | [-1000000, 1000000] | 1 |
+| v097_hc_se | n | [0, 64] | 1 |
+| v115_stage | n | [-1000000, 1000000] | 1 |
+| v118_exact | k | [-1000000, 1000000] | 1 |
+| v118_exact | n | [-1000000, 1000000] | 1 |
+| v118_mean | hi | [-1000000, 1000000] | 1 |
+| v118_mean | lo | [-1000000, 1000000] | 1 |
+| v127_panel | n | [-2000000, 2000000] | 1 |
+| v127_panel | p | [-1000000, 1000000] | 1 |
+| v1317_data | n | [-1000000, 1000000] | 1 |
+| v1317_data | p | [-1000000, 1000000] | 1 |
+| v1330_data | n | [-1000000, 1000000] | 1 |
+| v1330_data | p | [-1000000, 1000000] | 1 |
+| v1340_data | n | [-1000000, 1000000] | 1 |
+| v1340_data | p | [-1000000, 1000000] | 1 |
+| v1350_data | n | [-1000000, 1000000] | 1 |
+| v1350_data | p | [-1000000, 1000000] | 1 |
+| v1380_data | n | [-1000000, 1000000] | 1 |
+| v1380_data | p | [-1000000, 1000000] | 1 |
+| v1390_data | n | [-1000000, 1000000] | 1 |
+| v1470_mean | s | [0, 0] | 1 |
+| v1480_corr | n | [0, 64] | 1 |
+| v1510_mean | s | [0, 0] | 1 |
+| v1510_var | ss | [0, 0] | 1 |
+| v1590_data | n | [-1000000, 1000000] | 1 |
+| vector_add | n | [0, 64] | 1 |
+| Matrix | get | [-1000000, 1000000] | 1 |
+| Matrix | get | [-1000000, 1000000] | 1 |
+| Matrix | set | [-1000000, 1000000] | 1 |
+| Matrix | set | [-1000000, 1000000] | 1 |
+| Matrix | set | [-1000000, 1000000] | 1 |
+| argsort_asc | j | [0, 1] | 6 |
+| argsort_asc | n | [0, 64] | 1 |
+| cart_fit | mtry | [-1000000, 1000000] | 1 |
+| gather_rows | p | [-1000000, 1000000] | 1 |
+| kahan_sum | sum | [0, 0] | 1 |
+| kfold | n_folds | [-1000000, 1000000] | 1 |
+| nn_residual | e | [0, 1000005] | 18 |
+| nn_residual | m | [-1000000, 1000001] | 3 |
+| nn_residual | n | [0, 64] | 1 |
+| nn_residual | s | [0, 1000001] | 3 |
+| pava | cur_size | [1, 1] | 6 |
+| pava | last_idx | [0, 0] | 10 |
+| pool_tied_x | i | [0, 1000000] | 7 |
+| pool_tied_x | j | [1, 1000005] | 36 |
+| pool_tied_x | n | [0, 64] | 1 |
+| rdd_rb_side | b | [-1000000, 1000000] | 1 |
+| rdd_rb_side | h | [-1000000, 1000000] | 1 |
+| rdd_rb_side | n | [0, 6] | 1 |
+| rdd_rb_side | p | [-1000000, 1000000] | 1 |
+| rdd_rb_side | q | [-1000000, 1000000] | 1 |
+| rdd_rb_side | s | [0, 0] | 2 |
+| rdd_side | data | [-1000000, 1000000] | 1 |
+| rdd_side | quad | [0, 0] | 2 |
+| rdd_side | side | [-1000000, 1000000] | 1 |
+| rng_double2 | i | [-1000000, 1000000] | 1 |
 | sample_sd | acc | [0, 0] | 1 |
+| solve_pq | clip | [-1000000, 1000000] | 1 |
+| solve_pq | data | [-1000000, 1000000] | 1 |
+| solve_pq | seed | [-1000000, 1000000] | 1 |
+| v096_meat | acc | [0, 0] | 1 |
+| v097_hc0_se | j | [-1000000, 1000000] | 1 |
+| v099_dgp | seed | [-1000000, 1000000] | 1 |
+| v108_dgp | seed | [-1000000, 1000000] | 1 |
+| v116_lcg | salt | [-1000000, 1000000] | 1 |
+| v127_panel | x0 | [0, 0] | 2 |
+| v130_fit | data | [-1000000, 1000000] | 1 |
+| v1470_rel | got | [-1000000, 1000000] | 1 |
+| v1480_corr | sx | [0, 0] | 1 |
+| v1480_corr | sy | [0, 0] | 1 |
+| v1480_rel | got | [-1000000, 1000000] | 1 |
+| v1490_rel | got | [-1000000, 1000000] | 1 |
+| var_est | gamma | [0, 0] | 1 |
+| cart_fit | depth | [-1000000, 1000000] | 1 |
+| fit_isotonic | k | [0, 1000004] | 11 |
+| fit_isotonic | m | [0, 1000001] | 12 |
+| fit_isotonic | n | [0, 64] | 1 |
+| fold_mix_int | h | [-1000000, 1000000] | 1 |
+| fold_mix_int | v | [-1000000, 1000000] | 1 |
 | gaussian_kde | h | [-1000000, 1000000] | 1 |
 | gaussian_kde | n | [0, 64] | 1 |
 | gaussian_kde | x | [-1000000, 1000000] | 1 |
 | lpq_score | comp | [-1000000, 1000000] | 1 |
 | lpq_score | data | [-1000000, 1000000] | 1 |
 | lpq_score | sign | [-1000000, 1000000] | 1 |
+| nn_residual | i0 | [0, 1000001] | 4 |
+| pq_score_ipw | q | [-1000000, 1000000] | 1 |
+| rdd_hc0_term | e | [-1000000, 1000000] | 1 |
+| rdd_hc0_term | m | [-1000000, 1000000] | 1 |
+| rdd_hc0_term | w | [-1000000, 1000000] | 1 |
+| rdd_limit | side | [-1000000, 1000000] | 1 |
+| rdd_rb_side | ai | [0, 0] | 2 |
+| rdd_rb_side | kp | [-999999, 1000001] | 1 |
+| rdd_rb_side | kq | [-999999, 1000001] | 1 |
+| rdd_rb_side | pw | [1, 1] | 2 |
+| row_unit_max | m | [0, 0] | 1 |
+| tune_argmin | bi | [0, 1] | 5 |
+| v084_apo_dgp | n | [400, 400] | 1 |
+| v084_apo_dgp | p | [3, 3] | 1 |
+| v097_hc_se | acc | [0, 0] | 1 |
+| v097_hc_se | mjx | [0, 0] | 2 |
+| v097_hc_se | pow | [-1000000, 1000000] | 1 |
+| v107_ssm_dgp | n | [-1000000, 1000000] | 1 |
+| v107_ssm_dgp | p | [-1000000, 1000000] | 1 |
+| v107_ssm_fit | n | [-1000000, 1000000] | 1 |
+| v107_ssm_fit | p | [-1000000, 1000000] | 1 |
+| v118_weights | k | [-1000000, 1000000] | 1 |
+| v118_weights | n | [-1000000, 1000000] | 1 |
+| v120_close | tol | [-1000000, 1000000] | 1 |
+| v124_pq_data | n | [500, 500] | 1 |
+| v127_panel | row | [0, 0] | 3 |
+| v128_cs_data | n | [-9000000, 9000000] | 1 |
+| v128_cs_data | p | [-1000000, 1000000] | 1 |
+| v128_xs_data | n | [-1000000, 1000000] | 1 |
+| v128_xs_data | p | [-1000000, 1000000] | 1 |
+| v130_cs_data | n | [-9000000, 9000000] | 1 |
+| v130_cs_data | p | [-1000000, 1000000] | 1 |
+| v1317_apo | data | [-1000000, 1000000] | 1 |
+| v1317_data | lin | [0, 0] | 2 |
+| v1317_irm | data | [-1000000, 1000000] | 1 |
+| v1320_dgp | seed | [-1000000, 1000000] | 1 |
+| v1470_rel | want | [-1000000, 1000000] | 1 |
+| v1480_corr | sxx | [0, 0] | 1 |
+| v1480_corr | sxy | [0, 0] | 1 |
+| v1480_corr | syy | [0, 0] | 1 |
+| v1480_rel | want | [-1000000, 1000000] | 1 |
+| v1490_rel | want | [-1000000, 1000000] | 1 |
+| v1510_corr | saa | [0, 0] | 1 |
+| v1510_corr | sab | [0, 0] | 1 |
+| v1510_corr | sbb | [0, 0] | 1 |
+| v1520_fit | seed | [-1000000, 1000000] | 1 |
+| vector_scale | n | [0, 64] | 1 |
+| vector_scale | s | [-1000000, 1000000] | 1 |
+| Lasso | new | [-1000000, 1000000] | 1 |
+| build_row_dgp | n | [-2147483648, 2147483647] | 1 |
+| build_row_dgp | p | [3, 3] | 1 |
+| compute_score | n | [0, 64] | 1 |
+| count_eq | target | [-1000000, 1000000] | 1 |
+| default_5fold | i | [0, 1000001] | 6 |
+| default_5fold | j | [0, 1000001] | 18 |
+| default_5fold | k | [5, 5] | 1 |
+| default_5fold | n | [-1000000, 1000000] | 1 |
+| lplr_score_at | n | [0, 64] | 1 |
 | lpq_score | theta | [-1000000, 1000000] | 1 |
 | lpq_score_ipw | q | [-1000000, 1000000] | 1 |
+| make_apo_data | n | [-1000000, 1000000] | 1 |
+| make_apo_data | p | [2, 2] | 1 |
+| make_irm_data | j | [-1, 0] | 18 |
+| make_irm_data | s | [0, 0] | 3 |
+| make_ssm_data | j | [-1, 0] | 18 |
+| make_ssm_data | s | [0, 0] | 3 |
+| median_sorted | n | [0, 64] | 1 |
+| nn_residual | s_y | [0, 0] | 2 |
+| norm_cdf | p_coef | [0.2316419, 0.2316419] | 1 |
+| normalize_ipw | n | [0, 64] | 1 |
+| range_indices | n | [-1000000, 1000000] | 1 |
+| rdd_design | data | [-1000000, 1000000] | 1 |
+| rdd_design | side | [-1000000, 1000000] | 1 |
+| rdd_limit | order | [-1000000, 1000000] | 1 |
+| rdd_rb_side | v00 | [0, 0] | 1 |
+| rdd_side | cutoff | [-1000000, 1000000] | 1 |
+| rdd_side | order~ | [-1000000, 1000000] | 1 |
+| rdd_weight_at | h | [-1000000, 1000000] | 1 |
+| rdd_weight_at | u | [-1000000, 1000000] | 1 |
+| storey_m0_hat | n | [0, 64] | 1 |
+| tsbh_p_adjust | n | [0, 64] | 1 |
+| tsby_p_adjust | c | [0, 0] | 1 |
+| tsby_p_adjust | k | [-2, 62] | 2 |
+| tsby_p_adjust | n | [0, 64] | 1 |
+| v096_rel_diff | a | [-1000000, 1000000] | 1 |
+| v096_rel_diff | b | [-1000000, 1000000] | 1 |
+| v096_side_wls | h | [-1000000, 1000000] | 1 |
+| v096_side_wls | n | [0, 6] | 1 |
+| v097_rel_diff | a | [-1000000, 1000000] | 1 |
+| v097_rel_diff | b | [-1000000, 1000000] | 1 |
+| v109_plr_data | n | [-1000000, 1000000] | 1 |
+| v109_plr_data | p | [-1000000, 1000000] | 1 |
+| v110_rdd_data | n | [-1000000, 1000000] | 1 |
+| v115_rdd_data | n | [-1000000, 1000000] | 1 |
+| v117_prob_dev | s | [0, 0] | 1 |
+| v117_xor_data | n | [-1000000, 1000000] | 1 |
+| v118_clf_data | n | [-1000000, 1000000] | 1 |
+| v120_means | yacc | [0, 0] | 1 |
+| v122_irm_data | n | [300, 300] | 1 |
+| v123_ssm_data | n | [400, 400] | 1 |
+| v124_lpq_data | n | [500, 500] | 1 |
+| v124_qte_data | n | [500, 500] | 1 |
+| v127_panel | seed | [-1000000, 1000000] | 1 |
+| v1317_data | seed | [-1000000, 1000000] | 1 |
+| v1330_data | seed | [-1000000, 1000000] | 1 |
+| v1340_data | seed | [-1000000, 1000000] | 1 |
+| v1350_data | seed | [-1000000, 1000000] | 1 |
+| v1380_data | seed | [-1000000, 1000000] | 1 |
+| v1390_data | seed | [-1000000, 1000000] | 1 |
+| v1440_plr_fit | n | [-1000000, 1000000] | 1 |
+| v1470_cells | c00 | [0, 1000001] | 6 |
+| v1470_cells | c01 | [0, 1000001] | 6 |
+| v1470_cells | c10 | [0, 1000001] | 6 |
+| v1470_cells | c11 | [0, 1000001] | 6 |
+| v1590_data | seed | [-1000000, 1000000] | 1 |
+| var_est | gamma_c | [0, 0] | 1 |
+| vector_divide | n | [0, 64] | 1 |
+| add_ridge | lambda | [-1000000, 1000000] | 1 |
+| build_dgp_data | n | [-1000000, 1000000] | 1 |
+| build_dgp_data | p | [-1000000, 1000000] | 1 |
+| cart_predict | row | [-1000000, 1000000] | 1 |
+| chacha8_rng | seed | [-1000000, 1000000] | 1 |
+| cvar_ipw_score | n | [0, 64] | 1 |
 | gaussian_kde | acc | [0, 0] | 1 |
+| make_iivm_data | j | [-1, 0] | 18 |
+| make_iivm_data | s | [0, 0] | 3 |
+| matrix_predict | c | [0, 0] | 2 |
+| matrix_predict | s | [-1000000, 1000000] | 2 |
+| pool_tied_x | size | [-999999, 1000000] | 6 |
+| rdd_hc0_term | wi2 | [-1000000000000, 1000000000000] | 1 |
+| rdd_rb_side | data | [-1000000, 1000000] | 1 |
+| rdd_rb_side | ls_a | [0, 0] | 1 |
+| rdd_rb_side | side | [-1000000, 1000000] | 1 |
+| rdd_rb_side | xibc | [0, 0] | 1 |
+| rdd_xi_bc_pair | b | [-1000000, 1000000] | 1 |
+| rdd_xi_bc_pair | m | [-1000000, 1000000] | 1 |
+| rdd_xi_bc_pair | p | [-1000000, 1000000] | 1 |
+| rdd_xi_bc_pair | q | [-1000000, 1000000] | 1 |
+| solve_pq | n_folds | [-1000000, 1000000] | 1 |
+| v096_side_wls | mg | [0, 0] | 4 |
+| v096_side_wls | mj | [0, 0] | 2 |
+| v097_dgp | p_basis | [2, 2] | 1 |
+| v098_rel_close | a | [-1000000, 1000000] | 1 |
+| v098_rel_close | b | [-1000000, 1000000] | 1 |
+| v098_sample_sd | n | [0, 64] | 1 |
+| v107_plpr_data | n | [240, 240] | 1 |
+| v107_plpr_data | p | [2, 2] | 1 |
+| v115_stage | theta | [-1000000, 1000000] | 1 |
+| v117_accuracy | ok | [0, 1000001] | 6 |
+| v120_means | total | [0, 0] | 1 |
+| v123_iivm_data | n | [400, 400] | 1 |
+| v127_panel | slope | [-1000000, 1000000] | 1 |
+| v128_cs_data | row | [0, 0] | 3 |
+| v128_cs_fit | data | [-1000000, 1000000] | 1 |
+| v130_cs_data | row | [0, 0] | 3 |
+| v1316_did_data | n | [-1000000, 1000000] | 1 |
+| v1316_did_data | p | [-1000000, 1000000] | 1 |
+| v1380_data | slope | [-1000000, 1000000] | 1 |
+| v1380_data | theta | [-1000000, 1000000] | 1 |
+| v1450_lplr_fit | n | [-1000000, 1000000] | 1 |
+| v1470_all | fitted | [-1000000, 1000000] | 1 |
+| Lasso | new | [-1000000, 1000000] | 1 |
+| Ridge | new | [-1000000, 1000000] | 1 |
+| aggregate_group | w | [1, 1] | 10 |
+| bh_fdr_p_adjust | k | [-2, 62] | 2 |
+| bh_fdr_p_adjust | n | [0, 64] | 1 |
+| build_panel_dgp | n | [-2147483648, 2147483647] | 1 |
+| build_panel_dgp | p | [2, 2] | 1 |
+| build_row_dgp | row | [0, 0] | 3 |
+| by_fdr_p_adjust | c | [0, 0] | 1 |
+| by_fdr_p_adjust | k | [-2, 62] | 2 |
+| by_fdr_p_adjust | n | [0, 64] | 1 |
+| cart_leaf_value | h | [0, 0] | 2 |
+| cart_leaf_value | n | [0, 64] | 1 |
+| cart_leaf_value | s | [0, 0] | 1 |
+| default_5fold | rem | [0, 999999] | 1 |
+| expand_v092_fit | n | [-1000000, 1000000] | 1 |
+| expand_v093_fit | n | [-1000000, 1000000] | 1 |
+| expand_v094_fit | n | [-1000000, 1000000] | 1 |
+| expand_v095_fit | n | [-1000000, 1000000] | 1 |
+| expand_v095_row | j | [-1000000, 1000000] | 1 |
+| expand_v095_row | m | [-1000000, 1000000] | 1 |
+| expand_v095_row | n | [-1000000, 1000000] | 1 |
+| expand_v101_row | j | [-1000000, 1000000] | 1 |
+| expand_v101_row | m | [-1000000, 1000000] | 1 |
+| expand_v101_row | n | [-1000000, 1000000] | 1 |
+| expand_v102_fit | n | [-1000000, 1000000] | 1 |
+| fold_mix_double | h | [-1000000, 1000000] | 1 |
+| fold_mix_double | v | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | j | [-1, 0] | 18 |
+| make_did_CS2021 | s | [0, 0] | 3 |
+| make_did_SZ2020 | j | [-1, 0] | 18 |
+| make_did_SZ2020 | s | [0, 0] | 3 |
+| make_iivm_data | xb | [0, 0] | 2 |
+| make_irm_data | acc | [-700000, 700000] | 18 |
+| make_ssm_data | acc | [-700000, 700000] | 18 |
+| plr_iv_test_dgp | n | [-1000000, 1000000] | 1 |
+| rdd_design | cutoff | [-1000000, 1000000] | 1 |
+| rdd_design | order~ | [-1000000, 1000000] | 1 |
+| rdd_pilot_stage | m | [-1000000, 1000000] | 1 |
+| transform_panel | c | [0, 1000001] | 12 |
+| transform_panel | k | [0, 1000000] | 7 |
+| tune_score_grid | n | [0, 64] | 1 |
+| v084_apo_dgp | seed | [-1000000, 1000000] | 1 |
+| v085_policy_dgp | n | [300, 300] | 1 |
+| v085_policy_dgp | p | [2, 2] | 1 |
+| v098_sample_sd | ss | [0, 0] | 1 |
+| v106_singletons | n | [-1000000, 1000000] | 1 |
+| v107_ssm_fit | seed | [-1000000, 1000000] | 1 |
+| v107_ssm_fit_ml | n | [-1000000, 1000000] | 1 |
+| v107_ssm_fit_ml | p | [-1000000, 1000000] | 1 |
+| v109_drawn_reps | n | [-1000000, 1000000] | 1 |
+| v120_close | actual | [-1000000, 1000000] | 1 |
+| v126_clip_of | clip | [-1000000, 1000000] | 1 |
+| v128_cs_data | seed | [-1000000, 1000000] | 1 |
+| v128_xs_data | seed | [-1000000, 1000000] | 1 |
+| v130_cs_data | seed | [-1000000, 1000000] | 1 |
+| v1470_cells | other | [0, 1000001] | 6 |
+| v1480_cell_fit | mc | [0, 0] | 1 |
+| v1480_cell_fit | mg | [0, 0] | 1 |
+| v1480_cell_fit | yv | [0, 0] | 1 |
+| var_est_cluster | m | [0, 1000001] | 12 |
+| var_est_cluster | s | [0, 0] | 3 |
+| vector_multiply | n | [0, 64] | 1 |
+| vector_subtract | n | [0, 64] | 1 |
+| Matrix | identity | [-1000000, 1000000] | 1 |
+| Matrix | ones | [-1000000, 1000000] | 1 |
+| Matrix | ones | [-1000000, 1000000] | 1 |
+| cart_fit | max_depth | [-1000000, 1000000] | 1 |
+| cart_leaf_value | sw | [0, 0] | 1 |
+| cs_bin_score_obs | n | [0, 64] | 1 |
+| cvar_ipw_score | acc | [0, 0] | 1 |
+| default_5fold | base | [-200000, 200000] | 1 |
+| enet_objective | l1n | [0, 0] | 1 |
+| enet_objective | l2n | [0, 0] | 1 |
+| enet_objective | rss | [0, 0] | 1 |
+| expand_v090_data | n | [-1000000, 1000000] | 1 |
+| expand_v090_data | p | [-1000000, 1000000] | 1 |
+| expand_v091_data | n | [-1000000, 1000000] | 1 |
+| expand_v091_data | p | [-1000000, 1000000] | 1 |
+| expand_v100_flat | f | [-1000000, 1000000] | 1 |
+| expand_v100_flat | g | [-1000000, 1000000] | 1 |
+| expand_v100_flat | t | [-1000000, 1000000] | 1 |
+| fill_normal_pool | i | [0, 1000002] | 6 |
+| fit_cs_bin_g | sub_n | [0, 1000001] | 6 |
+| kfold_stratified | n | [-1000000, 1000000] | 1 |
 | lpq_score_ipw | comp | [-1000000, 1000000] | 1 |
 | lpq_score_ipw | data | [-1000000, 1000000] | 1 |
 | lpq_score_ipw | sign | [-1000000, 1000000] | 1 |
+| make_apo_data | seed | [-1000000, 1000000] | 1 |
+| make_iivm_data | acc | [-700000, 700000] | 18 |
+| make_irm_data | seed | [-1000000, 1000000] | 1 |
+| make_plpr_CP2025 | j | [-1, 0] | 18 |
+| make_plpr_CP2025 | s | [0, 0] | 3 |
+| make_ssm_data | seed | [-1000000, 1000000] | 1 |
+| pq_score_ipw | theta | [-1000000, 1000000] | 1 |
+| predict_isotonic | j | [0, 1000001] | 12 |
+| rdd_rb_side | cutoff | [-1000000, 1000000] | 1 |
+| rdd_side_offsets | h | [-1000000, 1000000] | 1 |
+| rdd_side_offsets | m | [-1000000, 1000000] | 1 |
+| reg_fit_means | wsum | [0, 0] | 1 |
+| reg_fit_means | yacc | [0, 0] | 1 |
+| seed_to_bytes | seed | [-1000000, 1000000] | 1 |
+| solve_pq | treatment | [-1000000, 1000000] | 1 |
+| stratified_kfold | i | [0, 1000000] | 3 |
+| stratified_kfold | j | [1, 1000005] | 12 |
+| v096_side_wls | pred | [0, 0] | 2 |
+| v096_side_wls | quad | [0, 0] | 2 |
+| v096_side_wls | side | [-1000000, 1000000] | 1 |
+| v097_reference | acc | [0, 0] | 7 |
+| v098_rel_close | tol | [-1000000, 1000000] | 1 |
+| v098_sample_sd | sum | [0, 0] | 1 |
+| v106_build_panel | n | [-2147483648, 2147483647] | 1 |
+| v106_build_panel | p | [3, 3] | 1 |
+| v107_plpr_data | row | [0, 0] | 3 |
+| v109_plr_data | seed | [-1000000, 1000000] | 1 |
+| v120_kfold_folds | k | [-1000000, 1000000] | 1 |
+| v120_kfold_folds | n | [-1000000, 1000000] | 1 |
+| v127_panel | n_units | [-1000000, 1000000] | 1 |
+| v1316_did_data | lin | [0, 0] | 2 |
+| v1316_did_fit | data | [-1000000, 1000000] | 1 |
+| v1440_plr_fit | seed | [-1000000, 1000000] | 1 |
+| v1470_cells | fitted | [-1000000, 1000000] | 1 |
+| v1480_cell_fit | cnt | [0, 1000001] | 6 |
+| var_est_cluster | sd | [0, 0] | 3 |
+| vector_divide | eps~ | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | fit | [0, 0] | 12 |
+| DoubleMLPQ | se | [-1000000, 1000000] | 1 |
+| Matrix | zeros | [-1000000, 1000000] | 1 |
+| Matrix | zeros | [-1000000, 1000000] | 1 |
+| RDDKernel | weight | [-1000000, 1000000] | 1 |
+| RDDKernel | weight | [-1000000, 1000000] | 1 |
+| aggregate_coef_se | n | [0, 64] | 1 |
+| aggregate_event | n_e | [0, 0] | 1 |
+| aggregate_time | flat | [0, 0] | 4 |
+| bh_step_up_sorted | k | [-2, 62] | 2 |
+| bh_step_up_sorted | n | [0, 64] | 1 |
+| build_dgp_data | seed | [-1000000, 1000000] | 1 |
+| build_lzz2020_dgp | n | [-1000000, 1000000] | 1 |
+| build_lzz2020_dgp | p | [6, 6] | 1 |
+| build_panel_dgp | row | [0, 0] | 3 |
+| cart_fit | best_score | [1.0000000000000002e+300, 1.0000000000000002e+300] | 1 |
+| cart_fit | left_count | [1, 1] | 3 |
+| default_5fold | start | [0, 0] | 1 |
+| est_coef_cluster | fa | [0, 0] | 2 |
+| est_coef_cluster | fb | [0, 0] | 2 |
+| est_coef_cluster | sa | [0, 0] | 1 |
+| est_coef_cluster | sb | [0, 0] | 1 |
+| expand_v086_close | x | [-1000000, 1000000] | 1 |
+| expand_v086_close | y | [-1000000, 1000000] | 1 |
+| expand_v087_close | x | [-1000000, 1000000] | 1 |
+| expand_v087_close | y | [-1000000, 1000000] | 1 |
+| expand_v088_close | x | [-1000000, 1000000] | 1 |
+| expand_v088_close | y | [-1000000, 1000000] | 1 |
+| expand_v089_close | x | [-1000000, 1000000] | 1 |
+| expand_v089_close | y | [-1000000, 1000000] | 1 |
+| expand_v090_close | x | [-1000000, 1000000] | 1 |
+| expand_v090_close | y | [-1000000, 1000000] | 1 |
+| expand_v091_close | x | [-1000000, 1000000] | 1 |
+| expand_v091_close | y | [-1000000, 1000000] | 1 |
+| expand_v092_close | x | [-1000000, 1000000] | 1 |
+| expand_v092_close | y | [-1000000, 1000000] | 1 |
+| expand_v093_close | x | [-1000000, 1000000] | 1 |
+| expand_v093_close | y | [-1000000, 1000000] | 1 |
+| expand_v094_close | x | [-1000000, 1000000] | 1 |
+| expand_v094_close | y | [-1000000, 1000000] | 1 |
+| expand_v095_close | x | [-1000000, 1000000] | 1 |
+| expand_v095_close | y | [-1000000, 1000000] | 1 |
+| expand_v100_close | x | [-1000000, 1000000] | 1 |
+| expand_v100_close | y | [-1000000, 1000000] | 1 |
+| expand_v101_close | x | [-1000000, 1000000] | 1 |
+| expand_v101_close | y | [-1000000, 1000000] | 1 |
+| expand_v102_fit | att | [-1000000, 1000000] | 1 |
+| fit_propensity | clip | [-1000000, 1000000] | 1 |
+| fold_mix_double | acc | [-1000000, 1000000] | 1 |
+| joint_sensitivity | k | [0, 64] | 1 |
+| joint_sensitivity | z | [1.959963984540054, 1.959963984540054] | 1 |
+| lplr_score_at | theta | [-1000000, 1000000] | 1 |
 | lpq_score_ipw | theta | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | acc | [-700000, 700000] | 18 |
+| make_did_CS2021 | idx | [0, 0] | 3 |
+| make_did_SZ2020 | acc | [-700000, 700000] | 18 |
+| make_did_SZ2020 | idx | [0, 0] | 3 |
+| make_iivm_data | seed | [-1000000, 1000000] | 1 |
+| make_irm_data | dim_x | [-1000000, 1000000] | 1 |
+| make_irm_data | idx_a | [0, 0] | 3 |
+| make_irm_data | idx_b | [1, 1] | 3 |
+| make_irm_data | n_obs | [-1000000, 1000000] | 1 |
+| make_irm_data | theta | [-1000000, 1000000] | 1 |
+| make_lplr_LZZ2020 | n | [-1000000, 1000000] | 1 |
+| make_lplr_LZZ2020 | p | [6, 6] | 1 |
+| make_pliv_CHS2015 | j | [-1, 0] | 18 |
+| make_pliv_CHS2015 | s | [0, 0] | 3 |
+| make_pliv_data | seed | [-1000000, 1000000] | 1 |
+| make_ssm_data | dim_x | [-1000000, 1000000] | 1 |
+| make_ssm_data | idx_a | [0, 0] | 3 |
+| make_ssm_data | idx_b | [1, 1] | 3 |
+| make_ssm_data | n_obs | [-1000000, 1000000] | 1 |
+| make_ssm_data | theta | [-1000000, 1000000] | 1 |
+| matrix_predict | bias | [-1000000, 1000000] | 1 |
 | percentile_sorted | n | [0, 64] | 1 |
 | percentile_sorted | p | [-1000000, 1000000] | 1 |
+| policy_tree_build | n | [0, 64] | 1 |
+| rdd_rb_side | nnmatch | [-1000000, 1000000] | 1 |
+| slice_matrix_rows | n | [0, 64] | 1 |
+| storey_m0_hat | alpha | [0.05, 0.05] | 1 |
+| transform_panel | end | [0, 1000004] | 36 |
+| tsbh_p_adjust | alpha | [0.05, 0.05] | 1 |
+| v096_dgp_lopsided | n | [-1000000, 1000000] | 1 |
+| v096_side_wls | ridge | [-1000000, 1000000] | 1 |
+| v107_ssm_dgp | theta0 | [-1000000, 1000000] | 1 |
+| v110_rdd_data | theta | [-1000000, 1000000] | 1 |
+| v115_rdd_data | theta | [-1000000, 1000000] | 1 |
+| v120_close | expected | [-1000000, 1000000] | 1 |
+| v122_extreme_data | n | [300, 300] | 1 |
+| v126_extreme_data | n | [600, 600] | 1 |
+| v127_panel_fit | data | [-1000000, 1000000] | 1 |
+| v1316_did_data | seed | [-1000000, 1000000] | 1 |
+| v1390_pq_coefs | data | [-1000000, 1000000] | 1 |
+| v1440_plr_fixture | n | [-1000000, 1000000] | 1 |
+| v1440_plr_fixture | p | [-1000000, 1000000] | 1 |
+| v1450_lplr_fit | seed | [-1000000, 1000000] | 1 |
+| v1510_resid_after | k | [0, 64] | 1 |
+| v1510_resid_after | n | [0, 64] | 1 |
 | DoubleMLAPO | se | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | se | [-1000000, 1000000] | 1 |
 | DoubleMLDID | se | [-1000000, 1000000] | 1 |
+| DoubleMLData | z | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | se | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | fit | [0, 0] | 12 |
 | DoubleMLLPQ | se | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | se | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | fit | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bias | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bias | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bias | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | se | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | se | [-1000000, 1000000] | 1 |
+| ElasticNet | new | [-1000000, 1000000] | 1 |
 | GBLearner | new | [-1000000, 1000000] | 1 |
+| Lasso | new | [-1000000, 1000000] | 1 |
+| RFLearner | new | [-1000000, 1000000] | 1 |
+| aggregate_group | flat | [0, 0] | 10 |
+| aggregate_time | sum_w | [0, 0] | 2 |
+| aggregate_time | total | [0, 0] | 1 |
+| blp_hac_require_df | n | [-1000000, 1000000] | 1 |
+| build_panel_dgp | seed | [-1000000, 1000000] | 1 |
+| build_row_dgp | theta0 | [-1000000, 1000000] | 1 |
+| build_row_unit_map | n | [0, 64] | 1 |
+| cart_fit | right_count | [-1, 63] | 3 |
+| compute_score | mean_d | [0, 0] | 1 |
+| compute_score | mean_t | [0, 0] | 1 |
+| cvar_ipw_score | theta | [-1000000, 1000000] | 1 |
+| empirical_quantile | j | [0, 1] | 6 |
+| empirical_quantile | q | [-1000000, 1000000] | 1 |
+| enet_objective | alpha | [-1000000, 1000000] | 1 |
+| expand_v086_psi | coef | [-1000000, 1000000] | 1 |
+| expand_v087_psi | coef | [-1000000, 1000000] | 1 |
+| expand_v089_psi | coef | [-1000000, 1000000] | 1 |
+| expand_v102_cs_dgp | n | [-1000000, 1000000] | 1 |
+| expand_v102_cs_dgp | p | [-1000000, 1000000] | 1 |
+| filter_two_values | v1 | [-1000000, 1000000] | 1 |
+| filter_two_values | v2 | [-1000000, 1000000] | 1 |
+| fit_cs_bin_g | d_value | [-1000000, 1000000] | 1 |
+| fit_cs_bin_g | n_train | [0, 64] | 1 |
+| fit_cs_bin_g | t_value | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | seed | [-1000000, 1000000] | 1 |
+| make_did_SZ2020 | seed | [-1000000, 1000000] | 1 |
+| make_did_cs_CS2021 | j | [-1, 0] | 18 |
+| make_did_cs_CS2021 | s | [0, 0] | 3 |
+| make_iivm_data | dim_x | [-1000000, 1000000] | 1 |
+| make_iivm_data | idx_a | [0, 0] | 3 |
+| make_iivm_data | idx_b | [1, 1] | 3 |
+| make_iivm_data | n_obs | [-1000000, 1000000] | 1 |
+| make_iivm_data | theta | [-1000000, 1000000] | 1 |
+| make_irm_data | half_n | [-499999, 500000] | 1 |
+| make_irm_data | half_z | [-1073741823, 1073741823] | 1 |
+| make_pliv_data | dim_x | [-1000000, 1000000] | 1 |
+| make_pliv_data | n_obs | [-1000000, 1000000] | 1 |
+| make_pliv_data | theta | [-1000000, 1000000] | 1 |
+| make_plpr_CP2025 | acc | [-700000, 700000] | 18 |
+| make_plpr_CP2025 | idx | [0, 0] | 3 |
+| make_ssm_data | half_n | [-499999, 500000] | 1 |
+| make_ssm_data | half_z | [-1073741823, 1073741823] | 1 |
+| newton_solve_score | n | [0, 64] | 1 |
+| newton_solve_score | s | [0, 0] | 2 |
+| nn_residual | nnmatch~ | [-1000000, 1000000] | 1 |
+| normalize_ipw | sum_t0 | [0, 0] | 1 |
+| normalize_ipw | sum_t1 | [0, 0] | 1 |
+| plr_iv_test_dgp | seed | [-1000000, 1000000] | 1 |
+| plr_score_elements | n | [-1000000, 1000000] | 1 |
+| policy_tree_build | bf | [-1, 0] | 3 |
+| policy_tree_build | bv | [0, 0] | 1 |
+| policy_tree_build | nl | [0, 1000001] | 12 |
+| policy_tree_build | nr | [0, 1000001] | 12 |
+| policy_tree_build | sl | [0, 0] | 2 |
+| policy_tree_build | sr | [0, 0] | 2 |
+| qte_post_scale | n_obs | [-1000000, 1000000] | 1 |
+| quantile_test_data | n | [400, 400] | 1 |
+| rdd_kernel_weights | h | [-1000000, 1000000] | 1 |
+| repeated_kfold | n_obs | [-1000000, 1000000] | 1 |
+| repeated_kfold | n_rep | [-1000000, 1000000] | 1 |
+| storey_m0_hat | m0_hat | [1, 1] | 1 |
+| transform_panel | data | [-1000000, 1000000] | 1 |
+| tune_score_grid | seed | [-1000000, 1000000] | 1 |
+| tune_score_outcome | n | [0, 64] | 1 |
+| v085_policy_dgp | seed | [-1000000, 1000000] | 1 |
+| v096_side_wls | cutoff | [-1000000, 1000000] | 1 |
+| v106_build_panel | row | [0, 0] | 3 |
+| v107_ssm_fit_ml | seed | [-1000000, 1000000] | 1 |
+| v109_drawn_reps | seed | [-1000000, 1000000] | 1 |
+| v120_rel_diff | actual | [-1000000, 1000000] | 1 |
+| v125_lpq_nonlinear | n | [600, 600] | 1 |
+| v128_cs_data | n_units | [-3000000, 3000000] | 1 |
+| v130_cs_data | n_units | [-3000000, 3000000] | 1 |
+| v1450_lplr_fit | alpha | [-1000000, 1000000] | 1 |
+| v1480_cell_fit | d_val | [-1000000, 1000000] | 1 |
+| v1480_cell_fit | t_val | [-1000000, 1000000] | 1 |
+| v1510_resid_after | nb | [0, 1000001] | 6 |
 | DoubleMLAPO | fit | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | new | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | fit | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | fit | [0, 0] | 1 |
+| DoubleMLBLP | rss | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | se | [-1000000, 1000000] | 1 |
 | DoubleMLDID | fit | [-1000000, 1000000] | 1 |
 | DoubleMLDID | new | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | se | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | fit | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | new | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | se | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | fit | [0, 0] | 1 |
 | DoubleMLLPQ | fit | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | se | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | se | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | fit | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | coef | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | tune | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | fit | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | new | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | ses | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | fit | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | new | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | fit | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | new | [-1000000, 1000000] | 1 |
+| aggregate_group | sum_w | [-999999, 1000001] | 12 |
+| aggregate_group | total | [0, 0] | 1 |
+| blp_hac_require_df | p1 | [-1000000, 1000000] | 1 |
+| bonferroni_p_adjust | n | [0, 64] | 1 |
+| build_bootstrap_dgp | n | [960, 960] | 1 |
+| build_bootstrap_dgp | p | [3, 3] | 1 |
+| build_clustered_dgp | n | [-2147483648, 2147483647] | 1 |
+| build_clustered_dgp | p | [3, 3] | 1 |
+| build_irm_tune_data | n | [-1000000, 1000000] | 1 |
+| build_irm_tune_data | p | [-1000000, 1000000] | 1 |
+| build_row_dgp | n_units | [-1000000, 1000000] | 1 |
+| cart_fit | best_feature | [-1, -1] | 1 |
+| enet_soft_threshold | t | [-1000000, 1000000] | 1 |
+| expand_v086_psi | n_obs | [-1000000, 1000000] | 1 |
+| expand_v087_psi | n_obs | [-1000000, 1000000] | 1 |
+| expand_v088_hc_pair | n | [-1000000, 1000000] | 1 |
+| expand_v088_input_a | n | [-1000000, 1000000] | 1 |
+| expand_v089_psi | n_obs | [-1000000, 1000000] | 1 |
+| expand_v094_pq_data | n | [-1000000, 1000000] | 1 |
+| expand_v100_apos | seed | [-1000000, 1000000] | 1 |
 | indicator_level | level | [-1000000, 1000000] | 1 |
+| kfold_stratified | seed | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | dim_x | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | idx_a | [0, 0] | 4 |
+| make_did_CS2021 | idx_b | [1, 1] | 4 |
+| make_did_CS2021 | n_obs | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | theta | [-1000000, 1000000] | 1 |
+| make_did_SZ2020 | dim_x | [-1000000, 1000000] | 1 |
+| make_did_SZ2020 | idx_a | [0, 0] | 3 |
+| make_did_SZ2020 | idx_b | [1, 1] | 3 |
+| make_did_SZ2020 | n_obs | [-1000000, 1000000] | 1 |
+| make_did_SZ2020 | theta | [-1000000, 1000000] | 1 |
+| make_iivm_data | beta_x | [0.5, 0.5] | 1 |
+| make_iivm_data | beta_z | [1, 1] | 1 |
+| make_iivm_data | half_n | [-499999, 500000] | 1 |
+| make_iivm_data | half_z | [-1073741823, 1073741823] | 1 |
+| make_pliv_CHS2015 | acc | [-700000, 700000] | 18 |
+| make_plpr_CP2025 | seed | [-1000000, 1000000] | 1 |
+| newton_solve_score | sd | [0, 0] | 2 |
+| policy_tree_build | bnl | [0, 1000000] | 3 |
+| policy_tree_build | bnr | [0, 1000000] | 3 |
+| policy_tree_build | ssl | [0, 0] | 2 |
+| policy_tree_build | ssr | [0, 0] | 2 |
+| policy_tree_build | sum | [0, 0] | 2 |
+| pq_score_orthogonal | q | [-1000000, 1000000] | 1 |
+| rdd_hac_require_df | p1 | [-1000000, 1000000] | 1 |
+| rdd_pilot_stage | order | [-1000000, 1000000] | 1 |
+| rdd_side_offsets | side | [-1000000, 1000000] | 1 |
 | silverman_bandwidth | n | [0, 64] | 1 |
+| solve_pq | newton_steps | [0, 100] | 6 |
+| storey_m0_hat | n_above | [0, 1000001] | 6 |
+| stratified_kfold | seed | [-1000000, 1000000] | 1 |
+| v098_small_leaf_dgp | n | [-1000000, 1000000] | 1 |
+| v107_plpr_data | theta0 | [1, 1] | 1 |
+| v109_drawn_reps | n_rep | [-1000000, 1000000] | 1 |
+| v117_threshold_data | n | [-1000000, 1000000] | 1 |
+| v120_check_enet | worst | [0, 0] | 1 |
+| v127_panel_fit | pclip~ | [-1000000, 1000000] | 1 |
+| v128_cs_fit_nrep | data | [-1000000, 1000000] | 1 |
+| v1390_changed_steps | n | [0, 1000001] | 6 |
+| v1440_plr_fixture | acc | [0, 0] | 2 |
+| v1480_cell_fit | fitted | [-1000000, 1000000] | 1 |
+| var_est_cluster | gamma | [0, 0] | 1 |
+| var_est_cluster | j_hat | [0, 0] | 1 |
 | DoubleMLAPO | coef | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | tune | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | fit | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | ses | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | coef | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | fit | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
 | DoubleMLDID | coef | [-1000000, 1000000] | 1 |
 | DoubleMLDID | new | [-1000000, 1000000] | 1 |
 | DoubleMLDID | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLIIVM | fit | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | new | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | coef | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | new | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | tune | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | fit | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | new | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | coef | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | fit | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | fit | [0, 0] | 2 |
+| DoubleMLPLPR | fit | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | coef | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | tune | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | new | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | tune | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bias | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bias | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | coef | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tune | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | coef | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | new | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | tune | [-1000000, 1000000] | 1 |
+| ElasticNet | new | [-1000000, 1000000] | 1 |
+| GainStatsSource | new | [0, 64] | 1 |
+| bootstrap_indices | seed | [-1000000, 1000000] | 1 |
+| build_lzz2020_dgp | need | [-7000000, 7000000] | 1 |
+| build_lzz2020_dgp | seed | [-1000000, 1000000] | 1 |
+| build_panel_dgp | theta0 | [-1000000, 1000000] | 1 |
+| crossfit_nuisance | data | [-1000000, 1000000] | 1 |
+| crossfit_nuisance | seed | [-1000000, 1000000] | 1 |
+| did_bootstrap_t_stat | s | [0, 0] | 3 |
+| enet_fit_tail | l1_ratio | [-1000000, 1000000] | 1 |
+| enet_fit_tail | self_tol | [-1000000, 1000000] | 1 |
+| expand_v086_ref_hc0 | m2 | [-1000000000000, 1000000000000] | 1 |
+| expand_v087_ref_hc0 | m2 | [-1000000000000, 1000000000000] | 1 |
+| expand_v087_ssm_data | n | [-1000000, 1000000] | 1 |
+| expand_v087_ssm_data | p | [-1000000, 1000000] | 1 |
+| expand_v089_apo_data | n | [-1000000, 1000000] | 1 |
+| expand_v089_apo_data | p | [-1000000, 1000000] | 1 |
+| expand_v089_ref_hc0 | m2 | [-1000000000000, 1000000000000] | 1 |
+| expand_v093_lpq_data | n | [-1000000, 1000000] | 1 |
+| expand_v095_qte_data | n | [-1000000, 1000000] | 1 |
+| expand_v101_qte_data | n | [-1000000, 1000000] | 1 |
+| expand_v101_qte_data | p | [3, 3] | 1 |
+| expand_v102_cs_dgp | att | [-1000000, 1000000] | 1 |
+| filter_by_value | target | [-1000000, 1000000] | 1 |
+| lplr_initial_theta | den | [0, 0] | 1 |
+| make_did_CS2021 | half_n | [-499999, 500000] | 1 |
+| make_did_CS2021 | half_z | [-1073741823, 1073741823] | 1 |
+| make_did_CS2021 | true_n | [-1000000, 1000000] | 1 |
+| make_did_SZ2020 | half_a | [-249999, 250000] | 1 |
+| make_did_SZ2020 | half_b | [1, 1] | 1 |
+| make_did_SZ2020 | half_n | [-499999, 500000] | 1 |
+| make_did_SZ2020 | half_z | [-1073741823, 1073741823] | 1 |
+| make_did_SZ2020 | true_n | [-1000000, 1000000] | 1 |
+| make_did_cs_CS2021 | acc | [-700000, 700000] | 18 |
+| make_did_cs_CS2021 | idx | [0, 0] | 3 |
+| make_lplr_LZZ2020 | half | [-3499999, 3500000] | 1 |
+| make_lplr_LZZ2020 | need | [-7000000, 7000000] | 1 |
+| make_lplr_LZZ2020 | seed | [-1000000, 1000000] | 1 |
+| make_pliv_CHS2015 | seed | [-1000000, 1000000] | 1 |
+| make_plpr_CP2025 | dim_x | [-1000000, 1000000] | 1 |
+| make_plpr_CP2025 | idx_a | [0, 0] | 3 |
+| make_plpr_CP2025 | idx_b | [1, 1] | 3 |
+| make_plpr_CP2025 | n_obs | [-1000000, 1000000] | 1 |
+| make_plpr_CP2025 | theta | [-1000000, 1000000] | 1 |
+| make_plr_CCDDHNR2018 | j | [-1, 0] | 18 |
+| make_plr_CCDDHNR2018 | s | [0, 0] | 3 |
+| make_plr_turrell2018 | j | [-1, 0] | 18 |
+| make_plr_turrell2018 | s | [0, 0] | 3 |
+| make_simple_plr_data | n | [-1000000, 1000000] | 1 |
+| make_simple_plr_data | p | [2, 2] | 1 |
+| nn_residual | nn_tol_eps | [1.4901161193847656, 1.4901161193847656] | 1 |
+| policy_tree_build | best | [-9.999999999999998e+307, -9.999999999999998e+307] | 1 |
+| predict_isotonic | n_fit | [0, 64] | 1 |
+| predict_isotonic | n_new | [0, 64] | 1 |
+| rdd_local_side_count | h | [-1000000, 1000000] | 1 |
+| reg_mean_one_weights | n | [-1000000, 1000000] | 1 |
+| repeated_kfold | n_folds | [-1000000, 1000000] | 1 |
+| robustness_value | theta | [-1000000, 1000000] | 1 |
+| romano_wolf_p_adjust | j | [0, 1] | 6 |
+| romano_wolf_p_adjust | n | [0, 64] | 1 |
+| solve_normal_eqs | ridge | [-1000000, 1000000] | 1 |
+| sort_rows_by_id_time | j | [0, 1] | 6 |
+| stratified_kfold | n_obs | [0, 64] | 1 |
+| tune_score_outcome | sse | [0, 0] | 1 |
+| v096_meat_leverage | acc | [0, 0] | 1 |
+| v107_plpr_data | n_units | [60, 60] | 1 |
+| v110_rdd_data | y_scale~ | [-1000000, 1000000] | 1 |
+| v115_exact_quadratic | n | [-1000000, 1000000] | 1 |
+| v120_check_ridge | worst | [0, 0] | 1 |
+| v120_rel_diff | expected | [-1000000, 1000000] | 1 |
+| v128_cs_data | n_periods | [3, 3] | 1 |
+| v128_cs_fit_nrep | n_rep | [-1000000, 1000000] | 1 |
+| v130_cs_data | n_periods | [3, 3] | 1 |
+| v1440_plr_fixture | seed | [-1000000, 1000000] | 1 |
+| v1500_no_base_period | n | [540, 540] | 1 |
+| v1500_no_base_period | p | [2, 2] | 1 |
+| v1550_score_gate_dgp | n | [-1000000, 1000000] | 1 |
+| zz_gate_y_variant | data | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | n_obs | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | tune | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | tune | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | basis | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | fit | [0, 0] | 1 |
+| DoubleMLBLP | hac_se | [0, 0] | 2 |
+| DoubleMLBLP | hac_se | [0, 0] | 4 |
+| DoubleMLBLP | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | var_y | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | coef | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | tune | [-1000000, 1000000] | 1 |
 | DoubleMLDID | n_obs | [-1000000, 1000000] | 1 |
 | DoubleMLDID | new | [-1000000, 1000000] | 1 |
 | DoubleMLDID | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | fit | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | new | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | coef | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | new | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | tune | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | n_obs | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | new | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | tune | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | coef | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | confint | [1.959963984540054, 1.959963984540054] | 1 |
+| DoubleMLLPLR | new | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | tune | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | coef | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | coef | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | confint | [1.959963984540054, 1.959963984540054] | 1 |
+| DoubleMLPLPR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | coefs | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | confint | [0, 0] | 2 |
+| DoubleMLQTE | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | tune | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tune | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | new | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | psi_a | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | psi_b | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | tune | [-1000000, 1000000] | 1 |
+| GBClassifier | new | [-1000000, 1000000] | 1 |
 | GBLearner | new | [-1000000, 1000000] | 1 |
+| Matrix | from_rows | [0, 64] | 1 |
+| RFClassifier | new | [-1000000, 1000000] | 1 |
+| RFLearner | new | [-1000000, 1000000] | 1 |
+| aggregate_time | n_groups | [0, 64] | 1 |
+| bh_step_up_sorted | alpha | [-1000000, 1000000] | 1 |
+| bootstrap_indices | n_obs | [-1000000, 1000000] | 1 |
+| build_bootstrap_dgp | row | [0, 0] | 3 |
+| build_clustered_dgp | row | [0, 0] | 3 |
+| build_lzz2020_dgp | alpha | [-1000000, 1000000] | 1 |
+| build_panel_dgp | n_units | [-1000000, 1000000] | 1 |
+| build_row_dgp | n_periods | [-1000000, 1000000] | 1 |
+| cart_fit | best_threshold | [0, 0] | 1 |
+| compute_score | mean_d0t0 | [0, 0] | 1 |
+| compute_score | mean_d0t1 | [0, 0] | 1 |
+| compute_score | mean_d1t0 | [0, 0] | 1 |
+| compute_score | mean_d1t1 | [0, 0] | 1 |
+| crossfit_nuisance | n_rep | [-1000000, 1000000] | 1 |
+| cs_bin_panel_subset | n_c | [0, 1000001] | 7 |
+| cs_bin_panel_subset | n_g | [0, 1000001] | 7 |
+| cs_bin_score_obs | mean_d | [0, 0] | 1 |
+| cs_bin_score_obs | mean_t | [0, 0] | 1 |
+| cvar_ipw_score | quantile | [-1000000, 1000000] | 1 |
+| discover_groups_times | n | [0, 64] | 1 |
+| enet_objective | l1_ratio | [-1000000, 1000000] | 1 |
+| expand_v086_ref_hc0 | acc | [0, 0] | 1 |
+| expand_v087_ref_hc0 | acc | [0, 0] | 1 |
+| expand_v089_ref_hc0 | acc | [0, 0] | 1 |
+| expand_v090_near_zero | x | [-1000000, 1000000] | 1 |
+| expand_v091_iivm_data | n | [-1000000, 1000000] | 1 |
+| expand_v091_iivm_data | p | [-1000000, 1000000] | 1 |
+| expand_v092_lplr_data | n | [-1000000, 1000000] | 1 |
+| expand_v092_lplr_data | p | [-1000000, 1000000] | 1 |
+| expand_v100_psi_b_row | j | [-1000000, 1000000] | 1 |
+| expand_v100_psi_b_row | m | [-1000000, 1000000] | 1 |
+| expand_v100_psi_b_row | n | [-1000000, 1000000] | 1 |
 | gaussian_kde_weighted | h | [-1000000, 1000000] | 1 |
 | gaussian_kde_weighted | n | [0, 64] | 1 |
 | gaussian_kde_weighted | x | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity | n | [0, 64] | 1 |
+| isotonic_calibrate_cv | n | [0, 64] | 1 |
+| joint_sensitivity | alpha | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | n_units | [-250000, 250000] | 1 |
+| make_did_SZ2020 | n_units | [-500000, 500000] | 1 |
+| make_did_cs_CS2021 | seed | [-1000000, 1000000] | 1 |
+| make_lplr_LZZ2020 | alpha | [-1000000, 1000000] | 1 |
+| make_lplr_LZZ2020 | idx_a | [0, 0] | 2 |
+| make_lplr_LZZ2020 | idx_b | [1, 1] | 2 |
+| make_pliv_CHS2015 | dim_x | [-1000000, 1000000] | 1 |
+| make_pliv_CHS2015 | idx_a | [0, 0] | 3 |
+| make_pliv_CHS2015 | idx_b | [1, 1] | 3 |
+| make_pliv_CHS2015 | n_obs | [-1000000, 1000000] | 1 |
+| make_pliv_CHS2015 | theta | [-1000000, 1000000] | 1 |
+| make_plpr_CP2025 | half_a | [-124999, 125000] | 1 |
+| make_plpr_CP2025 | half_b | [2, 2] | 1 |
+| make_plpr_CP2025 | half_n | [-499999, 500000] | 1 |
+| make_plpr_CP2025 | half_z | [-1073741823, 1073741823] | 1 |
+| make_plpr_CP2025 | true_n | [-1000000, 1000000] | 1 |
+| outcome_indicator | theta | [-1000000, 1000000] | 1 |
+| policy_tree_build | depth | [-1000000, 1000000] | 1 |
+| policy_tree_predict | row | [-1000000, 1000000] | 1 |
+| preprocess_did_binary | i | [0, 1000000] | 4 |
+| preprocess_did_binary | j | [1, 1000005] | 18 |
+| rdd_kernel_weights | data | [-1000000, 1000000] | 1 |
+| rdd_nn_matched_sigma4 | a | [-1000001, 999999] | 12 |
+| rdd_nn_matched_sigma4 | b | [0, 1000004] | 12 |
+| rdd_pilot_stage | nnmatch | [-1000000, 1000000] | 1 |
+| romano_wolf_p_adjust | cv | [0, 0] | 10 |
+| sandwich_variance | n_obs | [-1000000, 1000000] | 1 |
+| solve_ipw_root | quantile | [-1000000, 1000000] | 1 |
+| solve_pq | widen_attempts | [0, 20] | 6 |
+| v106_build_panel | theta0 | [-1000000, 1000000] | 1 |
+| v109_drawn_reps | n_folds | [-1000000, 1000000] | 1 |
+| v120_max_abs_diff | worst | [0, 0] | 1 |
+| v121_max_abs_diff | worst | [0, 0] | 1 |
+| v1440_plr_fit | data_seed | [-1000000, 1000000] | 1 |
+| v1500_conforming_data | n | [800, 800] | 1 |
+| v1500_conforming_data | p | [3, 3] | 1 |
+| var_est_cluster | n_folds | [-1000000, 1000000] | 1 |
+| var_est_cluster | n_units | [0, 64] | 1 |
+| var_est_with_jacobian | n | [0, 64] | 1 |
+| zz_gate_y_variant | scale | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | coefs | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | confint | [0, 0] | 2 |
 | DoubleMLAPOS | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | tune | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | hac_se | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | fit | [0, 1000001] | 18 |
+| DoubleMLDIDCS | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSData | new | [0, 64] | 1 |
+| DoubleMLData | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | new | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | tune | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | new | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | confint | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | hac_se | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | kernel | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | new | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc | [-1000000, 1000000] | 1 |
+| FitCache | from_fit | [-1000000, 1000000] | 1 |
+| FitCache | from_fit | [-1000000, 1000000] | 1 |
+| FitCache | is_valid | [-1000000, 1000000] | 1 |
+| FitCache | is_valid | [-1000000, 1000000] | 1 |
+| Matrix | from_array | [-1000000, 1000000] | 1 |
+| Matrix | from_array | [-1000000, 1000000] | 1 |
+| PSProcessor | adjust_ps | [0, 64] | 1 |
+| aggregate_event | n_groups | [0, 64] | 1 |
+| aggregate_group | n_groups | [0, 64] | 1 |
+| aggregate_time | n_periods | [0, 64] | 1 |
+| bias_corrected_theta | acc | [0, 0] | 1 |
+| build_irm_tune_data | seed | [-1000000, 1000000] | 1 |
+| build_iv_clustered_dgp | n | [-2147483648, 2147483647] | 1 |
+| build_iv_clustered_dgp | p | [3, 3] | 1 |
+| cs_bin_panel_subset | data | [-1000000, 1000000] | 1 |
+| cvar_inner_crossfit | seed | [-1000000, 1000000] | 1 |
+| enet_fit_tail | self_alpha | [-1000000, 1000000] | 1 |
+| expand_v087_ssm_data | idx | [-2147483648, 2147483647] | 2 |
+| expand_v100_didcs_data | n | [800, 800] | 1 |
+| expand_v100_didcs_data | p | [3, 3] | 1 |
+| expand_v100_live_cells | f | [-1000000, 1000000] | 1 |
+| kfold_stratified | n_folds | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | n_groups | [4, 4] | 1 |
+| make_did_SZ2020 | n_groups | [2, 2] | 1 |
+| make_did_cs_CS2021 | dim_x | [-1000000, 1000000] | 1 |
+| make_did_cs_CS2021 | idx_a | [0, 0] | 4 |
+| make_did_cs_CS2021 | idx_b | [1, 1] | 4 |
+| make_did_cs_CS2021 | n_obs | [-1000000, 1000000] | 1 |
+| make_did_cs_CS2021 | theta | [-1000000, 1000000] | 1 |
+| make_pliv_CHS2015 | half_n | [-499999, 500000] | 1 |
+| make_pliv_CHS2015 | half_z | [-1073741823, 1073741823] | 1 |
+| make_plpr_CP2025 | n_units | [-250000, 250000] | 1 |
+| make_plr_CCDDHNR2018 | a_0 | [1, 1] | 1 |
+| make_plr_CCDDHNR2018 | a_1 | [0.25, 0.25] | 1 |
+| make_plr_CCDDHNR2018 | acc | [-700000, 700000] | 18 |
+| make_plr_CCDDHNR2018 | b_0 | [1, 1] | 1 |
+| make_plr_CCDDHNR2018 | b_1 | [0.25, 0.25] | 1 |
+| make_plr_CCDDHNR2018 | s_1 | [1, 1] | 1 |
+| make_plr_CCDDHNR2018 | s_2 | [1, 1] | 1 |
+| make_plr_turrell2018 | acc | [-500000, 500000] | 18 |
+| make_simple_rdd_dgp | half | [-499999, 500000] | 1 |
+| make_simple_rdd_dgp | seed | [-1000000, 1000000] | 1 |
+| newton_solve_score | theta | [-1000000, 1000000] | 1 |
+| prelim_beta_per_fold | den | [0, 0] | 1 |
+| prelim_beta_per_fold | num | [0, 0] | 1 |
+| qte_leverage_divisor | eps | [1, 1] | 1 |
+| rdd_nn_matched_sigma4 | hi | [-1, 1000000] | 14 |
+| rdd_nn_matched_sigma4 | lo | [0, 1000001] | 14 |
+| rdd_pilot_bandwidth | data | [-1000000, 1000000] | 1 |
+| romano_wolf_p_adjust | p_k | [-999999, 1000001] | 12 |
+| single_psi_sensitivity | n | [0, 64] | 1 |
+| stratified_kfold | n_folds | [-1000000, 1000000] | 1 |
+| v085_dbl_array_close | tol | [-1000000, 1000000] | 1 |
+| v098_leaf_index_walk | row | [-1000000, 1000000] | 1 |
+| v106_build_panel | n_units | [-1000000, 1000000] | 1 |
+| v107_plpr_data | n_periods | [4, 4] | 1 |
+| v1500_no_base_period | row | [0, 0] | 3 |
+| weighted_xtx_transpose | s | [0, 0] | 3 |
 | DoubleMLAPO | confint | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | fitted | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | fitted | [-1000000, 1000000] | 1 |
 | DoubleMLDID | confint | [-1000000, 1000000] | 1 |
 | DoubleMLDID | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | confint | [0, 0] | 2 |
+| DoubleMLDIDCS | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | tune | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | confint | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | new | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | confint | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | fit | [0, 0] | 2 |
+| DoubleMLPLPR | fit | [0, 0] | 2 |
+| DoubleMLPLR | confint | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | confint | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | new | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | psi_row | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | confint | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | n_local | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | confint | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | new | [-1000000, 1000000] | 1 |
+| ElasticNet | new | [-1000000, 1000000] | 1 |
+| ElasticNet | new | [-1000000, 1000000] | 1 |
 | GBLearner | new | [-1000000, 1000000] | 1 |
 | GBLearner | new | [-1000000, 1000000] | 1 |
+| LogisticRegression | fit | [0, 0] | 6 |
+| RFLearner | new | [-1000000, 1000000] | 1 |
+| aggregate_event | n_periods | [0, 64] | 1 |
+| aggregate_group | n_periods | [0, 64] | 1 |
+| aggregate_time | sum_w2_se2 | [0, 0] | 2 |
+| build_bootstrap_dgp | y_val | [0, 0] | 3 |
+| build_cross_section_dgp | n | [-1000000, 1000000] | 1 |
+| build_cross_section_dgp | p | [-1000000, 1000000] | 1 |
+| build_panel_dgp | n_periods | [-1000000, 1000000] | 1 |
+| cart_fit | min_samples_leaf | [-1000000, 1000000] | 1 |
+| crossfit_nuisance | n_folds | [-1000000, 1000000] | 1 |
+| expand_v086_ref_hc0 | m_val | [-1000000, 1000000] | 1 |
+| expand_v086_ref_hc0 | n_obs | [-1000000, 1000000] | 1 |
+| expand_v087_ref_hc0 | m_val | [-1000000, 1000000] | 1 |
+| expand_v087_ref_hc0 | n_obs | [-1000000, 1000000] | 1 |
+| expand_v089_ref_cluster | n | [0, 64] | 1 |
+| expand_v089_ref_hc0 | m_val | [-1000000, 1000000] | 1 |
+| expand_v089_ref_hc0 | n_obs | [-1000000, 1000000] | 1 |
+| expand_v091_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v091_iivm_data | idx | [-2147483648, 2147483647] | 3 |
+| expand_v092_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v093_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v093_lpq_data | need | [-2000000, 2000000] | 1 |
+| expand_v094_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v095_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v095_qte_data | need | [-2000000, 2000000] | 1 |
+| expand_v100_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v100_didcs_close | x | [-1000000, 1000000] | 1 |
+| expand_v100_didcs_close | y | [-1000000, 1000000] | 1 |
+| expand_v101_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v101_qte_data | seed | [-1000000, 1000000] | 1 |
 | gaussian_kde_weighted | acc | [0, 0] | 1 |
+| make_did_CS2021 | n_periods | [4, 4] | 1 |
+| make_did_CS2021 | panel_row | [0, 0] | 3 |
+| make_did_SZ2020 | n_periods | [2, 2] | 1 |
+| make_did_SZ2020 | panel_row | [0, 0] | 3 |
+| make_did_cs_CS2021 | half_a | [-249999, 250000] | 1 |
+| make_did_cs_CS2021 | half_n | [-499999, 500000] | 1 |
+| make_did_cs_CS2021 | half_z | [-1073741823, 1073741823] | 1 |
+| make_did_cs_CS2021 | true_n | [-1000000, 1000000] | 1 |
+| make_irm_data | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_plr_CCDDHNR2018 | seed | [-1000000, 1000000] | 1 |
+| make_plr_turrell2018 | seed | [-1000000, 1000000] | 1 |
+| make_simple_plr_data | seed | [-1000000, 1000000] | 1 |
+| make_simple_rdd_dgp | idx_a | [0, 0] | 2 |
+| make_simple_rdd_dgp | idx_b | [1, 1] | 2 |
+| make_simple_rdd_dgp | n_obs | [-1000000, 1000000] | 1 |
+| make_simple_rdd_dgp | theta | [-1000000, 1000000] | 1 |
+| make_ssm_data | n_normals_x | [-2147483648, 2147483647] | 1 |
+| pq_score_orthogonal | theta | [-1000000, 1000000] | 1 |
+| rdd_hac_require_df | n_left | [-1000000, 1000000] | 1 |
+| rdd_kernel_weights | cutoff | [-1000000, 1000000] | 1 |
+| rdd_local_side_count | data | [-1000000, 1000000] | 1 |
+| rdd_local_side_count | side | [-1000000, 1000000] | 1 |
+| rdd_nn_matched_sigma4 | acc | [0, 0] | 1 |
+| rdd_nn_matched_sigma4 | mid | [0, 1000000] | 12 |
+| rdd_nn_matched_sigma4 | n_l | [0, 64] | 1 |
+| rdd_nn_matched_sigma4 | n_r | [0, 64] | 1 |
+| rdd_nn_matched_sigma4 | sum | [0, 0] | 2 |
+| sandwich_variance_hc0 | acc | [0, 0] | 1 |
+| sandwich_variance_hc2 | acc | [0, 0] | 1 |
+| sandwich_variance_hc2 | eps | [1, 1] | 1 |
+| sandwich_variance_hc3 | acc | [0, 0] | 1 |
+| sandwich_variance_hc3 | eps | [1, 1] | 1 |
+| sort_indices_by_feature | j | [-1, 0] | 6 |
+| sort_indices_by_feature | n | [0, 64] | 1 |
+| v115_exact_quadratic | jump | [-1000000, 1000000] | 1 |
+| v125_lpq_floor_dominant | n | [500, 500] | 1 |
+| v128_cs_data | cohort_count | [3, 3] | 1 |
+| v128_cs_data | n_per_cohort | [-1000000, 1000000] | 1 |
+| v130_cs_data | cohort_count | [3, 3] | 1 |
+| v130_cs_data | n_per_cohort | [-1000000, 1000000] | 1 |
+| v1500_conforming_data | row | [0, 0] | 3 |
+| ConstantLearner | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | confint | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | new | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | leverage | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | n_params | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | confint | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | fit | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | new | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | confint | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | new | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | confint | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | new | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | confint | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | confint | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | new | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | confint | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | learner_l | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | m_inv_1x1 | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | leverage | [-1000000, 1000000] | 1 |
+| FitCache | from_fit | [-1000000, 1000000] | 1 |
+| FitCache | is_valid | [-1000000, 1000000] | 1 |
+| GBClassifier | new | [-1000000, 1000000] | 1 |
+| GainStatsSource | new | [-1000000, 1000000] | 1 |
+| GainStatsSource | new | [-1000000, 1000000] | 1 |
+| RFClassifier | new | [-1000000, 1000000] | 1 |
+| aggregate_group | sum_w2_se2 | [0, 0] | 2 |
+| aggregate_time | sum_w_theta | [0, 0] | 2 |
+| bias_corrected_theta | acc_c | [0, 0] | 1 |
+| build_bootstrap_dgp | cohort | [0, 0] | 2 |
+| build_bootstrap_dgp | theta0 | [1, 1] | 1 |
+| build_clustered_dgp | theta0 | [-1000000, 1000000] | 1 |
+| build_iv_clustered_dgp | row | [0, 0] | 3 |
+| build_row_unit_map | n_units | [0, 64] | 1 |
+| compute_score | mean_d0t0_pw | [0, 0] | 1 |
+| compute_score | mean_d0t1_pw | [0, 0] | 1 |
+| compute_sensitivity_bias | n | [0, 64] | 1 |
+| cs_bin_crossfit_nuisance | n | [0, 64] | 1 |
+| cs_bin_crossfit_nuisance | p | [-1000000, 1000000] | 1 |
+| cs_bin_score_obs | mean_d0t0 | [0, 0] | 1 |
+| cs_bin_score_obs | mean_d0t1 | [0, 0] | 1 |
+| cs_bin_score_obs | mean_d1t0 | [0, 0] | 1 |
+| cs_bin_score_obs | mean_d1t1 | [0, 0] | 1 |
+| cvar_inner_crossfit | q_comp | [-999999, 1000001] | 1 |
+| did_bootstrap_t_stat | n_obs | [-1000000, 1000000] | 1 |
+| enet_coordinate_descent | ym | [-1000000, 1000000] | 1 |
+| enet_soft_threshold | thresh | [-1000000, 1000000] | 1 |
+| expand_gt_keyword | n_groups | [0, 64] | 1 |
+| expand_v088_pinned_close | x | [-1000000, 1000000] | 1 |
+| expand_v088_pinned_close | y | [-1000000, 1000000] | 1 |
+| expand_v089_ref_cluster | m2 | [-1000000000000, 1000000000000] | 1 |
+| expand_v092_lplr_data | need | [-2147483648, 2147483647] | 1 |
+| expand_v100_didcs_data | row | [0, 0] | 3 |
+| fit_g_subset_predict | sub_n | [0, 1000001] | 6 |
+| holm_bonferroni_p_adjust | n | [0, 64] | 1 |
+| irm_style_sensitivity | cf_d | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity | cf_y | [-1000000, 1000000] | 1 |
+| joint_sensitivity | joint_rv | [1.0000000000000002e+300, 1.0000000000000002e+300] | 1 |
+| make_confounded_plr_data | j | [-1, 0] | 18 |
+| make_confounded_plr_data | s | [0, 0] | 3 |
+| make_did_CS2021 | half_alpha | [-124999, 125000] | 1 |
+| make_did_cs_CS2021 | n_units | [-500000, 500000] | 1 |
+| make_iivm_data | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_irm_confounded_data | j | [-1, 0] | 18 |
+| make_irm_confounded_data | s | [0, 0] | 3 |
+| make_plpr_CP2025 | n_periods | [4, 4] | 1 |
+| make_plr_CCDDHNR2018 | dim_x | [-1000000, 1000000] | 1 |
+| make_plr_CCDDHNR2018 | idx_a | [0, 0] | 4 |
+| make_plr_CCDDHNR2018 | idx_b | [1, 1] | 4 |
+| make_plr_CCDDHNR2018 | n_obs | [-1000000, 1000000] | 1 |
+| make_plr_CCDDHNR2018 | theta | [-1000000, 1000000] | 1 |
+| make_plr_turrell2018 | dim_x | [20, 20] | 1 |
+| make_plr_turrell2018 | idx_a | [0, 0] | 3 |
+| make_plr_turrell2018 | idx_b | [1, 1] | 3 |
+| make_plr_turrell2018 | n_obs | [-1000000, 1000000] | 1 |
+| make_plr_turrell2018 | theta | [-1000000, 1000000] | 1 |
+| policy_tree_cache_decode | b | [-5000000, 5000000] | 1 |
+| policy_tree_leaf_index | acc | [-1000000, 1000000] | 1 |
+| policy_tree_leaf_index | row | [-1000000, 1000000] | 1 |
+| preprocess_did_binary | data | [-1000000, 1000000] | 1 |
+| qte_leverage_divisor | n_obs | [-1000000, 1000000] | 1 |
+| rdd_hac_require_df | n_right | [-1000000, 1000000] | 1 |
+| rdd_local_side_count | count | [0, 1000001] | 6 |
+| reg_mean_one_weights | total | [0, 0] | 1 |
+| sandwich_variance | n_params | [-1000000, 1000000] | 1 |
+| stratified_half_split | seed | [-1000000, 1000000] | 1 |
+| trim_predictions | threshold | [-1000000, 1000000] | 1 |
+| v106_build_panel | n_periods | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | has_cache | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | learner_g | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
 | DoubleMLDID | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLDID | confint | [-1000000, 1000000] | 1 |
 | DoubleMLDID | has_cache | [-1000000, 1000000] | 1 |
 | DoubleMLDID | learner_g | [-1000000, 1000000] | 1 |
 | DoubleMLDID | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | fit | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | fit | [0, 1000004] | 11 |
+| DoubleMLDIDCS | new | [-1000000, 1000000] | 1 |
 | DoubleMLDIDData | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | confint | [0, 0] | 2 |
+| DoubleMLDIDMulti | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | tune | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | confint | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | has_cache | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | learner_g | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | warnings | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | confint | [-1000000, 1000000] | 1 |
+| DoubleMLLPQ | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLLPQ | m_inv_1x1 | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | confint | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | fit_cluster | [0, 0] | 2 |
+| DoubleMLPQ | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | confint | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | learner_l | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | new | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se | [-1000000, 1000000] | 1 |
+| DoubleMLRDDData | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLSSMData | n_obs | [-1000000, 1000000] | 1 |
+| aggregate_group | sum_w_theta | [0, 0] | 2 |
+| bh_step_up_sorted | rejectmax | [-1, 0] | 3 |
+| build_bootstrap_dgp | n_units | [240, 240] | 1 |
+| build_clustered_dgp | n_units | [-1000000, 1000000] | 1 |
+| build_cross_section_dgp | att | [-1000000, 1000000] | 1 |
+| cluster_sandwich_variance | n | [0, 64] | 1 |
+| cs_bin_panel_subset | g_value | [-1000000, 1000000] | 1 |
+| cvar_inner_crossfit | n_folds | [-1000000, 1000000] | 1 |
+| draw_bootstrap_weights | seed | [-1000000, 1000000] | 1 |
+| enet_coordinate_descent | l1n | [0, 0] | 5 |
+| enet_coordinate_descent | l2n | [0, 0] | 5 |
+| enet_coordinate_descent | rho | [0, 0] | 10 |
+| enet_coordinate_descent | rss | [0, 0] | 5 |
+| enet_coordinate_descent | tol | [-1000000, 1000000] | 1 |
+| enet_coordinate_descent | yn2 | [0, 0] | 1 |
+| enet_fit_tail | self_max_iter | [-1000000, 1000000] | 1 |
+| expand_gt_keyword | n_periods | [0, 64] | 1 |
+| expand_unit_folds_to_rows | n | [0, 64] | 1 |
+| expand_v087_ref_leverage | m2 | [-1000000000000, 1000000000000] | 1 |
+| expand_v089_ref_cluster | acc | [0, 0] | 1 |
+| expand_v089_ref_leverage | m2 | [-1000000000000, 1000000000000] | 1 |
+| expand_v090_hc_identities | n | [-1000000, 1000000] | 1 |
+| expand_v095_qte_data_wide | n | [-1000000, 1000000] | 1 |
+| expand_v100_didmulti_cell | m | [-1000000, 1000000] | 1 |
+| expand_v100_didmulti_data | n | [800, 800] | 1 |
+| expand_v100_didmulti_data | p | [3, 3] | 1 |
+| irm_style_sensitivity | theta | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_did_CS2021 | x_dot_gamma | [0, 0] | 3 |
+| make_did_SZ2020 | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_did_SZ2020 | x_dot_gamma | [0, 0] | 3 |
+| make_did_cs_CS2021 | n_groups | [2, 2] | 1 |
+| make_plr_CCDDHNR2018 | half_n | [-499999, 500000] | 1 |
+| make_plr_CCDDHNR2018 | half_z | [-1073741823, 1073741823] | 1 |
+| make_plr_turrell2018 | half_n | [-499999, 500000] | 1 |
+| make_plr_turrell2018 | half_z | [-9999999, 10000000] | 1 |
+| policy_tree_build | threshold | [0, 0] | 2 |
+| rdd_local_side_count | cutoff | [-1000000, 1000000] | 1 |
+| rdd_nn_matched_sigma4 | taken | [0, 1000001] | 12 |
+| sandwich_variance_hc0 | acc_c | [0, 0] | 1 |
+| sandwich_variance_hc0 | n_obs | [-1000000, 1000000] | 1 |
+| sandwich_variance_hc1 | n_obs | [-1000000, 1000000] | 1 |
+| sandwich_variance_hc2 | acc_c | [0, 0] | 1 |
+| sandwich_variance_hc2 | n_obs | [-1000000, 1000000] | 1 |
+| sandwich_variance_hc3 | acc_c | [0, 0] | 1 |
+| sandwich_variance_hc3 | n_obs | [-1000000, 1000000] | 1 |
+| single_psi_sensitivity | cf_d | [-1000000, 1000000] | 1 |
+| single_psi_sensitivity | cf_y | [-1000000, 1000000] | 1 |
+| v098_leaf_means_match_raw | f | [-1000000, 1000000] | 1 |
+| v1500_conforming_data | theta | [1, 1] | 1 |
+| v1500_conforming_data | y_val | [0, 0] | 3 |
+| v1500_no_base_period | cohort | [0, 0] | 2 |
+| var_est_with_jacobian | gamma | [0, 0] | 1 |
 | DoubleMLAPO | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | n_features | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | boot_seed | [-1000000, 1000000] | 1 |
@@ -1658,11 +4067,106 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLAPOS | has_cache | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | learner_g | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
 | DoubleMLDID | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | coef | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinaryData | new | [0, 64] | 1 |
+| DoubleMLDIDCS | group_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | n_groups | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | new | [-1, -1] | 1 |
+| DoubleMLDIDMulti | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | tune | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | confint | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | learner_r | [-1000000, 1000000] | 1 |
+| DoubleMLIIVMData | n_obs | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | learner_m | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | confint | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPLIVData | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | fit | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | fit_cluster | [0, 0] | 4 |
+| DoubleMLQTE | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_mse | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | hac_se | [0, 0] | 1 |
+| DoubleMLRDD | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se_rb | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se_rb | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | bootstrap | [-1000000, 1000000] | 1 |
+| FitCache | from_fit | [-1000000, 1000000] | 1 |
+| FitCache | is_valid | [-1000000, 1000000] | 1 |
+| GBClassifier | new | [-1000000, 1000000] | 1 |
+| GBClassifier | new | [-1000000, 1000000] | 1 |
+| LinearRegression | new | [-1000000, 1000000] | 1 |
+| LogisticRegression | fit | [0, 0] | 5 |
+| LogisticRegression | fit | [0, 1000001] | 6 |
+| LogisticRegression | fit | [-1000000, 1000000] | 1 |
+| RFClassifier | new | [-1000000, 1000000] | 1 |
+| build_panel_dgp | alpha_scale~ | [-1000000, 1000000] | 1 |
+| check_sample_splitting | n_obs | [-1000000, 1000000] | 1 |
+| compute_sensitivity_bias | nu2 | [-1000000, 1000000] | 1 |
+| cvar_inner_crossfit | quantile | [-1000000, 1000000] | 1 |
+| draw_bootstrap_weights | n_obs | [-1000000, 1000000] | 1 |
+| enet_coordinate_descent | iter | [0, 1000001] | 6 |
+| enet_coordinate_descent | w_l1 | [0, 0] | 5 |
+| expand_v087_cs_binary_data | p | [-1000000, 1000000] | 1 |
+| expand_v087_ref_leverage | acc | [0, 0] | 1 |
+| expand_v087_ref_leverage | eps | [1, 1] | 1 |
+| expand_v089_ref_leverage | acc | [0, 0] | 1 |
+| expand_v089_ref_leverage | eps | [1, 1] | 1 |
+| expand_v094_pq_data_scaled | n | [-1000000, 1000000] | 1 |
+| expand_v100_didcs_data | y_val | [0, 0] | 3 |
+| expand_v100_didmulti_cell | gi | [-1, 0] | 3 |
+| expand_v100_didmulti_cell | pi | [-1, 0] | 3 |
+| fit_g_subset_predict | d_value | [-1000000, 1000000] | 1 |
+| fit_g_subset_predict | n_train | [0, 64] | 1 |
+| fit_g_subset_predict | t_value | [-1000000, 1000000] | 1 |
+| joint_sensitivity | joint_rv_q | [1.0000000000000002e+300, 1.0000000000000002e+300] | 1 |
+| make_confounded_plr_data | acc | [-700000, 700000] | 18 |
+| make_did_CS2021 | n_per_cohort | [-62500, 62500] | 1 |
+| make_did_SZ2020 | n_per_cohort | [-250000, 250000] | 1 |
+| make_did_cs_CS2021 | n_periods | [2, 2] | 1 |
+| make_did_cs_CS2021 | panel_row | [0, 0] | 3 |
+| make_irm_confounded_data | acc | [-700000, 700000] | 18 |
+| make_pliv_multiway_cluster | j | [-1, 0] | 18 |
+| make_pliv_multiway_cluster | s | [0, 0] | 3 |
+| make_plpr_CP2025 | n_normals_x | [-2147483648, 2147483647] | 1 |
+| newton_solve_score | max_iter~ | [-1000000, 1000000] | 1 |
+| single_psi_sensitivity | theta | [-1000000, 1000000] | 1 |
+| single_psi_sensitivity | y_sum | [0, 0] | 1 |
+| tune_score_grid | n_folds_tune | [-1000000, 1000000] | 1 |
+| v097_dgp_constant_leverage | n | [-1000000, 1000000] | 1 |
+| v123_ssm_selection_extreme | n | [400, 400] | 1 |
+| v1500_conforming_data | cohort | [0, 0] | 2 |
+| v1500_no_base_period | n_units | [180, 180] | 1 |
 | DoubleMLAPO | bootstrap | [0, 0] | 1 |
 | DoubleMLAPO | clear_cache | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | fit_cluster | [0, 0] | 1 |
@@ -1670,20 +4174,187 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLAPO | sandwich_se | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | n_rep_boot | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | orth_signal | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | predictions | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | n_features | [-1000000, 1000000] | 1 |
 | DoubleMLDID | clear_cache | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | n_periods | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | period_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | fit | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | new | [0, 0] | 1 |
+| DoubleMLData | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | bootstrap | [0, 0] | 1 |
 | DoubleMLIRM | clear_cache | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | fit_cluster | [0, 0] | 1 |
 | DoubleMLIRM | fit_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLLPQ | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLLPQ | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | bootstrap | [0, 0] | 1 |
+| DoubleMLPLR | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | fit_cluster | [0, 0] | 1 |
+| DoubleMLPLR | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | tune_result | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bootstrap | [0, 0] | 1 |
+| DoubleMLRDD | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | fit | [0, 0] | 1 |
+| DoubleMLRDD | hac_se | [0, 0] | 1 |
+| DoubleMLRDD | kernel_weights | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sandwich_se | [-1000000, 1000000] | 1 |
 | GBLearner | fit_weighted | [0, 0] | 1 |
 | GBLearner | new | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp | [-1000000, 1000000] | 1 |
+| JointSensitivityInput | new | [-1000000, 1000000] | 1 |
+| build_bootstrap_dgp | n_periods | [4, 4] | 1 |
+| build_clustered_dgp | n_periods | [-1000000, 1000000] | 1 |
+| build_iv_clustered_dgp | theta0 | [-1000000, 1000000] | 1 |
+| cluster_causal_param_and_se | n | [0, 64] | 1 |
+| cluster_sandwich_variance | acc | [0, 0] | 1 |
 | cross_fit_did | propensity_clip | [-1000000, 1000000] | 1 |
+| cs_bin_crossfit_nuisance | seed | [-1000000, 1000000] | 1 |
+| cs_bin_score_obs | mean_d0t0_pw | [0, 0] | 1 |
+| cs_bin_score_obs | mean_d0t1_pw | [0, 0] | 1 |
+| cvar_inner_crossfit | treatment | [-1000000, 1000000] | 1 |
+| did_bootstrap_t_stat | n_thetas | [-1000000, 1000000] | 1 |
+| double_cross_fit_predict | seed | [-1000000, 1000000] | 1 |
+| expand_v089_did_binary_data | n | [-2000000, 2000000] | 1 |
+| expand_v089_did_binary_data | p | [-1000000, 1000000] | 1 |
+| expand_v089_ref_cluster | m_val | [-1000000, 1000000] | 1 |
+| expand_v093_lpq_data_scaled | n | [-1000000, 1000000] | 1 |
+| expand_v100_didcs_data | cohort | [0, 0] | 2 |
+| expand_v100_didcs_data | theta0 | [1, 1] | 1 |
+| expand_v100_didmulti_cell | idx | [-1000000, 1000000] | 1 |
+| expand_v100_didmulti_data | row | [0, 0] | 3 |
+| generic_bootstrap_t_stat | coef | [-1000000, 1000000] | 1 |
+| generic_bootstrap_t_stat | seed | [-1000000, 1000000] | 1 |
+| joint_sensitivity | joint_lower | [0, 0] | 1 |
+| joint_sensitivity | joint_upper | [0, 0] | 1 |
+| lplr_initial_theta | beta_start | [-1000000, 1000000] | 1 |
+| make_confounded_plr_data | seed | [-1000000, 1000000] | 1 |
+| make_irm_confounded_data | seed | [-1000000, 1000000] | 1 |
+| make_irm_heterogeneous_data | j | [-1, 0] | 18 |
+| make_irm_heterogeneous_data | s | [0, 0] | 3 |
+| make_pliv_CHS2015 | n_normals_x | [-2147483648, 2147483647] | 1 |
+| newton_solve_score | tol_theta~ | [-1000000, 1000000] | 1 |
+| policy_tree_cache_decode | slot | [-1000000, 1000000] | 1 |
+| policy_tree_cache_encode | slot | [0, 12] | 1 |
+| policy_tree_ints_to_doubles | n | [0, 64] | 1 |
+| preprocess_did_binary | g_value | [-1000000, 1000000] | 1 |
+| preprocess_did_binary | pre_idx | [-1, -1] | 3 |
+| rdd_nn_matched_sigma4 | nnmatch | [-1000000, 1000000] | 1 |
+| single_psi_sensitivity | mb_sum | [0, 0] | 1 |
+| solve_ipw_root | widen_attempts | [0, 20] | 6 |
+| v1500_conforming_data | n_units | [200, 200] | 1 |
+| var_est_with_jacobian | gamma_c | [0, 0] | 1 |
 | DoubleMLAPOS | boot_method | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | coef | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | bootstrap | [-1, 0] | 6 |
+| DoubleMLDIDMulti | bootstrap | [-1, 0] | 6 |
+| DoubleMLDIDMulti | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | se_at_idx | [-1, 0] | 3 |
+| DoubleMLDIDMulti | se_at_idx | [-1, 0] | 3 |
+| DoubleMLDIDMulti | t_stats | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | bootstrap | [0, 0] | 1 |
+| DoubleMLIIVM | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | fit_cluster | [0, 0] | 1 |
+| DoubleMLIIVM | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sandwich_se | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | fit | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | bootstrap | [0, 0] | 1 |
+| DoubleMLPLIV | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | fit_cluster | [0, 0] | 1 |
+| DoubleMLPLIV | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | fit | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | new | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | m_inv_1x1_at | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se_rb | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se_rb | [-1000000, 1000000] | 1 |
+| GBClassifier | fit_weighted | [1, 1] | 1 |
 | GBLearner | new | [-1000000, 1000000] | 1 |
+| JointSensitivityInput | new | [-1000000, 1000000] | 1 |
+| LogisticRegression | fit | [-1000000, 1000000] | 1 |
+| RFLearner | new | [-1000000, 1000000] | 1 |
+| bias_corrected_theta | theta_hat | [-1000000, 1000000] | 1 |
+| build_iv_clustered_dgp | n_units | [-1000000, 1000000] | 1 |
+| cs_bin_crossfit_nuisance | n_rep | [-1000000, 1000000] | 1 |
+| did_multi_inner_cell_at_idx | gi | [-1, 0] | 3 |
+| did_multi_inner_cell_at_idx | pi | [-1, 0] | 3 |
+| enet_coordinate_descent | l1_reg | [-1000000, 1000000] | 1 |
+| enet_coordinate_descent | l2_reg | [-1000000, 1000000] | 1 |
+| enet_coordinate_descent | n_iter | [0, 1000001] | 6 |
+| expand_v087_cs_binary_data | row | [0, 0] | 3 |
+| expand_v087_ref_leverage | m_val | [-1000000, 1000000] | 1 |
+| expand_v087_ref_leverage | n_obs | [-1000000, 1000000] | 1 |
+| expand_v087_ref_leverage | power | [-1000000, 1000000] | 1 |
+| expand_v089_ref_leverage | m_val | [-1000000, 1000000] | 1 |
+| expand_v089_ref_leverage | n_obs | [-1000000, 1000000] | 1 |
+| expand_v089_ref_leverage | power | [-1000000, 1000000] | 1 |
+| expand_v091_old_accumulator | m2 | [-1000000000000, 1000000000000] | 1 |
+| expand_v095_qte_data_wide | need | [-2000000, 2000000] | 1 |
+| expand_v100_didcs_data | n_units | [200, 200] | 1 |
+| generic_bootstrap_t_stat | n_obs | [0, 64] | 1 |
+| make_confounded_plr_data | dim_x | [-1000000, 1000000] | 1 |
+| make_confounded_plr_data | idx_a | [0, 0] | 3 |
+| make_confounded_plr_data | idx_b | [1, 1] | 3 |
+| make_confounded_plr_data | n_obs | [-1000000, 1000000] | 1 |
+| make_confounded_plr_data | theta | [-1000000, 1000000] | 1 |
+| make_did_CS2021 | unit_in_cohort | [0, 62499] | 2 |
+| make_did_SZ2020 | unit_in_cohort | [0, 249999] | 2 |
+| make_did_cs_CS2021 | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_did_cs_CS2021 | x_dot_gamma | [0, 0] | 3 |
+| make_irm_confounded_data | dim_x | [-1000000, 1000000] | 1 |
+| make_irm_confounded_data | idx_a | [0, 0] | 3 |
+| make_irm_confounded_data | idx_b | [1, 1] | 3 |
+| make_irm_confounded_data | n_obs | [-1000000, 1000000] | 1 |
+| make_irm_confounded_data | theta | [-1000000, 1000000] | 1 |
+| make_irm_discrete_treatments | j | [-1, 0] | 18 |
+| make_irm_discrete_treatments | s | [0, 0] | 3 |
+| make_pliv_multiway_cluster | acc | [-700000, 700000] | 18 |
+| newton_solve_score | theta_start | [-1000000, 1000000] | 1 |
+| preprocess_did_binary | eval_idx | [-1, -1] | 3 |
+| sandwich_variance_hc0 | n_params | [-1000000, 1000000] | 1 |
+| sandwich_variance_hc1 | n_params | [-1000000, 1000000] | 1 |
+| sandwich_variance_hc2 | n_params | [-1000000, 1000000] | 1 |
+| sandwich_variance_hc3 | n_params | [-1000000, 1000000] | 1 |
+| single_psi_sensitivity | nu2_sum | [0, 0] | 1 |
+| v120_check_l1_ratio_zero | total | [0, 0] | 1 |
+| v120_check_l1_ratio_zero | worst | [0, 0] | 1 |
+| v1500_no_base_period | n_periods | [3, 3] | 1 |
+| var_est_with_jacobian | jacobian | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | predictions_g | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | predictions_m | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | tune | [-1000000, 1000000] | 1 |
@@ -1691,111 +4362,865 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLAPOS | m_inv_1x1_at | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | psi_a_row_at | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | psi_b_row_at | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | cluster_hac_se | [0, 0] | 2 |
+| DoubleMLBLP | cluster_hac_se | [0, 0] | 3 |
+| DoubleMLBLP | confint_joint | [-1000000, 1000000] | 1 |
 | DoubleMLDID | predictions_m | [-1000000, 1000000] | 1 |
 | DoubleMLDID | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | psi_a | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | psi_b | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | confint | [1.959963984540054, 1.959963984540054] | 1 |
+| DoubleMLDIDMulti | p_adjust | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | p_values | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | se_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | fit | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | predictions_m | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | tune | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | fit | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | fit | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | predictions_l | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | tune | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_mse | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | cluster_hac_se | [0, 0] | 1 |
+| DoubleMLRDD | tune | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | tune | [-1000000, 1000000] | 1 |
+| JointSensitivityInput | new | [-1000000, 1000000] | 1 |
+| JointSensitivityInput | new | [-1000000, 1000000] | 1 |
+| JointSensitivityInput | new | [-1000000, 1000000] | 1 |
+| LearnerDispatch | constant | [-1000000, 1000000] | 1 |
+| cluster_sandwich_variance | acc_c | [0, 0] | 1 |
+| compute_sensitivity_bias | sigma2 | [-1000000, 1000000] | 1 |
+| cs_bin_panel_subset | t_value_pre | [-1000000, 1000000] | 1 |
+| did_bootstrap_t_stat | n_rep_boot | [-1000000, 1000000] | 1 |
+| did_multi_inner_cell_at_idx | est | [-1000000, 1000000] | 1 |
+| did_multi_inner_cell_at_idx | idx | [-1000000, 1000000] | 1 |
+| expand_v089_did_binary_data | row | [0, 0] | 3 |
+| expand_v089_ref_cluster | max_cid | [-1, -1] | 1 |
+| expand_v091_old_accumulator | acc | [0, 0] | 1 |
+| expand_v094_pq_data_scaled | need | [-2000000, 2000000] | 1 |
+| expand_v100_didcs_cluster_ids | n | [-1000000, 1000000] | 1 |
+| expand_v100_didmulti_data | y_val | [0, 0] | 3 |
+| expand_v100_didmulti_live_idx | m | [-1000000, 1000000] | 1 |
+| generic_bootstrap_t_stat | ss_psi | [0, 0] | 1 |
+| irm_style_sensitivity_cluster | n | [0, 64] | 1 |
+| make_confounded_plr_data | half_n | [-499999, 500000] | 1 |
+| make_confounded_plr_data | half_z | [-1073741823, 1073741823] | 1 |
+| make_did_cs_CS2021 | n_per_cohort | [-250000, 250000] | 1 |
+| make_irm_confounded_data | half_n | [-499999, 500000] | 1 |
+| make_irm_confounded_data | half_z | [-1073741823, 1073741823] | 1 |
+| make_irm_heterogeneous_data | acc | [-700000, 700000] | 18 |
+| make_pliv_multiway_cluster | seed | [-1000000, 1000000] | 1 |
+| policy_tree_ints_from_doubles | n | [0, 64] | 1 |
+| sort_indices_by_feature | feature | [-1000000, 1000000] | 1 |
+| v1500_conforming_data | n_periods | [4, 4] | 1 |
 | DoubleMLAPO | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | fit_cluster | [0, 0] | 1 |
 | DoubleMLAPO | fit_cluster | [0, 0] | 1 |
 | DoubleMLAPOS | tune | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | cluster_hac_se | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | confint_joint | [0, 0] | 2 |
+| DoubleMLBLP | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | predictions_g | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | tune | [-1000000, 1000000] | 1 |
 | DoubleMLDID | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLDID | predictions_g0 | [-1000000, 1000000] | 1 |
 | DoubleMLDID | predictions_g1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | fit | [0, 0] | 1 |
+| DoubleMLDIDCS | cell_flat_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | m_inv_1x1_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | fitted | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | se | [-1000000, 1000000] | 1 |
 | DoubleMLDIDData | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | coef_at_idx | [-1, 0] | 3 |
+| DoubleMLDIDMulti | coef_at_idx | [-1, 0] | 3 |
+| DoubleMLDIDMulti | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | se_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | tune | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | fit_cluster | [0, 0] | 1 |
 | DoubleMLIRM | fit_cluster | [0, 0] | 1 |
 | DoubleMLIRM | predictions_g0 | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | predictions_g1 | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | new | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | predictions_a | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | predictions_t | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | tune | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | predictions_g0 | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | predictions_g1 | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | predictions_l | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | predictions_r | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | predictions_l | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | fit_cluster | [0, 0] | 1 |
+| DoubleMLPLR | fit_cluster | [0, 0] | 1 |
+| DoubleMLPQ | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | fit_cluster | [0, 0] | 1 |
+| DoubleMLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | fit | [0, 0] | 1 |
+| DoubleMLPolicyTree | leaf_se | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | predict | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | joint_covariance | [1, 1] | 1 |
+| DoubleMLQTE | sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | cluster_hac_se | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | kernel_weights | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | n_local_params | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_collapsed | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_collapsed | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | predictions_pi | [-1000000, 1000000] | 1 |
+| DoubleMLSSMData | n_features | [-1000000, 1000000] | 1 |
+| GBClassifier | fit_weighted | [0, 0] | 1 |
+| GBClassifier | new | [-1000000, 1000000] | 1 |
 | GBLearner | new | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv | [-1000000, 1000000] | 1 |
+| RFLearner | new | [-1000000, 1000000] | 1 |
+| assert_bootstrap_finite | n_finite | [0, 1000001] | 6 |
+| build_bootstrap_dgp | cohort_count | [4, 4] | 1 |
+| build_bootstrap_dgp | n_per_cohort | [60, 60] | 1 |
+| build_iv_clustered_dgp | n_periods | [-1000000, 1000000] | 1 |
+| cs_bin_crossfit_nuisance | n_folds | [0, 64] | 1 |
+| cs_bin_panel_subset | t_value_eval | [-1000000, 1000000] | 1 |
+| double_cross_fit_predict | n_inner | [-1000000, 1000000] | 1 |
+| enet_coordinate_descent | max_iter | [-1000000, 1000000] | 1 |
+| expand_v088_derived_leverage | hc0 | [-1000000, 1000000] | 1 |
+| expand_v088_derived_leverage | hc2 | [-1000000, 1000000] | 1 |
+| expand_v090_hc_identities | se_hc0 | [-1000000, 1000000] | 1 |
+| expand_v090_hc_identities | se_hc1 | [-1000000, 1000000] | 1 |
+| expand_v090_hc_identities | se_hc2 | [-1000000, 1000000] | 1 |
+| expand_v090_hc_identities | se_hc3 | [-1000000, 1000000] | 1 |
+| expand_v093_lpq_data_scaled | need | [-2000000, 2000000] | 1 |
+| expand_v094_pq_data_scaled | width | [-1000000, 1000000] | 1 |
+| expand_v100_didcs_data | n_periods | [4, 4] | 1 |
+| expand_v100_didmulti_data | cohort | [0, 0] | 2 |
+| expand_v100_didmulti_data | theta0 | [1, 1] | 1 |
+| hash_hyperparams | propensity_clip | [-1000000, 1000000] | 1 |
+| make_irm_discrete_treatments | acc | [-700000, 700000] | 18 |
+| make_irm_discrete_treatments | d_i | [0, 3] | 10 |
+| make_irm_heterogeneous_data | seed | [-1000000, 1000000] | 1 |
+| make_pliv_multiway_cluster | dim_x | [-1000000, 1000000] | 1 |
+| make_pliv_multiway_cluster | idx_a | [0, 0] | 3 |
+| make_pliv_multiway_cluster | idx_b | [1, 1] | 3 |
+| make_pliv_multiway_cluster | n_obs | [-1000000, 1000000] | 1 |
+| make_pliv_multiway_cluster | theta | [-1000000, 1000000] | 1 |
+| make_plr_CCDDHNR2018 | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_plr_turrell2018 | n_normals_x | [-20000000, 20000000] | 1 |
+| policy_tree_honest_leaf_se | n_est | [0, 64] | 1 |
 | DoubleMLAPO | disable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | new | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | blp_hat_diagonal | [0, 0] | 2 |
+| DoubleMLBLP | cluster_hac_se | [0, 0] | 2 |
+| DoubleMLBLP | confint_joint | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLDID | disable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLDID | fit | [0, 0] | 1 |
 | DoubleMLDID | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinaryData | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | fit | [-1, 0] | 6 |
+| DoubleMLDIDCS | group_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | g_value | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | fit | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | coef_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLData | n_cluster_vars | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | fit_cluster | [0, 0] | 1 |
+| DoubleMLIIVM | fit_cluster | [0, 0] | 1 |
+| DoubleMLIIVM | predictions_g0 | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | predictions_g1 | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | predictions_r0 | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | predictions_r1 | [-1000000, 1000000] | 1 |
+| DoubleMLIIVMData | n_features | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | disable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | new | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | disable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | new | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | fit_cluster | [0, 0] | 1 |
+| DoubleMLPLIV | fit_cluster | [0, 0] | 1 |
+| DoubleMLPLIVData | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | fit_cluster | [0, 0] | 1 |
+| DoubleMLPQ | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | fit_cluster | [0, 0] | 2 |
+| DoubleMLQTE | joint_covariance | [0, 0] | 3 |
+| DoubleMLQTE | new | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_mse | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | cluster_hac_se | [0, 0] | 1 |
+| DoubleMLRDD | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | pilot_bandwidth | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | new | [-1000000, 1000000] | 1 |
+| GBClassifier | new | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_hc0 | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_hc0 | [0, 0] | 4 |
+| LinearRegression | sandwich_se | [0, 0] | 2 |
+| LinearRegression | sandwich_se | [0, 0] | 4 |
+| LogisticRegression | fit | [-1000000, 1000000] | 1 |
+| RFClassifier | new | [-1000000, 1000000] | 1 |
+| assert_bootstrap_t_stat_basic | sum | [0, 0] | 1 |
+| cluster_sandwich_variance | max_cid | [-1, -1] | 1 |
+| crossfit_nuisance | propensity_clip | [-1000000, 1000000] | 1 |
+| draw_bootstrap_weights | n_rep_boot | [-1000000, 1000000] | 1 |
+| expand_v087_cs_binary_data | n_rows | [-6000000, 6000000] | 1 |
+| expand_v091_old_accumulator | m_val | [-1000000, 1000000] | 1 |
+| expand_v091_old_accumulator | n_obs | [-1000000, 1000000] | 1 |
+| expand_v093_lpq_data_scaled | width | [-1000000, 1000000] | 1 |
+| expand_v100_didmulti_data | n_units | [200, 200] | 1 |
+| generic_bootstrap_psi_matrix | seed | [-1000000, 1000000] | 1 |
+| generic_bootstrap_single_psi | seed | [-1000000, 1000000] | 1 |
+| make_did_cs_CS2021 | unit_in_cohort | [0, 249999] | 2 |
+| make_irm_discrete_treatments | seed | [-1000000, 1000000] | 1 |
+| make_irm_heterogeneous_data | dim_x | [-1000000, 1000000] | 1 |
+| make_irm_heterogeneous_data | idx_a | [0, 0] | 3 |
+| make_irm_heterogeneous_data | idx_b | [1, 1] | 3 |
+| make_irm_heterogeneous_data | n_obs | [-1000000, 1000000] | 1 |
+| make_pliv_multiway_cluster | half_n | [-499999, 500000] | 1 |
+| make_pliv_multiway_cluster | half_z | [-1073741823, 1073741823] | 1 |
+| make_pliv_multiway_cluster | max_ca | [25, 25] | 1 |
+| make_pliv_multiway_cluster | max_cb | [25, 25] | 1 |
+| preprocess_did_binary | t_value_pre | [-1000000, 1000000] | 1 |
+| single_psi_sensitivity | sigma2_sum | [0, 0] | 1 |
+| v1500_no_base_period | cohort_count | [3, 3] | 1 |
+| v1500_no_base_period | n_per_cohort | [60, 60] | 1 |
 | DoubleMLAPO | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | sample_splitting | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | causal_contrast | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | disable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | new | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | blp_hat_diagonal | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
 | DoubleMLDID | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | psi_a_long | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | psi_b_long | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | coef | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSectionData | new | [0, 64] | 1 |
+| DoubleMLDIDMulti | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | coef_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLData | is_cluster_data | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | new | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | disable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | is_honest | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | fit_cluster | [0, 0] | 2 |
+| DoubleMLQTE | joint_covariance | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_sigma4 | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_collapsed | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_collapsed | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | tau_bc_se_rb | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | predictions_g_d0 | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | predictions_g_d1 | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sample_splitting | [-1000000, 1000000] | 1 |
+| FitCache | from_fit | [-1000000, 1000000] | 1 |
+| FitCache | is_valid | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv | [1, 1] | 1 |
+| GainStatsSource | from_blp_cv | [-1000000, 1000000] | 1 |
+| build_iv_clustered_dgp | iv_strength | [-1000000, 1000000] | 1 |
+| cluster_sandwich_variance | n_params | [-1000000, 1000000] | 1 |
+| double_cross_fit_predict | rng_state | [-1000000, 1000004] | 7 |
+| enet_coordinate_descent | max_change | [0, 0] | 5 |
+| expand_v087_cs_binary_data | n_units | [-2000000, 2000000] | 1 |
+| expand_v100_didmulti_cluster_ids | n | [-1000000, 1000000] | 1 |
+| generic_bootstrap_psi_matrix | n_obs | [-1000000, 1000000] | 1 |
+| generic_bootstrap_single_psi | n_obs | [0, 64] | 1 |
+| irm_style_sensitivity_cluster | cf_d | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster | cf_y | [-1000000, 1000000] | 1 |
+| make_irm_discrete_treatments | dim_x | [-1000000, 1000000] | 1 |
+| make_irm_discrete_treatments | idx_a | [0, 0] | 3 |
+| make_irm_discrete_treatments | idx_b | [1, 1] | 3 |
+| make_irm_discrete_treatments | n_obs | [-1000000, 1000000] | 1 |
+| make_irm_discrete_treatments | theta | [-1000000, 1000000] | 1 |
+| make_irm_heterogeneous_data | half_n | [-499999, 500000] | 1 |
+| make_irm_heterogeneous_data | half_z | [-1073741823, 1073741823] | 1 |
+| preprocess_did_binary | t_value_eval | [-1000000, 1000000] | 1 |
+| v1500_conforming_data | cohort_count | [4, 4] | 1 |
+| v1500_conforming_data | n_per_cohort | [50, 50] | 1 |
 | DoubleMLAPOS | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sample_splitting | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | treatment_levels | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | cluster_hac_se | [-1, -1] | 1 |
+| DoubleMLBLP | confint_joint | [0, 0] | 2 |
+| DoubleMLCVAR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | inner_psi_a | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | inner_psi_b | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | period_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_nu2 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | psi_a | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | psi_b | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | tune | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | leaf_psi_a | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | leaf_psi_a | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | min_leaf_n | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | new | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | new | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | joint_covariance | [0, 0] | 3 |
+| DoubleMLQTE | psi_row | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_mse | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | cluster_hac_se | [-1, -1] | 1 |
+| DoubleMLRDD | optimal_bandwidth | [-1000000, 1000000] | 1 |
+| FitCache | from_fit | [-1000000, 1000000] | 1 |
+| FitCache | from_fit | [-1000000, 1000000] | 1 |
+| FitCache | is_valid | [-1000000, 1000000] | 1 |
+| FitCache | is_valid | [-1000000, 1000000] | 1 |
+| GBClassifier | new | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv | [0, 0] | 1 |
+| GainStatsSource | from_blp_hc0 | [0, 0] | 2 |
+| GainStatsSource | from_blp_hc0 | [1, 1] | 1 |
+| GainStatsSource | from_blp_hc0 | [1, 1] | 1 |
+| GainStatsSource | from_blp_hc0 | [-1000000, 1000000] | 1 |
+| JointSensitivityInput | new | [-1000000, 1000000] | 1 |
+| RFClassifier | new | [-1000000, 1000000] | 1 |
+| expand_v089_did_binary_data | n_units | [-1000000, 1000000] | 1 |
+| expand_v090_hc_identities | se_pooled | [-1000000, 1000000] | 1 |
+| expand_v100_didcs_data | cohort_count | [4, 4] | 1 |
+| expand_v100_didcs_data | n_per_cohort | [50, 50] | 1 |
+| expand_v100_didmulti_data | n_periods | [4, 4] | 1 |
+| generic_bootstrap_ols_per_coef | m_xi | [0, 0] | 3 |
+| generic_bootstrap_ols_per_coef | seed | [-1000000, 1000000] | 1 |
+| generic_bootstrap_single_psi | ss_psi | [0, 0] | 1 |
+| generic_bootstrap_t_stat | n_rep_boot | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster | theta | [-1000000, 1000000] | 1 |
+| make_irm_discrete_treatments | half_n | [-499999, 500000] | 1 |
+| make_irm_discrete_treatments | half_z | [-1073741823, 1073741823] | 1 |
+| policy_tree_honest_leaf_se | n_leaves | [0, 64] | 1 |
+| var_est_cluster | n_folds_per_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | n_obs_subset | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | n_c_subset | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | n_g_subset | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | tune | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | est_indices | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | policy_value | [0, 0] | 1 |
+| DoubleMLPolicyTree | set_min_leaf_n | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | split_value | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_sigma4 | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bandwidth | [2, 2] | 1 |
+| DoubleMLRDD | optimal_bandwidth | [0.5, 0.5] | 1 |
+| GainStatsSource | from_blp_hc0 | [0, 0] | 2 |
+| assert_bootstrap_finite | expected_len | [-1000000, 1000000] | 1 |
+| expand_v087_cs_binary_data | n_periods | [3, 3] | 1 |
+| irm_style_sensitivity_cluster | mb_sum | [0, 0] | 1 |
+| make_confounded_plr_data | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_irm_confounded_data | n_normals_x | [-2147483648, 2147483647] | 1 |
 | DoubleMLAPO | bias_corrected_coef | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | cluster_sandwich_se | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | n_treatment_levels | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | sensitivity_analysis | [0, 0] | 3 |
 | DoubleMLDID | bias_corrected_coef | [-1000000, 1000000] | 1 |
 | DoubleMLDID | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_flat_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_psi_a_row_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_psi_b_row_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | m_inv_1x1_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_folds | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | n_obs_panel | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | t_value_pre | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | aggregate_time | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | n_combinations | [-1000000, 1000000] | 1 |
+| DoubleMLData | is_instrument_data | [-1000000, 1000000] | 1 |
+| DoubleMLIIVMData | n_cluster_vars | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | bias_corrected_coef | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLLPQ | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLLPQ | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLIVData | n_cluster_vars | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | policy_value | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bandwidth | [50, 50] | 1 |
+| DoubleMLSSM | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv | [-1000000, 1000000] | 1 |
+| cluster_causal_param_and_se | n_folds_u | [-1000000, 1000000] | 1 |
+| generic_bootstrap_psi_matrix | n_thetas | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster | max_cid | [-1, -1] | 1 |
+| irm_style_sensitivity_from_elements | n | [0, 64] | 1 |
+| make_irm_heterogeneous_data | theta_sum | [0, 0] | 1 |
+| sensitivity_from_variance_baselines | n | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | fit_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | cluster_sandwich_se | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLDID | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | predictions_g0 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | predictions_g1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinaryData | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_flat_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | m_inv_1x1_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_sigma2 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | t_value_eval | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | aggregate_event | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | aggregate_group | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLIIVMData | is_cluster_data | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | fit_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | propensity_score_raw | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | cluster_sandwich_se | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLIVData | is_cluster_data | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | policy_value_se | [0, 0] | 1 |
+| DoubleMLPolicyTree | split_feature | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | split_indices | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_sigma4 | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | bandwidth_variance_term | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bias_bandwidth | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | set_sample_splitting | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_hc0 | [-1000000, 1000000] | 1 |
+| assert_bootstrap_t_stat_basic | n_finite | [0, 1000001] | 6 |
+| double_cross_fit_predict_dispatch | seed | [-1000000, 1000000] | 1 |
+| expand_gt_keyword | anticipation_periods | [-1000000, 1000000] | 1 |
+| expand_v090_hc_identities | se_singleton | [-1000000, 1000000] | 1 |
+| expand_v100_didmulti_data | cohort_count | [4, 4] | 1 |
+| expand_v100_didmulti_data | n_per_cohort | [50, 50] | 1 |
+| irm_style_sensitivity_cluster | ss_psi_a | [0, 0] | 1 |
+| irm_style_sensitivity_cluster | ss_resid | [0, 0] | 1 |
+| make_pliv_multiway_cluster | n_normals_x | [-2147483648, 2147483647] | 1 |
+| v120_check_unpenalised_intercept | plain | [0, 0] | 1 |
 | DoubleMLAPO | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | set_sample_splitting | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | predictions_g_d0_t0 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | predictions_g_d0_t1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | predictions_g_d1_t0 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | predictions_g_d1_t1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_psi_nu2 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | confint | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | has_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | learner_g | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | learner_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSectionData | n_obs | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | set_sample_splitting | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | set_sample_splitting | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | fit_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | set_sample_splitting | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis | [0, 0] | 1 |
+| DoubleMLPolicyTree | enable_honesty | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | leaf_influence | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | leaf_influence | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | set_min_leaf_n | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bandwidth | [1.0000000000000002e+300, 1.0000000000000002e+300] | 1 |
+| DoubleMLRDD | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| expand_v087_cs_binary_data | n_per_cohort | [-1000000, 1000000] | 1 |
+| generic_bootstrap_psi_matrix | n_rep_boot | [-1000000, 1000000] | 1 |
+| generic_bootstrap_single_psi | n_rep_boot | [-1000000, 1000000] | 1 |
+| make_irm_heterogeneous_data | n_normals_x | [-2147483648, 2147483647] | 1 |
+| make_pliv_multiway_cluster | n_clusters_a | [50, 50] | 1 |
+| make_pliv_multiway_cluster | n_clusters_b | [50, 50] | 1 |
+| sensitivity_from_variance_baselines | nu2 | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sensitivity_analysis | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | bootstrap | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sandwich_se_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | policy_value_se | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | bias_corrected_coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | cluster_joint_covariance | [1, 1] | 1 |
+| DoubleMLQTE | cluster_sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | m_inv_1x1_at | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bias_bandwidth | [-1000000, 1000000] | 1 |
+| assert_bootstrap_t_stat_basic | n_rep_boot | [-1000000, 1000000] | 1 |
+| cross_fit_predict_conditional_dispatch | n | [0, 64] | 1 |
+| cs_bin_crossfit_nuisance | propensity_clip | [-1000000, 1000000] | 1 |
+| cs_bin_panel_subset | anticipation_periods | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster_multi | cf_d | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster_multi | cf_y | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_from_elements | cf_d | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_from_elements | cf_y | [-1000000, 1000000] | 1 |
+| make_irm_discrete_treatments | n_normals_x | [-2147483648, 2147483647] | 1 |
+| resolve_ps_processor | trimming_threshold~ | [-1000000, 1000000] | 1 |
+| sensitivity_from_variance_baselines | cf_d | [-1000000, 1000000] | 1 |
+| sensitivity_from_variance_baselines | cf_y | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | bias_corrected_coef_at | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | cluster_sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_riesz_rep | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | bootstrap | [0, 0] | 1 |
+| DoubleMLDIDCrossSection | clear_cache | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sandwich_se_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis | [-1, 0] | 6 |
+| DoubleMLDIDMulti | sensitivity_analysis | [-1, 0] | 6 |
+| DoubleMLPolicyTree | leaf_se_reliable | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | cluster_joint_covariance | [0, 0] | 3 |
+| DoubleMLRDD | bandwidth_variance_term | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bias_bandwidth | [2, 2] | 1 |
+| DoubleMLRDD | optimal_bias_bandwidth | [0.5, 0.5] | 1 |
+| GainStatsSource | from_blp_cv | [0, 0] | 1 |
+| GainStatsSource | from_blp_cv_repeated | [-1000000, 1000000] | 1 |
+| PSProcessorConfig | new | [-1000000, 1000000] | 1 |
+| double_cross_fit_predict_dispatch | n_inner | [-1000000, 1000000] | 1 |
+| generic_bootstrap_ols_per_coef | n_rep_boot | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_from_elements | theta | [-1000000, 1000000] | 1 |
+| sensitivity_from_variance_baselines | theta | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | sensitivity_nu2_elements | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | m_inv_1x1_at | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | psi_a_row_at | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | psi_b_row_at | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_nu2_elements | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | bias_corrected_coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_psi_a_row_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_psi_b_row_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cluster_sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_psi_sigma2 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sensitivity_nu2_elements | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis | [0, 0] | 1 |
+| DoubleMLPolicyTree | enable_split_seed | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | enable_split_seed | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | unreliable_leaves | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | cluster_joint_covariance | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bias_bandwidth | [50, 50] | 1 |
+| GainStatsSource | from_blp_hc0 | [0, 0] | 1 |
+| LinearRegression | sandwich_se_weighted | [0, 0] | 2 |
+| LinearRegression | sandwich_se_weighted | [0, 0] | 4 |
+| PSProcessorConfig | new | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_from_elements | mb_sum | [0, 0] | 1 |
+| irm_style_sensitivity_from_elements | ss_nu2 | [0, 0] | 1 |
+| preprocess_did_binary | anticipation_periods | [-1000000, 1000000] | 1 |
+| sensitivity_from_variance_baselines | mb_sum | [0, 0] | 1 |
+| sensitivity_from_variance_baselines | sigma2 | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_nu2_elements | [0, 0] | 1 |
+| DoubleMLDIDBinary | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_psi_a_row_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cell_psi_b_row_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | predictions_m | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | tune | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | cluster_joint_covariance | [0, 0] | 3 |
+| DoubleMLRDD | bandwidth_variance_term | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | require_hac_preconditions | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv_repeated | [1, 1] | 1 |
+| GainStatsSource | from_blp_cv_repeated | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | enable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSectionData | n_features | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | smallest_leaf_count | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | optimal_bias_bandwidth | [1.0000000000000002e+300, 1.0000000000000002e+300] | 1 |
+| DoubleMLRDD | optimal_bias_bandwidth | [-1000000, 1000000] | 1 |
+| LinearRegression | covariance_diagonal | [-1000000, 1000000] | 1 |
+| LogisticRegression | predict_class | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster_multi | n_thetas | [0, 64] | 1 |
+| irm_style_sensitivity_from_elements | ss_resid | [0, 0] | 1 |
+| DoubleMLBLP | sensitivity_analysis_cluster | [0, 0] | 3 |
+| DoubleMLDIDBinary | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | predictions_g_d0_t0 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | predictions_g_d0_t1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | predictions_g_d1_t0 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | predictions_g_d1_t1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | disable_memoize | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | new | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | cluster_joint_covariance | [-1, -1] | 1 |
+| DoubleMLRDD | bandwidth_variance_term | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster_from_elements | n | [0, 64] | 1 |
 | DoubleMLAPO | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_nu2_elements | [0, 0] | 1 |
+| DoubleMLDIDCSBinary | new | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPQ | sensitivity_analysis_cluster | [0, 0] | 1 |
+| DoubleMLPolicyTree | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv_repeated | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLBLP | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLDID | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | bias_corrected_coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cluster_sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLIRM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLLPQ | sensitivity_analysis_cluster | [0, 0] | 1 |
+| DoubleMLPLIV | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis_cluster | [0, 0] | 1 |
+| DoubleMLQTE | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | sensitivity_analysis_cluster | [0, 0] | 1 |
+| DoubleMLRDD | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLRDD | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLSSM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| cluster_causal_param_and_se | n_folds_per_cluster | [-1000000, 1000000] | 1 |
+| resolve_ps_processor_config | trimming_threshold~ | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLCVAR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | bias_corrected_coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | cluster_sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | bias_corrected_coef_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | cluster_sandwich_se_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLIIVM | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLLPLR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLIV | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPLPR | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLPolicyTree | smallest_leaf_count | [-1, -1] | 1 |
+| GainStatsSource | from_blp_cv_repeated | [0, 0] | 2 |
+| GainStatsSource | from_blp_cv_repeated | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster_from_elements | cf_d | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster_from_elements | cf_y | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCS | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | bias_corrected_coef | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | cluster_sandwich_se | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | predictions_g_d0_t0 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | predictions_g_d0_t1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | predictions_g_d1_t0 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | predictions_g_d1_t1 | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | bias_corrected_coef_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | cluster_sandwich_se_at_idx | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis_cluster | [-1, 0] | 6 |
+| DoubleMLDIDMulti | sensitivity_analysis_cluster | [-1, 0] | 6 |
+| DoubleMLPLR | sensitivity_analysis_cluster | [-1, -1] | 1 |
+| irm_style_sensitivity_cluster_from_elements | ss_rr | [0, 0] | 1 |
+| irm_style_sensitivity_cluster_from_elements | theta | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLPLR | sensitivity_analysis_cluster | [0, 0] | 1 |
+| DoubleMLQTE | bias_corrected_coef_at | [-1000000, 1000000] | 1 |
+| DoubleMLQTE | cluster_sandwich_se_at | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv_repeated | [0, 0] | 2 |
+| irm_style_sensitivity_cluster_from_elements | mb_sum | [0, 0] | 1 |
+| irm_style_sensitivity_cluster_from_elements | ss_nu2 | [0, 0] | 1 |
+| DoubleMLDIDCrossSection | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | sensitivity_analysis | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| irm_style_sensitivity_cluster_from_elements | max_cid | [-1, -1] | 1 |
 | DoubleMLAPOS | bias_corrected_coef_at | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | cluster_sandwich_se_at | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDMulti | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| GainStatsSource | from_blp_cv_repeated | [0, 0] | 1 |
+| irm_style_sensitivity_cluster_from_elements | ss_resid | [0, 0] | 1 |
+| DoubleMLDIDBinary | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDBinary | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_residuals | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_nu2_elements | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_nu2_elements | [0, 0] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_nu2_elements | [0, 0] | 1 |
+| DoubleMLDIDCrossSection | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCrossSection | sensitivity_analysis_cluster | [-1000000, 1000000] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_nu2_elements | [0, 0] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_nu2_elements | [0, 0] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_nu2_elements | [0, 0] | 1 |
+| DoubleMLDIDCSBinary | cs_bin_sensitivity_nu2_elements | [0, 0] | 1 |
 
 ## 7. Program slicing
 
@@ -1835,7 +5260,7 @@ Deductive verification is WP-style: each contract becomes verification condition
 
 _No verification condition generated._
 
-Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `DoubleMLAPO::new (apo.mbt:101)`, `DoubleMLAPO::coef (apo.mbt:196)`, `DoubleMLAPO::se (apo.mbt:207)`, `DoubleMLAPO::confint (apo.mbt:218)`, `DoubleMLAPO::predictions_g (apo.mbt:229)`, `DoubleMLAPO::predictions_m (apo.mbt:240)`, `DoubleMLAPO::fit_cluster (apo.mbt:549)`, `DoubleMLAPO::sandwich_se (apo.mbt:766)`, `DoubleMLAPO::cluster_sandwich_se (apo.mbt:799)`, `DoubleMLAPO::bias_corrected_coef (apo.mbt:858)`, `DoubleMLAPO::bootstrap (apo.mbt:895)`, `DoubleMLAPO::tune (apo.mbt:968)`, `DoubleMLAPOS::tune (apo.mbt:1024)`, `DoubleMLAPO::sensitivity_nu2_elements (apo.mbt:1094)`, `DoubleMLAPO::sensitivity_analysis (apo.mbt:1127)`, `DoubleMLAPO::sensitivity_analysis_cluster (apo.mbt:1157)`, `DoubleMLAPOS::new (apo.mbt:1282)`, `DoubleMLAPOS::fit (apo.mbt:1379)`, `DoubleMLAPOS::coefs (apo.mbt:1693)`, `DoubleMLAPOS::ses (apo.mbt:1704)`, `DoubleMLAPOS::psi_b_row_at (apo.mbt:1808)`, `DoubleMLAPOS::psi_a_row_at (apo.mbt:1838)`, `DoubleMLAPOS::m_inv_1x1_at (apo.mbt:1868)`, `DoubleMLAPOS::sandwich_se_at (apo.mbt:1919)`, `DoubleMLAPOS::cluster_sandwich_se_at (apo.mbt:1965)`, `DoubleMLAPOS::bias_corrected_coef_at (apo.mbt:2019)`, `DoubleMLAPOS::bootstrap (apo.mbt:2045)`, `DoubleMLAPOS::confint (apo.mbt:2094)`, `DoubleMLAPOS::boot_t_stats (apo.mbt:2148)`, `DoubleMLAPOS::causal_contrast (apo.mbt:2200)`, `DoubleMLAPOS::sensitivity_analysis (apo.mbt:2266)`, `DoubleMLAPOS::sensitivity_analysis_cluster (apo.mbt:2314)`, `DoubleMLDIDData::new (did.mbt:31)`, `DoubleMLDID::new (did.mbt:252)`, `DoubleMLDID::coef (did.mbt:345)`, `DoubleMLDID::se (did.mbt:356)`, `DoubleMLDID::confint (did.mbt:369)`, `DoubleMLDID::fit (did.mbt:483)`, `DoubleMLDID::bootstrap (did.mbt:793)`, `DoubleMLDID::sensitivity_nu2_elements (did.mbt:873)`, `DoubleMLDID::sensitivity_analysis (did.mbt:940)`, `DoubleMLDID::sensitivity_analysis_cluster (did.mbt:975)`, `DoubleMLDID::sandwich_se (did.mbt:1027)`, `DoubleMLDID::cluster_sandwich_se (did.mbt:1057)`, `DoubleMLDID::bias_corrected_coef (did.mbt:1114)`, `DoubleMLDID::tune (did.mbt:1196)`, `GBLearner::fit_weighted (gbl.mbt:125)`, `DoubleMLIRM::new (irm.mbt:109)`, `DoubleMLIRM::coef (irm.mbt:184)`, `DoubleMLIRM::se (irm.mbt:195)`, `DoubleMLIRM::confint (irm.mbt:209)`, `filter_indices (irm.mbt:314)`, `clip_vec (irm.mbt:327)`, `cross_fit_irm (irm.mbt:352)`, `DoubleMLIRM::fit (irm.mbt:462)`, `DoubleMLIRM::fit_cluster (irm.mbt:730)`, `DoubleMLIRM::bootstrap (irm.mbt:935)`, `DoubleMLIRM::tune (irm.mbt:1014)`, `DoubleMLIRM::sensitivity_nu2_elements (irm.mbt:1089)`, `DoubleMLIRM::sensitivity_analysis (irm.mbt:1116)`, `DoubleMLIRM::sensitivity_analysis_cluster (irm.mbt:1154)`, `DoubleMLIRM::sandwich_se (irm.mbt:1197)`, `DoubleMLIRM::cluster_sandwich_se (irm.mbt:1238)`, `DoubleMLIRM::bias_corrected_coef (irm.mbt:1296)`, `silverman_bandwidth (kde.mbt:14)`, `sample_sd (kde.mbt:32)`, `percentile_sorted (kde.mbt:65)`, `gaussian_kde (kde.mbt:88)`, `gaussian_kde_weighted (kde.mbt:125)`, `DoubleMLLPQData::new (lpq.mbt:14)`, `lpq_score (lpq.mbt:37)`, `lpq_score_ipw (lpq.mbt:68)`, `DoubleMLLPQ::new (lpq.mbt:178)`, `DoubleMLLPQ::fit (lpq.mbt:236)`, `DoubleMLLPQ::bootstrap (lpq.mbt:536)`, `DoubleMLLPQ::sensitivity_analysis (lpq.mbt:580)`, `DoubleMLLPQ::sensitivity_analysis_cluster (lpq.mbt:608)`, `DoubleMLLPQ::confint (lpq.mbt:655)`, `DoubleMLLPQ::coef (lpq.mbt:677)`, `DoubleMLLPQ::se (lpq.mbt:688)`, `DoubleMLLPQ::predictions_g0 (lpq.mbt:701)`, `DoubleMLLPQ::predictions_g1 (lpq.mbt:714)`, `DoubleMLLPQ::predictions_m (lpq.mbt:727)`, `unique_units (plpr.mbt:172)`, `check_sample_splitting (kfold.mbt:288)`, `kfold (kfold.mbt:439)`, `slice_matrix_rows (kfold.mbt:487)`, `build_row_unit_map (kfold.mbt:584)`, `mean (matrix.mbt:245)`, `psi_at (sandwich.mbt:215)`, `cluster_sandwich_variance (sandwich.mbt:534)`, `draw_bootstrap_weights (did_multi.mbt:1126)`, `aggregate_coef_se (aggregator.mbt:33)`, `vector_subtract (vectorized.mbt:77)`, `irm_style_sensitivity_from_elements (sensitivity.mbt:78)`, `irm_style_sensitivity_cluster_from_elements (sensitivity.mbt:233)`, `irm_style_sensitivity_cluster (sensitivity.mbt:317)`, `single_psi_sensitivity (sensitivity.mbt:489)`, `normalize_ipw (ps_processor.mbt:910)`, `generic_bootstrap_t_stat (bootstrap_helper.mbt:47)`, `generic_bootstrap_single_psi (bootstrap_helper.mbt:104)`
+Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `DoubleMLAPO::new (apo.mbt:101)`, `DoubleMLAPO::coef (apo.mbt:196)`, `DoubleMLAPO::se (apo.mbt:207)`, `DoubleMLAPO::confint (apo.mbt:218)`, `DoubleMLAPO::predictions_g (apo.mbt:229)`, `DoubleMLAPO::predictions_m (apo.mbt:240)`, `DoubleMLAPO::fit_cluster (apo.mbt:549)`, `DoubleMLAPO::sandwich_se (apo.mbt:766)`, `DoubleMLAPO::cluster_sandwich_se (apo.mbt:799)`, `DoubleMLAPO::bias_corrected_coef (apo.mbt:858)`, `DoubleMLAPO::bootstrap (apo.mbt:895)`, `DoubleMLAPO::tune (apo.mbt:968)`, `DoubleMLAPOS::tune (apo.mbt:1024)`, `DoubleMLAPO::sensitivity_nu2_elements (apo.mbt:1094)`, `DoubleMLAPO::sensitivity_analysis (apo.mbt:1127)`, `DoubleMLAPO::sensitivity_analysis_cluster (apo.mbt:1157)`, `DoubleMLAPOS::new (apo.mbt:1282)`, `DoubleMLAPOS::fit (apo.mbt:1379)`, `DoubleMLAPOS::coefs (apo.mbt:1693)`, `DoubleMLAPOS::ses (apo.mbt:1704)`, `DoubleMLAPOS::psi_b_row_at (apo.mbt:1808)`, `DoubleMLAPOS::psi_a_row_at (apo.mbt:1838)`, `DoubleMLAPOS::m_inv_1x1_at (apo.mbt:1868)`, `DoubleMLAPOS::sandwich_se_at (apo.mbt:1919)`, `DoubleMLAPOS::cluster_sandwich_se_at (apo.mbt:1965)`, `DoubleMLAPOS::bias_corrected_coef_at (apo.mbt:2019)`, `DoubleMLAPOS::bootstrap (apo.mbt:2045)`, `DoubleMLAPOS::confint (apo.mbt:2094)`, `DoubleMLAPOS::boot_t_stats (apo.mbt:2148)`, `DoubleMLAPOS::causal_contrast (apo.mbt:2200)`, `DoubleMLAPOS::sensitivity_analysis (apo.mbt:2266)`, `DoubleMLAPOS::sensitivity_analysis_cluster (apo.mbt:2314)`, `DoubleMLDIDData::new (did.mbt:31)`, `DoubleMLDID::new (did.mbt:252)`, `DoubleMLDID::coef (did.mbt:345)`, `DoubleMLDID::se (did.mbt:356)`, `DoubleMLDID::confint (did.mbt:369)`, `DoubleMLDID::fit (did.mbt:483)`, `DoubleMLDID::bootstrap (did.mbt:793)`, `DoubleMLDID::sensitivity_nu2_elements (did.mbt:873)`, `DoubleMLDID::sensitivity_analysis (did.mbt:940)`, `DoubleMLDID::sensitivity_analysis_cluster (did.mbt:975)`, `DoubleMLDID::sandwich_se (did.mbt:1027)`, `DoubleMLDID::cluster_sandwich_se (did.mbt:1057)`, `DoubleMLDID::bias_corrected_coef (did.mbt:1114)`, `DoubleMLDID::tune (did.mbt:1196)`, `GBLearner::fit_weighted (gbl.mbt:125)`, `DoubleMLIRM::new (irm.mbt:109)`, `DoubleMLIRM::coef (irm.mbt:184)`, `DoubleMLIRM::se (irm.mbt:195)`, `DoubleMLIRM::confint (irm.mbt:209)`, `filter_indices (irm.mbt:314)`, `clip_vec (irm.mbt:327)`, `cross_fit_irm (irm.mbt:352)`, `DoubleMLIRM::fit (irm.mbt:462)`, `DoubleMLIRM::fit_cluster (irm.mbt:730)`, `DoubleMLIRM::bootstrap (irm.mbt:935)`, `DoubleMLIRM::tune (irm.mbt:1014)`, `DoubleMLIRM::sensitivity_nu2_elements (irm.mbt:1089)`, `DoubleMLIRM::sensitivity_analysis (irm.mbt:1116)`, `DoubleMLIRM::sensitivity_analysis_cluster (irm.mbt:1154)`, `DoubleMLIRM::sandwich_se (irm.mbt:1197)`, `DoubleMLIRM::cluster_sandwich_se (irm.mbt:1238)`, `DoubleMLIRM::bias_corrected_coef (irm.mbt:1296)`, `silverman_bandwidth (kde.mbt:14)`, `sample_sd (kde.mbt:32)`, `percentile_sorted (kde.mbt:65)`, `gaussian_kde (kde.mbt:88)`, `gaussian_kde_weighted (kde.mbt:125)`, `DoubleMLLPQData::new (lpq.mbt:14)`, `lpq_score (lpq.mbt:37)`, `lpq_score_ipw (lpq.mbt:68)`, `DoubleMLLPQ::new (lpq.mbt:178)`, `DoubleMLLPQ::fit (lpq.mbt:236)`, `DoubleMLLPQ::bootstrap (lpq.mbt:536)`, `DoubleMLLPQ::sensitivity_analysis (lpq.mbt:580)`, `DoubleMLLPQ::sensitivity_analysis_cluster (lpq.mbt:608)`, `DoubleMLLPQ::confint (lpq.mbt:655)`, `DoubleMLLPQ::coef (lpq.mbt:677)`, `DoubleMLLPQ::se (lpq.mbt:688)`, `DoubleMLLPQ::predictions_g0 (lpq.mbt:701)`, `DoubleMLLPQ::predictions_g1 (lpq.mbt:714)`, `DoubleMLLPQ::predictions_m (lpq.mbt:727)`, `DoubleMLLPQ::m_inv_1x1 (lpq.mbt:838)`, `DoubleMLLPQ::sandwich_se (lpq.mbt:872)`, `DoubleMLLPQ::cluster_sandwich_se (lpq.mbt:911)`, `DoubleMLLPQ::bias_corrected_coef (lpq.mbt:956)`, `DoubleMLPLR::new (plr.mbt:98)`, `DoubleMLPLR::coef (plr.mbt:158)`, `DoubleMLPLR::se (plr.mbt:171)`, `DoubleMLPLR::confint (plr.mbt:187)`, `plr_score_elements (plr.mbt:348)`, `DoubleMLPLR::fit (plr.mbt:414)`, `DoubleMLPLR::fit_cluster (plr.mbt:673)`, `DoubleMLPLR::bootstrap (plr.mbt:976)`, `DoubleMLPLR::sensitivity_analysis (plr.mbt:1086)`, `DoubleMLPLR::sensitivity_analysis_cluster (plr.mbt:1129)`, `DoubleMLPLR::sandwich_se (plr.mbt:1179)`, `DoubleMLPLR::cluster_sandwich_se (plr.mbt:1214)`, `DoubleMLPLR::bias_corrected_coef (plr.mbt:1271)`, `DoubleMLRDDData::new (rdd.mbt:15)`, `DoubleMLRDD::new (rdd.mbt:160)`, `weighted_xtx_transpose (rdd.mbt:405)`, `DoubleMLRDD::fit (rdd.mbt:663)`, `DoubleMLRDD::coef (rdd.mbt:1001)`, `DoubleMLRDD::se (rdd.mbt:1012)`, `DoubleMLRDD::confint (rdd.mbt:1023)`, `rdd_hac_require_df (rdd.mbt:1261)`, `DoubleMLRDD::hac_se (rdd.mbt:1321)`, `DoubleMLRDD::cluster_hac_se (rdd.mbt:1462)`, `DoubleMLRDD::sensitivity_analysis (rdd.mbt:1556)`, `DoubleMLRDD::sensitivity_analysis_cluster (rdd.mbt:1593)`, `DoubleMLRDD::bootstrap (rdd.mbt:1720)`, `DoubleMLRDD::tune (rdd.mbt:1831)`, `DoubleMLRDD::bias (rdd.mbt:2089)`, `DoubleMLRDD::tau_bc (rdd.mbt:2228)`, `DoubleMLRDD::tau_bc_collapsed (rdd.mbt:2290)`, `DoubleMLRDD::tau_bc_se (rdd.mbt:2343)`, `DoubleMLRDD::bandwidth_mse (rdd.mbt:2414)`, `DoubleMLRDD::bandwidth_variance_term (rdd.mbt:2487)`, `rdd_pilot_stage (rdd.mbt:2580)`, `rdd_nn_matched_sigma4 (rdd.mbt:2658)`, `nn_residual (rdd.mbt:2806)`, `rdd_rb_side (rdd.mbt:2982)`, `DoubleMLRDD::tau_bc_se_rb (rdd.mbt:3199)`, `cart_fit (rfl.mbt:202)`, `cart_leaf_value (rfl.mbt:495)`, `RFLearner::fit_weighted (rfl.mbt:610)`, `DoubleMLSSMData::new (ssm.mbt:18)`, `DoubleMLSSM::new (ssm.mbt:152)`, `DoubleMLSSM::coef (ssm.mbt:286)`, `DoubleMLSSM::se (ssm.mbt:297)`, `DoubleMLSSM::confint (ssm.mbt:308)`, `DoubleMLSSM::bootstrap (ssm.mbt:356)`, `DoubleMLSSM::tune (ssm.mbt:438)`, `DoubleMLSSM::psi_a (ssm.mbt:469)`, `DoubleMLSSM::psi_b (ssm.mbt:480)`, `DoubleMLSSM::sensitivity_analysis (ssm.mbt:498)`, `DoubleMLSSM::sensitivity_analysis_cluster (ssm.mbt:526)`, `augment_one_col (ssm.mbt:553)`, `filter_two_values (ssm.mbt:570)`, `DoubleMLSSM::fit (ssm.mbt:692)`, `DoubleMLSSM::sandwich_se (ssm.mbt:957)`, `DoubleMLSSM::cluster_sandwich_se (ssm.mbt:988)`, `DoubleMLSSM::bias_corrected_coef (ssm.mbt:1047)`, `DoubleMLCVAR::new (cvar.mbt:128)`, `DoubleMLCVAR::se (cvar.mbt:292)`, `DoubleMLCVAR::confint (cvar.mbt:304)`, `DoubleMLCVAR::predictions_g (cvar.mbt:317)`, `DoubleMLCVAR::predictions_m (cvar.mbt:333)`, `DoubleMLCVAR::sensitivity_analysis (cvar.mbt:376)`, `DoubleMLCVAR::sensitivity_analysis_cluster (cvar.mbt:431)`, `stratified_half_split (cvar.mbt:465)`, `cvar_ipw_score (cvar.mbt:535)`, `solve_ipw_root (cvar.mbt:573)`, `DoubleMLCVAR::fit (cvar.mbt:841)`, `DoubleMLCVAR::tune (cvar.mbt:1213)`, `DoubleMLCVAR::bootstrap (cvar.mbt:1265)`, `DoubleMLCVAR::sandwich_se (cvar.mbt:1328)`, `DoubleMLCVAR::cluster_sandwich_se (cvar.mbt:1356)`, `DoubleMLCVAR::bias_corrected_coef (cvar.mbt:1414)`, `DoubleMLData::new (data.mbt:42)`, `DoubleMLIIVMData::new (iivm.mbt:18)`, `DoubleMLIIVM::new (iivm.mbt:178)`, `DoubleMLIIVM::se (iivm.mbt:303)`, `DoubleMLIIVM::confint (iivm.mbt:316)`, `filter_by_value (iivm.mbt:400)`, `cross_fit_iivm (iivm.mbt:434)`, `DoubleMLIIVM::fit (iivm.mbt:550)`, `DoubleMLIIVM::fit_cluster (iivm.mbt:817)`, `DoubleMLIIVM::bootstrap (iivm.mbt:1035)`, `DoubleMLIIVM::tune (iivm.mbt:1111)`, `DoubleMLIIVM::sensitivity_analysis (iivm.mbt:1156)`, `DoubleMLIIVM::sensitivity_analysis_cluster (iivm.mbt:1181)`, `DoubleMLIIVM::sandwich_se (iivm.mbt:1230)`, `DoubleMLIIVM::cluster_sandwich_se (iivm.mbt:1258)`, `DoubleMLIIVM::bias_corrected_coef (iivm.mbt:1315)`, `DoubleMLBinaryData::new (lplr.mbt:46)`, `prelim_beta_per_fold (lplr.mbt:76)`, `lplr_score_at (lplr.mbt:184)`, `newton_solve_score (lplr.mbt:236)`, `DoubleMLLPLR::new (lplr.mbt:354)`, `DoubleMLLPLR::confint (lplr.mbt:552)`, `DoubleMLLPLR::predictions_t (lplr.mbt:565)`, `DoubleMLLPLR::predictions_m (lplr.mbt:578)`, `DoubleMLLPLR::predictions_a (lplr.mbt:593)`, `concat_d_x (lplr.mbt:608)`, `DoubleMLLPLR::bootstrap (lplr.mbt:1452)`, `DoubleMLLPLR::tune (lplr.mbt:1535)`, `cross_fit_predict_inner (lplr.mbt:1618)`, `DoubleMLLPLR::sensitivity_analysis (lplr.mbt:1750)`, `DoubleMLLPLR::sensitivity_analysis_cluster (lplr.mbt:1782)`, `DoubleMLLPLR::sandwich_se (lplr.mbt:1886)`, `DoubleMLLPLR::cluster_sandwich_se (lplr.mbt:1922)`, `DoubleMLLPLR::bias_corrected_coef (lplr.mbt:1968)`, `DoubleMLPLIVData::new (pliv.mbt:23)`, `DoubleMLPLIV::new (pliv.mbt:155)`, `DoubleMLPLIV::coef (pliv.mbt:206)`, `DoubleMLPLIV::se (pliv.mbt:217)`, `DoubleMLPLIV::confint (pliv.mbt:230)`, `DoubleMLPLIV::fit (pliv.mbt:310)`, `DoubleMLPLIV::fit_cluster (pliv.mbt:539)`, `DoubleMLPLIV::bootstrap (pliv.mbt:733)`, `DoubleMLPLIV::tune (pliv.mbt:811)`, `DoubleMLPLIV::sandwich_se (pliv.mbt:943)`, `DoubleMLPLIV::cluster_sandwich_se (pliv.mbt:971)`, `DoubleMLPLIV::bias_corrected_coef (pliv.mbt:1028)`, `DoubleMLPanelData::new (plpr.mbt:51)`, `sort_rows_by_id_time (plpr.mbt:95)`, `unit_means (plpr.mbt:116)`, `unique_units (plpr.mbt:172)`, `est_coef_cluster (plpr.mbt:198)`, `var_est_cluster (plpr.mbt:252)`, `transform_panel (plpr.mbt:319)`, `DoubleMLPLPR::new (plpr.mbt:554)`, `DoubleMLPLPR::coef (plpr.mbt:655)`, `DoubleMLPLPR::predictions_l (plpr.mbt:690)`, `DoubleMLPLPR::predictions_m (plpr.mbt:703)`, `DoubleMLPLPR::sensitivity_analysis (plpr.mbt:763)`, `DoubleMLPLPR::fit (plpr.mbt:801)`, `DoubleMLPLPR::bootstrap (plpr.mbt:1181)`, `DoubleMLPLPR::tune (plpr.mbt:1277)`, `DoubleMLPLPR::sensitivity_analysis_cluster (plpr.mbt:1330)`, `DoubleMLPLPR::sandwich_se (plpr.mbt:1401)`, `DoubleMLPLPR::cluster_sandwich_se (plpr.mbt:1437)`, `DoubleMLPLPR::bias_corrected_coef (plpr.mbt:1495)`, `tune_score_outcome (tune.mbt:175)`, `tune_argmin (tune.mbt:215)`, `DoubleMLPLR::tune (tune.mbt:352)`, `GBClassifier::fit_weighted (gbclf.mbt:163)`, `Fold::new (kfold.mbt:225)`, `check_sample_splitting (kfold.mbt:288)`, `kfold_stratified (kfold.mbt:346)`, `kfold (kfold.mbt:439)`, `slice_matrix_rows (kfold.mbt:487)`, `slice_vector (kfold.mbt:501)`, `expand_unit_folds_to_rows (kfold.mbt:536)`, `build_row_unit_map (kfold.mbt:584)`, `cluster_causal_param_and_se (kfold.mbt:640)`, `cross_fit_predict (kfold.mbt:675)`, `double_cross_fit_predict (kfold.mbt:731)`, `RFClassifier::fit_weighted (rfclf.mbt:148)`, `DoubleMLDIDCSData::new (did_cs.mbt:37)`, `discover_groups_times (did_cs.mbt:85)`, `DoubleMLDIDCS::new (did_cs.mbt:322)`, `DoubleMLDIDCS::coef_at (did_cs.mbt:446)`, `DoubleMLDIDCS::se_at (did_cs.mbt:491)`, `DoubleMLDIDCS::period_at (did_cs.mbt:789)`, `DoubleMLDIDCS::cell_flat_at (did_cs.mbt:941)`, `DoubleMLDIDCS::cell_psi_a_row_at (did_cs.mbt:969)`, `DoubleMLDIDCS::cell_psi_b_row_at (did_cs.mbt:995)`, `DoubleMLDIDCS::m_inv_1x1_at (did_cs.mbt:1030)`, `DoubleMLDIDCS::sandwich_se_at (did_cs.mbt:1092)`, `DoubleMLDIDCS::cluster_sandwich_se_at (did_cs.mbt:1161)`, `DoubleMLDIDCS::fit (did_cs.mbt:1244)`, `DoubleMLDIDCS::bootstrap (did_cs.mbt:1871)`, `DoubleMLDIDCS::sensitivity_analysis (did_cs.mbt:1953)`, `DoubleMLDIDCS::confint (did_cs.mbt:1999)`, `DoubleMLDIDCS::sensitivity_analysis_cluster (did_cs.mbt:2071)`, `DoubleMLDIDCS::tune (did_cs.mbt:2201)`, `cholesky (linalg.mbt:12)`, `solve_spd (linalg.mbt:74)`, `inv_spd (linalg.mbt:141)`, `LinearRegression::fit (linear.mbt:96)`, `LinearRegression::fit_weighted (linear.mbt:197)`, `LinearRegression::predict (linear.mbt:257)`, `LinearRegression::sandwich_se_weighted (linear.mbt:287)`, `LinearRegression::sandwich_se (linear.mbt:350)`, `Matrix::zeros (matrix.mbt:20)`, `Matrix::ones (matrix.mbt:27)`, `Matrix::from_array (matrix.mbt:35)`, `Matrix::from_rows (matrix.mbt:109)`, `matvec (matrix.mbt:167)`, `dot (matrix.mbt:220)`, `mean (matrix.mbt:245)`, `make_irm_data (dgp_irm.mbt:41)`, `make_ssm_data (dgp_ssm.mbt:38)`, `cross_fit_predict_conditional_dispatch (learner.mbt:383)`, `var_est (var_est.mbt:24)`, `var_est_with_jacobian (var_est.mbt:76)`, `count_eq (apo_test.mbt:22)`, `make_iivm_data (dgp_iivm.mbt:40)`, `make_pliv_CHS2015 (dgp_pliv.mbt:28)`, `make_plpr_CP2025 (dgp_plpr.mbt:42)`, `LogisticRegression::fit (logistic.mbt:105)`, `LogisticRegression::predict (logistic.mbt:218)`, `argsort_asc (p_adjust.mbt:91)`, `romano_wolf_p_adjust (p_adjust.mbt:128)`, `bonferroni_p_adjust (p_adjust.mbt:254)`, `bh_fdr_p_adjust (p_adjust.mbt:287)`, `by_fdr_p_adjust (p_adjust.mbt:331)`, `bh_step_up_sorted (p_adjust.mbt:388)`, `tsbh_p_adjust (p_adjust.mbt:484)`, `tsby_p_adjust (p_adjust.mbt:609)`, `array_min (quantile.mbt:7)`, `array_max (quantile.mbt:26)`, `pq_score_ipw (quantile.mbt:116)`, `pq_score_orthogonal (quantile.mbt:156)`, `DoubleMLPQ::new (quantile.mbt:479)`, `DoubleMLPQ::fit_cluster (quantile.mbt:759)`, `DoubleMLPQ::coef (quantile.mbt:913)`, `DoubleMLPQ::confint (quantile.mbt:976)`, `DoubleMLPQ::bootstrap (quantile.mbt:1006)`, `DoubleMLPQ::sensitivity_analysis (quantile.mbt:1050)`, `DoubleMLPQ::sensitivity_analysis_cluster (quantile.mbt:1072)`, `DoubleMLPQ::m_inv_1x1 (quantile.mbt:1176)`, `DoubleMLPQ::sandwich_se (quantile.mbt:1217)`, `DoubleMLPQ::tune (quantile.mbt:1342)`, `DoubleMLQTE::fit_cluster (quantile.mbt:1848)`, `DoubleMLQTE::confint (quantile.mbt:2075)`, `DoubleMLQTE::bootstrap (quantile.mbt:2137)`, `DoubleMLQTE::sensitivity_analysis (quantile.mbt:2215)`, `DoubleMLQTE::sensitivity_analysis_cluster (quantile.mbt:2271)`, `DoubleMLQTE::m_inv_1x1_at (quantile.mbt:2442)`, `DoubleMLQTE::psi_row (quantile.mbt:2470)`, `DoubleMLQTE::sandwich_se_at (quantile.mbt:2536)`, `DoubleMLQTE::cluster_sandwich_se_at (quantile.mbt:2574)`, `DoubleMLQTE::bias_corrected_coef_at (quantile.mbt:2628)`, `DoubleMLQTE::joint_covariance (quantile.mbt:2740)`, `DoubleMLQTE::cluster_joint_covariance (quantile.mbt:2814)`, `DoubleMLQTE::tune (quantile.mbt:2901)`, `psi_at (sandwich.mbt:215)`, `sandwich_variance_hc0 (sandwich.mbt:273)`, `sandwich_variance_hc1 (sandwich.mbt:317)`, `sandwich_variance_hc2 (sandwich.mbt:366)`, `sandwich_variance_hc3 (sandwich.mbt:416)`, `cluster_sandwich_variance (sandwich.mbt:534)`, `bias_corrected_theta (sandwich.mbt:646)`, `did_bootstrap_t_stat (bootstrap.mbt:66)`, `DoubleMLDIDMulti::new (did_multi.mbt:83)`, `expand_gt_keyword (did_multi.mbt:211)`, `DoubleMLDIDMulti::coef_at_idx (did_multi.mbt:305)`, `DoubleMLDIDMulti::se_at_idx (did_multi.mbt:337)`, `did_multi_inner_cell_at_idx (did_multi.mbt:381)`, `DoubleMLDIDMulti::sandwich_se_at_idx (did_multi.mbt:459)`, `DoubleMLDIDMulti::cluster_sandwich_se_at_idx (did_multi.mbt:515)`, `DoubleMLDIDMulti::bias_corrected_coef_at_idx (did_multi.mbt:560)`, `DoubleMLDIDMulti::tune (did_multi.mbt:682)`, `DoubleMLDIDMulti::bootstrap (did_multi.mbt:732)`, `DoubleMLDIDMulti::t_stats (did_multi.mbt:826)`, `DoubleMLDIDMulti::p_values (did_multi.mbt:856)`, `DoubleMLDIDMulti::p_adjust (did_multi.mbt:942)`, `DoubleMLDIDMulti::confint (did_multi.mbt:1029)`, `draw_bootstrap_weights (did_multi.mbt:1126)`, `DoubleMLDIDMulti::aggregate_time (did_multi.mbt:1196)`, `DoubleMLDIDMulti::sensitivity_analysis_cluster (did_multi.mbt:1333)`, `build_lzz2020_dgp (lplr_test.mbt:21)`, `build_panel_dgp (plpr_test.mbt:12)`, `aggregate_coef_se (aggregator.mbt:33)`, `DoubleMLBLP::new (blp_policy.mbt:68)`, `DoubleMLBLP::bootstrap (blp_policy.mbt:409)`, `DoubleMLBLP::rss (blp_policy.mbt:462)`, `DoubleMLBLP::sensitivity_analysis_cluster (blp_policy.mbt:564)`, `DoubleMLBLP::var_y (blp_policy.mbt:620)`, `DoubleMLBLP::orth_signal (blp_policy.mbt:635)`, `DoubleMLBLP::basis (blp_policy.mbt:650)`, `DoubleMLBLP::predictions (blp_policy.mbt:670)`, `DoubleMLBLP::confint_joint (blp_policy.mbt:721)`, `DoubleMLBLP::leverage (blp_policy.mbt:958)`, `blp_hac_require_df (blp_policy.mbt:986)`, `DoubleMLBLP::hac_se (blp_policy.mbt:1032)`, `DoubleMLBLP::cluster_hac_se (blp_policy.mbt:1175)`, `policy_tree_build (blp_policy.mbt:1276)`, `DoubleMLPolicyTree::new (blp_policy.mbt:1585)`, `policy_tree_ints_to_doubles (blp_policy.mbt:1707)`, `policy_tree_ints_from_doubles (blp_policy.mbt:1721)`, `policy_tree_cache_decode (blp_policy.mbt:1782)`, `policy_tree_honest_leaf_se (blp_policy.mbt:1840)`, `DoubleMLPolicyTree::set_min_leaf_n (blp_policy.mbt:2227)`, `DoubleMLPolicyTree::predict (blp_policy.mbt:2289)`, `DoubleMLPolicyTree::split_feature (blp_policy.mbt:2307)`, `DoubleMLPolicyTree::leaf_se (blp_policy.mbt:2408)`, `DoubleMLPolicyTree::leaf_se_reliable (blp_policy.mbt:2438)`, `DoubleMLPolicyTree::unreliable_leaves (blp_policy.mbt:2459)`, `DoubleMLPolicyTree::smallest_leaf_count (blp_policy.mbt:2483)`, `DoubleMLPolicyTree::policy_value (blp_policy.mbt:2537)`, `DoubleMLPolicyTree::policy_value_se (blp_policy.mbt:2605)`, `DoubleMLPolicyTree::leaf_influence (blp_policy.mbt:2668)`, `DoubleMLPolicyTree::leaf_psi_a (blp_policy.mbt:2709)`, `DoubleMLPolicyTree::sensitivity_analysis (blp_policy.mbt:2785)`, `DoubleMLDIDBinaryData::new (did_binary.mbt:30)`, `preprocess_did_binary (did_binary.mbt:111)`, `DoubleMLDIDBinary::new (did_binary.mbt:355)`, `DoubleMLDIDBinary::coef (did_binary.mbt:515)`, `DoubleMLDIDBinary::se (did_binary.mbt:527)`, `DoubleMLDIDBinary::predictions_g0 (did_binary.mbt:572)`, `DoubleMLDIDBinary::predictions_g1 (did_binary.mbt:586)`, `DoubleMLDIDBinary::sandwich_se (did_binary.mbt:655)`, `DoubleMLDIDBinary::cluster_sandwich_se (did_binary.mbt:681)`, `DoubleMLDIDBinary::bias_corrected_coef (did_binary.mbt:703)`, `DoubleMLDIDBinary::psi_a_long (did_binary.mbt:724)`, `DoubleMLDIDBinary::psi_b_long (did_binary.mbt:744)`, `DoubleMLDIDBinary::inner_psi_b (did_binary.mbt:782)`, `DoubleMLDIDBinary::fit (did_binary.mbt:806)`, `DoubleMLDIDBinary::sensitivity_analysis (did_binary.mbt:980)`, `DoubleMLDIDBinary::sensitivity_analysis_cluster (did_binary.mbt:1000)`, `DoubleMLDIDBinary::tune (did_binary.mbt:1080)`, `matrix_predict (vectorized.mbt:50)`, `vector_subtract (vectorized.mbt:77)`, `vector_add (vectorized.mbt:96)`, `vector_scale (vectorized.mbt:115)`, `vector_divide (vectorized.mbt:165)`, `reg_fit_means (regularized.mbt:119)`, `reg_mean_one_weights (regularized.mbt:152)`, `enet_coordinate_descent (regularized.mbt:200)`, `Ridge::fit_weighted (regularized.mbt:421)`, `Ridge::predict (regularized.mbt:479)`, `Lasso::coefficients (regularized.mbt:576)`, `Lasso::fit_weighted (regularized.mbt:612)`, `Lasso::predict (regularized.mbt:650)`, `ElasticNet::coefficients (regularized.mbt:749)`, `ElasticNet::intercept (regularized.mbt:761)`, `ElasticNet::fit_weighted (regularized.mbt:784)`, `ElasticNet::predict (regularized.mbt:828)`, `enet_objective (regularized.mbt:879)`, `irm_style_sensitivity (sensitivity.mbt:31)`, `irm_style_sensitivity_from_elements (sensitivity.mbt:78)`, `irm_style_sensitivity_cluster_from_elements (sensitivity.mbt:233)`, `irm_style_sensitivity_cluster (sensitivity.mbt:317)`, `empirical_quantile (sensitivity.mbt:402)`, `irm_style_sensitivity_cluster_multi (sensitivity.mbt:448)`, `single_psi_sensitivity (sensitivity.mbt:489)`, `compute_sensitivity_bias (sensitivity.mbt:566)`, `gain_statistics (sensitivity.mbt:689)`, `GainStatsSource::new (sensitivity.mbt:859)`, `GainStatsSource::from_blp (sensitivity.mbt:905)`, `GainStatsSource::from_blp_cv (sensitivity.mbt:974)`, `GainStatsSource::from_blp_cv_repeated (sensitivity.mbt:1094)`, `GainStatsSource::from_blp_hc0 (sensitivity.mbt:1220)`, `median_sorted (sensitivity.mbt:1342)`, `joint_sensitivity (sensitivity.mbt:1516)`, `build_irm_tune_data (v065_wbtest.mbt:67)`, `build_dgp_data (v066_wbtest.mbt:21)`, `PSProcessorConfig::new (ps_processor.mbt:38)`, `PSProcessor::adjust_ps (ps_processor.mbt:248)`, `pava (ps_processor.mbt:440)`, `pool_tied_x (ps_processor.mbt:541)`, `fit_isotonic (ps_processor.mbt:581)`, `predict_isotonic (ps_processor.mbt:654)`, `isotonic_calibrate_cv (ps_processor.mbt:748)`, `normalize_ipw (ps_processor.mbt:910)`, `cs_bin_panel_subset (did_cs_binary.mbt:97)`, `cs_bin_crossfit_nuisance (did_cs_binary.mbt:219)`, `fit_cs_bin_g (did_cs_binary.mbt:391)`, `cs_bin_score_obs (did_cs_binary.mbt:441)`, `DoubleMLDIDCSBinary::new (did_cs_binary.mbt:718)`, `DoubleMLDIDCSBinary::coef (did_cs_binary.mbt:807)`, `DoubleMLDIDCSBinary::confint (did_cs_binary.mbt:832)`, `DoubleMLDIDCSBinary::predictions_g_d1_t0 (did_cs_binary.mbt:969)`, `DoubleMLDIDCSBinary::predictions_g_d1_t1 (did_cs_binary.mbt:984)`, `DoubleMLDIDCSBinary::predictions_m (did_cs_binary.mbt:1000)`, `DoubleMLDIDCSBinary::bootstrap (did_cs_binary.mbt:1193)`, `DoubleMLDIDCSBinary::cs_bin_sensitivity_nu2_elements (did_cs_binary.mbt:1263)`, `DoubleMLDIDCSBinary::cs_bin_sensitivity_residuals (did_cs_binary.mbt:1382)`, `DoubleMLDIDCSBinary::sensitivity_analysis_cluster (did_cs_binary.mbt:1465)`, `DoubleMLDIDCSBinary::sandwich_se (did_cs_binary.mbt:1521)`, `DoubleMLDIDCSBinary::cluster_sandwich_se (did_cs_binary.mbt:1554)`, `DoubleMLDIDCSBinary::bias_corrected_coef (did_cs_binary.mbt:1612)`, `DoubleMLDIDCSBinary::tune (did_cs_binary.mbt:1704)`, `make_did_CS2021 (dgp_did_CS2021.mbt:43)`, `make_did_SZ2020 (dgp_did_SZ2020.mbt:19)`, `make_plr_CCDDHNR2018 (dgp_plr_CCDDHNR.mbt:45)`, `aggregate_group (did_aggregation.mbt:41)`, `aggregate_time (did_aggregation.mbt:107)`, `aggregate_event (did_aggregation.mbt:168)`, `generic_bootstrap_t_stat (bootstrap_helper.mbt:47)`, `generic_bootstrap_single_psi (bootstrap_helper.mbt:104)`, `generic_bootstrap_ols_per_coef (bootstrap_helper.mbt:165)`, `make_irm_discrete_treatments (dgp_irm_discrete.mbt:24)`, `make_pliv_multiway_cluster (dgp_pliv_cluster.mbt:35)`, `expand_v086_psi (expand_v086_test.mbt:72)`, `expand_v086_ref_hc0 (expand_v086_test.mbt:96)`, `expand_v087_psi (expand_v087_test.mbt:99)`, `expand_v087_ssm_data (expand_v087_test.mbt:207)`, `expand_v087_cs_binary_data (expand_v087_test.mbt:260)`, `expand_v089_ref_hc0 (expand_v089_test.mbt:111)`, `expand_v089_ref_leverage (expand_v089_test.mbt:137)`, `expand_v089_ref_cluster (expand_v089_test.mbt:171)`, `expand_v089_apo_data (expand_v089_test.mbt:273)`, `expand_v090_data (expand_v090_test.mbt:85)`, `expand_v091_data (expand_v091_test.mbt:92)`, `expand_v091_iivm_data (expand_v091_test.mbt:119)`, `expand_v092_lplr_data (expand_v092_test.mbt:74)`, `expand_v093_lpq_data (expand_v093_test.mbt:83)`, `expand_v094_pq_data_scaled (expand_v094_test.mbt:82)`, `expand_v095_row (expand_v095_test.mbt:159)`, `expand_v095_qte_data_wide (expand_v095_test.mbt:928)`, `v096_side_wls (expand_v096_test.mbt:166)`, `v096_meat (expand_v096_test.mbt:246)`, `v096_meat_leverage (expand_v096_test.mbt:262)`, `v097_reference (expand_v097_test.mbt:79)`, `v098_dbl_array_eq_nan_aware (expand_v098_test.mbt:121)`, `v099_dgp (expand_v099_test.mbt:61)`, `v099_identical (expand_v099_test.mbt:84)`, `expand_v101_row (expand_v101_test.mbt:99)`, `v106_build_panel (expand_v106_test.mbt:52)`, `v107_ssm_dgp (expand_v107_test.mbt:26)`, `v116_assert_exact (expand_v116_test.mbt:134)`, `v117_prob_dev (expand_v117_test.mbt:82)`, `v118_mean (expand_v118_test.mbt:94)`, `v120_max_abs_diff (expand_v120_test.mbt:54)`, `v120_expect (expand_v120_test.mbt:160)`, `v120_kfold_folds (expand_v120_test.mbt:6692)`, `v120_check_ridge (expand_v120_test.mbt:6717)`, `v120_check_enet (expand_v120_test.mbt:6749)`, `v121_max_abs_diff (expand_v121_test.mbt:50)`, `v121_expect (expand_v121_test.mbt:72)`, `v122_expect_bool (expand_v122_test.mbt:257)`, `v128_cs_data (expand_v128_test.mbt:31)`, `v130_cs_data (expand_v130_test.mbt:36)`, `v1316_did_data (expand_v131_test.mbt:18)`, `v1317_data (expand_v131_test.mbt:177)`, `v1330_data (expand_v133_test.mbt:37)`, `v1350_data (expand_v135_test.mbt:42)`, `v1380_data (expand_v138_test.mbt:99)`, `v1480_corr (expand_v148_test.mbt:57)`, `build_clustered_dgp (plr_cluster_test.mbt:10)`, `build_row_dgp (plr_cluster_test.mbt:57)`, `make_did_cs_CS2021 (dgp_did_cs_CS2021.mbt:56)`, `DoubleMLDIDCrossSectionData::new (did_cross_section.mbt:35)`, `DoubleMLDIDCrossSection::psi_a (did_cross_section.mbt:252)`, `DoubleMLDIDCrossSection::psi_b (did_cross_section.mbt:286)`, `DoubleMLDIDCrossSection::predictions_g_d0_t1 (did_cross_section.mbt:316)`, `DoubleMLDIDCrossSection::predictions_g_d1_t1 (did_cross_section.mbt:346)`, `DoubleMLDIDCrossSection::confint (did_cross_section.mbt:451)`, `fit_g_subset_predict (did_cross_section.mbt:630)`, `norm_ppf (did_cross_section.mbt:711)`, `compute_score (did_cross_section.mbt:738)`, `DoubleMLDIDCrossSection::tune (did_cross_section.mbt:1143)`, `DoubleMLDIDCrossSection::bootstrap (did_cross_section.mbt:1191)`, `DoubleMLDIDCrossSection::sensitivity_analysis (did_cross_section.mbt:1291)`, `DoubleMLDIDCrossSection::sensitivity_analysis_cluster (did_cross_section.mbt:1323)`, `DoubleMLDIDCrossSection::sandwich_se (did_cross_section.mbt:1400)`, `DoubleMLDIDCrossSection::cluster_sandwich_se (did_cross_section.mbt:1436)`, `DoubleMLDIDCrossSection::bias_corrected_coef (did_cross_section.mbt:1510)`, `build_iv_clustered_dgp (pliv_cluster_test.mbt:10)`
 
 ## 9. Method summary
 

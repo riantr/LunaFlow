@@ -1,5 +1,9 @@
 # Deep QA report — LunaFlow (`riantr/LunaFlow`) @ 0.1.3
 
+> **This is the 0.1.3 pass, dated 2026-11-10, and it is kept as that pass's record.**
+> The current deep QA report is `docs/qa/REPORT_0_1_29.md`, which covers the current
+> tree and adds the registry self-check and a peer scan.
+
 Date: 2026-11-10
 Scope: the whole repository in `D:\src\MiniMax\Projects\MoonBit\moonbit_LunaFlow`
 Toolchain: `moon 0.1.20261102 (ea07287)`, `moonc v0.10.19+bee578715`, native backend, Windows 11 x64

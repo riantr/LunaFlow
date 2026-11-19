@@ -313,6 +313,7 @@ fn report_for(coord : String) -> String {
     funnel: None,
     abstract_result: None,
     proof: None,
+    abs_universe: 0,
   }
   @app.render_report(input)
 }

@@ -139,8 +139,15 @@ target that is a path, analyze a vendored checkout with the same pipeline. The
 only hard limits are:
 
 - files walk limit (`2000`, stated in `load_module`),
-- interpreted-function cap (`--max-functions`),
+- interpreted-function cap (`--max-functions`) — this caps the **L1 dynamic
+  layer's entry points**, and therefore the trace. It does **not** cap the
+  abstract layer: the L2 analyses the whole module and is bounded by its own
+  step budget instead,
 - per-function step budget (`2000`),
+- the abstract layer's total step budget (twenty times its per-function
+  budget). The abstract layer's scope is the module, so it needs a bound on
+  the TOTAL work and not only on one function's; the report says how far it
+  got, so a truncated analysis is visible rather than silent,
 - expression/statement nesting depth (`256`, `MAX_PARSE_DEPTH`). A deeper
   construct is skipped whole and counted as a parse gap (`unsupported_stmts`),
   never parsed on a deeper native stack: before this guard, 5,000 nested `if`
@@ -220,7 +227,9 @@ State: `Map[var -> AbsCell{value, taint}]`. Transfer functions:
 - `assert`/`require`: "may fail" when the condition can be false;
 - loop condition taint propagates to numeric variables read by the condition (implicit flow), which is why `while i < len { a[i] }` is flagged even though `i` starts at 0.
 
-Cost: linear in the number of statements × fixpoint rounds; measured 187 findings from the 120 doubleML functions in the same run as L1 (8 s total), and 8 findings from 200 static_analysis functions (1.3 s total).
+Cost: linear in the number of statements × fixpoint rounds; measured 1282 findings from the 1411 doubleML functions in the same run as L1 (10.8 s total), and 184 findings from the 1422 static_analysis functions (1.5 s total).
+
+**The universe includes the module's test code.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt`. The L2's scope is therefore the module *as scanned*, and for a module whose tests are most of its code that is a lot of test code: **129 of doubleML's 220 `.mbt` files are test files**. What says how much of the output is about test code is the finding split, not the scope line: measured on the committed doubleML artefact, **24 of the 926 findings shown in §5.2 (2.6 %) are in test files**.
 
 Precision: sound relative to the abstract semantics, but joins and widening lose path and value precision; the default interval bound (`±1,000,000`) is a practical closure, not the mathematical top. Every L2 finding carries `mode = L2-abstract` so it is never confused with an observed L1 fact.
 
@@ -326,7 +335,7 @@ Every parameter is a **taint source** at entry (`EvSource`). Each executed state
 | `call` | call site (callee, argument count, taint) |
 | `abort`, `budget`, `unsupported` | abort path, step budget, parser gap |
 
-Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, 120 interpreted functions by default. A budget hit is reported with `BUDGET-EXCEEDED`, not as a proof of non-termination.
+Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, 150 interpreted functions by default. A budget hit is reported with `BUDGET-EXCEEDED`, not as a proof of non-termination.
 
 **Implicit flows.** When a loop condition is tainted, numeric variables read by that condition are marked tainted (control dependence). This is what lets `while i < len { buffer[i] }` report a tainted index even though `i` is initialized to `0`. It is deliberately conservative; see §5.5 for the precision cost.
 
@@ -1150,16 +1159,21 @@ cap:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 / 0 / 0 (no specs) | 0 | 118 | 8.0 s | 130 KB | 36.8 MB |
-| static_analysis 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 / 0 / 0 (no specs) | 0 | 9 | 1.3 s | 81 KB | 2.5 MB |
-| fixtures/vuln_demo | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms | 33 KB | 79 KB |
+| doubleML 0.164.64 | 220 | 30,258 | 237,904 | **1,282** | 0 / 0 / 0 (no specs) | 0 | 118 | **10.8 s** | **445 KB** | 36.8 MB |
+| static_analysis 0.5.0 | 254 | 17,428 | 17,029 | **184** | 0 / 0 / 0 (no specs) | 0 | 9 | **1.5 s** | **147 KB** | 2.5 MB |
+| fixtures/vuln_demo | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 4 ms | 33 KB | 79 KB |
 
-**The cap is not part of the recipe, and adding it moves every number.** With
-`--max-functions 120` the doubleML run produces **193,962** trace events and
-**141** L2 findings; without it, **237,904** events and **187** findings. The
-committed artefacts are the **no-cap** run, and re-running the recipe with the
-current build reproduces all three of them **byte-identically** — traces
-included.
+Sizes are in **KB = 1024 bytes**, against a 512 KB limit, so the doubleML report
+(455,994 B) sits at **87 %** of A12. The L2 column moved from 187 / 8 to 1,282 / 184
+because the abstract layer's scope stopped being the interpreter's entry-point cap
+and became the whole module; the L1 event and trace columns did not move, and the
+committed trace is byte-identical to the one before the change.
+
+**The cap is not part of the recipe, and adding it moves the dynamic layer's
+numbers.** With `--max-functions 120` the doubleML run produces **193,962** trace
+events; without it, **237,904**. The committed artefacts are the **no-cap** run, and
+re-running the recipe with the current build reproduces all three of them
+**byte-identically** — traces included.
 
 The statement counts fell and the dead-code column emptied because the old
 numbers were wrong: the parser shredded every construct it did not model into
@@ -1302,20 +1316,20 @@ Interpretation:
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 223 passed, 0 failed | 223/223 |
-| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.4.50 |
-| A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.07 %, 95.55 % |
+| A2 | Tests | `moon test src/app --target native` ≥ 229 passed, 0 failed | 229/229 |
+| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.5.0 |
+| A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.82 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
 | A6 | Dead code | fixture reports exactly 3 `DEAD-CODE` + 1 `UNREACHABLE` | 3 / 1 |
 | A7 | Infinite loop | fixture `spin` yields ≥ 1 `INFINITE-LOOP`; unit test pins it | 1 |
 | A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 6; doubleML 118; static 9 |
 | A9 | Ranges | per-point table non-empty; ≥ 1 numeric variable per module | non-empty on all reports |
 | A10 | Slicing | doubleML `theta_hat@aggregate_coef_se` ≥ 4 nodes; static `buf@render_reports` ≥ 1 node | 4, 1 |
-| A11 | Runtime | ≤ 60 s per module on a warm cache | 8.0 s, 1.3 s |
-| A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 130 KB / 36.8 MB; 81 KB / 2.5 MB |
+| A11 | Runtime | ≤ 60 s per module on a warm cache | 10.8 s, 1.5 s |
+| A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 445 KB / 36.8 MB; 147 KB / 2.5 MB |
 | A13 | Determinism | two runs produce identical `summary.json` except `elapsed_ms` | verified |
 | A14 | Verifier | `node scripts/verify.mjs` exits 0 | 87/87 checks pass |
-| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 187 / 8 / 10 |
+| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 1282 / 184 / 10 |
 | A16 | L3 on fixture | ≥ 1 `proved` and ≥ 1 `failed` VC | 2 proved, 1 failed, 3 unknown |
 | A17 | Funnel report | every report contains the funnel Mermaid diagram and L1/L2/L3 rows | present in all three |
 | A18 | Cumulative levels | `--level N` runs levels 1..N; `--funnel` runs all three | covered by unit + E2E runs |

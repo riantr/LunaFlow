@@ -209,7 +209,7 @@ fn conc_last_part(name : String) -> String {
   while i >= 0 {
     let c = name.get_char(i)
     if c == Some('.') || c == Some(':') {
-      return name[i + 1:].to_string()
+      return name[i + 1:].to_owned()
     }
     i = i - 1
   }
@@ -1385,7 +1385,7 @@ fn conc_after_last_dot(name : String) -> String {
   let mut i = name.length() - 1
   while i >= 0 {
     if name.get_char(i) == Some('.') {
-      return name[i + 1:].to_string()
+      return name[i + 1:].to_owned()
     }
     i = i - 1
   }

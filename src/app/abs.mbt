@@ -80,7 +80,7 @@ pub struct AbsState {
 
 ///|
 pub fn AbsState::new() -> AbsState {
-  { env: Map::new(), }
+  { env: Map([]), }
 }
 
 ///|
@@ -1651,12 +1651,12 @@ pub fn run_abstract(
   max_steps : Int32,
 ) -> AbsResult {
   let findings : Array[Finding] = []
-  let ranges : Map[String, AbsRange] = Map::new()
+  let ranges : Map[String, AbsRange] = Map([])
   let mut steps = 0
   let mut count = 0
   // The function table, so the EVOLVED VALUE ANALYSIS knows the width and
   // the Option-ness of what a call returns.
-  let rets : Map[String, String] = Map::new()
+  let rets : Map[String, String] = Map([])
   for f in ast.all_funcs() {
     rets[f.name] = f.ret_ty
   }
@@ -1664,8 +1664,20 @@ pub fn run_abstract(
   // the top-level bindings are constants of the module, and their abstract
   // values are what a function that reads a global sees.
   let global_cells = eval_globals_abs(findings, ranges, rets, ast, max_steps)
+  // The TOTAL step budget. `max_steps` bounds ONE function's analysis, and
+  // the caller hands this layer the WHOLE module rather than the
+  // interpreter's entry-point cap: without a total bound, a module with a
+  // hundred thousand functions would cost a hundred thousand times one
+  // function. The budget is twenty times the per-function one -- a module far
+  // larger than the one this tool is meant to analyse -- and the function
+  // count in the result says how far it got, so a truncated analysis is
+  // visible in the report rather than silent.
+  let total_budget = max_steps * 20
   for f in ast.all_funcs() {
     if count >= max_functions {
+      break
+    }
+    if steps >= total_budget {
       break
     }
     if f.body.length() == 0 {

@@ -455,7 +455,7 @@ pub fn family_excluded(kind : FindingKind) -> String {
 ///|
 /// The whole roster, in the peer's `--explain-all` shape.
 pub fn explain_roster() -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string(
     "families: code, title, and the property each one asserts\n\n",
   )
@@ -488,7 +488,7 @@ pub fn explain_family(code : String) -> String {
       family_codes().join(", ") +
       "\n"
     Some(k) => {
-      let out = StringBuilder::new()
+      let out = StringBuilder()
       out.write_string(k.code() + "  " + family_title(k) + "\n\n")
       out.write_string("  property    " + family_property(k) + "\n\n")
       out.write_string("  assumption  " + family_assumption(k) + "\n\n")

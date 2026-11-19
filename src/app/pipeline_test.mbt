@@ -131,8 +131,8 @@ test "cobertura parser counts covered and total lines" {
   let cov = parse_cobertura(xml, "cov.xml")
   inspect(cov.total, content="3")
   inspect(cov.covered, content="2")
-  inspect(cov.hits_at("a.mbt", 5), content="Some(7)")
-  inspect(cov.hits_at("a.mbt", 4), content="Some(0)")
+  debug_inspect(cov.hits_at("a.mbt", 5), content="Some(7)")
+  debug_inspect(cov.hits_at("a.mbt", 4), content="Some(0)")
 }
 
 ///|

@@ -409,7 +409,7 @@ async fn read_text(path : String) -> String? {
 
 ///|
 fn event_json(ev : @app.TraceEvent) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("{\"k\":\"")
   out.write_string(ev.kind.tag())
   out.write_string("\",\"fn\":\"")
@@ -436,7 +436,7 @@ fn event_json(ev : @app.TraceEvent) -> String {
 
 ///|
 fn traces_jsonl(events : Array[@app.TraceEvent]) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for ev in events {
     out.write_string(event_json(ev))
   }
@@ -456,7 +456,7 @@ fn count_kind(fs : Array[@app.Finding], kind : @app.FindingKind) -> Int32 {
 
 ///|
 fn summary_json(input : @app.ReportInput, report_path : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("{\n")
   out.write_string("  \"module\": \"" + @app.json_escape(input.coord) + "\",\n")
   out.write_string(
@@ -734,8 +734,32 @@ async fn analyze(opts : Opts) -> Unit {
   }
   let taint = @app.build_taint(run.events, run.findings)
   let level = @app.parse_int(opts.level, 1)
+  // The ABSTRACT LAYER'S SCOPE IS THE WHOLE MODULE, and it is NOT the
+  // interpreter's entry-point cap. It used to be `--max-functions` -- 150 by
+  // default -- so on a 957-function module the abstract layer analysed 16 % of
+  // the code and the report's L2 section said "_No findings._" without saying
+  // that the other 84 % had never been looked at. The two caps bound
+  // different things: the interpreter's cap bounds the TRACE, which is what
+  // the A12 size budget is about, and the abstract layer's own step budget
+  // bounds the abstract analysis.
+  //
+  // The universe is every function the module's AST holds that has a body --
+  // and the module's AST holds EVERY `.mbt` file the scanner found, TEST FILES
+  // INCLUDED (the scanner excludes build and vendored trees, not `_test.mbt`).
+  // So the abstract layer reads a module's test code too. That is deliberate:
+  // the layer's claim is "exhaustive over the input abstraction", and the
+  // input abstraction is the module as it was scanned. It is worth knowing
+  // that for a module whose tests are most of its code (doubleML: 129 of its
+  // 220 `.mbt` files are test files) -- but the finding split is what says
+  // how much of the output is about test code rather than production code.
+  let mut abs_universe = 0
+  for f in ast.all_funcs() {
+    if f.body.length() > 0 {
+      abs_universe = abs_universe + 1
+    }
+  }
   let abs_result : @app.AbsResult? = if opts.funnel || level >= 2 {
-    Some(@app.run_abstract(ast, opts.max_functions, 200000))
+    Some(@app.run_abstract(ast, abs_universe, 200000))
   } else {
     None
   }
@@ -865,6 +889,7 @@ async fn analyze(opts : Opts) -> Unit {
     funnel: funnel_result,
     abstract_result: abs_result,
     proof: proof_result,
+    abs_universe,
   }
   ensure_dir(opts.out)
   let stem = @app.safe_stem(coord_file_stem(coord) + "_" + version2)

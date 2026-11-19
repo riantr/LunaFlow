@@ -28,7 +28,7 @@
 | Interpreted steps | 156 |
 | Observed functions | 12 |
 | Entry selection | the first 12 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 5 ms |
+| Wall time (analyzer) | 4 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -394,6 +394,8 @@ flowchart LR
 ### 5.2 L2 abstract findings (may-analysis)
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Two rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. And a tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose.
+
+**Scope.** The abstract layer analysed 12 of 12 — every function the abstract layer can analyse, in 182 steps.
 
 | Rule | Severity | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- |

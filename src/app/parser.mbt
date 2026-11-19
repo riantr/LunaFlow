@@ -206,7 +206,7 @@ fn span_from(start : Tok, stop : Tok, file : String) -> Span {
 
 ///|
 fn render_tokens(toks : Array[Tok], from : Int32, to : Int32) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   let mut started = false
   let mut j = from
   while j < to && j < toks.length() {
@@ -1071,7 +1071,7 @@ fn parse_stmt(p : P) -> Stmt? {
     SContinue
   } else if t.text == "match" {
     ignore(p.bump())
-    while not(p.at_op("{") && !p.eof() && p.peek().kind != TNewline) {
+    while !(p.at_op("{") && !p.eof() && p.peek().kind != TNewline) {
       ignore(p.bump())
     }
     skip_balanced_braces(p)
@@ -1472,7 +1472,7 @@ fn parse_for(p : P) -> StmtKind {
 ///|
 fn parse_params(p : P) -> Array[Param] {
   let out : Array[Param] = []
-  if not(p.at_op("(")) {
+  if !p.at_op("(") {
     return out
   }
   ignore(p.bump())
@@ -1690,7 +1690,7 @@ fn first_ident_of(text : String) -> String {
           break
         }
       }
-      return text[start:i].to_string()
+      return text[start:i].to_owned()
     }
     i = i + 1
   }
@@ -2145,7 +2145,7 @@ pub fn parse_manifest_version(text : String) -> String {
           while j < t.length() && t.get_char(j) != Some('"') {
             j = j + 1
           }
-          return t[i + 1:j].to_string()
+          return t[i + 1:j].to_owned()
         }
         i = i + 1
       }

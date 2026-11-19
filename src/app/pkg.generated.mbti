@@ -907,6 +907,7 @@ pub(all) struct ReportInput {
   funnel : FunnelResult?
   abstract_result : AbsResult?
   proof : ProofResult?
+  abs_universe : Int32
 }
 
 pub(all) struct ReportOptions {

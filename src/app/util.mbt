@@ -21,13 +21,13 @@ pub fn split_lines(text : String) -> Array[String] {
       } else {
         i
       }
-      out.push(text[start:end].to_string())
+      out.push(text[start:end].to_owned())
       start = i + 1
     }
     i = i + 1
   }
   if start <= n {
-    let tail = text[start:].to_string()
+    let tail = text[start:].to_owned()
     if tail != "" || out.length() == 0 {
       out.push(tail)
     }
@@ -49,7 +49,7 @@ pub fn basename(path : String) -> String {
   if idx < 0 {
     path
   } else {
-    path[idx + 1:].to_string()
+    path[idx + 1:].to_owned()
   }
 }
 
@@ -67,7 +67,7 @@ pub fn dirname(path : String) -> String {
   if idx <= 0 {
     "."
   } else {
-    path[:idx].to_string()
+    path[:idx].to_owned()
   }
 }
 
@@ -99,7 +99,7 @@ pub fn path_join(a : String, b : String) -> String {
 /// `.` runs collapse to one, and leading separators/dots are stripped, so the
 /// result can never name a parent directory.
 pub fn safe_stem(s : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   let mut prev_dot = false
   for c in s {
     let code = c.to_int()
@@ -107,7 +107,7 @@ pub fn safe_stem(s : String) -> String {
       (code >= 65 && code <= 90) ||
       (code >= 97 && code <= 122)
     if c == '.' {
-      if not(prev_dot) {
+      if !prev_dot {
         out.write_char('.')
         prev_dot = true
       }
@@ -150,13 +150,13 @@ pub fn strip_ext(path : String) -> String {
   if idx <= 0 {
     path
   } else {
-    path[:idx].to_string()
+    path[:idx].to_owned()
   }
 }
 
 ///|
 pub fn json_escape(s : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for c in s {
     let code = c.to_int()
     if c == '"' {
@@ -186,7 +186,7 @@ pub fn hex4(n : Int32) -> String {
   let b = n / 256 % 16
   let c = n / 16 % 16
   let d = n % 16
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_char(digits.get_char(a).unwrap_or('0'))
   out.write_char(digits.get_char(b).unwrap_or('0'))
   out.write_char(digits.get_char(c).unwrap_or('0'))
@@ -199,15 +199,15 @@ pub fn truncate(s : String, limit : Int32) -> String {
   if s.length() <= limit {
     s
   } else if limit <= 3 {
-    s[:limit].to_string()
+    s[:limit].to_owned()
   } else {
-    s[:limit - 3].to_string() + "..."
+    s[:limit - 3].to_owned() + "..."
   }
 }
 
 ///|
 pub fn normalize_ws(s : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   let mut space = false
   let mut started = false
   for c in s {
@@ -253,7 +253,7 @@ pub fn mermaid_id(prefix : String, n : Int32) -> String {
 
 ///|
 pub fn mermaid_label(s : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for c in s {
     if c == '"' {
       out.write_string("#quot;")
@@ -276,7 +276,7 @@ pub fn mermaid_label(s : String) -> String {
 
 ///|
 pub fn md_escape(s : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for c in s {
     if c == '|' {
       out.write_string("\\|")

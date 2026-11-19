@@ -2447,7 +2447,7 @@ moonx riantr/moonbit_static_analysis@latest <target> [flags]
 | `--funnel` | run the full funnel — L1 dynamic, L2 abstract, L3 contracts, taint and slicing — instead of L1 alone. It also sets `--level 3`. |
 | `--level <n>` | the analysis level (default `1`). |
 | `--trials <n>` | how many samples the dynamic layer runs (default `8`). |
-| `--max-functions <n>` | the cap on functions entered as entry points (default `150`). |
+| `--max-functions <n>` | the cap on functions entered as entry points by the **dynamic** layer (default `150`), and therefore on the trace. It does **not** cap the abstract layer: that one analyses the whole module, is bounded by its own step budget, and report §5.2 states how much of the module it covered. |
 | `--slice <criterion>` | the slicing criterion, spelled exactly — a criterion that names no function yields an empty slice **and** one fewer function run. |
 | `--forward` | the slice direction: forward from the criterion. |
 | `--backward` | the slice direction: backward to the criterion (the default). |
@@ -2525,7 +2525,13 @@ fixtures/ipc_demo/          the IPC and buffer fixture: the short read, the
                            shared buffer, and the safe shapes next to them
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
-docs/qa/REPORT.md          deep QA report (security, coverage, metrics)
+docs/qa/REPORT_0_1_29.md   deep QA report for the current tree (security,
+                           coverage, metrics, the registry self-check and the
+                           peer scan)
+docs/qa/REPORT.md          the deep QA report of the 0.1.3 pass — kept as
+                           that pass's record
+docs/qa/IFDS_SPIKE.md      the Phase-0 IFDS spike: four measurements and
+                           their verdict
 docs/host_requirements.txt  the published wasm's host contract, measured
 reports/                   generated reports for the validation modules
 scripts/verify.mjs         dependency-free acceptance checker
@@ -2551,12 +2557,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 173 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 173 warnings, 0 errors |
-| `moon check --target js` | exit 0, 198 warnings, 0 errors |
-| `moon test src/app --target native` | **223 passed, 0 failed** |
-| `moon test src/app --target wasm` | **223 passed, 0 failed** |
-| `moon test src/app --target js` | **223 passed, 0 failed** |
+| `moon check --target native` | exit 0, 80 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 80 warnings, 0 errors |
+| `moon check --target js` | exit 0, 105 warnings, 0 errors |
+| `moon test src/app --target native` | **229 passed, 0 failed** |
+| `moon test src/app --target wasm` | **229 passed, 0 failed** |
+| `moon test src/app --target js` | **229 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -2573,49 +2579,53 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
-| `node scripts/qa/core_compat.mjs` | **12 library + 1 test-only declaration(s) identical in every core compared** |
+| `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
 | `node scripts/qa/verify_published.mjs 0.1.28` | **4 passed, 0 failed** |
 `moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
 `moon 0.1.20261117` (core 0.10.21+06da1ed44), installed into a scratch home next to
-the verified one: `moon check` gives **173 / 173 / 198 warnings, 0 errors** on native /
-wasm / js, `moon test src/app` gives **223 passed, 0 failed** on each of the three,
-`moon build src/cli --target native` and `moon build . --target wasm` are exit 0, and
-`moon fmt --check` is exit 0. The toolchain the CDN serves as `latest` is still that
-one — its binary has not been rebuilt since this release was verified — but the
-runner takes whatever `latest` is on the day it runs, so this row is a measurement
-of a moving target and is kept honest by re-running it against the newest one
-before every release. The measured runs committed with the reports — the
+the verified one: `moon check` gives **80 / 80 / 105 warnings, 0 errors** on native /
+wasm / js, `moon test src/app` gives **229 passed, 0 failed** on each of the three,
+`moon build src/cli --target native`, `moon build src/cli --target js`,
+`moon build . --target wasm` and `moon build . --target js` are exit 0, and
+`moon fmt --check` is exit 0. **The warning counts are identical to the verified
+toolchain's, and `deprecated` is 0 on both** — which is the point of migrating the
+87 deprecated APIs: the fix holds on the toolchain the runner will actually take.
+The toolchain the CDN serves as `latest` is still that one — its binary has not been
+rebuilt since this release was verified — but the runner takes whatever `latest` is
+on the day it runs, so this row is a measurement of a moving target and is kept
+honest by re-running it against the newest one before every release. The measured
+runs committed with the reports — the
 **Time** column is the `elapsed_ms` of the committed artefact itself, so every cell is
 traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 187 | 0 (no specs) | 0 | 118 | 8.0 s |
-| `riantr/moonbit_static_analysis@latest` → 0.4.50 | 239 | 16,592 | 16,993 | 8 | 0 (no specs) | 0 | 9 | 1.3 s |
-| `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 50 | 6,104 | 9,892 | 1 | 2 / 1 / 3 | 0 | 7 | 0.39 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 1,282 | 0 (no specs) | 0 | 118 | 10.8 s |
+| `riantr/moonbit_static_analysis@latest` → 0.5.0 | 254 | 17,428 | 17,029 | 184 | 0 (no specs) | 0 | 9 | 1.5 s |
+| `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 4 ms |
+| `LunaFlow` itself (`--dir .`) | 51 | 6,388 | 9,903 | 46 | 2 / 1 / 3 | 0 | 7 | 542 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** alternating runs, which is also
 how the deltas below are measured.
 
-The three committed artefacts are the ones the **0.1.24** build generated, with
+The three committed artefacts are regenerated by this release's build, with
 `--funnel --trials 4` and one slice each (`theta_hat@aggregate_coef_se` for doubleML,
 `buf@render_reports` for the static-analysis module, `i@copy_prefix` for the fixture).
 `node scripts/verify.mjs` checks all three, and the version in each file name is the
 version the registry served when it was generated.
 
-**This release reproduces them rather than replacing them**, because the change is in
-the parser and the parser's output on these three trees did not move: the fixture's
-report and trace are **byte-identical**, doubleML's 38.5 MB trace is
-**byte-identical** (only the wall-time cell of the report differs, and that cell is
-a timing measurement), and the static-analysis module — at the version the registry
-serves now — gives the same **20 rows, 0 removed, 0 added** against the published
-0.1.24 artifact. The committed files therefore stay as they are, and they remain
-measurements of the analyser that ships with this release.
+**The abstract layer's scope is why the L2 column moved.** It used to be the
+dynamic layer's entry-point cap, so the L2 column read 187 findings on doubleML
+because the layer had only ever seen the first 150 functions. It now analyses the
+whole module — 1,411 functions — and the report says so in §5.2. The **L1 columns
+and both traces are untouched by that**: the fixture's report and trace and
+doubleML's 38.5 MB trace are **byte-identical**, and the only cell that differs in
+the fixture's report is the new scope line. The static-analysis module is a new
+file because the registry serves a newer version of it.
 
 **The absolute times move with the machine, so the comparison that counts is the
 controlled one.** Over the same 220-file module, with the two builds alternating and
@@ -2642,21 +2652,21 @@ measured:
 The change removes one unused parameter and adds no work, so the deltas are the
 machine's noise, not the code's.
 
-**Reproduction status (2026-11-18).** The rows above are the committed
+**Reproduction status (2026-11-19).** The rows above are the committed
 artefacts, pinned to the versions resolved on the day they were generated. They were
-**regenerated by the 0.1.24 build**, and this release's build **reproduces them** —
-byte-identical traces for the fixture and for doubleML, and 0 row differences on the
-static-analysis module. What moved on the registry side is the static-analysis
-module's own version, and neither move is a regression:
+**regenerated by this release's build**, and both registry artefacts' **traces are
+byte-identical** to the ones they replace, while the L2 column moved — because the
+abstract layer's scope is now the whole module instead of the dynamic layer's
+entry-point cap. What moved on the registry side is the static-analysis module's own
+version, and neither move is a regression:
 
-- the **static-analysis module** is now **0.4.50** — the registry served a newer version
+- the **static-analysis module** is now **0.5.0** — the registry served a newer version
   — and it is a bigger module than the 0.4.46 the previous artefacts were made from
-  (199 → 239 files, 12,970 → 16,592 statements). The registry serves **0.4.52** today;
-  analysed with this build it gives the same 20 rows the published 0.1.24 artifact
-  gives, so the analyser did not change on that tree either;
-- **doubleML** moved from 29,853 to **30,258** statements and from 166 to **187** L2
-  findings. The reason is the **0.1.19 parser fix**: a range loop's body used to be
-  left behind, and the statements in it were never counted.
+  (199 → 254 files, 12,970 → 17,428 statements);
+- **doubleML** moved from 29,853 to **30,258** statements — the **0.1.19 parser fix**:
+  a range loop's body used to be left behind, and the statements in it were never
+  counted — and from 187 to **1,282** L2 findings, which is the abstract layer's scope
+  moving from 150 functions to all **1,411** of them.
 
 The earlier rows said 43,822 statements, 137 dead-code findings and 102 taint sinks for
 doubleML, and 14,505 / 48 / 103 for the static-analysis module. The reason is
@@ -2708,11 +2718,25 @@ moon run src/cli --target native -- analyze riantr/moonbit_doubleML@latest \
 ```
 
 **There is NO `--max-functions` cap in that recipe, and adding one changes every
-number.** Measured on the committed artefacts: with `--max-functions 120` the
-doubleML run produces **193,962** trace events and **141** L2 findings; without it,
-**237,904** events and **187** findings. The committed artefacts are the **no-cap**
-run, and re-running the recipe above with this release's build reproduces all three
-of them **byte-identically** — traces included.
+L1 number.** Measured on the committed artefacts: with `--max-functions 120` the
+doubleML run produces **193,962** trace events; without it, **237,904**. The cap
+binds the **dynamic** layer's entry points, and with them the trace.
+
+**The abstract layer's scope is NOT that cap.** It analyses the whole module — all
+**1,411** doubleML functions — and is bounded by its own step budget instead, so the
+L2 row of the funnel reads **1282 findings, 1411 functions, 167271 steps**. Report
+§5.2 states that scope in words, so a reader can tell a complete analysis from a
+truncated one instead of having to infer it.
+
+**"The whole module" includes the module's test code**, because the scanner reads
+every `.mbt` file it finds — it excludes build and vendored trees, not `_test.mbt`.
+For doubleML that is **129 of 220 files**. What says how much of the output is about
+test code is the finding split: on the committed doubleML artefact, **24 of the 926
+findings in §5.2 (2.6 %) are in test files**.
+
+The committed artefacts are the **no-cap** run, and re-running the recipe above with
+this release's build reproduces all three of them **byte-identically** — traces
+included.
 
 The module version is part of the artefact's file name, so a new release of a
 validation module means a new file and a new pin in `scripts/verify.mjs`. One
@@ -2739,8 +2763,11 @@ fails on an identifier the coverage reporter **reserves** (the reporter's lexer
 is stricter than the compiler) and on a **stale trace tree** under the
 repository, either of which makes `moon coverage analyze` fail outright. The
 report of the last deep QA pass is
-`docs/qa/REPORT.md` — it covers 0.1.3 and is dated 2026-11-10, so it is a
-record of that pass and not a claim about this version.
+`docs/qa/REPORT_0_1_29.md` — it covers the current tree (the 0.1.29 release candidate:
+the published 0.1.28 plus the Phase-0 IFDS spike, the abstract layer's scope fix and the
+deprecation migration), is dated 2026-11-19, and measures sixteen dimensions plus
+the registry self-check and a peer scan. The 0.1.3 pass is kept as
+`docs/qa/REPORT.md`: it is a record of that pass, not a claim about this version.
 
 Two things deliberately **not** claimed. No production-load testing has been
 done, and no head-to-head comparison against another analyzer **on the same

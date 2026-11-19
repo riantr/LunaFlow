@@ -6,7 +6,7 @@
 //
 // Usage: node scripts/qa/e2e.mjs [--out <dir>] [--skip-modules]
 import { spawnSync } from 'node:child_process';
-import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { resolveCli } from './cli_bin.mjs';
 
@@ -18,6 +18,32 @@ const skipModules = process.argv.includes('--skip-modules');
 if (!existsSync(exe)) {
   console.error(`missing binary: ${exe}\nrun: moon build src/cli --target native`);
   process.exit(2);
+}
+
+// THE BINARY UNDER TEST IS BUILT HERE, not assumed. This harness measures
+// the PRODUCT's behaviour -- its findings, its counts, its wall time -- and a
+// binary left over from an earlier build measures the product as it WAS. That
+// is not a hypothetical: the abstract layer's scope change was measured
+// against a stale binary here and reported the OLD scope, because the
+// harness ran whatever `cli.exe` was on disk.
+//
+// The build is incremental, so on a warm tree it costs a second and prints
+// "no work to do"; on a cold one it is the build the CI step would have done
+// anyway. It happens BEFORE any timed run, so it never lands inside a
+// measurement.
+{
+  const build = spawnSync('moon', ['build', 'src/cli', '--target', 'native'], {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 900000,
+    maxBuffer: 32 * 1024 * 1024,
+    shell: true,
+  });
+  if (build.status !== 0) {
+    console.error('the CLI build failed, so there is nothing to test:');
+    console.error((build.stderr ?? '') + (build.stdout ?? ''));
+    process.exit(2);
+  }
 }
 
 let checks = 0;
@@ -131,14 +157,34 @@ const modules = skipModules
         stemPrefix: 'riantr_moonbit_static_analysis@latest_',
         slice: 'buf@render_reports',
         minSlice: 1,
-        // The honest count for 0.4.45 is 11729; the 16713 the published
-        // build reported included the shredded fragments.
+        // A scale check, not a count check: the statement count used to be
+        // 43822 for doubleML, and that number was wrong twice over -- the
+        // parser shredded every construct it did not model into one statement
+        // per fragment, and a shredded fragment ate the closing brace of its
+        // function, so whole function bodies were truncated. Both are fixed.
+        //
+        // The floor moves with the module's own releases: this module's
+        // statement count was 11,750 at 0.4.45 and 17,428 at 0.5.0. The floor
+        // is set low enough that it survives a release, because what it is
+        // really testing is that the analyser READ the module at all.
         minStmts: 7000,
       },
     ];
 
 for (const mod of modules) {
   const dir = join(outRoot, mod.label);
+  // THE OUTPUT DIRECTORY IS EMPTIED BEFORE THE RUN. The artefact names carry
+  // the resolved version, so a directory that has been used before holds one
+  // set of files PER VERSION, and `readdirSync().find()` returns the first
+  // match -- which is the OLDEST one, not the one this run just wrote.
+  //
+  // MEASURED: on 2026-11-19 the run wrote `..._0.5.0.md` and the harness
+  // measured `..._0.4.45.md`, dated nine days earlier, because that file
+  // sorted first. Every count the harness reported for this module -- the
+  // statement count, the report size, the L2 finding count, even the
+  // "resolved version" -- was a week-old number, and the run still passed.
+  // A clean directory makes the only files present the ones this run wrote.
+  rmSync(dir, { recursive: true, force: true });
   const { ms } = runCli(mod.label, [
     'analyze',
     mod.coord,
@@ -176,6 +222,9 @@ for (const mod of modules) {
 // --- full-size run (no --function): A11/A12 at documented scale ----------
 if (!skipModules) {
   const full = join(outRoot, 'doubleML-full');
+  // The same reason as the module runs above: the directory accumulates one
+  // set of files per resolved version, and only this run's files may be read.
+  rmSync(full, { recursive: true, force: true });
   const { ms } = runCli('doubleML full', [
     'analyze',
     'riantr/moonbit_doubleML@latest',
@@ -208,8 +257,11 @@ if (!skipModules) {
       check('doubleML full: dead code findings <= 5', summary.dead_code <= 5, `${summary.dead_code}`);
       check('doubleML full: taint sinks >= 100', summary.taint_sinks >= 100, `${summary.taint_sinks}`);
       // The L2 count moved from 127 to 204 for the same reason: the abstract
-      // interpreter sees the code now.
-      check('doubleML full: L2 findings within 50% of documented 204', Math.abs(summary.abstract_findings - 204) <= 102, `${summary.abstract_findings}`);
+      // interpreter sees the code now. It moved again, from 187 to 1282, when
+      // the abstract layer's scope stopped being the interpreter's entry-point
+      // cap and became the WHOLE module: the committed artefact is the
+      // full-scope run, and 1282 is its number.
+      check('doubleML full: L2 findings within 50% of documented 1282', Math.abs(summary.abstract_findings - 1282) <= 641, `${summary.abstract_findings}`);
     }
   }
 }

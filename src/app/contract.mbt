@@ -267,8 +267,8 @@ fn prove_expr(
 
 ///|
 fn prove_from_facts(goal : Expr, facts : Array[Expr]) -> (VCStatus, String) {
-  let lo : Map[String, Double] = Map::new()
-  let hi : Map[String, Double] = Map::new()
+  let lo : Map[String, Double] = Map([])
+  let hi : Map[String, Double] = Map([])
   for f in facts {
     absorb_fact(f, lo, hi)
   }
@@ -978,7 +978,7 @@ pub fn check_contracts(ast : ModuleAst, only : Array[String]) -> ProofResult {
     for inv in c.invariants {
       facts.push(inv)
     }
-    let state : Map[String, Expr] = Map::new()
+    let state : Map[String, Expr] = Map([])
     for p in f.params {
       state[p.name] = Expr::new(f.span, EName(p.name))
     }

@@ -78,10 +78,10 @@ struct EvaState {
 ///|
 fn EvaState::new(rets : Map[String, String]) -> EvaState {
   {
-    none: Map::new(),
-    width: Map::new(),
-    uninit_len: Map::new(),
-    uninit_set: Map::new(),
+    none: Map([]),
+    width: Map([]),
+    uninit_len: Map([]),
+    uninit_set: Map([]),
     uninit_any: [],
     loop_depth: 0,
     rets,

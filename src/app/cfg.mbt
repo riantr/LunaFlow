@@ -378,7 +378,7 @@ pub fn build_cfg(fn_name : Func) -> Cfg {
 ///|
 pub fn cfg_findings(cfg : Cfg) -> Array[Finding] {
   let out : Array[Finding] = []
-  let incoming = Map::new()
+  let incoming = Map([])
   for e in cfg.edges {
     incoming[e.to] = incoming.get_or_default(e.to, 0) + 1
   }
@@ -464,7 +464,7 @@ pub fn find_func(ast : ModuleAst, name : String) -> Func? {
 
 ///|
 pub fn cfg_label_counts(cfg : Cfg) -> Map[String, Int32] {
-  let m : Map[String, Int32] = Map::new()
+  let m : Map[String, Int32] = Map([])
   for n in cfg.nodes {
     let key = match n.kind {
       NEntry => "entry"

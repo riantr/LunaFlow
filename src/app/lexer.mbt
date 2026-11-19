@@ -109,9 +109,9 @@ pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
       let start_col = col
       i = i + 1
       col = col + 1
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       let mut closed = false
-      while i < n && not(closed) {
+      while i < n && !closed {
         let d = src.get_char(i).unwrap_or(' ')
         if d == '\\' && i + 1 < n {
           let e = src.get_char(i + 1).unwrap_or(' ')
@@ -203,7 +203,7 @@ pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
         }
         toks.push({
           kind: TInt,
-          text: src[start:i].to_string(),
+          text: src[start:i].to_owned(),
           line,
           col: start_col,
         })
@@ -231,7 +231,7 @@ pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
             break
           }
         }
-        let text = src[start:i].to_string()
+        let text = src[start:i].to_owned()
         toks.push({
           kind: if is_double {
             TDouble
@@ -267,7 +267,7 @@ pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
       }
       toks.push({
         kind: TIdent,
-        text: src[start:i].to_string(),
+        text: src[start:i].to_owned(),
         line,
         col: start_col,
       })
@@ -283,8 +283,8 @@ pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
     // 0,1,2,3, so `..<` has an EXCLUSIVE end and `..<=` an INCLUSIVE one. A
     // bare `a..b` is a parse error in MoonBit ("Missing `=` after `..`"), so
     // there is no two-character range to read.
-    let three = if i + 2 < n { src[i:i + 3].to_string() } else { "" }
-    let four = if i + 3 < n { src[i:i + 4].to_string() } else { "" }
+    let three = if i + 2 < n { src[i:i + 3].to_owned() } else { "" }
+    let four = if i + 3 < n { src[i:i + 4].to_owned() } else { "" }
     if four == "..<=" {
       toks.push({ kind: TOp, text: four, line, col: start_col, })
       i = i + 4
@@ -297,7 +297,7 @@ pub fn lex_at(src : String, base_line : Int32) -> Array[Tok] {
       col = col + 3
       continue
     }
-    let two = if i + 1 < n { src[i:i + 2].to_string() } else { "" }
+    let two = if i + 1 < n { src[i:i + 2].to_owned() } else { "" }
     let is_two = two == "==" ||
       two == "!=" ||
       two == "<=" ||
