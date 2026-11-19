@@ -67,7 +67,7 @@ fn record_length_bound(
     None => ()
   }
   xs.push(base)
-  st.env[key] = AbsCell::new(AStr(xs), TClean)
+  st.env[key] = AbsCell::new(AStr(xs), [])
 }
 
 ///|
@@ -119,7 +119,7 @@ fn drop_length_bounds(st : AbsState, name : String) -> Unit {
               if kept.length() == 0 {
                 ignore(st.env.remove(key))
               } else {
-                st.env[key] = AbsCell::new(AStr(kept), TClean)
+                st.env[key] = AbsCell::new(AStr(kept), [])
               }
             }
           }
@@ -166,7 +166,7 @@ fn prune_length_bounds(out : AbsState, a : AbsState, b : AbsState) -> Unit {
       if kept.length() == 0 {
         ignore(out.env.remove(key))
       } else {
-        out.env[key] = AbsCell::new(AStr(kept), TClean)
+        out.env[key] = AbsCell::new(AStr(kept), [])
       }
     }
   }

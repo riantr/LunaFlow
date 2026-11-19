@@ -451,14 +451,58 @@ fn spike_index_stmts(stmts : Array[Stmt], out : Map[Int32, Stmt]) -> Unit {
 ///|
 /// The NAMES an expression reads.
 ///
-/// The L2's blanket rule taints the names the condition reads, so the spike
-/// needs the same set. The L2's own `collect_names` is reused: the spike
-/// and the L2 must agree on WHICH names a condition reads, and there is one
-/// implementation of that question in this package.
+/// The spike's own implementation: the spike is the engine the L2 is
+/// MEASURED against, and an engine that borrows the other one's name
+/// collector is not independent of it. (It used to borrow the L2's
+/// `collect_names`, which the L2's blanket rule needed and the spike's
+/// `rule:loop` mode still models.)
 fn spike_names_of(e : Expr) -> Array[String] {
   let names : Array[String] = []
-  collect_names(e, names)
+  spike_collect_names(e, names)
   names
+}
+
+///|
+fn spike_collect_names(e : Expr, out : Array[String]) -> Unit {
+  match e.kind {
+    EName(n) => if !out.contains(n) { out.push(n) }
+    EBin(_, a, b) => {
+      spike_collect_names(a, out)
+      spike_collect_names(b, out)
+    }
+    EUn(_, a) => spike_collect_names(a, out)
+    EIndex(a, b) => {
+      spike_collect_names(a, out)
+      spike_collect_names(b, out)
+    }
+    ESlice(a, s, en) => {
+      spike_collect_names(a, out)
+      match s {
+        Some(x) => spike_collect_names(x, out)
+        None => ()
+      }
+      match en {
+        Some(x) => spike_collect_names(x, out)
+        None => ()
+      }
+    }
+    EMethod(a, _, args) => {
+      spike_collect_names(a, out)
+      for x in args {
+        spike_collect_names(x, out)
+      }
+    }
+    ECall(_, args) =>
+      for x in args {
+        spike_collect_names(x, out)
+      }
+    EField(a, _) => spike_collect_names(a, out)
+    EArray(xs) | ETuple(xs) =>
+      for x in xs {
+        spike_collect_names(x, out)
+      }
+    _ => ()
+  }
 }
 
 ///|
@@ -1292,14 +1336,21 @@ test "ifds_spike: a tainted value that is overwritten leaves no taint behind" {
 }
 
 ///|
-/// GROUND TRUTH 5 -- the L2 finds the same sink the spike with the rule
-/// finds, and the spike without the rule does not.
+/// GROUND TRUTH 5 -- the L2 and the flow-sensitive fixpoint agree on the
+/// loop counter, and the honest claim survives.
 ///
-/// The L2 and the spike with the rule are the two engines that are
-/// supposed to agree. If they do not, the comparison the measurement makes
-/// is measuring the difference between the engines and not the difference
-/// between the modes.
-test "ifds_spike: the spike with the rule and the L2 agree on the loop counter" {
+/// This assertion CHANGED with Phase 1. It used to say "the L2 finds the
+/// same sink the spike WITH the blanket rule finds" -- because the L2
+/// carried the blanket rule too. Phase 1 deleted the rule from the L2, so
+/// the L2 now agrees with the spike WITHOUT it: neither claims that the
+/// counter is tainted, because it is not -- the BOUND is, and the counter's
+/// value is bounded by it.
+///
+/// What survives is the honest claim: the index may be out of bounds. That
+/// is the VALUE domain's relation between the counter and the bound, and
+/// it is asserted here so that deleting the rule cannot silently lose the
+/// signal the rule was a proxy for.
+test "ifds_spike: the L2 and the flow-sensitive fixpoint agree on the loop counter" {
   let src =
     #|pub fn f(xs : Array[Int], ys : Array[Int]) -> Int {
     #|  let mut total = 0
@@ -1313,13 +1364,24 @@ test "ifds_spike: the spike with the rule and the L2 agree on the loop counter" 
     #|
   let ast = spike_ast_of([parse_file("a.mbt", src)])
   let l2 = run_abstract(ast, 10, 1000)
-  let mut n = 0
+  let mut taint = 0
+  let mut oob = 0
   for f in l2.findings {
     if f.kind == FTaintIndex {
-      n = n + 1
+      taint = taint + 1
+    }
+    if f.kind == FIndexOob {
+      oob = oob + 1
     }
   }
-  assert_eq(n, 1)
+  // The counter is NOT tainted, so no tainted index is claimed.
+  assert_eq(taint, 0)
+  // The index may still be out of bounds, and that claim is made.
+  assert_eq(oob, 1)
+  // The spike without the rule agrees: no sink either.
+  assert_eq(spike_sites(ast, SpikePlain).length(), 0)
+  // The spike WITH the rule still claims one -- the rule's claim is what
+  // Phase 1 removed from the L2.
   assert_eq(spike_sites(ast, SpikeWithRule).length(), 1)
 }
 

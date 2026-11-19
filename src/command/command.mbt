@@ -846,6 +846,11 @@ async fn analyze(opts : Opts) -> Unit {
       abs_universe = abs_universe + 1
     }
   }
+  // The FLOW pass's universe: the functions the CFG pass was given. It is
+  // the count of the functions that are not test blocks -- NOT the scanner's
+  // count, which includes them. The coverage line divides by this, so the
+  // number it reports is about the functions the pass could have covered.
+  let cfg_universe = ast.all_funcs().length()
   let abs_result : @app.AbsResult? = if opts.funnel || level >= 2 {
     Some(@app.run_abstract(ast, abs_universe, 200000))
   } else {
@@ -979,6 +984,7 @@ async fn analyze(opts : Opts) -> Unit {
     abstract_result: abs_result,
     proof: proof_result,
     abs_universe,
+    cfg_universe,
   }
   ensure_dir(opts.out)
   let stem = @app.safe_stem(coord_file_stem(coord) + "_" + version2)

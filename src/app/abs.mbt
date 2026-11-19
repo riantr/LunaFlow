@@ -11,17 +11,6 @@ pub(all) enum AbsVal {
 }
 
 ///|
-#derive(Eq)
-pub(all) enum TaintMode {
-  TClean
-  TMaybe
-  TTainted
-}
-
-///|
-pub extend TaintMode with Eq::{not_equal, equal}
-
-///|
 pub fn AbsVal::code(self : AbsVal) -> String {
   match self {
     ABottom => "bottom"
@@ -45,32 +34,92 @@ pub fn AbsVal::code(self : AbsVal) -> String {
 }
 
 ///|
-pub fn TaintMode::join(a : TaintMode, b : TaintMode) -> TaintMode {
-  match (a, b) {
-    (TTainted, _) | (_, TTainted) => TTainted
-    (TMaybe, _) | (_, TMaybe) => TMaybe
-    _ => TClean
+/// The SOURCES of a taint: the labels of where the taint came from.
+///
+/// A source is `param:<name>` -- the parameter whose value may have reached
+/// the tainted value. The set is FINITE: it is a subset of the function's
+/// parameters, so the join grows to at most one entry per parameter and the
+/// widening can never run away. That is the difference between this domain
+/// and the interval domain beside it, whose bound goes to a million in either
+/// direction.
+///
+/// The set is EMPTY for a clean value. A value with a non-empty set carries
+/// every source in it, and the label says WHICH ones -- so a reader of a
+/// taint finding does not have to guess which value was untrusted.
+fn srcs_union(a : Array[String], b : Array[String]) -> Array[String] {
+  let out = a.copy()
+  for s in b {
+    if !out.contains(s) {
+      out.push(s)
+    }
   }
+  out
 }
 
 ///|
-pub fn TaintMode::code(self : TaintMode) -> String {
-  match self {
-    TClean => "clean"
-    TMaybe => "maybe"
-    TTainted => "tainted"
+/// Whether two source sets hold the same sources.
+fn srcs_same(a : Array[String], b : Array[String]) -> Bool {
+  if a.length() != b.length() {
+    return false
   }
+  for s in a {
+    if !b.contains(s) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+/// Whether a value carries any taint at all.
+fn srcs_tainted(srcs : Array[String]) -> Bool {
+  srcs.length() > 0
+}
+
+///|
+/// The source set as the reader sees it.
+///
+/// `["param:len"]` reads as "parameter `len`"; two sources read as
+/// "parameters `a` and `b`".
+fn srcs_label(srcs : Array[String]) -> String {
+  let names : Array[String] = []
+  for s in srcs {
+    let parts = s.split(":").to_array()
+    names.push(parts[parts.length() - 1].to_owned())
+  }
+  let sorted = sort_strings(names)
+  if sorted.length() == 0 {
+    return "an unlabelled source"
+  }
+  if sorted.length() == 1 {
+    return "parameter `" + sorted[0] + "`"
+  }
+  let mut out = "parameters "
+  for i in 0..<sorted.length() {
+    if i > 0 {
+      out = out + (if i == sorted.length() - 1 { " and " } else { ", " })
+    }
+    out = out + "`" + sorted[i] + "`"
+  }
+  out
+}
+
+///|
+/// The source label of a parameter: the taint a parameter's value carries.
+fn param_source(name : String) -> String {
+  "param:" + name
 }
 
 ///|
 pub struct AbsCell {
   v : AbsVal
-  t : TaintMode
+  /// The SOURCES of the taint this value carries. Empty means clean.
+  srcs : Array[String]
 }
 
 ///|
-pub fn AbsCell::new(v : AbsVal, t : TaintMode) -> AbsCell {
-  { v, t, }
+pub fn AbsCell::new(v : AbsVal, srcs : Array[String]) -> AbsCell {
+  { v, srcs, }
 }
 
 ///|
@@ -120,7 +169,10 @@ fn abs_join_state(a : AbsState, b : AbsState) -> AbsState {
     let ca = pair.1
     match b.env.get(name) {
       Some(cb) =>
-        out.env[name] = AbsCell::new(abs_join_val(ca.v, cb.v), ca.t.join(cb.t))
+        out.env[name] = AbsCell::new(
+          abs_join_val(ca.v, cb.v),
+          srcs_union(ca.srcs, cb.srcs),
+        )
       None => out.env[name] = ca
     }
   }
@@ -156,7 +208,7 @@ fn abs_state_equal(a : AbsState, b : AbsState) -> Bool {
   for pair in a.env.to_array() {
     match b.env.get(pair.0) {
       Some(cb) =>
-        if !abs_val_equal(pair.1.v, cb.v) || pair.1.t != cb.t {
+        if !abs_val_equal(pair.1.v, cb.v) || !srcs_same(pair.1.srcs, cb.srcs) {
           return false
         }
       None => return false
@@ -186,7 +238,10 @@ fn abs_widen(old : AbsState, next : AbsState) -> AbsState {
               // below the array's length could not be used.
               let lo = if nl < ol { -1000000 } else { ol }
               let hi = if nh > oh { 1000000 } else { oh }
-              out.env[name] = AbsCell::new(AInt(lo, hi), cn.t.join(co.t))
+              out.env[name] = AbsCell::new(
+                AInt(lo, hi),
+                srcs_union(cn.srcs, co.srcs),
+              )
             } else {
               out.env[name] = cn
             }
@@ -194,7 +249,7 @@ fn abs_widen(old : AbsState, next : AbsState) -> AbsState {
             if nl < ol || nh > oh {
               out.env[name] = AbsCell::new(
                 ADouble(-1000000.0, 1000000.0),
-                cn.t.join(co.t),
+                srcs_union(cn.srcs, co.srcs),
               )
             } else {
               out.env[name] = cn
@@ -202,7 +257,7 @@ fn abs_widen(old : AbsState, next : AbsState) -> AbsState {
           _ =>
             out.env[name] = AbsCell::new(
               abs_join_val(co.v, cn.v),
-              cn.t.join(co.t),
+              srcs_union(cn.srcs, co.srcs),
             )
         }
       None => out.env[name] = cn
@@ -355,7 +410,7 @@ fn abs_binop(
   a : AbsCell,
   b : AbsCell,
 ) -> AbsCell {
-  let t = a.t.join(b.t)
+  let t = srcs_union(a.srcs, b.srcs)
   match (a.v, b.v) {
     (AInt(al, ah), AInt(bl, bh)) =>
       match op {
@@ -540,14 +595,74 @@ fn refine_into(st : AbsState, cond : Expr, truth : Bool) -> Unit {
                     _ => ()
                   }
                   if nl <= nh {
-                    st.env[n] = AbsCell::new(AInt(nl, nh), cell.t)
+                    st.env[n] = AbsCell::new(AInt(nl, nh), cell.srcs)
                   } else {
-                    st.env[n] = AbsCell::new(ABottom, cell.t)
+                    st.env[n] = AbsCell::new(ABottom, cell.srcs)
                   }
                 }
                 _ => ()
               }
             None => ()
+          }
+        (EName(n), EName(m)) =>
+          // A COMPARISON AGAINST ANOTHER VARIABLE: `i < len`.
+          //
+          // This is the relation the blanket loop rule approximated -- the
+          // counter and the bound it is compared against -- stated where a
+          // relation between two numbers can be held: the VALUE domain. The
+          // rule said "the counter is tainted because the bound is"; the
+          // truth is "the counter's VALUE is bounded by the bound", and the
+          // bound's taint says the bound is untrusted, not that the counter
+          // carries the taint.
+          //
+          // The narrowing is SOUND. `n < m` with `m <= m.hi` gives
+          // `n <= m.hi - 1`, and `n >= m` with `m >= m.lo` gives
+          // `n >= m.lo`; the right-hand side's interval is a may interval, so
+          // every value it holds is inside it.
+          //
+          // The arithmetic is done in 64 bits and clamped back, because
+          // MoonBit's own arithmetic WRAPS: a bound that wrapped would be a
+          // wrong bound, and a wrong bound downstream is a false finding
+          // somewhere else.
+          if n == m {
+            ()
+          } else {
+            match (st.env.get(n), st.env.get(m)) {
+              (Some(cn), Some(cm)) =>
+                match (cn.v, cm.v) {
+                  (AInt(nl, nh), AInt(ml, mh)) => {
+                    let mut nlo = nl.to_int64()
+                    let mut nhi = nh.to_int64()
+                    let ml64 = ml.to_int64()
+                    let mh64 = mh.to_int64()
+                    match eff {
+                      OpGe => if ml64 > nlo { nlo = ml64 }
+                      OpGt => if ml64 + 1 > nlo { nlo = ml64 + 1 }
+                      OpLe => if mh64 < nhi { nhi = mh64 }
+                      OpLt => if mh64 - 1 < nhi { nhi = mh64 - 1 }
+                      OpEq => {
+                        if ml64 > nlo {
+                          nlo = ml64
+                        }
+                        if mh64 < nhi {
+                          nhi = mh64
+                        }
+                      }
+                      _ => ()
+                    }
+                    if nlo <= nhi && nlo >= -2147483648L && nhi <= 2147483647L {
+                      st.env[n] = AbsCell::new(
+                        AInt(nlo.to_int(), nhi.to_int()),
+                        cn.srcs,
+                      )
+                    } else {
+                      st.env[n] = AbsCell::new(ABottom, cn.srcs)
+                    }
+                  }
+                  _ => ()
+                }
+              _ => ()
+            }
           }
         (EInt(_), EName(_)) =>
           refine_into(st, Expr::new(cond.span, EBin(flip_op(op), b, a)), truth)
@@ -706,9 +821,9 @@ fn refine_array_length(
             _ => ()
           }
           if nl <= nh {
-            st.env[arr] = AbsCell::new(AArr(nl, nh), cell.t)
+            st.env[arr] = AbsCell::new(AArr(nl, nh), cell.srcs)
           } else {
-            st.env[arr] = AbsCell::new(ABottom, cell.t)
+            st.env[arr] = AbsCell::new(ABottom, cell.srcs)
           }
         }
         _ => ()
@@ -776,11 +891,11 @@ fn abs_eval(
 ) -> AbsCell {
   ctx.steps = ctx.steps + 1
   match e.kind {
-    EInt(n) => AbsCell::new(AInt(n, n), TClean)
-    EDouble(d) => AbsCell::new(ADouble(d, d), TClean)
-    EBool(b) => AbsCell::new(ABool(b, b), TClean)
-    EString(s) => AbsCell::new(AStr([s]), TClean)
-    EBytes(s) => AbsCell::new(AStr([s]), TClean)
+    EInt(n) => AbsCell::new(AInt(n, n), [])
+    EDouble(d) => AbsCell::new(ADouble(d, d), [])
+    EBool(b) => AbsCell::new(ABool(b, b), [])
+    EString(s) => AbsCell::new(AStr([s]), [])
+    EBytes(s) => AbsCell::new(AStr([s]), [])
     EName(n) =>
       match st.env.get(n) {
         Some(c) => c
@@ -789,7 +904,7 @@ fn abs_eval(
           // computed once for the whole module.
           match ctx.globals.get(n) {
             Some(c) => c
-            None => AbsCell::new(ATop, TClean)
+            None => AbsCell::new(ATop, [])
           }
       }
     EBin(OpAnd, a, b) => {
@@ -797,14 +912,14 @@ fn abs_eval(
       let cb = abs_eval(ctx, st, eva, b)
       let (at, af) = bool_of_abs(ca.v)
       let (bt, bf) = bool_of_abs(cb.v)
-      AbsCell::new(ABool(at && bt, af || bf), ca.t.join(cb.t))
+      AbsCell::new(ABool(at && bt, af || bf), srcs_union(ca.srcs, cb.srcs))
     }
     EBin(OpOr, a, b) => {
       let ca = abs_eval(ctx, st, eva, a)
       let cb = abs_eval(ctx, st, eva, b)
       let (at, af) = bool_of_abs(ca.v)
       let (bt, bf) = bool_of_abs(cb.v)
-      AbsCell::new(ABool(at || bt, af && bf), ca.t.join(cb.t))
+      AbsCell::new(ABool(at || bt, af && bf), srcs_union(ca.srcs, cb.srcs))
     }
     EBin(op, a, b) => {
       let ca = abs_eval(ctx, st, eva, a)
@@ -814,15 +929,15 @@ fn abs_eval(
     EUn(UnNeg, a) => {
       let ca = abs_eval(ctx, st, eva, a)
       match ca.v {
-        AInt(l, h) => AbsCell::new(AInt(-h, -l), ca.t)
-        ADouble(l, h) => AbsCell::new(ADouble(-h, -l), ca.t)
-        _ => AbsCell::new(ATop, ca.t)
+        AInt(l, h) => AbsCell::new(AInt(-h, -l), ca.srcs)
+        ADouble(l, h) => AbsCell::new(ADouble(-h, -l), ca.srcs)
+        _ => AbsCell::new(ATop, ca.srcs)
       }
     }
     EUn(UnNot, a) => {
       let ca = abs_eval(ctx, st, eva, a)
       let (t, f) = bool_of_abs(ca.v)
-      AbsCell::new(ABool(f, t), ca.t)
+      AbsCell::new(ABool(f, t), ca.srcs)
     }
     EIndex(base, idx) => {
       let cb = abs_eval(ctx, st, eva, base)
@@ -857,12 +972,14 @@ fn abs_eval(
           index_is_length_relative(base, idx, arr_lo)
         _ => false
       }
-      if ci.t != TClean && is_array && !bounded {
+      if srcs_tainted(ci.srcs) && is_array && !bounded {
         add_finding(
           ctx,
           FTaintIndex,
           e.span.start_line,
-          "tainted value may reach an array index / buffer offset",
+          "tainted value from " +
+          srcs_label(ci.srcs) +
+          " may reach an array index / buffer offset",
           0.6,
           base.render() + "[" + ci.v.code() + "]",
         )
@@ -882,30 +999,30 @@ fn abs_eval(
           eva_check_uninit_read(ctx, eva, base, idx, il, ih, e.span.start_line)
         _ => ()
       }
-      AbsCell::new(ATop, cb.t.join(ci.t))
+      AbsCell::new(ATop, srcs_union(cb.srcs, ci.srcs))
     }
     ESlice(base, start, end) => {
       let cb = abs_eval(ctx, st, eva, base)
       let cs = match start {
         Some(x) => abs_eval(ctx, st, eva, x)
-        None => AbsCell::new(AInt(0, 0), TClean)
+        None => AbsCell::new(AInt(0, 0), [])
       }
       let ce = match end {
         Some(x) => abs_eval(ctx, st, eva, x)
-        None => AbsCell::new(AInt(0, 0), TClean)
+        None => AbsCell::new(AInt(0, 0), [])
       }
       // A slice is clamped by the runtime, so there is no out-of-bounds claim
       // here the way there is for an index. The slice carries the taint of
       // its parts, and that is all that is claimed.
-      AbsCell::new(ATop, cb.t.join(cs.t).join(ce.t))
+      AbsCell::new(ATop, srcs_union(srcs_union(cb.srcs, cs.srcs), ce.srcs))
     }
     ECall(f, args) => {
       let cells : Array[AbsCell] = []
-      let mut t = TClean
+      let mut t : Array[String] = []
       for a in args {
         let c = abs_eval(ctx, st, eva, a)
         cells.push(c)
-        t = t.join(c.t)
+        t = srcs_union(t, c.srcs)
       }
       // The PARSER renders a qualified path with a DOT -- `Array::make(n)`
       // becomes the call name `Array.make` -- so the `::` spelling never
@@ -917,12 +1034,14 @@ fn abs_eval(
         f == "FixedArray::make" {
         if cells.length() > 0 {
           let size = cells[0]
-          if size.t != TClean {
+          if srcs_tainted(size.srcs) {
             add_finding(
               ctx,
               FTaintAlloc,
               e.span.start_line,
-              "tainted value may control an allocation size",
+              "tainted value from " +
+              srcs_label(size.srcs) +
+              " may control an allocation size",
               0.6,
               f + "(" + size.v.code() + ")",
             )
@@ -950,12 +1069,12 @@ fn abs_eval(
           AbsCell::new(AArr(0, 0), t)
         }
       } else if f == "abort" || f == "panic" || f == "fail" {
-        if t != TClean {
+        if srcs_tainted(t) {
           add_finding(
             ctx,
             FUnsupported,
             e.span.start_line,
-            "tainted value may reach abort/panic",
+            "tainted value from " + srcs_label(t) + " may reach abort/panic",
             0.5,
             f,
           )
@@ -998,12 +1117,12 @@ fn abs_eval(
         abs_eval(ctx, st, eva, Expr::new(e.span, ECall(owner + "." + m, args)))
       } else {
         let cr = abs_eval(ctx, st, eva, recv)
-        let mut t = cr.t
+        let mut t = cr.srcs
         let arg_cells : Array[AbsCell] = []
         for a in args {
           let c = abs_eval(ctx, st, eva, a)
           arg_cells.push(c)
-          t = t.join(c.t)
+          t = srcs_union(t, c.srcs)
         }
         // The EVOLVED VALUE ANALYSIS checks: what the RECEIVER IS USED FOR.
         // Each one is a question about the use of a value, not about its range.
@@ -1050,7 +1169,7 @@ fn abs_eval(
                 Some(cell) =>
                   match cell.v {
                     AArr(l, h) =>
-                      st.env[n] = AbsCell::new(AArr(l + 1, h + 1), cell.t)
+                      st.env[n] = AbsCell::new(AArr(l + 1, h + 1), cell.srcs)
                     _ => ()
                   }
                 None => ()
@@ -1067,33 +1186,33 @@ fn abs_eval(
     }
     EField(base, _) => {
       let cb = abs_eval(ctx, st, eva, base)
-      AbsCell::new(ATop, cb.t)
+      AbsCell::new(ATop, cb.srcs)
     }
     EArray(xs) => {
-      let mut t = TClean
+      let mut t : Array[String] = []
       for x in xs {
-        t = t.join(abs_eval(ctx, st, eva, x).t)
+        t = srcs_union(t, abs_eval(ctx, st, eva, x).srcs)
       }
       AbsCell::new(AArr(xs.length(), xs.length()), t)
     }
     ETuple(xs) => {
       let vals : Array[AbsVal] = []
-      let mut t = TClean
+      let mut t : Array[String] = []
       for x in xs {
         let c = abs_eval(ctx, st, eva, x)
         vals.push(c.v)
-        t = t.join(c.t)
+        t = srcs_union(t, c.srcs)
       }
       AbsCell::new(ATuple(vals), t)
     }
-    EFn(_, _) => AbsCell::new(ATop, TClean)
+    EFn(_, _) => AbsCell::new(ATop, [])
     ERange(_, _, _) =>
       // A RANGE is not a value: the toolchain says "Range operators are
       // currently only supported in `for .. in` loops". The `for` loop reads
       // its own range, so a range that reaches here was used somewhere it
       // cannot be used.
-      AbsCell::new(ATop, TClean)
-    EUnknown(_) => AbsCell::new(ATop, TClean)
+      AbsCell::new(ATop, [])
+    EUnknown(_) => AbsCell::new(ATop, [])
   }
 }
 
@@ -1176,7 +1295,7 @@ fn abs_stmt(
         EName(n) => {
           let cur = match st.env.get(n) {
             Some(c) => c
-            None => AbsCell::new(ATop, TClean)
+            None => AbsCell::new(ATop, [])
           }
           let c = abs_binop(
             ctx,
@@ -1308,7 +1427,7 @@ fn abs_stmt(
     SWhile(cond, body) => {
       let mut cur = st
       let mut iter = 0
-      let mut last_cond = AbsCell::new(ABool(true, true), TClean)
+      let mut last_cond = AbsCell::new(ABool(true, true), [])
       // A write inside a loop makes an uninitialized array's written set
       // unbounded, so the loop depth is tracked while the body is analysed.
       let outer_depth = eva.loop_depth
@@ -1321,9 +1440,6 @@ fn abs_stmt(
           break
         }
         let body_in = refine_cond(cur, cond, true)
-        if last_cond.t != TClean {
-          implicit_abs_taint(body_in, cond)
-        }
         let after = abs_block(ctx, body_in, eva, body)
         let next = abs_join_state(cur, after)
         let widened = if iter >= 3 { abs_widen(cur, next) } else { next }
@@ -1401,7 +1517,7 @@ fn abs_stmt(
           // value the binder holds is not known either.
           let cs = abs_eval(ctx, st, eva, start_e)
           let ce = abs_eval(ctx, st, eva, end_e)
-          let t = cs.t.join(ce.t)
+          let t = srcs_union(cs.srcs, ce.srcs)
           // The binder's value is the range's start, up to its end -- one
           // less when the end is EXCLUSIVE.
           //
@@ -1484,7 +1600,7 @@ fn abs_stmt(
           // state, and the loop may run zero times.
           let entry = copy_state(st)
           let mut cur = copy_state(st)
-          let binder = AbsCell::new(ATop, ci.t)
+          let binder = AbsCell::new(ATop, ci.srcs)
           for n in names {
             entry.env[n] = binder
             cur.env[n] = binder
@@ -1547,63 +1663,28 @@ fn copy_state(st : AbsState) -> AbsState {
 }
 
 ///|
-fn implicit_abs_taint(st : AbsState, cond : Expr) -> Unit {
-  let names : Array[String] = []
-  collect_names(cond, names)
-  for n in names {
-    match st.env.get(n) {
-      Some(c) =>
-        match c.v {
-          AInt(_, _) | ADouble(_, _) => st.env[n] = AbsCell::new(c.v, TMaybe)
-          _ => ()
-        }
-      None => ()
-    }
-  }
-}
-
-///|
-fn collect_names(e : Expr, out : Array[String]) -> Unit {
-  match e.kind {
-    EName(n) => if !out.contains(n) { out.push(n) }
-    EBin(_, a, b) => {
-      collect_names(a, out)
-      collect_names(b, out)
-    }
-    EUn(_, a) => collect_names(a, out)
-    EIndex(a, b) => {
-      collect_names(a, out)
-      collect_names(b, out)
-    }
-    ESlice(a, s, en) => {
-      collect_names(a, out)
-      match s {
-        Some(x) => collect_names(x, out)
-        None => ()
-      }
-      match en {
-        Some(x) => collect_names(x, out)
-        None => ()
-      }
-    }
-    EMethod(a, _, args) => {
-      collect_names(a, out)
-      for x in args {
-        collect_names(x, out)
-      }
-    }
-    ECall(_, args) =>
-      for x in args {
-        collect_names(x, out)
-      }
-    EField(a, _) => collect_names(a, out)
-    EArray(xs) | ETuple(xs) =>
-      for x in xs {
-        collect_names(x, out)
-      }
-    _ => ()
-  }
-}
+/// The BLANKET LOOP RULE USED TO LIVE HERE.
+///
+/// It tainted every number a loop condition read, when the condition itself
+/// was tainted. It was a COARSE encoding of one true fact -- "this loop's
+/// bound is untrusted" -- and it produced a false claim at every site it
+/// touched: the number it tainted was the loop's COUNTER, and the counter
+/// does not carry the bound's taint. The counter's VALUE is bounded by the
+/// bound, and that is a relation in the VALUE domain, not a taint.
+///
+/// MEASURED on `riantr/moonbit_doubleML@0.164.64` (the Phase-0 IFDS
+/// spike, re-measured after the D1/D2 repair): the rule was the ONLY reason
+/// 13 of the layer's 236 tainted-index sites existed, and at every one of
+/// those 13 lines the layer ALREADY reported the honest claim -- an index
+/// out of bounds -- beside the rule's tainted-index claim. So the rule put a
+/// false claim on top of a true one and was deleted.
+///
+/// The counter/bound relation it approximated is now stated where it
+/// belongs: `refine_into` narrows a number by the number it is compared
+/// against, so the counter's interval says what the bound allows and the
+/// index check is made against THAT.
+///
+/// The rule's own function and the name-collector it used are gone.
 
 ///|
 pub struct AbsResult {
@@ -1615,19 +1696,25 @@ pub struct AbsResult {
 }
 
 ///|
-fn initial_cell(ty : String) -> AbsCell {
+/// The abstract value a PARAMETER starts with, and the source it carries.
+///
+/// A parameter is a taint SOURCE: its value is the untrusted input, so the
+/// cell carries that parameter's own label. The label is what lets a finding
+/// say WHICH value was untrusted instead of leaving the reader to guess.
+fn initial_cell(ty : String, name : String) -> AbsCell {
+  let srcs = [param_source(name)]
   if ty.contains("Array") || ty.contains("FixedArray") {
-    AbsCell::new(AArr(0, 64), TTainted)
+    AbsCell::new(AArr(0, 64), srcs)
   } else if ty.contains("Bool") {
-    AbsCell::new(ABool(true, true), TTainted)
+    AbsCell::new(ABool(true, true), srcs)
   } else if ty.contains("Double") {
-    AbsCell::new(ADouble(-1000000.0, 1000000.0), TTainted)
+    AbsCell::new(ADouble(-1000000.0, 1000000.0), srcs)
   } else if ty.contains("String") || ty.contains("Char") {
-    AbsCell::new(AStr(["", "abc", "../../etc/passwd"]), TTainted)
+    AbsCell::new(AStr(["", "abc", "../../etc/passwd"]), srcs)
   } else if ty.contains("Int") || ty.contains("UInt") || ty.contains("Byte") {
-    AbsCell::new(AInt(-1000000, 1000000), TTainted)
+    AbsCell::new(AInt(-1000000, 1000000), srcs)
   } else {
-    AbsCell::new(ATop, TTainted)
+    AbsCell::new(ATop, srcs)
   }
 }
 
@@ -1656,7 +1743,7 @@ fn eval_globals_abs(
         if mutated.contains(name) {
           // A mutated global's value at the point of use is not its
           // initializer's value.
-          out[name] = AbsCell::new(ATop, TClean)
+          out[name] = AbsCell::new(ATop, [])
         } else {
           let ctx : AbsContext = {
             fn_name: "<global>",
@@ -1730,7 +1817,7 @@ pub fn run_abstract(
     // says nothing about the same name in another.
     let eva = EvaState::new(rets)
     for p in f.params {
-      st.env[p.name] = initial_cell(p.ty)
+      st.env[p.name] = initial_cell(p.ty, p.name)
       record_abs_range(ctx, p.name, st.env[p.name])
       // A parameter of an Option type may be None: that is the null
       // dereference class, and it starts at the parameter.

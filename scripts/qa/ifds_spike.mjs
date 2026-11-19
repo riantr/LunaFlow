@@ -6,9 +6,13 @@
 // `docs/qa/IFDS_SPIKE.md`:
 //
 //   M1  NO LOST SINK. Every taint site the L2 found is also a site the
-//       spike with the blanket rule found. A site the L2 has and the spike
-//       does not is a sink the flow-sensitive fixpoint LOST, and that is
-//       the one failure this harness exists to catch.
+//       flow-sensitive fixpoint found -- the PLAIN spike, the one with no
+//       blanket rule. A site the L2 has and the fixpoint does not is a sink
+//       the flow-sensitive fixpoint LOST, and that is the one failure this
+//       harness exists to catch. (Phase 1, 2026-11-20: the L2 no longer
+//       carries the blanket rule, so the comparison is with the plain mode.
+//       With the rule on both sides the check was vacuous for the claim that
+//       matters -- the rule invents taint on both sides.)
 //
 //   M2  THE RULE'S CONTRIBUTION. Every site the plain spike found is also
 //       a site the spike with the blanket rule found -- the rule only
@@ -136,8 +140,16 @@ const withRuleSites = keys.filter((k) => sites.get(k).withrule);
 // --- the checks, as functions of the data ------------------------------------
 // They take the data as arguments so that the falsification can break the
 // data and watch them fail.
-const checkM1 = (l2, withRule) => {
-  const missing = l2.filter((k) => !withRule.includes(k));
+//
+// M1 compares the L2 with the PLAIN spike -- the flow-sensitive fixpoint
+// with NO blanket rule. That is the comparison Phase 1 made possible: the
+// L2 no longer carries the blanket rule, so the honest question is whether
+// the L2's taint sites are sites the flow-sensitive fixpoint finds. Before
+// Phase 1 the L2 carried the rule too, and the comparison had to be with
+// the spike's `with-rule` mode -- which made the check VACUOUS for the
+// claim that matters, because the rule invents taint on both sides.
+const checkM1 = (l2, plain) => {
+  const missing = l2.filter((k) => !plain.includes(k));
   return { ok: missing.length === 0, missing };
 };
 const checkM2a = (plain, withRule) => {
@@ -163,7 +175,7 @@ const checkM3 = (gaps, histogramUnsupported, parserUnsupported) => {
   };
 };
 
-const m1 = checkM1(l2Sites, withRuleSites);
+const m1 = checkM1(l2Sites, plainSites);
 const m2a = checkM2a(plainSites, withRuleSites);
 const m2b = checkM2b(sites, plainSites, withRuleSites);
 const m3 = checkM3(
@@ -173,36 +185,34 @@ const m3 = checkM3(
 );
 
 // --- why the spike has sites the L2 does not ---------------------------------
-// Every site the spike has and the L2 does not is attributed to a cause,
-// so that the difference is COUNTED rather than waved at.
+// Every site the flow-sensitive fixpoint has and the L2 does not is
+// attributed to a cause, so that the difference is COUNTED rather than
+// waved at. The attribution is over the PLAIN spike's sites, because that is
+// the set the L2 is compared against (M1).
 //
-//   alloc   -- the site is an allocation size. The L2's allocation rule
-//              matches a name the parser never produces, so the L2's
-//              allocation family cannot fire at all.
-//   dedupe  -- another site of the same kind on the same LINE is one the
-//              L2 has. The L2's `add_finding` keys a finding on
-//              (kind, line, message) and NOT on the file, so the second
-//              file's finding on a line is silently dropped.
-//   made    -- the container is the result of an allocation. The L2 does
-//              not see such a container as an array, for the same reason
-//              as `alloc`.
-//   unknown -- the container's type is not known, so the L2's sink filter
+//   alloc   -- an allocation size. The L2's allocation rule did not fire at
+//              this site: the size's taint did not reach the rule on the
+//              path the L2 analysed.
+//   made    -- the container is the result of an allocation. The spike does
+//              not see such a container as an array.
+//   unknown -- the container's type is not known, so the L2's array filter
 //              stops the site.
 //   array   -- the container IS an array by type, so the L2 agrees about
 //              the container: whatever stopped it is its taint or its
 //              length bound.
+//
+// The Phase-0 attribution had two more causes -- `dedupe` (the L2's
+// file-less de-duplication) and the L2's dead allocation rule. BOTH were
+// REPAIRED (D1 and D2, 2026-11-20), so the causes are gone and the
+// line-collision heuristic that stood in for `dedupe` is not a cause any
+// more: with the file in the key, a same-line finding in another file is
+// not dropped.
 const causes = new Map();
-const l2IndexLines = new Set(
-  [...sites.values()]
-    .filter((s) => s.l2 && s.kind === 'TAINT-INDEX')
-    .map((s) => s.line),
-);
-for (const key of withRuleSites) {
+for (const key of plainSites) {
   if (l2Sites.includes(key)) continue;
   const s = sites.get(key);
   let cause;
   if (s.kind === 'TAINT-ALLOC') cause = 'alloc';
-  else if (l2IndexLines.has(s.line)) cause = 'dedupe';
   else if (s.container === 'made') cause = 'made';
   else if (s.container === 'unknown') cause = 'unknown';
   else cause = 'array';
@@ -211,9 +221,9 @@ for (const key of withRuleSites) {
 const causeOf = (k) => causes.get(k) ?? 0;
 
 if (m1.ok) {
-  pass(`M1: no lost sink -- all ${l2Sites.length} L2 taint site(s) are also spike sites`);
+  pass(`M1: no lost sink -- all ${l2Sites.length} L2 taint site(s) are also sites of the flow-sensitive fixpoint`);
 } else {
-  fail(`M1: ${m1.missing.length} L2 taint site(s) the spike did NOT find -- a lost sink:`);
+  fail(`M1: ${m1.missing.length} L2 taint site(s) the flow-sensitive fixpoint did NOT find -- a lost sink:`);
   for (const k of m1.missing) console.log(`      ${k}`);
 }
 if (m2a.ok) {
@@ -239,13 +249,14 @@ if (m3.ok) {
 // Each check is broken on purpose and has to fail. A check that cannot fail
 // is not a check, and this harness asserts that these ones can.
 if (falsify) {
-  // M1 asks "is every L2 site also a spike site?". Taking a site AWAY from
-  // the spike's set is what breaks it: the L2 site is then a lost sink.
-  const victim = l2Sites.find((k) => withRuleSites.includes(k));
-  const brokenWithRule = withRuleSites.filter((k) => k !== victim);
-  const b1 = checkM1(l2Sites, brokenWithRule);
+  // M1 asks "is every L2 site also a site of the flow-sensitive
+  // fixpoint?". Taking a site AWAY from the PLAIN spike's set is what
+  // breaks it: the L2 site is then a lost sink.
+  const victim = l2Sites.find((k) => plainSites.includes(k));
+  const brokenPlain = plainSites.filter((k) => k !== victim);
+  const b1 = checkM1(l2Sites, brokenPlain);
   if (!b1.ok && b1.missing.includes(victim)) {
-    pass('falsification: M1 fails when a site is taken away from the spike');
+    pass('falsification: M1 fails when a site is taken away from the flow-sensitive fixpoint');
   } else {
     fail('falsification: M1 did NOT fail when one of its sites was removed -- the check is vacuous');
   }
@@ -294,8 +305,8 @@ const summary = {
     plain: plainSites.length,
     withRule: withRuleSites.length,
     ruleAdded: withRuleSites.filter((k) => !plainSites.includes(k)).length,
-    spikeOnly: withRuleSites.filter((k) => !l2Sites.includes(k)).length,
-    l2Only: l2Sites.filter((k) => !withRuleSites.includes(k)).length,
+    spikeOnly: plainSites.filter((k) => !l2Sites.includes(k)).length,
+    l2Only: l2Sites.filter((k) => !plainSites.includes(k)).length,
   },
   checks: {
     m1: m1.ok,
@@ -331,13 +342,12 @@ console.log(`| L2 taint sites | ${l2Sites.length} |`);
 console.log(`| spike (plain) taint sites | ${plainSites.length} |`);
 console.log(`| spike (with rule) taint sites | ${withRuleSites.length} |`);
 console.log(`| sites the rule added | ${summary.totals.ruleAdded} |`);
-console.log(`| sites the spike has and the L2 does not | ${summary.totals.spikeOnly} |`);
-console.log(`| ... of which the L2's dead allocation rule | ${causeOf('alloc')} |`);
-console.log(`| ... of which the L2's file-less dedupe dropped it | ${causeOf('dedupe')} |`);
+console.log(`| sites the flow-sensitive fixpoint has and the L2 does not | ${summary.totals.spikeOnly} |`);
+console.log(`| ... of which the L2's allocation rule did not fire | ${causeOf('alloc')} |`);
 console.log(`| ... of which the container is an allocation | ${causeOf('made')} |`);
 console.log(`| ... of which the container's type is unknown | ${causeOf('unknown')} |`);
 console.log(`| ... of which the container is an array by type | ${causeOf('array')} |`);
-console.log(`| sites the L2 has and the spike does not | ${summary.totals.l2Only} |`);
+console.log(`| sites the L2 has and the flow-sensitive fixpoint does not | ${summary.totals.l2Only} |`);
 console.log(`| L2 time / spike time (ms) | ${times['l2'] ?? '-'} / ${times['spike-with-rule'] ?? '-'} |`);
 console.log(`| spike facts / worklist steps | ${engines['with-rule'].facts} / ${engines['with-rule'].steps} |`);
 console.log(`| spike gaps / walked unmodelled / parser unmodelled | ${engines['with-rule'].gaps} / ${kinds.unsupported ?? 0} / ${corpusInfo.unsupported} |`);

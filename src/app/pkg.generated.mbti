@@ -257,9 +257,9 @@ pub fn version_parts(String) -> Array[Int32]
 // Types and methods
 pub struct AbsCell {
   v : AbsVal
-  t : TaintMode
+  srcs : Array[String]
 }
-pub fn AbsCell::new(AbsVal, TaintMode) -> Self
+pub fn AbsCell::new(AbsVal, Array[String]) -> Self
 
 pub struct AbsContext {
   fn_name : String
@@ -908,6 +908,7 @@ pub(all) struct ReportInput {
   abstract_result : AbsResult?
   proof : ProofResult?
   abs_universe : Int32
+  cfg_universe : Int32
 }
 
 pub(all) struct ReportOptions {
@@ -1076,17 +1077,6 @@ pub struct TaintGraph {
 pub fn TaintGraph::add_edge(Self, Int32, Int32, String) -> Unit
 pub fn TaintGraph::add_node(Self, TaintNodeKind, String, String, String, Int32) -> Int32
 pub fn TaintGraph::new() -> Self
-
-#derive(Eq)
-pub(all) enum TaintMode {
-  TClean
-  TMaybe
-  TTainted
-}
-pub fn TaintMode::code(Self) -> String
-pub fn TaintMode::equal(Self, Self) -> Bool
-pub fn TaintMode::join(Self, Self) -> Self
-pub fn TaintMode::not_equal(Self, Self) -> Bool
 
 pub struct TaintNode {
   id : Int32

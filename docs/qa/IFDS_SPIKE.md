@@ -9,6 +9,18 @@ loop rule creates?
 has no CLI flag, adds no published declaration, and changes
 `src/app/pkg.generated.mbti` by zero bytes.
 
+> **THE NUMBERS IN THIS DOCUMENT ARE A HISTORICAL RECORD.** They were taken on
+> **2026-11-19**, on the tree as it was then: before the D1/D2 repair and
+> before Phase 1. The layer has moved twice since — the five dead `::`-spelled
+> rules and the de-duplication key were repaired on 2026-11-20 (§7), and
+> **IFDS Phase 1** (`docs/qa/IFDS_PHASE1.md`) labelled the taint, removed the
+> blanket rule and fixed the CFG's merge node on the same day. **The layer's
+> own numbers below are therefore the OLD ones**; the current ones are in
+> `docs/qa/IFDS_PHASE1.md` §6, and the harness that produces both is the same
+> (`scripts/qa/ifds_spike.mjs`). What this document still holds is the
+> *method* — the four measurements, the ground truths, and the reasoning —
+> and those did not change.
+
 **Date:** 2026-11-19. **Corpora:** `fixtures/` (6 files, 77 functions, 232
 statements), `riantr/moonbit_doubleML@0.164.64` (220 files, 2,529
 functions, 30,258 statements) and `riantr/LunaFlow@0.1.28` — **the published
@@ -23,6 +35,14 @@ someone else's code and a set of small demo fixtures.
 ## 1. Verdict
 
 **Yes, with one caveat that the measurement makes precise.**
+
+> **What became of this verdict.** Item 3 — the caveat — is what IFDS Phase 1
+> acted on: the rule was **replaced**, not deleted, and the measurement that
+> replaced it is in `docs/qa/IFDS_PHASE1.md`. Items 1 and 2 below were
+> measured on the tree of 2026-11-19; the current numbers are in Phase 1's
+> §6, and they agree: **0 lost sinks on all three corpora**, this time
+> against the fixpoint **without** the blanket rule, which is the comparison
+> that matters once the layer no longer carries it.
 
 1. **The flow-sensitive fixpoint loses no sink.** Every taint site the L2
    found on doubleML (81 of 81) is also a site the spike found — in the mode
@@ -114,6 +134,12 @@ else.
 | doubleML 0.164.64 | 81 | 1,316 | 1,286 | **0** |
 | published LunaFlow 0.1.28 | 14 | 70 | 40 | **0** |
 
+> **Measured on the tree of 2026-11-19.** The layer's own column has moved
+> since (the D1/D2 repair and Phase 1): the current figures are **7 / 1,094 /
+> 12** L2 taint sites on the same three corpora, and the check now compares
+> against the **plain** spike — the fixpoint without the blanket rule, which
+> is what the layer became. See `docs/qa/IFDS_PHASE1.md` §6.1.
+
 **The check is falsifiable, and was falsified once — by a bug in the spike.**
 The first doubleML run reported two lost sinks,
 `TAINT-INDEX|rdd.mbt|2869` and `TAINT-INDEX|expand_v118_test.mbt|97`. Both
@@ -138,6 +164,11 @@ was a real defect in the engine under test.
 | `fixtures/` | 8 | 10 | 2 | yes |
 | doubleML 0.164.64 | 1,286 | 1,316 | 30 | yes |
 | published LunaFlow 0.1.28 | 40 | 70 | 30 | yes |
+
+> **Measured on the tree of 2026-11-19.** The rule's contribution is now
+> **2 / 28 / 30** on the same three corpora — the doubleML figure moved
+> because fixing the CFG's merge node recovered three taint sinks, two of
+> which the rule was carrying. See `docs/qa/IFDS_PHASE1.md` §4 and §6.1.
 
 The rule only *adds* taint, so the plain set is a subset of the with-rule
 set; the second half of the check is the one that says the difference is the

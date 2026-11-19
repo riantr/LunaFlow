@@ -56,6 +56,12 @@ pub(all) struct ReportInput {
   /// and the number the layer actually analysed is a truncation that has to
   /// be stated rather than left for a reader to infer.
   abs_universe : Int32
+  /// The number of functions the CFG pass was GIVEN: the module's functions
+  /// that are not test blocks. It is the denominator of the flow pass's
+  /// coverage, and it is NOT `funcs` -- the scanner counts the test blocks
+  /// too, and a coverage line that divides by them blames a thousand
+  /// functions the flow pass was never asked to look at.
+  cfg_universe : Int32
 }
 
 ///|
@@ -279,8 +285,16 @@ fn abstract_coverage(analysed : Int32, universe : Int32) -> String {
 /// leaves the rest with NO CFG -- and a file's findings then depend on how
 /// many functions happen to precede it. Saying so is the difference between
 /// "this module is clean" and "this module was not looked at".
+///
+/// The DENOMINATOR is the number of functions the flow pass was given -- the
+/// module's functions that are not test blocks -- and NOT the scanner's
+/// function count. The scanner counts the test blocks too, and a coverage
+/// line that divides by them blames a thousand functions the flow pass was
+/// never asked to look at: on doubleML, 2,529 parsed functions, 1,411 of
+/// them analysable, and the old line said the pass had left 1,929 functions
+/// without a CFG when it had left 811.
 fn cfg_coverage_line(input : ReportInput) -> String {
-  cfg_coverage(input.cfgs.length(), input.funcs)
+  cfg_coverage(input.cfgs.length(), input.cfg_universe)
 }
 
 ///|

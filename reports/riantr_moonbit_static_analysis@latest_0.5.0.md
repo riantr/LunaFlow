@@ -23,12 +23,12 @@
 | Statements unsupported | 754 |
 | Frontend coverage | 95.8% |
 | Parse issues | 0 |
-| CFG functions | 600 of 3173 — the first 600 in file order; 2573 functions had no CFG and can carry no CFG finding |
-| Trace events | 23502 |
-| Interpreted steps | 4447 |
+| CFG functions | 600 of 1422 — the first 600 in file order; 822 functions had no CFG and can carry no CFG finding |
+| Trace events | 17029 |
+| Interpreted steps | 4410 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 1549 ms |
+| Wall time (analyzer) | 1619 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -51,7 +51,7 @@ flowchart LR
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
   L1["L1 concrete: 12 findings"]:::l1
-  L2["L2 abstract: 220 findings, 218 new"]:::l2
+  L2["L2 abstract: 190 findings, 188 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -60,7 +60,7 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 12 findings | — | 150 functions | observed facts |
-| L2 abstract | 220 findings | 218 | 1422 functions, 193506 steps | exhaustive over the input abstraction |
+| L2 abstract | 190 findings | 188 | 1422 functions, 196396 steps | exhaustive over the input abstraction |
 | L3 contracts | 0 VCs | 0 failed, 0 unknown | 70 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
@@ -194,7 +194,7 @@ flowchart TD
   n21 --> n22
   n19 -->|false| n22
   n12 -->|true| n13
-  n21 -.->|back| n12
+  n22 -.->|back| n12
   n12 -->|false| n23
   n23 --> n24
   n7 -->|true| n8
@@ -224,7 +224,7 @@ flowchart TD
   n46 --> n47
   n44 -->|false| n47
   n42 -->|true| n43
-  n46 -.->|back| n42
+  n47 -.->|back| n42
   n42 -->|false| n48
   n37 -->|true| n38
   n37 -.->|back| n37
@@ -245,7 +245,7 @@ flowchart TD
   n63 --> n64
   n62 -->|false| n64
   n60 -->|true| n61
-  n63 -.->|back| n60
+  n64 -.->|back| n60
   n60 -->|false| n65
   n65 --> n66
   n67 --> n68
@@ -254,7 +254,7 @@ flowchart TD
   n71 --> n72
   n69 -->|false| n72
   n68 -->|true| n69
-  n71 -.->|back| n68
+  n72 -.->|back| n68
   n68 -->|false| n73
   n73 --> n74
   n75 --> n76
@@ -265,7 +265,7 @@ flowchart TD
   n77 --> n78
   n66 -->|false| n78
   n58 -->|true| n59
-  n76 -.->|back| n58
+  n78 -.->|back| n58
   n58 -->|false| n79
   n79 --> n80
   n56 -->|true| n57
@@ -404,7 +404,7 @@ flowchart TD
   n46 --> n47
   n39 -->|false| n47
   n38 -->|true| n39
-  n44 -.->|back| n38
+  n47 -.->|back| n38
   n38 -->|false| n48
   n48 --> n49
   n51 --> n52
@@ -419,7 +419,7 @@ flowchart TD
   n57 --> n58
   n50 -->|false| n58
   n49 -->|true| n50
-  n55 -.->|back| n49
+  n58 -.->|back| n49
   n49 -->|false| n59
   n37 -->|true| n38
   n37 -.->|back| n37
@@ -578,7 +578,7 @@ flowchart TD
   n48 --> n55
   n54 --> n55
   n29 -->|true| n30
-  n53 -.->|back| n29
+  n55 -.->|back| n29
   n29 -->|false| n56
   n56 --> n57
   n57 --> n58
@@ -757,7 +757,7 @@ flowchart TD
   n63 --> n64
   n62 -->|false| n64
   n61 -->|true| n62
-  n63 -.->|back| n61
+  n64 -.->|back| n61
   n61 -->|false| n65
   n60 -->|true| n61
   n60 -.->|back| n60
@@ -828,14 +828,14 @@ flowchart TD
   n14 --> n15
   n13 -->|false| n15
   n12 -->|true| n13
-  n14 -.->|back| n12
+  n15 -.->|back| n12
   n12 -->|false| n16
   n16 --> n17
   n17 -->|true| n18
   n18 --> n19
   n17 -->|false| n19
   n10 -->|true| n11
-  n18 -.->|back| n10
+  n19 -.->|back| n10
   n10 -->|false| n20
   n20 --> n21
   n22 --> n23
@@ -843,14 +843,14 @@ flowchart TD
   n25 --> n26
   n24 -->|false| n26
   n23 -->|true| n24
-  n25 -.->|back| n23
+  n26 -.->|back| n23
   n23 -->|false| n27
   n27 --> n28
   n28 -->|true| n29
   n29 --> n30
   n28 -->|false| n30
   n21 -->|true| n22
-  n29 -.->|back| n21
+  n30 -.->|back| n21
   n21 -->|false| n31
   n31 --> n32
   n32 --> n1
@@ -969,7 +969,7 @@ flowchart TD
   n34 --> n36
   n35 --> n36
   n30 -->|true| n31
-  n35 -.->|back| n30
+  n36 -.->|back| n30
   n30 -->|false| n37
   n37 --> n38
   n38 --> n39
@@ -1037,45 +1037,41 @@ flowchart LR
   t9["source: n"]:::src
   t10["source: cap"]:::src
   t11["#lt;ret#gt; = (?, ?)"]:::step
-  t12["source: n"]:::src
-  t13["source: cap"]:::src
-  t14["#lt;ret#gt; = (?, ?)"]:::step
-  t15["source: n"]:::src
-  t16["source: cap"]:::src
-  t17["#lt;ret#gt; = (?, ?)"]:::step
-  t18["source: n"]:::src
-  t19["source: cap"]:::src
-  t20["#lt;ret#gt; = (?, ?)"]:::step
-  t21["source: n"]:::src
-  t22["source: cap"]:::src
-  t23["#lt;ret#gt; = (?, ?)"]:::step
-  t24["source: sp"]:::src
-  t25["source: hiding"]:::src
-  t26["source: sp"]:::src
-  t27["source: hiding"]:::src
-  t28["h = 0"]:::step
-  t29["source: sp"]:::src
+  t12["source: sp"]:::src
+  t13["source: hiding"]:::src
+  t14["source: sp"]:::src
+  t15["source: hiding"]:::src
+  t16["h = 0"]:::step
+  t17["source: sp"]:::src
+  t18["source: hiding"]:::src
+  t19["h = 0"]:::step
+  t20["source: sp"]:::src
+  t21["source: hiding"]:::src
+  t22["h = 1"]:::step
+  t23["source: findings"]:::src
+  t24["source: hiding"]:::src
+  t25["source: findings"]:::src
+  t26["source: hiding"]:::src
+  t27["source: findings"]:::src
+  t28["source: hiding"]:::src
+  t29["source: findings"]:::src
   t30["source: hiding"]:::src
-  t31["h = 0"]:::step
-  t32["source: sp"]:::src
-  t33["source: hiding"]:::src
-  t34["h = 1"]:::step
-  t35["source: findings"]:::src
-  t36["source: hiding"]:::src
+  t31["source: findings"]:::src
+  t32["source: hiding"]:::src
+  t33["source: show_notices"]:::src
+  t34["source: findings"]:::src
+  t35["source: hiding"]:::src
+  t36["source: show_notices"]:::src
   t37["source: findings"]:::src
   t38["source: hiding"]:::src
-  t39["source: findings"]:::src
+  t39["source: show_notices"]:::src
   t0 -->|propagates| t2
   t3 -->|propagates| t5
   t6 -->|propagates| t8
   t9 -->|propagates| t11
-  t12 -->|propagates| t14
-  t15 -->|propagates| t17
-  t18 -->|propagates| t20
-  t21 -->|propagates| t23
-  t27 -->|propagates| t28
-  t30 -->|propagates| t31
-  t33 -->|propagates| t34
+  t15 -->|propagates| t16
+  t18 -->|propagates| t19
+  t21 -->|propagates| t22
 ```
 
 ### 5.1 Taint sinks
@@ -1096,133 +1092,103 @@ flowchart LR
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Two rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. And a tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose.
 
-**Scope.** The abstract layer analysed 1422 of 1422 — every function the abstract layer can analyse, in 193506 steps.
+**Scope.** The abstract layer analysed 1422 of 1422 — every function the abstract layer can analyse, in 196396 steps.
 
 | Rule | Severity | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1937 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1940 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | mermaid_states | src/sa/mermaid.mbt:89 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | mm_parsed_with | src/sa/mermaid_test.mbt:86 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | lower_if | src/flow/ir.mbt:304 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | lower_if | src/flow/ir.mbt:305 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | pred_of | src/flow/cfg.mbt:285 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | build_else | src/flow/cfg.mbt:494 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cfl_ordinary_from | src/flow/cfl.mbt:290 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1937 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1940 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | mermaid_states | src/sa/mermaid.mbt:89 | tainted value from parameters `verdicts` and `max_files` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | mm_parsed_with | src/sa/mermaid_test.mbt:86 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | lower_if | src/flow/ir.mbt:304 | tainted value from parameter `elif_at` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | lower_if | src/flow/ir.mbt:305 | tainted value from parameter `elif_at` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | pred_of | src/flow/cfg.mbt:285 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | build_else | src/flow/cfg.mbt:494 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cfl_ordinary_from | src/flow/cfl.mbt:290 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | INFINITE-LOOP | warning | cfl_chain | src/flow/cfl.mbt:523 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
-| TAINT-ALLOC | error | dominators | src/flow/dom.mbt:97 | tainted value may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominators | src/flow/dom.mbt:116 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominators | src/flow/dom.mbt:117 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:162 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:163 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | reverse_postorder | src/flow/dom.mbt:190 | tainted value may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | reverse_postorder | src/flow/dom.mbt:192 | tainted value may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reverse_postorder | src/flow/dom.mbt:197 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reverse_postorder | src/flow/dom.mbt:201 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | dominators | src/flow/dom.mbt:97 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dominators | src/flow/dom.mbt:117 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:162 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:163 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:162 | tainted value from parameters `bb` and `dom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:163 | tainted value from parameters `bb` and `dom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | reverse_postorder | src/flow/dom.mbt:190 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | reverse_postorder | src/flow/dom.mbt:192 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | reverse_postorder | src/flow/dom.mbt:197 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | reverse_postorder | src/flow/dom.mbt:201 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | INFINITE-LOOP | warning | reverse_postorder | src/flow/dom.mbt:195 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
-| TAINT-ALLOC | error | compute_idom | src/flow/dom.mbt:235 | tainted value may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | compute_idom | src/flow/dom.mbt:253 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | compute_idom | src/flow/dom.mbt:262 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:290 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:292 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:293 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | pta_step | src/flow/pta.mbt:515 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | pta_sweep_heap | src/flow/pta.mbt:615 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | new_ssa | src/flow/ssa.mbt:369 | tainted value may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | prepare | src/flow/ssa.mbt:530 | tainted value may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | subscript | src/flow/ssa.mbt:1197 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | reaches | src/flow/icfg.mbt:251 | tainted value may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:262 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:263 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:264 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | icfg_of | src/flow/icfg.mbt:302 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | icfg_of | src/flow/icfg.mbt:303 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | icfg_of | src/flow/icfg.mbt:315 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | icfg_of | src/flow/icfg.mbt:347 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_reach_rel | src/flow/ifds.mbt:261 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_reach_rel | src/flow/ifds.mbt:268 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_after | src/flow/cprop.mbt:401 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ir_blocks | src/flow/ir_cfg.mbt:176 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ir_block_succ | src/flow/ir_cfg.mbt:266 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ir_block_succ | src/flow/ir_cfg.mbt:267 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | join_of_nodes | src/flow/lattice.mbt:112 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:80 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:87 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:92 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:93 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | interval_state_join | src/flow/interval.mbt:546 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | interval_state_same | src/flow/interval.mbt:560 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_widening | src/flow/interval.mbt:636 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_widening | src/flow/interval.mbt:642 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_widening | src/flow/interval.mbt:644 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | narrow_round | src/flow/interval.mbt:685 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | narrow_round | src/flow/interval.mbt:690 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reaching_use_defs | src/flow/reaching.mbt:264 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_round_robin | src/flow/worklist.mbt:54 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_round_robin | src/flow/worklist.mbt:55 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | solve_propagation | src/flow/worklist.mbt:91 | tainted value may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | compute_idom | src/flow/dom.mbt:235 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | compute_idom | src/flow/dom.mbt:253 | tainted value from parameters `bb` and `rpo` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | compute_idom | src/flow/dom.mbt:262 | tainted value from parameter `rpo` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameter `a` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:290 | tainted value from parameter `a` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:290 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:292 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:292 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:293 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:292 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:293 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | pta_step | src/flow/pta.mbt:515 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | pta_sweep_heap | src/flow/pta.mbt:615 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | new_ssa | src/flow/ssa.mbt:369 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | prepare | src/flow/ssa.mbt:530 | tainted value from parameter `s` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | subscript | src/flow/ssa.mbt:1197 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | reaches | src/flow/icfg.mbt:251 | tainted value from parameter `succ` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:262 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:263 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:264 | tainted value from parameters `from` and `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ifds_reach_rel | src/flow/ifds.mbt:261 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ifds_reach_rel | src/flow/ifds.mbt:268 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cprop_after | src/flow/cprop.mbt:401 | tainted value from parameter `v` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | join_of_nodes | src/flow/lattice.mbt:112 | tainted value from parameter `nodes` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:80 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:92 | tainted value from parameter `x` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:93 | tainted value from parameter `x` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | solve_propagation | src/flow/worklist.mbt:91 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
 | RANGE-VIOLATION | warning | solve_propagation | src/flow/worklist.mbt:91 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:102 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:104 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:106 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:107 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:108 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:109 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:111 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | states_after | src/flow/worklist.mbt:140 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | solve_edges | src/flow/worklist.mbt:191 | tainted value may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:108 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:109 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:111 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | solve_edges | src/flow/worklist.mbt:191 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
 | RANGE-VIOLATION | warning | solve_edges | src/flow/worklist.mbt:191 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:202 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:204 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:206 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:207 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:208 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:209 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:211 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | solve_worklist | src/flow/worklist.mbt:275 | tainted value may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:208 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:209 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:211 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | solve_worklist | src/flow/worklist.mbt:275 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
 | RANGE-VIOLATION | warning | solve_worklist | src/flow/worklist.mbt:275 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:281 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:284 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:285 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:291 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:292 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:293 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cp_store_node | src/flow/icfg_test.mbt:116 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cp_call_node | src/flow/icfg_test.mbt:131 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | powerset_of | src/flow/laws_test.mbt:86 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | pta_demand_run | src/flow/pta_demand.mbt:428 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:97 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:98 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_distributes | src/flow/ifds_distrib.mbt:141 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:163 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:164 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dl_taint_facts_of | src/flow/datalog_taint.mbt:201 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dl_same_triple | src/flow/datalog_taint.mbt:367 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ss_step | src/flow/pta_storeless.mbt:327 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ss_sweep | src/flow/pta_storeless.mbt:404 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | union_of | src/flow/reaching_test.mbt:62 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dl_facts_of | src/flow/datalog_pointer.mbt:88 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dl_has_tuple | src/flow/datalog_pointer.mbt:307 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | as_array | src/walk/walk.mbt:1291 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:293 | tainted value from parameter `succs` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cp_store_node | src/flow/icfg_test.mbt:116 | tainted value from parameter `nth` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cp_call_node | src/flow/icfg_test.mbt:131 | tainted value from parameter `nth` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:97 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:98 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cprop_distributes | src/flow/ifds_distrib.mbt:141 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:163 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:164 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dl_taint_facts_of | src/flow/datalog_taint.mbt:201 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ss_step | src/flow/pta_storeless.mbt:327 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ss_sweep | src/flow/pta_storeless.mbt:404 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | union_of | src/flow/reaching_test.mbt:62 | tainted value from parameter `nodes` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | dl_facts_of | src/flow/datalog_pointer.mbt:88 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | as_array | src/walk/walk.mbt:1291 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | enter_guard | src/walk/guardfacts.mbt:484 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:337 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:338 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:339 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:340 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:344 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:345 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:352 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | collect_using | src/parser/parser.mbt:1539 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | collect_using | src/parser/parser.mbt:1547 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | starts_variant | src/parser/parser.mbt:1609 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | declared_name_after_kw | src/parser/parser.mbt:3083 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | declared_name_after_kw | src/parser/parser.mbt:3086 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | file_request | src/jsoncli/main.mbt:447 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | file_request | src/jsoncli/main.mbt:448 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:337 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:338 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:339 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:340 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:344 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:345 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:352 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | collect_using | src/parser/parser.mbt:1539 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | collect_using | src/parser/parser.mbt:1547 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | starts_variant | src/parser/parser.mbt:1609 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | declared_name_after_kw | src/parser/parser.mbt:3083 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | declared_name_after_kw | src/parser/parser.mbt:3086 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | taint_findings | src/pipeline/taintcheck.mbt:80 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:505 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:506 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:505 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:506 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | line_head_identifier | src/moonfiles/moonfiles.mbt:1142 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | UNREACHABLE | info | line_head_identifier | src/moonfiles/moonfiles.mbt:1142 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 
@@ -1525,7 +1491,6 @@ Every definition event is keyed by function, source line and variable, so a valu
 
 | Function | Line | Variable | Observed values |
 | --- | --- | --- | --- |
-| scan | 763 | s | "" |
 | scan | 766 | s | "", "x" |
 | bump | 1634 | n | ? |
 | slug | 324 | buf | ? |
@@ -1564,24 +1529,18 @@ Every definition event is keyed by function, source line and variable, so a valu
 | path_tail | 60 | out | "" |
 | path_tail | 67 | buf | ? |
 | path_tail | 72 | out | "?" |
-| pick_files | 111 | _ | ? |
-| pick_files | 111 | i | ? |
 | sanitize | 461 | buf | ? |
 | version_gt | 51 | pa | () |
 | version_gt | 52 | pb | () |
 | <global> | 155 | flow | "let k = 3 if k {   print("yes") } fn ..." |
 | <global> | 94 | clean | "fn fact(n: int) -> int {   if n <= 1 ..." |
-| apply_nosec | 303 | r | 0 |
-| apply_nosec | 308 | r | 0 |
-| apply_nosec | 310 | n | 0, 1, -1 |
 | apply_nosec | 319 | n | 0, 1, -1 |
-| apply_nosec | 321 | r | 0 |
 | dir_of | 1698 | chars | [], ["a", "b", "c"], [".", ".", "/", ".", ".", "/", "e", ... |
 | family_ids | 120 | id | ""MSA-"()" |
 | mm_check | 300 | errs | [] |
 | stamp_utc | 138 | sec | ? |
 | by_rank | 437 | sorted | [], [0], [0, 1, -1], [1, 0] |
-| collect | 1276 | stack | [""], ["abc"] |
+| collect | 1276 | stack | [""] |
 | emit_file | 216 | head | ? |
 | emit_file | 227 | head | ? |
 | emit_file | 338 | head | ? |
@@ -1591,7 +1550,6 @@ Every definition event is keyed by function, source line and variable, so a valu
 | emit_mmd | 1138 | path | ? |
 | family_ids | 117 | out | [] |
 | first_line | 481 | out | ? |
-| line_with0521 | 56 | l | "" |
 | mm_check | 302 | edges | [] |
 | mm_check | 304 | lines | () |
 | mm_label | 253 | parts | ? |
@@ -1604,14 +1562,11 @@ Every definition event is keyed by function, source line and variable, so a valu
 | aggregate | 430 | total | 0 |
 | aggregate | 438 | total | ? |
 | apply_nosec | 320 | hit | false |
-| apply_nosec | 323 | hit | true |
 | apply_profile | 172 | r | 0, 1, -1 |
 | count_notices | 201 | n | 0 |
 | count_notices | 202 | r | 0, 1, -1 |
 | count_notices | 204 | n | 1, 2, 3 |
 | count_rows0521 | 68 | n | 0 |
-| count_rows0521 | 69 | l | "" |
-| count_rows0521 | 71 | n | 1 |
 | emit_file | 238 | limit | () |
 | emit_file | 325 | parts | "" |
 | explain_family | 36 | s | "\{f.id()}  \{f.name()} " |
@@ -1624,8 +1579,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | explain_roster | 62 | s | """"families: id, name, and the proper..." |
 | first_line | 482 | done | false |
 | lens_list | 426 | names | [] |
-| metrics_lines | 601 | v | 0 |
-| mm_parsed_with | 85 | i | 0, 1, 2, 3, 4 |
+| mm_parsed_with | 85 | i | 0, 1, 2 |
 | parse_nosec | 225 | out | [] |
 | print_ssa_cost | 80 | _ | () |
 | suffix_of | 1653 | tail | "" |
@@ -1638,7 +1592,6 @@ Every definition event is keyed by function, source line and variable, so a valu
 | ctx_line | 668 | per_sig | "\{t / 100}.\{t % 100 / 10}\{t % 10} e..." |
 | emit_file | 239 | counts | ? |
 | line_with0521 | 55 | out | "" |
-| line_with0521 | 58 | out | "" |
 | metrics_lines | 595 | hi | ? |
 | metrics_lines | 596 | lo | ? |
 | metrics_lines | 597 | un | ? |
@@ -1652,7 +1605,6 @@ Every definition event is keyed by function, source line and variable, so a valu
 | split_coord | 1227 | mod | "" |
 | split_coord | 1228 | ver | "" |
 | split_coord | 1242 | ver | "" |
-| split_findings | 121 | r | 0 |
 | split_tokens | 264 | out | [] |
 | stamp_utc | 136 | day_ms | ? |
 | version_parts | 77 | cur | 0 |
@@ -1664,9 +1616,9 @@ Every definition event is keyed by function, source line and variable, so a valu
 | aggregate | 441 | n_calls | ? |
 | aggregate | 448 | notices | ? |
 | apply_nosec | 301 | stale | [] |
-| civil_from_days | 158 | z | ?, 719467, 719468, 719469, 719470, 719473 |
+| civil_from_days | 158 | z | ?, 719467, 719468, 719469, 719470 |
 | civil_from_days | 162 | y | ?, 1969 |
-| civil_from_days | 165 | d | ?, 31, 1, 2, 3, 6 |
+| civil_from_days | 165 | d | ?, 31, 1, 2, 3 |
 | emit_file | 184 | defects | ? |
 | emit_file | 321 | dropped | ? |
 | measure_file | 122 | text | ? |
@@ -1701,9 +1653,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | print_ssa_cost | 81 | cost | () |
 | render_reports | 257 | buf | ? |
 | run_exit_code | 1762 | res | ? |
-| validate_profile | 70 | id | "" |
 | validate_profile | 81 | id | "", "x" |
-| validate_profile | 93 | id | "" |
 | version_parts | 76 | parts | [] |
 | version_parts | 78 | named | false |
 | <global> | 128 | deadbranch | "fn h(x: int) -> int {   if 1 > 2 {   ..." |
@@ -1713,12 +1663,10 @@ Every definition event is keyed by function, source line and variable, so a valu
 | <global> | 54 | script_mbtx | "import {   "moonbitlang/core/list" @l..." |
 | aggregate | 433 | n_checked | 0 |
 | aggregate | 442 | n_checked | ? |
-| apply_nosec | 309 | covered | false |
-| apply_nosec | 312 | covered | true |
 | civil_from_days | 159 | era | ?, 4 |
-| civil_from_days | 160 | doe | ?, 135079, 135080, 135081, 135082, 135085 |
+| civil_from_days | 160 | doe | ?, 135079, 135080, 135081, 135082 |
 | civil_from_days | 161 | yoe | ?, 369 |
-| civil_from_days | 163 | doy | ?, 305, 306, 307, 308, 311 |
+| civil_from_days | 163 | doy | ?, 305, 306, 307, 308 |
 | collect | 1278 | last_files | 0 |
 | measure_function | 147 | ir | ? |
 | metrics_lines | 562 | other | ? |
@@ -1813,79 +1761,75 @@ Every definition event is keyed by function, source line and variable, so a valu
 | dir_of | i | -1 | 63 | 87 | -1, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 | src/sa/main.mbt:1700:3 |
 | dir_of | cut | -1 | -1 | 4 | -1 | src/sa/main.mbt:1699:3 |
 | aggregate | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:436:3-461:4 |
-| is_hiding | h | 0 | 1 | 6 | 0, 1 | src/sa/main.mbt:81:3-85:4 |
+| is_hiding | h | 0 | 1 | 3 | 0, 1 | src/sa/main.mbt:81:3-85:4 |
 | path_tail | i | 0 | 17 | 38 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/core/core.mbt:61:3 |
 | path_tail | j | 2 | 64 | 1085 | 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 | src/core/core.mbt:66:7 |
 | path_tail | n | 0 | 64 | 4 | 0, 3, 16, 64 | src/core/core.mbt:63:3 |
-| family_ids | n | 1 | 1 | 9 | 1 | src/sa/profile.mbt:118:3 |
+| family_ids | n | 1 | 1 | 5 | 1 | src/sa/profile.mbt:118:3 |
 | is_dir | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1248:7-1252:2 |
-| version_gt | i | 0 | 0 | 8 | 0 | src/sa/version.mbt:53:3 |
+| version_gt | i | 0 | 0 | 4 | 0 | src/sa/version.mbt:53:3 |
 | wanted | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1324:1-1332:2 |
-| apply_nosec | n | -1 | 1 | 18 | 0, 1, -1 | src/sa/profile.mbt:319:3-329:4 |
-| apply_nosec | r | 0 | 0 | 10 | 0 | src/sa/profile.mbt:303:5-305:6 |
-| collect | <ret> | 1 | 1 | 8 | true | src/sa/main.mbt:1271:11-1321:2 |
+| apply_nosec | n | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:319:3-329:4 |
+| collect | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1271:11-1321:2 |
 | slug | last_dash | 0 | 0 | 20 | false | src/sa/provenance.mbt:325:3 |
 | aggregate | total | 0 | 0 | 4 | 0 | src/sa/main.mbt:430:3 |
-| apply_nosec | hit | 0 | 1 | 18 | false, true | src/sa/profile.mbt:320:5 |
-| apply_profile | r | -1 | 1 | 10 | 0, 1, -1 | src/sa/profile.mbt:172:3-176:4 |
+| apply_nosec | hit | 0 | 0 | 6 | false | src/sa/profile.mbt:320:5 |
+| apply_profile | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:172:3-176:4 |
 | count_notices | n | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:201:3 |
 | count_notices | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:202:3-206:4 |
 | first_line | done | 0 | 0 | 5 | false | src/sa/provenance.mbt:482:3 |
 | is_hiding | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:80:5-87:2 |
-| metrics_lines | v | 0 | 0 | 3 | 0 | src/sa/main.mbt:601:3-619:4 |
 | count_by_shape | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:265:3-271:4 |
-| count_rows0521 | n | 0 | 1 | 12 | 0, 1 | src/sa/sa_0521_test.mbt:68:3 |
+| count_rows0521 | n | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:68:3 |
 | mm_check | in_note | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:303:3 |
 | mm_id_char | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:190:1-192:2 |
-| mm_parsed_with | i | 0 | 4 | 11 | 0, 1, 2, 3, 4 | src/sa/mermaid_test.mbt:85:3-88:4 |
+| mm_parsed_with | i | 0 | 2 | 6 | 0, 1, 2 | src/sa/mermaid_test.mbt:85:3-88:4 |
 | mm_state_id | seen | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:277:3 |
-| ok_segment | <ret> | 0 | 1 | 8 | false, true | src/sa/main.mbt:1933:1-1944:2 |
+| ok_segment | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:1933:1-1944:2 |
 | render_reports | r | -1 | 1 | 6 | 0, 1, -1 | src/report/report.mbt:258:3-260:4 |
-| split_findings | r | 0 | 0 | 4 | 0 | src/sa/main.mbt:121:3-148:4 |
 | aggregate | n_calls | 0 | 0 | 4 | 0 | src/sa/main.mbt:432:3 |
 | aggregate | notices | 0 | 0 | 4 | 0 | src/sa/main.mbt:427:3 |
-| civil_from_days | d | 1 | 31 | 5 | 31, 1, 2, 3, 6 | src/sa/provenance.mbt:165:3 |
-| civil_from_days | y | 1969 | 1969 | 5 | 1969 | src/sa/provenance.mbt:162:3 |
-| civil_from_days | z | 719467 | 719473 | 5 | 719467, 719468, 719469, 719470, 719473 | src/sa/provenance.mbt:158:3 |
-| collect | last_dirs | 0 | 0 | 16 | 0 | src/sa/main.mbt:1279:3 |
-| collect | seen_dirs | 0 | 64 | 1040 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/main.mbt:1277:3 |
+| civil_from_days | d | 1 | 31 | 4 | 31, 1, 2, 3 | src/sa/provenance.mbt:165:3 |
+| civil_from_days | y | 1969 | 1969 | 4 | 1969 | src/sa/provenance.mbt:162:3 |
+| civil_from_days | z | 719467 | 719470 | 4 | 719467, 719468, 719469, 719470 | src/sa/provenance.mbt:158:3 |
+| collect | last_dirs | 0 | 0 | 8 | 0 | src/sa/main.mbt:1279:3 |
+| collect | seen_dirs | 0 | 64 | 520 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/main.mbt:1277:3 |
 | mm_count_quotes | n | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:217:3 |
 | mm_id_start | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:185:1-187:2 |
 | mm_valid_id | <ret> | 0 | 1 | 4 | false, true | src/sa/mermaid_test.mbt:197:1-213:2 |
 | mm_valid_id | first | 1 | 1 | 3 | true | src/sa/mermaid_test.mbt:201:3 |
-| version_parts | cur | 0 | 0 | 20 | 0 | src/sa/version.mbt:77:3 |
+| version_parts | cur | 0 | 0 | 12 | 0 | src/sa/version.mbt:77:3 |
 | aggregate | withheld | 0 | 0 | 4 | 0 | src/sa/main.mbt:429:3 |
-| civil_from_days | mp | 9 | 10 | 5 | 9, 10 | src/sa/provenance.mbt:164:3 |
-| collect | last_files | 0 | 0 | 16 | 0 | src/sa/main.mbt:1278:3 |
-| metrics_lines | n_hi | 0 | 0 | 8 | 0 | src/sa/main.mbt:598:3 |
-| metrics_lines | n_lo | 0 | 0 | 8 | 0 | src/sa/main.mbt:599:3 |
-| metrics_lines | n_un | 0 | 0 | 8 | 0 | src/sa/main.mbt:600:3 |
+| civil_from_days | mp | 9 | 10 | 4 | 9, 10 | src/sa/provenance.mbt:164:3 |
+| collect | last_files | 0 | 0 | 8 | 0 | src/sa/main.mbt:1278:3 |
+| metrics_lines | n_hi | 0 | 0 | 4 | 0 | src/sa/main.mbt:598:3 |
+| metrics_lines | n_lo | 0 | 0 | 4 | 0 | src/sa/main.mbt:599:3 |
+| metrics_lines | n_un | 0 | 0 | 4 | 0 | src/sa/main.mbt:600:3 |
 | aggregate | n_checked | 0 | 0 | 4 | 0 | src/sa/main.mbt:433:3 |
-| apply_nosec | covered | 0 | 1 | 9 | false, true | src/sa/profile.mbt:309:5 |
-| civil_from_days | doe | 135079 | 135085 | 5 | 135079, 135080, 135081, 135082, 135085 | src/sa/provenance.mbt:160:3 |
-| civil_from_days | doy | 305 | 311 | 5 | 305, 306, 307, 308, 311 | src/sa/provenance.mbt:163:3 |
-| civil_from_days | era | 4 | 4 | 5 | 4 | src/sa/provenance.mbt:159:3 |
-| civil_from_days | yoe | 369 | 369 | 5 | 369 | src/sa/provenance.mbt:161:3 |
+| civil_from_days | doe | 135079 | 135082 | 4 | 135079, 135080, 135081, 135082 | src/sa/provenance.mbt:160:3 |
+| civil_from_days | doy | 305 | 308 | 4 | 305, 306, 307, 308 | src/sa/provenance.mbt:163:3 |
+| civil_from_days | era | 4 | 4 | 4 | 4 | src/sa/provenance.mbt:159:3 |
+| civil_from_days | yoe | 369 | 369 | 4 | 369 | src/sa/provenance.mbt:161:3 |
 | count_notices | <ret> | 0 | 3 | 4 | 0, 1, 3, 2 | src/sa/main.mbt:200:5-208:2 |
-| parse_nosec | line_no | 0 | 0 | 12 | 0 | src/sa/profile.mbt:226:3 |
+| parse_nosec | line_no | 0 | 0 | 8 | 0 | src/sa/profile.mbt:226:3 |
 | profile_keeps | <ret> | 0 | 0 | 1 | false | src/sa/profile.mbt:148:5-157:2 |
-| split_coord | seen_at | 0 | 0 | 18 | false | src/sa/main.mbt:1229:3 |
-| suffix_of | after_dot | 0 | 0 | 20 | false | src/sa/main.mbt:1654:3 |
-| version_parts | named | 0 | 0 | 20 | false | src/sa/version.mbt:78:3 |
+| split_coord | seen_at | 0 | 0 | 13 | false | src/sa/main.mbt:1229:3 |
+| suffix_of | after_dot | 0 | 0 | 16 | false | src/sa/main.mbt:1654:3 |
+| version_parts | named | 0 | 0 | 12 | false | src/sa/version.mbt:78:3 |
 | aggregate | actionable | 0 | 0 | 4 | 0 | src/sa/main.mbt:426:3 |
 | aggregate | unreliable | 0 | 0 | 4 | 0 | src/sa/main.mbt:428:3 |
-| count_rows0521 | <ret> | 0 | 1 | 8 | 0, 1 | src/sa/sa_0521_test.mbt:67:1-75:2 |
+| count_rows0521 | <ret> | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:67:1-75:2 |
 | aggregate | n_unchecked | 0 | 0 | 4 | 0 | src/sa/main.mbt:431:3 |
 | is_module_coord | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1884:5-1929:2 |
 | mm_count_quotes | <ret> | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:216:1-224:2 |
-| ssa_cost_over_files | i | 0 | 3 | 18 | 0, 1, 2, 3 | src/sa/ssa_cost.mbt:106:3 |
+| ssa_cost_over_files | i | 0 | 3 | 14 | 0, 1, 2, 3 | src/sa/ssa_cost.mbt:106:3 |
 | aggregate | parsed_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:424:3 |
 | aggregate | partial_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:425:3 |
 | mm_state_id | after_close | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:278:3 |
 | tally_partial_reasons | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:687:3-704:4 |
 | aggregate | n_arity_agrees | 0 | 0 | 4 | 0 | src/sa/main.mbt:435:3 |
 | aggregate | n_sig_available | 0 | 0 | 4 | 0 | src/sa/main.mbt:434:3 |
-| emit_file | notices_dropped | 0 | 0 | 8 | 0 | src/sa/mermaid.mbt:240:3 |
+| emit_file | notices_dropped | 0 | 0 | 4 | 0 | src/sa/mermaid.mbt:240:3 |
 | Nosec | covers_family | 1 | 1 | 1 | true |  |
 | parse_moon_mod_imports | in_import | 0 | 0 | 4 | false | src/sa/main.mbt:1824:3 |
 | collect_iface_symtabs | skipped_dot | 0 | 0 | 4 | 0 | src/sa/main.mbt:1976:3 |
@@ -1906,7 +1850,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | plus | n | [-1000000, 1000000] | 1 |
 | audit | i | [0, 1000001] | 14 |
 | bb_of | v | [0, 1000001] | 7 |
-| chain | i | [0, 1000001] | 7 |
+| chain | i | [0, 64] | 7 |
 | chain | n | [0, 64] | 1 |
 | int_e | i | [-1000000, 1000000] | 1 |
 | p_int | i | [-1000000, 1000000] | 1 |
@@ -2203,16 +2147,16 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | pf_law_maps | j | [0, 4] | 42 |
 | phi_version | b | [-1000000, 1000000] | 1 |
 | place_phis | vi | [0, 1000001] | 6 |
-| powerset_of | i | [0, 1000001] | 36 |
+| powerset_of | i | [0, 64] | 36 |
 | powerset_of | k | [0, 64] | 1 |
 | pta_fs_step | v | [-1000000, 1000000] | 1 |
 | reaching_in | v | [0, 1000001] | 7 |
 | show_plan | cap | [-1000000, 1000000] | 1 |
-| solve_edges | i | [0, 1000001] | 12 |
-| solve_edges | j | [0, 1000001] | 7 |
+| solve_edges | i | [0, 1000000] | 12 |
+| solve_edges | j | [0, 1000000] | 7 |
 | solve_edges | k | [0, 1000001] | 60 |
 | solve_edges | n | [-1000000, 1000000] | 1 |
-| solve_edges | v | [0, 1000001] | 6 |
+| solve_edges | v | [0, 1000000] | 6 |
 | ss_agree | same | [0, 1000004] | 26 |
 | ss_alias_at | k | [-1000000, 1000000] | 1 |
 | ss_store | line | [-1000000, 1000000] | 1 |
@@ -2222,12 +2166,12 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | tchk_stmt | col | [-1000000, 1000000] | 1 |
 | tn_field | line | [-1000000, 1000000] | 1 |
 | unqualified | i | [2, 1000005] | 12 |
-| Lexer | slice | [-1000000, 1000004] | 6 |
+| Lexer | slice | [-1000000, 1000000] | 2 |
 | bb_is_branch | v | [-1000000, 1000000] | 1 |
 | bb_is_leader | v | [-1000000, 1000000] | 1 |
 | build_one | next | [-1000000, 1000000] | 1 |
 | build_seq | next | [-1000000, 1000000] | 1 |
-| closer_ahead | i | [-1000000, 1000004] | 11 |
+| closer_ahead | i | [-1000000, 1000000] | 3 |
 | closer_ahead | n | [0, 64] | 1 |
 | collect_defs | b | [0, 1000001] | 6 |
 | collect_defs | k | [0, 1000001] | 30 |
@@ -2253,9 +2197,9 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | mk_defect | line | [-1000000, 1000000] | 1 |
 | mk_notice | line | [-1000000, 1000000] | 1 |
 | mk_v0521 | calls | [-1000000, 1000000] | 1 |
-| narrow_round | i | [0, 1000001] | 7 |
+| narrow_round | i | [0, 1000000] | 7 |
 | narrow_round | n | [-1000000, 1000000] | 1 |
-| narrow_round | v | [0, 1000001] | 6 |
+| narrow_round | v | [0, 1000000] | 6 |
 | omittable_at | i | [-1000000, 1000000] | 1 |
 | p_name_at | line | [-1000000, 1000000] | 1 |
 | p_span_at | line | [-1000000, 1000000] | 1 |
@@ -2273,7 +2217,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | rename_block | i | [0, 1000001] | 6 |
 | rename_block | k | [0, 1000001] | 36 |
 | source_sites | k | [0, 1000001] | 13 |
-| states_after | i | [0, 1000001] | 7 |
+| states_after | i | [0, 1000000] | 7 |
 | states_after | n | [-1000000, 1000000] | 1 |
 | str_slice | from | [-1000000, 1000000] | 1 |
 | tchk_call | line | [-1000000, 1000000] | 1 |
@@ -2297,7 +2241,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | cfl_state_key | v | [-1000000, 1000000] | 1 |
 | cg_name_after | i | [-1000000, 1000000] | 1 |
 | collect_using | i | [-1000000, 1000000] | 1 |
-| collect_using | j | [-999999, 1000002] | 2 |
+| collect_using | j | [-999999, 1000001] | 2 |
 | collect_using | n | [0, 64] | 1 |
 | count_notices | n | [0, 1000001] | 6 |
 | cp_store_node | f | [-1000000, 1000000] | 1 |
@@ -2391,14 +2335,14 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | reaching_graph | i | [0, 1000001] | 7 |
 | rewrite_inst | idx | [-1000000, 1000000] | 1 |
 | run_core | n_parse | [-1000001, 1000001] | 13 |
-| solve_widening | i | [0, 1000001] | 7 |
+| solve_widening | i | [0, 1000000] | 7 |
 | solve_widening | n | [-1000000, 1000000] | 1 |
-| solve_widening | p | [0, 1000001] | 35 |
-| solve_widening | v | [0, 1000001] | 30 |
-| solve_worklist | i | [0, 1000001] | 7 |
+| solve_widening | p | [0, 1000000] | 35 |
+| solve_widening | v | [0, 1000000] | 30 |
+| solve_worklist | i | [0, 1000000] | 7 |
 | solve_worklist | k | [0, 1000001] | 60 |
 | solve_worklist | n | [-1000000, 1000000] | 1 |
-| solve_worklist | v | [0, 1000001] | 12 |
+| solve_worklist | v | [0, 1000000] | 12 |
 | ssa_if_else | line | [-1000000, 1000000] | 1 |
 | starts_variant | i | [-1000000, 1000000] | 1 |
 | taint_analyze | fi | [0, 1000002] | 13 |
@@ -2414,8 +2358,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | Parser | name_at | [-1000000, 1000000] | 1 |
 | aggregate | n_calls | [0, 0] | 1 |
 | aggregate | notices | [0, 0] | 1 |
-| assign_versions | a | [0, 1000001] | 30 |
-| assign_versions | c | [0, 1000001] | 150 |
+| assign_versions | a | [0, 6] | 30 |
+| assign_versions | c | [0, 6] | 150 |
 | assign_versions | i | [0, 1000001] | 30 |
 | assign_versions | k | [0, 1000001] | 35 |
 | assign_versions | v | [-1, 1000000] | 50 |
@@ -2434,7 +2378,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | cfl_search_from | k | [0, 1000001] | 30 |
 | cg_collect_lets | i | [0, 1000001] | 6 |
 | chain_violation | n | [-1000000, 1000000] | 1 |
-| chain_violation | v | [0, 1000001] | 6 |
+| chain_violation | v | [0, 1000000] | 6 |
 | civil_from_days | d | [-7511320, 7511292] | 1 |
 | civil_from_days | y | [-5575, 9514] | 1 |
 | civil_from_days | z | [-280532, 1719468] | 1 |
@@ -2505,7 +2449,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | notice_lines | total | [-1000000, 1000000] | 1 |
 | parse_double | whole | [0, 0] | 1 |
 | parse_hex_double | i | [2, 1000006] | 20 |
-| parse_hex_double | j | [0, 1000004] | 11 |
+| parse_hex_double | j | [0, 1000001] | 8 |
 | pf_after_text | line | [-1000000, 1000000] | 1 |
 | pi_add_reachable | n | [0, 1000001] | 6 |
 | pi_add_reachable | s | [0, 1000001] | 6 |
@@ -2561,14 +2505,14 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | pta_demand_run | head | [0, 1000001] | 6 |
 | reaching_use_defs | v | [0, 1000001] | 7 |
 | reverse_postorder | k | [-1, 5] | 7 |
-| solve_propagation | i | [0, 1000001] | 12 |
-| solve_propagation | j | [0, 1000001] | 7 |
+| solve_propagation | i | [0, 1000000] | 12 |
+| solve_propagation | j | [0, 1000000] | 7 |
 | solve_propagation | k | [0, 1000001] | 60 |
 | solve_propagation | n | [-1000000, 1000000] | 1 |
-| solve_propagation | v | [0, 1000001] | 6 |
-| solve_round_robin | i | [0, 1000001] | 7 |
+| solve_propagation | v | [0, 1000000] | 6 |
+| solve_round_robin | i | [0, 1000000] | 7 |
 | solve_round_robin | n | [-1000000, 1000000] | 1 |
-| solve_round_robin | v | [0, 1000001] | 12 |
+| solve_round_robin | v | [0, 1000000] | 12 |
 | taint_spec_sink | arg | [-1000000, 1000000] | 1 |
 | widen_interval | next | [-1000000, 1000000] | 1 |
 | widen_interval | prev | [-1000000, 1000000] | 1 |
@@ -2595,12 +2539,12 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | dl_taint_facts_of | fi | [-1000000, 1000000] | 1 |
 | fence_census | display | [0, 0] | 1 |
 | ifds_tabulate_text | i | [0, 1000001] | 7 |
-| interval_state_bot | i | [0, 1000001] | 7 |
+| interval_state_bot | i | [0, 1000000] | 7 |
 | interval_state_bot | n | [-1000000, 1000000] | 1 |
 | is_module_coord | segs | [0, 1000001] | 7 |
 | literate | first_error | [0, 0] | 1 |
 | monotone_violation | n | [-1000000, 1000000] | 1 |
-| monotone_violation | v | [0, 1000001] | 6 |
+| monotone_violation | v | [0, 1000000] | 6 |
 | notice_lines | printed | [-1000000, 1000000] | 1 |
 | parse_hex_double | exp | [0, 0] | 2 |
 | pfg_solve | propagated | [0, 0] | 1 |
@@ -2609,7 +2553,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | pick_files | max_files | [-1000000, 1000000] | 1 |
 | pta_demand_site | line | [-1000000, 1000000] | 1 |
 | pta_heap_ctx_pairs | n | [0, 1000004] | 21 |
-| solve_widening | iters | [0, 1000001] | 6 |
+| solve_widening | iters | [0, 1000000] | 6 |
 | solve_widening | widen | [-1000000, 1000000] | 1 |
 | strip_fn_modifiers | i | [0, 1000002] | 32 |
 | truncated_fn | suspect | [-1, 63] | 3 |
@@ -2677,7 +2621,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | Interp | tail_bound | [-1000000, 1000000] | 1 |
 | Interval | is_empty | [-1000000, 1000000] | 1 |
 | Lexer | lex_number | [0, 0] | 1 |
-| Parser | harvest_ctors | [-999999, 1000005] | 6 |
+| Parser | harvest_ctors | [-999999, 1000001] | 2 |
 | aggregate | partial_files | [0, 1000001] | 6 |
 | cfl_ordinary_from | start | [-1000000, 1000000] | 1 |
 | mermaid_states | per_file | [-1000000, 1000000] | 1 |

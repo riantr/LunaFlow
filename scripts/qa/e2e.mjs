@@ -329,7 +329,14 @@ if (!skipModules) {
       // in it, so a finding in one file could be dropped as a duplicate of
       // one in another. Both were measured, and the count is the number the
       // repaired tree produces.
-      check('doubleML full: L2 findings within 50% of documented 3316', Math.abs(summary.abstract_findings - 3316) <= 1658, `${summary.abstract_findings}`);
+      //
+      // And it moved AGAIN, from 3316 to 3305, when the blanket loop rule was
+      // removed: the rule tainted every number a tainted loop condition read,
+      // and the counter is not one of the tainted values -- the BOUND is. The
+      // 11 findings the rule alone carried were false, and at every one of
+      // their sites the layer already reported the honest claim, an index
+      // out of bounds. See `docs/qa/IFDS_PHASE1.md`.
+      check('doubleML full: L2 findings within 50% of documented 3305', Math.abs(summary.abstract_findings - 3305) <= 1652, `${summary.abstract_findings}`);
       checkSidecar('doubleML full', full, mdName.slice(0, -3), readFileSync(join(full, mdName), 'utf8'), summary);
     }
   }

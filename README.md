@@ -46,10 +46,22 @@ One analyzer · three evidence strengths · one Markdown report.
   Sources are entry-function parameters (and `@env.args` when the frontend sees
   it). Propagation follows recorded definitions and the variables each
   statement read; array reads inherit container taint; `length()` inherits
-  receiver taint; a tainted loop condition taints the numeric loop counters
-  (implicit flow). Sinks are array indices and allocation sizes. The rules and
+  receiver taint. Sinks are array indices and allocation sizes. The rules and
   their imprecision — field- and index-insensitive, no alias analysis, depth-6
   calls, unsupported `match` arms — are printed in every report.
+
+  The **abstract** layer's taint is **labelled** and **kill-exact**: it carries
+  the *set* of parameters whose values may have reached the value, the set is
+  killed at an assignment and re-bound with the right-hand side's sources, and
+  a taint finding says which parameter was untrusted — *"tainted value from
+  parameter `len` may reach an array index"*. The abstract layer has **no
+  implicit flow**: a tainted loop condition does not taint the loop's counter,
+  because the counter does not carry the bound's taint. What the counter does
+  carry is a *bound* — and the layer states that relation where a relation
+  between two numbers belongs, in its value domain, so the honest claim (the
+  index may be out of bounds) survives. The measurement is in
+  `docs/qa/IFDS_PHASE1.md`. The **dynamic** layer keeps its implicit flow: it
+  reports what it observed on a concrete path.
 
 * Values at every point
 
@@ -2606,6 +2618,9 @@ docs/qa/REPORT.md          the deep QA report of the 0.1.3 pass — kept as
                            that pass's record
 docs/qa/IFDS_SPIKE.md      the Phase-0 IFDS spike: four measurements and
                            their verdict
+docs/qa/IFDS_PHASE1.md    IFDS Phase 1: the labelled, kill-exact taint
+                           engine, the blanket rule's replacement, the CFG
+                           defect and the coverage accounting
 docs/host_requirements.txt  the published wasm's host contract, measured
 reports/                   generated reports for the validation modules
 scripts/verify.mjs         dependency-free acceptance checker
@@ -2634,9 +2649,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 80 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 80 warnings, 0 errors |
 | `moon check --target js` | exit 0, 105 warnings, 0 errors |
-| `moon test src/app --target native` | **229 passed, 0 failed** |
-| `moon test src/app --target wasm` | **229 passed, 0 failed** |
-| `moon test src/app --target js` | **229 passed, 0 failed** |
+| `moon test src/app --target native` | **251 passed, 0 failed** |
+| `moon test src/app --target wasm` | **251 passed, 0 failed** |
+| `moon test src/app --target js` | **251 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -2645,7 +2660,7 @@ The gate, and the result it produced for this version:
 | `moon build . --target js` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
-| `node scripts/qa/e2e.mjs` | **56 passed, 0 failed** |
+| `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
 | `node scripts/qa/path_traversal.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
@@ -2661,7 +2676,7 @@ The gate, and the result it produced for this version:
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
 `moon 0.1.20261117` (core 0.10.21+06da1ed44), installed into a scratch home next to
 the verified one: `moon check` gives **80 / 80 / 105 warnings, 0 errors** on native /
-wasm / js, `moon test src/app` gives **229 passed, 0 failed** on each of the three,
+wasm / js, `moon test src/app` gives **251 passed, 0 failed** on each of the three,
 `moon build src/cli --target native`, `moon build src/cli --target js`,
 `moon build . --target wasm` and `moon build . --target js` are exit 0, and
 `moon fmt --check` is exit 0. **The warning counts are identical to the verified
@@ -2677,29 +2692,42 @@ traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 237,904 | 1,282 | 0 (no specs) | 0 | 118 | 10.8 s |
-| `riantr/moonbit_static_analysis@latest` → 0.5.0 | 254 | 17,428 | 17,029 | 184 | 0 (no specs) | 0 | 9 | 1.5 s |
-| `fixtures/vuln_demo` | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 51 | 6,388 | 9,903 | 46 | 2 / 1 / 3 | 0 | 7 | 542 ms |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,305 | 0 (no specs) | 0 | 195 | 8.4 s |
+| `riantr/moonbit_static_analysis@latest` → 0.5.0 | 254 | 17,450 | 17,029 | 190 | 0 (no specs) | 0 | 9 | 1.6 s |
+| `fixtures/vuln_demo` | 1 | 32 | 604 | 14 | 2 / 1 / 3 | 3 | 8 | 5 ms |
+| `LunaFlow` itself (`--dir .`) | 54 | 6,644 | 10,198 | 54 | 2 / 1 / 3 | 0 | 8 | 603 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
-tree — so its time is the **minimum of five** alternating runs, which is also
-how the deltas below are measured.
+tree — so its time is the **minimum of five** runs, which is also how the deltas
+below are measured.
 
-The three committed artefacts are regenerated by this release's build, with
+The three committed artefacts are regenerated by this tree's build, with
 `--funnel --trials 4` and one slice each (`theta_hat@aggregate_coef_se` for doubleML,
 `buf@render_reports` for the static-analysis module, `i@copy_prefix` for the fixture).
 `node scripts/verify.mjs` checks all three, and the version in each file name is the
 version the registry served when it was generated.
 
-**The abstract layer's scope is why the L2 column moved.** It used to be the
-dynamic layer's entry-point cap, so the L2 column read 187 findings on doubleML
-because the layer had only ever seen the first 150 functions. It now analyses the
-whole module — 1,411 functions — and the report says so in §5.2. The **L1 columns
-and both traces are untouched by that**: the fixture's report and trace and
-doubleML's 38.5 MB trace are **byte-identical**, and the only cell that differs in
-the fixture's report is the new scope line. The static-analysis module is a new
-file because the registry serves a newer version of it.
+**The L2 column has moved twice, and each move has a cause.** At 0.1.29 it moved
+from **187** to **1,282** because the abstract layer's scope stopped being the
+dynamic layer's entry-point cap and became the whole module — all **1,411**
+functions — and the report says so in §5.2. It moved again, **1,282 → 3,305**,
+because five taint rules matched only the `::` spelling of a qualified path and so
+could never fire on any input; one of them is the L2's own source of allocation
+findings. Repairing them turned dead code into findings, and the finding count
+went up because the layer had been silent, not because it got stricter.
+
+**The L1 event column moved with it, for the same reason.** The repaired
+allocation rule now records an `EvAlloc`, so the trace carries the allocation it
+was silently skipping: **237,904 → 243,528** events on doubleML, and the taint
+sinks went **118 → 195**. The taint sinks are the L1's own allocation-taint rule,
+one of the same five. The **other two artefacts' event counts did not move at
+all** — the static-analysis module is still 17,029 and the fixture still 604.
+
+Phase 1 then took **11** of doubleML's findings back — the ones the L2's blanket
+taint rule invented — while leaving **2** that name a real source parameter. On
+the static-analysis module it took **30** back (**220 → 190**). Every finding it
+removed was a claim the layer had already made honestly at the same site: the
+`INDEX-OOB` finding was already there.
 
 **The absolute times move with the machine, so the comparison that counts is the
 controlled one.** Over the same 220-file module, with the two builds alternating and
@@ -2750,6 +2778,19 @@ brace of its function, so whole function bodies were truncated. The committed
 numbers are now the honest ones: neither module has an unreachable statement,
 and the analyzer says so.
 
+**Reproduction status (2026-11-20).** The artefacts were regenerated on this
+tree with the recipe above, and they reproduce **byte-identically** — all three
+traces, all three findings sidecars; the reports differ only in their wall time.
+**The recipe had drifted, and this is where it says so:** the artefacts
+committed earlier on the same day were generated with the **default `--trials
+8`** instead of the documented `--trials 4`, so they no longer matched the
+recipe, the doubleML trace had doubled to 69.6 MB, and the 64 MB ceiling had to
+be raised to 96 MB to hold it. The artefacts are back on the documented recipe,
+the trace is **37.6 MB** again, and the ceiling is back to **64 MB**. The traces
+are **not** byte-identical to the ones the 0.1.29 release committed: the
+repaired allocation rule records an `EvAlloc`, so the trace carries the
+allocation it was silently skipping.
+
 LunaFlow's OWN row moves because the analyzer is one of the modules it analyses, and
 because the new checks are new source: 0.1.7 moved the statement count, 3,126 →
 3,145, when the `#cfg` guards and the stubs behind them became statements, the
@@ -2769,10 +2810,23 @@ events, because the foreign-address-space model is new source, because the
 fixture that exercises the C boundary is a new file, and because the analyzer
 now understands the FFI declarations it used to count as parse issues. The
 0.1.14 patch moved it once more, to 4,601 statements and 16,674 events, because
-the coordinate fix and its three tests are new source. The
-evolved value analysis now reports **exactly one** finding on LunaFlow's own
-tree, and it is the deliberate overflow in the memory fixture's global
-initializer — the library's own source has none.
+the coordinate fix and its three tests are new source. At that release the
+evolved value analysis reported **exactly one** finding on LunaFlow's own
+tree, and it was the deliberate overflow in the memory fixture's global
+initializer. **That figure is a 0.1.14 figure and it does not hold any more:
+the EVA reports 41 findings on this tree, 23 of them in the library's own
+source under `src/`.** Eight of those 23 are in one function whose accesses
+are provably in range — the layer cannot relate two arrays' lengths, and
+`docs/qa/IFDS_PHASE1.md` §8 records the measurement that says so. The number
+to read is the one in the table above.
+
+On this tree the row reads **54 files, 6,644 statements, 10,198 events, 54 L2
+findings, 0 dead and 8 taint sinks**, and it moved for the two reasons this
+paragraph has been naming all along: the new checks are new source, and the
+analyzer is one of the modules it analyses. The **L2** column moved for a third
+reason — the layer's blanket taint rule was replaced, and the five findings it
+had invented on this tree (four in `src/app/interp.mbt`, one in the fixture) are
+not in the 54.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.
@@ -2793,14 +2847,15 @@ moon run src/cli --target native -- analyze riantr/moonbit_doubleML@latest \
 
 **There is NO `--max-functions` cap in that recipe, and adding one changes every
 L1 number.** Measured on the committed artefacts: with `--max-functions 120` the
-doubleML run produces **193,962** trace events; without it, **237,904**. The cap
+doubleML run produces **198,182** trace events; without it, **243,528**. The cap
 binds the **dynamic** layer's entry points, and with them the trace.
 
 **The abstract layer's scope is NOT that cap.** It analyses the whole module — all
 **1,411** doubleML functions — and is bounded by its own step budget instead, so the
-L2 row of the funnel reads **1282 findings, 1411 functions, 167271 steps**. Report
-§5.2 states that scope in words, so a reader can tell a complete analysis from a
-truncated one instead of having to infer it.
+L2 row of the funnel reads **3305 findings, 1411 functions, 167211 steps** in *both*
+runs — the capped run's L1 row drops to 120 functions and its L2 row does not move.
+Report §5.2 states that scope in words, so a reader can tell a complete analysis
+from a truncated one instead of having to infer it.
 
 **"The whole module" includes the module's test files' HELPERS, but not its
 `test` blocks.** The scanner reads every `.mbt` file it finds — it excludes build

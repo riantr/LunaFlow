@@ -379,6 +379,7 @@ test "the report has the foreign address space section" {
     abstract_result: None,
     proof: None,
     abs_universe: 0,
+    cfg_universe: 0,
   }
   let md = @app.render_report(input, ffi=Some(ffi_model(src)))
   inspect(md.contains("### 5.7 The foreign address space"), content="true")

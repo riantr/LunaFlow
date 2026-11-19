@@ -326,18 +326,26 @@ fn stmts_always_exit(stmts : Array[Stmt]) -> Bool {
 }
 
 ///|
+/// The node a block ENDS at.
+///
+/// The block's exit is the node `emit_stmts` returns -- and for a block that
+/// ends in an `if`, that node is the `if`'s MERGE, not either arm. The arms
+/// are branches; the flow leaves the `if` through the merge.
+///
+/// Taking an arm's last node instead leaves the MERGE with NO outgoing edge
+/// at all: a dead end in the middle of the block. And the back edge of a
+/// loop whose body ends in an `if` then comes from ONE arm, so whatever the
+/// other arm assigned never reaches the loop head. MEASURED on
+/// `riantr/moonbit_doubleML@0.164.64` (the Phase-0 IFDS spike): a binary
+/// search whose `lo` is assigned in the `then` arm lost its taint at the
+/// loop head, and the flow fixpoint reported 2 taint sinks fewer than the
+/// abstract interpreter -- which walks the AST and gets the join right.
 fn last_node(b : Builder, stmts : Array[Stmt], fallback : Int32) -> Int32 {
   if stmts.length() == 0 {
     return fallback
   }
   let last = stmts[stmts.length() - 1]
   match last.kind {
-    SIf(_, then_b, else_b) =>
-      if else_b.length() > 0 {
-        last_node(b, else_b, fallback)
-      } else {
-        last_node(b, then_b, fallback)
-      }
     SWhile(_, _) | SFor(_, _, _, _, _) | SForIn(_, _, _) => fallback
     SBlock(inner) | STry(inner) => last_node(b, inner, fallback)
     _ => {

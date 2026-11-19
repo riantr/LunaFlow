@@ -350,6 +350,7 @@ fn report_for(coord : String) -> String {
     abstract_result: None,
     proof: None,
     abs_universe: 0,
+    cfg_universe: 0,
   }
   @app.render_report(input)
 }

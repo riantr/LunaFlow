@@ -215,19 +215,22 @@ This is the dynamic-first engine described in §5.3: parse the function, synthes
 
 ### 4.2 Level 2 — Value Mode (abstract interpretation)
 
-Domain (`AbsVal`): `Int` and `Double` intervals, `Bool` as a pair of possible values, bounded `String` sets, array **length** intervals, tuples, `top`/`bottom`. Taint is a three-valued lattice (`clean`, `maybe`, `tainted`) so a may-analysis can say "possibly tainted".
+Domain (`AbsVal`): `Int` and `Double` intervals, `Bool` as a pair of possible values, bounded `String` sets, array **length** intervals, tuples, `top`/`bottom`. Taint is a **set of sources** — the labels of the parameters whose values may have reached the value (`param:<name>`) — so a may-analysis can say "possibly tainted" *and* say which input was untrusted. The set is finite: it is a subset of the function's parameters, so the join grows to at most one entry per parameter and the widening cannot run away.
 
-State: `Map[var -> AbsCell{value, taint}]`. Transfer functions:
+State: `Map[var -> AbsCell{value, sources}]`. Transfer functions:
 
 - arithmetic via interval arithmetic with conservative division/modulo;
 - comparisons return a `Bool` pair (can-be-true, can-be-false);
 - `if`: evaluate the condition, refine the state on the true and false edges (`i >= 0`, `i < n`, `i == k`), execute both branches, join the results; a branch that cannot be taken is reported as unreachable **for the abstract input set**;
 - `while` / `for`: iterate to a bounded fixpoint (6 rounds), joining states; from round 3 a widening step pushes growing intervals to the default bound; the loop exit state is refined by the negated condition;
-- array indexing: tainted index → `TAINT-INDEX` (mode `L2-abstract`, confidence 0.6); interval may exceed `[0, len-1]` → `RANGE-VIOLATION` (0.6 may, 0.95 when the interval proves it); allocation size tainted or possibly negative → `TAINT-ALLOC` / `RANGE-VIOLATION`;
+- a comparison against another **variable** narrows the left-hand side by the right-hand side's interval (`i < len` gives `i ≤ len.hi − 1`), so a loop counter is bounded by the bound it is compared against;
+- array indexing: tainted index → `TAINT-INDEX` (mode `L2-abstract`, confidence 0.6), and the finding **names the source** — "tainted value from parameter `len` may reach an array index"; interval may exceed `[0, len-1]` → `RANGE-VIOLATION` (0.6 may, 0.95 when the interval proves it); allocation size tainted or possibly negative → `TAINT-ALLOC` / `RANGE-VIOLATION`;
 - `assert`/`require`: "may fail" when the condition can be false;
-- loop condition taint propagates to numeric variables read by the condition (implicit flow), which is why `while i < len { a[i] }` is flagged even though `i` starts at 0.
+- the taint is **kill-exact**: `let` and `=` kill the variable's taint and re-bind it with the right-hand side's sources, so a tainted value that is overwritten leaves nothing behind.
 
-Cost: linear in the number of statements × fixpoint rounds; measured 1282 findings from the 1411 doubleML functions in the same run as L1 (10.8 s total), and 184 findings from the 1422 static_analysis functions (1.5 s total).
+**There is no implicit flow in this layer.** The L2 used to taint every number a tainted loop condition read, so that `while i < len { a[i] }` was flagged although `i` starts at 0. That was a false claim — the tainted value is the *bound*, and the counter does not carry the bound's taint — and it was **removed** in IFDS Phase 1. What survives it is the honest claim, in the value domain: the counter's value is bounded by the bound, so the index may be out of bounds. The measurement and the falsification are in `docs/qa/IFDS_PHASE1.md`.
+
+Cost: linear in the number of statements × fixpoint rounds; measured 3,305 findings from the 1411 doubleML functions in the same run as L1 (8.4 s total), and 190 findings from the 1422 static_analysis functions (1.6 s total).
 
 **The universe excludes the `test` BLOCKS, and nothing else.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt` — and `ModuleAst::all_funcs()` filters on the **function** (`fn.is_test`), not on the file. So an ordinary helper that lives in a `_test.mbt` file is analysed, and a `test "..." { }` block is not. For a module whose test files are most of its code that is worth stating: **129 of doubleML's 220 `.mbt` files are test files**. What says how much of the output is about test code is the finding split, not the scope line: measured on the committed doubleML artefact, **24 of the 926 findings shown in §5.2 (2.6 %) are in test files**, and every one of them is in a helper (`v120_check_enet`, `count_eq`, `expand_v091_iivm_data`, …), not in a test block.
 
@@ -339,6 +342,8 @@ Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, 1
 
 **Implicit flows.** When a loop condition is tainted, numeric variables read by that condition are marked tainted (control dependence). This is what lets `while i < len { buffer[i] }` report a tainted index even though `i` is initialized to `0`. It is deliberately conservative; see §5.5 for the precision cost.
 
+**This is the DYNAMIC layer's rule, and the abstract layer does not have it.** The L2 used to carry the same rule — it was called the *blanket loop rule* — and IFDS Phase 1 removed it, because the claim it makes is false: the tainted value is the loop's *bound*, and the counter does not carry the bound's taint. The dynamic layer keeps its rule because it reports what it *observed* on a concrete path, where a tainted condition really did control the loop. `docs/qa/IFDS_PHASE1.md` has the measurement.
+
 ### 5.4 Dead code, unreachable code and infinite loops
 
 | Signal | Method | Rule | Confidence | Known limitation |
@@ -361,7 +366,7 @@ Propagation rules:
 2. call: arguments are evaluated; if the callee is a parsed function it is interpreted, so parameter taint flows into the callee and the return value carries the callee's result taint; if unknown, the result is tainted iff any argument is;
 3. containers: reading `a[i]` inherits the array's taint; writing `a[i] = v` makes `a` tainted if `v` is; element-level identity is *not* tracked (index-insensitive);
 4. `length()` inherits receiver taint;
-5. implicit control dependence: tainted loop condition taints numeric loop variables (see §5.3);
+5. implicit control dependence: tainted loop condition taints numeric loop variables (see §5.3). This rule is the **dynamic** layer's; the abstract layer does not have it — see §4.2;
 6. string operations are coarse: `to_string` propagates taint; char-level operations are unknown.
 
 Sinks:
@@ -1075,6 +1080,7 @@ Labels are sanitized: quotes → `#quot;`, angle brackets → `#lt;`/`#gt;`, pip
 | Findings rows | 300 | bounded table; the count table above it states the family mix of the WHOLE set, and the findings the table does not show are in the report's `_findings.jsonl` sidecar, so the bound costs no finding |
 | Files walked | 2,000 | stated in the report if the cap is hit |
 | Syntactic nesting depth | 256 | beyond this the construct is a recorded parse gap; protects the native stack on hostile input |
+| CFG window | 600 functions, in file order | disclosed and configurable (`--max-cfg-functions`); the report states how many functions the flow pass was given and how many it could not reach, and the denominator is the **analysable** universe — the functions that are not test blocks — not the scanner's count, which includes them |
 
 Interaction is intentionally file-based: the CLI produces Markdown that GitHub/GitLab/VS Code render; Mermaid blocks are also extracted by `scripts/verify.mjs`. Source locations are in every label and table row; the JSONL trace allows programmatic drill-down to any event.
 
@@ -1160,21 +1166,30 @@ cap:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.64 | 220 | 30,258 | 237,904 | **1,282** | 0 / 0 / 0 (no specs) | 0 | 118 | **10.8 s** | **445 KB** | 36.8 MB |
-| static_analysis 0.5.0 | 254 | 17,428 | 17,029 | **184** | 0 / 0 / 0 (no specs) | 0 | 9 | **1.5 s** | **147 KB** | 2.5 MB |
-| fixtures/vuln_demo | 1 | 32 | 604 | 10 | 2 / 1 / 3 | 3 | 6 | 4 ms | 33 KB | 79 KB |
+| doubleML 0.164.64 | 220 | 30,258 | 243,528 | **3,305** | 0 / 0 / 0 (no specs) | 0 | 195 | **8.4 s** | **384 KB** | 37.6 MB |
+| static_analysis 0.5.0 | 254 | 17,450 | 17,029 | **190** | 0 / 0 / 0 (no specs) | 0 | 9 | **1.6 s** | **150 KB** | 2.5 MB |
+| fixtures/vuln_demo | 1 | 32 | 604 | 14 | 2 / 1 / 3 | 3 | 8 | 5 ms | 35 KB | 79 KB |
 
 Sizes are in **KB = 1024 bytes**, against a 512 KB limit, so the doubleML report
-(455,994 B) sits at **87 %** of A12. The L2 column moved from 187 / 8 to 1,282 / 184
+(392,644 B) sits at **75 %** of A12. The L2 column moved from 187 / 8 to 1,282 / 184
 because the abstract layer's scope stopped being the interpreter's entry-point cap
-and became the whole module; the L1 event and trace columns did not move, and the
-committed trace is byte-identical to the one before the change.
+and became the whole module, and then to **3,305 / 190** because the five dead
+`::`-spelled rules were repaired (the allocation family could not fire at all)
+and the de-duplication key was given the file it had been omitting.
+
+**The L1 event and trace columns moved too, and the reason is the repair, not
+the taint.** The allocation rule records an `EvAlloc` event for every
+allocation it sees, and the rule was dead before — so repairing it added
+**5,624** trace events on doubleML (237,904 → 243,528) and the trace grew
+from 36.8 MB to 37.6 MB, still inside the 64 MB cap. The **other two artefacts'
+event counts did not move at all**: the static-analysis module is still 17,029
+and the fixture still 604.
 
 **The cap is not part of the recipe, and adding it moves the dynamic layer's
-numbers.** With `--max-functions 120` the doubleML run produces **193,962** trace
-events; without it, **237,904**. The committed artefacts are the **no-cap** run, and
+numbers.** With `--max-functions 120` the doubleML run produces **198,182** trace
+events; without it, **243,528**. The committed artefacts are the **no-cap** run, and
 re-running the recipe with the current build reproduces all three of them
-**byte-identically** — traces included.
+**byte-identically** — traces included; only the reports' wall time differs.
 
 The statement counts fell and the dead-code column emptied because the old
 numbers were wrong: the parser shredded every construct it did not model into
@@ -1183,7 +1198,7 @@ its function, so whole function bodies were truncated. Neither module has an
 unreachable statement, and the analyzer now says so. The event count rose
 because the analyzer understands more of the module and explores more paths.
 
-Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 36.8 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-functions` or stream events to disk.
+Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 37.6 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-functions` or stream events to disk.
 
 Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `scripts/qa/metrics.mjs`):
 
@@ -1191,8 +1206,8 @@ Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `
 | --- | --- |
 | doubleML full run (`@latest` → 0.164.64), wall time | 8.5–9 s |
 | doubleML full run, peak working set (sampled) | 295.9 MB |
-| doubleML full run, trace size / events | 70.3 MB / 387,638 (default `--trials 8`) |
-| doubleML with a `--max-functions 120` cap (`--trials 4`, no slice) | 193,906 events, 85 sinks, 0 dead, 9.2 s |
+| doubleML full run, trace size / events | 69.6 MB / 448,001 (default `--trials 8`) |
+| doubleML with a `--max-functions 120` cap (`--trials 4`, no slice) | 193,906 events, 85 sinks, 0 dead, 9.2 s — re-measured on 2026-11-20 with the slice: **198,182** events |
 | fixture run, peak working set | 7.5 MB |
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
 | LunaFlow's own line coverage (`moon coverage`, `src/app` scope) | **57.35 %** (4,052 / 7,065 coverable lines of `src/app`) |
@@ -1317,20 +1332,20 @@ Interpretation:
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 229 passed, 0 failed | 229/229 |
+| A2 | Tests | `moon test src/app --target native` ≥ 251 passed, 0 failed | 251/251 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.5.0 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.82 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
 | A6 | Dead code | fixture reports exactly 3 `DEAD-CODE` + 1 `UNREACHABLE` | 3 / 1 |
 | A7 | Infinite loop | fixture `spin` yields ≥ 1 `INFINITE-LOOP`; unit test pins it | 1 |
-| A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 6; doubleML 118; static 9 |
+| A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 8; doubleML 195; static 9 |
 | A9 | Ranges | per-point table non-empty; ≥ 1 numeric variable per module | non-empty on all reports |
 | A10 | Slicing | doubleML `theta_hat@aggregate_coef_se` ≥ 4 nodes; static `buf@render_reports` ≥ 1 node | 4, 1 |
-| A11 | Runtime | ≤ 60 s per module on a warm cache | 10.8 s, 1.5 s |
-| A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 445 KB / 36.8 MB; 147 KB / 2.5 MB |
+| A11 | Runtime | ≤ 60 s per module on a warm cache | 8.4 s, 1.6 s |
+| A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 384 KB / 37.6 MB; 150 KB / 2.5 MB |
 | A13 | Determinism | two runs produce identical `summary.json` except `elapsed_ms` | verified |
 | A14 | Verifier | `node scripts/verify.mjs` exits 0 | 87/87 checks pass |
-| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 1282 / 184 / 10 |
+| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 3305 / 190 / 14 |
 | A16 | L3 on fixture | ≥ 1 `proved` and ≥ 1 `failed` VC | 2 proved, 1 failed, 3 unknown |
 | A17 | Funnel report | every report contains the funnel Mermaid diagram and L1/L2/L3 rows | present in all three |
 | A18 | Cumulative levels | `--level N` runs levels 1..N; `--funnel` runs all three | covered by unit + E2E runs |
@@ -1346,9 +1361,11 @@ artefact's `elapsed_ms`, A12 is the artefact's size on disk, and A10 is the node
 count of the slice section. `scripts/qa/e2e.mjs` re-measures the same thresholds
 against **fresh** runs.
 
-A12's trace ceiling (64 MB) is the tightest margin: the doubleML trace is **36.8 MB**
+A12's trace ceiling (64 MB) is the tightest margin: the doubleML trace is **37.6 MB**
 at `--trials 4`, and the default `--trials 8` produces a larger one, so the
-**documented `--trials 4` recipe** is what keeps it inside the threshold.
+**documented `--trials 4` recipe** is what keeps it inside the threshold. The
+E2E's own runs use the default, and they carry their own, looser ceiling for
+exactly that reason.
 
 ---
 
