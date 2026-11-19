@@ -320,7 +320,16 @@ if (!skipModules) {
       // the abstract layer's scope stopped being the interpreter's entry-point
       // cap and became the WHOLE module: the committed artefact is the
       // full-scope run, and 1282 is its number.
-      check('doubleML full: L2 findings within 50% of documented 1282', Math.abs(summary.abstract_findings - 1282) <= 641, `${summary.abstract_findings}`);
+      //
+      // And it moved AGAIN, from 1282 to 3316, when two defects were
+      // repaired: the allocation rules matched only the `::` spelling while
+      // the parser renders a qualified path with a DOT, so the
+      // allocation-size family could not fire at all (it appeared ZERO times
+      // in the committed artefacts); and the de-duplication key had no file
+      // in it, so a finding in one file could be dropped as a duplicate of
+      // one in another. Both were measured, and the count is the number the
+      // repaired tree produces.
+      check('doubleML full: L2 findings within 50% of documented 3316', Math.abs(summary.abstract_findings - 3316) <= 1658, `${summary.abstract_findings}`);
       checkSidecar('doubleML full', full, mdName.slice(0, -3), readFileSync(join(full, mdName), 'utf8'), summary);
     }
   }

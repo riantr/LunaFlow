@@ -240,8 +240,18 @@ fn add_finding(
   confidence : Double,
   evidence : String,
 ) -> Unit {
+  // The FILE is part of the key. The findings array is the MODULE's -- one
+  // array, shared by every function -- so a key without the file let two
+  // functions in two different files collide: the same family, the same
+  // line number and the same message, and the second finding was dropped
+  // as a duplicate of the first. MEASURED on `riantr/moonbit_doubleML`:
+  // 23 taint sites were lost that way. Within one file the key is still
+  // exact, because a file has one statement per line.
   for f in ctx.findings {
-    if f.kind == kind && f.line == line && f.message == message {
+    if f.kind == kind &&
+      f.file == ctx.file &&
+      f.line == line &&
+      f.message == message {
       return
     }
   }
@@ -897,7 +907,14 @@ fn abs_eval(
         cells.push(c)
         t = t.join(c.t)
       }
-      if f == "Array::make" || f == "FixedArray::make" {
+      // The PARSER renders a qualified path with a DOT -- `Array::make(n)`
+      // becomes the call name `Array.make` -- so the `::` spelling never
+      // arrives here, and a rule that matches only that spelling is DEAD.
+      // Both are accepted, because a caller may build the expression itself.
+      if f == "Array.make" ||
+        f == "Array::make" ||
+        f == "FixedArray.make" ||
+        f == "FixedArray::make" {
         if cells.length() > 0 {
           let size = cells[0]
           if size.t != TClean {
@@ -965,71 +982,87 @@ fn abs_eval(
       }
     }
     EMethod(recv, m, args) => {
-      let cr = abs_eval(ctx, st, eva, recv)
-      let mut t = cr.t
-      let arg_cells : Array[AbsCell] = []
-      for a in args {
-        let c = abs_eval(ctx, st, eva, a)
-        arg_cells.push(c)
-        t = t.join(c.t)
+      // A MODULE's function written as a method call: `Array.make(n, 0)`.
+      // The parser reads a qualified path `Array::make` as a field access
+      // and then a call, so the two spellings of the SAME call reach the
+      // analyzer by different routes -- and a rule that answers to one and
+      // not the other analyses one call two ways. This is the other half
+      // of the dead-rule repair: the qualified path is re-written as the
+      // call it is, and the allocation rule answers to it.
+      let owner = match recv.kind {
+        EName(n) => n
+        _ => ""
       }
-      // The EVOLVED VALUE ANALYSIS checks: what the RECEIVER IS USED FOR.
-      // Each one is a question about the use of a value, not about its range.
-      if m == "unwrap" {
-        // `None.unwrap()` is MoonBit's null dereference: it panics.
-        eva_check_none_deref(ctx, eva, recv, e.span.start_line)
-      } else if m == "to_int" || m == "to_int64" {
-        // `Double::to_int` SATURATES: a value outside the target's range
-        // silently becomes the bound, and a NaN becomes 0.
-        match cr.v {
-          ADouble(lo, hi) =>
-            eva_check_invalid_cast(ctx, m, lo, hi, e.span.start_line)
-          _ => ()
-        }
-      } else if m == "set" && arg_cells.length() > 0 {
-        // A write into an uninitialized array.
-        match arg_cells[0].v {
-          AInt(k, k2) => if k == k2 { eva_note_uninit_set(eva, recv, k) }
-          _ => ()
-        }
-      }
-      if m == "length" {
-        match cr.v {
-          AArr(l, h) => AbsCell::new(AInt(l, h), t)
-          AStr(xs) => {
-            let mut lo = 999
-            let mut hi = 0
-            for x in xs {
-              if x.length() < lo {
-                lo = x.length()
-              }
-              if x.length() > hi {
-                hi = x.length()
-              }
-            }
-            AbsCell::new(AInt(lo, hi), t)
-          }
-          _ => AbsCell::new(ATop, t)
-        }
-      } else if m == "push" {
-        match recv.kind {
-          EName(n) =>
-            match st.env.get(n) {
-              Some(cell) =>
-                match cell.v {
-                  AArr(l, h) =>
-                    st.env[n] = AbsCell::new(AArr(l + 1, h + 1), cell.t)
-                  _ => ()
-                }
-              None => ()
-            }
-          _ => ()
-        }
-        AbsCell::new(ATop, t)
-      } else if m == "to_string" {
-        AbsCell::new(AStr(["<string>"]), t)
+      if (m == "make" || m == "new") &&
+        (owner == "Array" || owner == "FixedArray") {
+        abs_eval(ctx, st, eva, Expr::new(e.span, ECall(owner + "." + m, args)))
       } else {
-        AbsCell::new(ATop, t)
+        let cr = abs_eval(ctx, st, eva, recv)
+        let mut t = cr.t
+        let arg_cells : Array[AbsCell] = []
+        for a in args {
+          let c = abs_eval(ctx, st, eva, a)
+          arg_cells.push(c)
+          t = t.join(c.t)
+        }
+        // The EVOLVED VALUE ANALYSIS checks: what the RECEIVER IS USED FOR.
+        // Each one is a question about the use of a value, not about its range.
+        if m == "unwrap" {
+          // `None.unwrap()` is MoonBit's null dereference: it panics.
+          eva_check_none_deref(ctx, eva, recv, e.span.start_line)
+        } else if m == "to_int" || m == "to_int64" {
+          // `Double::to_int` SATURATES: a value outside the target's range
+          // silently becomes the bound, and a NaN becomes 0.
+          match cr.v {
+            ADouble(lo, hi) =>
+              eva_check_invalid_cast(ctx, m, lo, hi, e.span.start_line)
+            _ => ()
+          }
+        } else if m == "set" && arg_cells.length() > 0 {
+          // A write into an uninitialized array.
+          match arg_cells[0].v {
+            AInt(k, k2) => if k == k2 { eva_note_uninit_set(eva, recv, k) }
+            _ => ()
+          }
+        }
+        if m == "length" {
+          match cr.v {
+            AArr(l, h) => AbsCell::new(AInt(l, h), t)
+            AStr(xs) => {
+              let mut lo = 999
+              let mut hi = 0
+              for x in xs {
+                if x.length() < lo {
+                  lo = x.length()
+                }
+                if x.length() > hi {
+                  hi = x.length()
+                }
+              }
+              AbsCell::new(AInt(lo, hi), t)
+            }
+            _ => AbsCell::new(ATop, t)
+          }
+        } else if m == "push" {
+          match recv.kind {
+            EName(n) =>
+              match st.env.get(n) {
+                Some(cell) =>
+                  match cell.v {
+                    AArr(l, h) =>
+                      st.env[n] = AbsCell::new(AArr(l + 1, h + 1), cell.t)
+                    _ => ()
+                  }
+                None => ()
+              }
+            _ => ()
+          }
+          AbsCell::new(ATop, t)
+        } else if m == "to_string" {
+          AbsCell::new(AStr(["<string>"]), t)
+        } else {
+          AbsCell::new(ATop, t)
+        }
       }
     }
     EField(base, _) => {

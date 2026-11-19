@@ -463,8 +463,14 @@ fn eva_add_finding(
   confidence : Double,
   evidence : String,
 ) -> Unit {
+  // The FILE is part of the key, for the same reason as in `abs.mbt`: the
+  // findings array is the module's, so a key without the file let a finding
+  // in one file be dropped as a duplicate of a finding in another.
   for f in ctx.findings {
-    if f.kind == kind && f.line == line && f.message == message {
+    if f.kind == kind &&
+      f.file == ctx.file &&
+      f.line == line &&
+      f.message == message {
       return
     }
   }

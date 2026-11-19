@@ -44,7 +44,9 @@ someone else's code and a set of small demo fixtures.
    than delete it.
 4. **The measurement found three real defects in the product**, two of them
    in the taint path the spike was built to compare against (§7). The
-   allocation-size family is **dead code**: it cannot fire on any input.
+   allocation-size family was **dead code**: it could not fire on any input.
+   **D1 and D2 have since been repaired (2026-11-20)** — §7 says what each
+   cost and what they now report. D3 is still open.
 
 ---
 
@@ -231,7 +233,7 @@ The spike exists to answer a question about IFDS. It also turned up three
 defects in the analyser it was measured against. All three are in the taint
 path, and all three are **measured, not inferred**.
 
-### D1 — the allocation-size family is dead code
+### D1 — the allocation-size family is dead code — **REPAIRED**
 
 The L2's allocation rule matches `f == "Array::make"` (sic — with `::`).
 **The parser never produces that name**: a qualified path is rendered with a
@@ -249,7 +251,36 @@ The spike, which matches the name the parser actually produces, finds **881**
 tainted allocation sizes on doubleML — out of **2,099** `Array::make` /
 `FixedArray::make` calls in the corpus.
 
-### D2 — the finding de-duplication omits the file
+**THE REPAIR (2026-11-20).** Five rules matched only the `::` spelling and
+could never fire: the L2's allocation-size rule (`abs.mbt`), the
+allocation-size VC (`contract.mbt`), the L1's allocation taint
+(`interp.mbt`), and the two string-conversion rules (`interp.mbt`). Each now
+answers to the DOT spelling as well. The same repair covers the OTHER route
+to the same call: the source spelling `Array.make(n, 0)` is a METHOD call,
+not a qualified path, so a module function written that way is re-written as
+the call it is before the rule sees it — otherwise the same call would be
+analysed two different ways depending on how the caller spelled it.
+
+MEASURED on `riantr/moonbit_doubleML@0.164.64`, the full funnel run:
+
+| | before | after |
+| --- | ---: | ---: |
+| `TAINT-ALLOC` findings | **0** | **944** |
+| `RANGE-VIOLATION` | 824 | 1,403 |
+| `INDEX-OOB` | 273 | 684 |
+| `TAINT-INDEX` | 199 | 354 |
+| L2 findings in total | 1,282 | 3,316 |
+| L1 taint sinks | 123 | 199 |
+
+The new `RANGE-VIOLATION` findings are the dead rule's second clause — "a
+size may be negative" — and the new `INDEX-OOB` findings are the SAME claim
+shape the tool already made (an index interval against a length interval),
+not a new kind of claim. The ground truth is the fixture that exists to
+prove the case: `make_window(n : Int32)` and `parse_len(s : String)` in
+`fixtures/vuln_demo` are exactly "a tainted value controls an allocation
+size", and the published tool was **silent** on both. It is not now.
+
+### D2 — the finding de-duplication omits the file — **REPAIRED**
 
 `add_finding` compares a candidate against the findings already collected on
 **(kind, line, message)** — and not on the file. Two files with a taint
@@ -260,6 +291,17 @@ Measured on doubleML: **23** taint-index sites share a line with a site the
 L2 has in another file. `kde.mbt:77` keeps the line; `did_aggregation.mbt:77`
 is silently dropped. The corpus has 220 files and 30,258 statements, so line
 collisions are common, not exotic.
+
+**THE REPAIR (2026-11-20).** The file is part of the key, in the L2's
+`add_finding` (`abs.mbt`) and in the EVA's (`eva.mbt`) — the findings array
+is the MODULE's, one array shared by every function, so a key without the
+file let a finding in one file be dropped as a duplicate of a finding in
+another. Within one file the key is still exact, because a file has one
+statement per line.
+
+MEASURED on doubleML, with D2 alone and D1's repair switched off: **+312**
+findings (RANGE-VIOLATION +229, INDEX-OOB +60, INTEGER-OVERFLOW +20,
+TAINT-INDEX +3), L2 findings 1,282 → 1,594.
 
 ### D3 — an exact array length prunes loop bodies
 

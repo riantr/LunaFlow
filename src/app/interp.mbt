@@ -561,7 +561,7 @@ fn eval(p : Interp, env : Map[String, Val], e : Expr) -> Val {
       }
     }
     ECall(name, args) => eval_call(p, env, name, args, e.span)
-    EMethod(recv, m, args) => eval_method(p, env, recv, m, args)
+    EMethod(recv, m, args) => eval_method(p, env, recv, m, args, e.span)
     EField(base, _) => {
       let v = eval(p, env, base)
       Val::new(VUnknown, v.tainted)
@@ -611,7 +611,20 @@ fn eval_method(
   recv : Expr,
   m : String,
   args : Array[Expr],
+  span : Span,
 ) -> Val {
+  // A MODULE's function written as a method call: `Array.make(n, 0)`. The
+  // parser reads a qualified path `Array::make` as a field access and then
+  // a call, so the two spellings of the SAME call reach the analyzer by
+  // different routes -- and the allocation rule has to answer to both, or
+  // the same call is analysed two ways.
+  let owner = match recv.kind {
+    EName(n) => n
+    _ => ""
+  }
+  if (m == "make" || m == "new") && (owner == "Array" || owner == "FixedArray") {
+    return eval_call(p, env, owner + "." + m, args, span)
+  }
   let rv = eval(p, env, recv)
   if m == "length" {
     match rv.v.len_of() {
@@ -723,7 +736,16 @@ fn eval_call(
   args : Array[Expr],
   span : Span,
 ) -> Val {
-  if name == "Array::make" || name == "FixedArray::make" || name == "Array::new" {
+  // The parser renders a qualified path with a DOT -- `Array::make(n)`
+  // becomes the call name `Array.make` -- so the `::` spelling never
+  // arrives here, and a rule that matches only that spelling is DEAD.
+  // Both are accepted, because a caller may build the expression itself.
+  if name == "Array.make" ||
+    name == "Array::make" ||
+    name == "FixedArray.make" ||
+    name == "FixedArray::make" ||
+    name == "Array.new" ||
+    name == "Array::new" {
     let size = if args.length() > 0 {
       eval(p, env, args[0])
     } else {
@@ -822,14 +844,20 @@ fn eval_call(
       ),
     )
     Val::new(VStr("tainted-argv"), true)
-  } else if name == "Int::to_string" || name == "Double::to_string" {
+  } else if name == "Int.to_string" ||
+    name == "Int::to_string" ||
+    name == "Double.to_string" ||
+    name == "Double::to_string" {
     let v = if args.length() > 0 {
       eval(p, env, args[0])
     } else {
       clean(VUnknown)
     }
     Val::new(VStr(v.v.repr()), v.tainted)
-  } else if name == "Int::from_string" || name == "Double::from_string" {
+  } else if name == "Int.from_string" ||
+    name == "Int::from_string" ||
+    name == "Double.from_string" ||
+    name == "Double::from_string" {
     let v = if args.length() > 0 {
       eval(p, env, args[0])
     } else {

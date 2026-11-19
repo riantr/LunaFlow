@@ -9,7 +9,7 @@
 | Requested coordinate | `local/module` |
 | Resolved version | `0.0.0` |
 | Pinning strategy | explicit local directory without moon.mod |
-| Source root | `fixtures/vuln_demo` |
+| Source root | `fixtures\vuln_demo` |
 | Declared target | `` |
 | Direct dependencies | (none) |
 
@@ -24,11 +24,11 @@
 | Frontend coverage | 100.0% |
 | Parse issues | 0 |
 | CFG functions | 12 of 12 — every function |
-| Trace events | 604 |
-| Interpreted steps | 156 |
+| Trace events | 889 |
+| Interpreted steps | 154 |
 | Observed functions | 12 |
 | Entry selection | the first 12 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 4 ms |
+| Wall time (analyzer) | 5 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -50,8 +50,8 @@ flowchart LR
   classDef l1 fill:#dcedc8,stroke:#33691e
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
-  L1["L1 concrete: 12 findings"]:::l1
-  L2["L2 abstract: 10 findings, 5 new"]:::l2
+  L1["L1 concrete: 21 findings"]:::l1
+  L2["L2 abstract: 15 findings, 7 new"]:::l2
   L3["L3 contracts: 2 proved / 1 failed / 3 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -59,15 +59,15 @@ flowchart LR
 
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
-| L1 concrete | 12 findings | — | 12 functions | observed facts |
-| L2 abstract | 10 findings | 5 | 12 functions, 182 steps | exhaustive over the input abstraction |
-| L3 contracts | 6 VCs | 1 failed, 3 unknown | 8 critical functions | specs required |
+| L1 concrete | 21 findings | — | 12 functions | observed facts |
+| L2 abstract | 15 findings | 7 | 12 functions, 182 steps | exhaustive over the input abstraction |
+| L3 contracts | 6 VCs | 1 failed, 3 unknown | 9 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
 
-Escalated functions (have at least one L1/L2 finding or a contract): `copy_prefix`, `lookup`, `parse_len`, `spin`, `get_checked`, `get_unsafe`, `get_negative`, `double`
+Escalated functions (have at least one L1/L2 finding or a contract): `copy_prefix`, `lookup`, `make_window`, `parse_len`, `spin`, `get_checked`, `get_unsafe`, `get_negative`, `double`
 
-Functions escalated without any contract (spec gap at L3): `copy_prefix (lib.mbt:2)`, `lookup (lib.mbt:13)`, `parse_len (lib.mbt:26)`, `spin (lib.mbt:40)`
+Functions escalated without any contract (spec gap at L3): `copy_prefix (lib.mbt:2)`, `lookup (lib.mbt:13)`, `make_window (lib.mbt:21)`, `parse_len (lib.mbt:26)`, `spin (lib.mbt:40)`
 
 ## 4. Control-flow analysis
 
@@ -214,7 +214,7 @@ flowchart TD
   n2 --> n1
 ```
 
-Observed path (trial 0, first 2 events): `call@22` -> `def@21`
+Observed path (trial 0, first 2 events): `alloc@22` -> `def@21`
 
 #### `parse_len` (lib.mbt)
 
@@ -238,7 +238,7 @@ flowchart TD
   n4 --> n1
 ```
 
-Observed path (trial 0, first 5 events): `def@27` -> `call@28` -> `def@28` -> `index@29` -> `def@26`
+Observed path (trial 0, first 5 events): `def@27` -> `alloc@28` -> `def@28` -> `index@29` -> `def@26`
 
 #### `get_checked` (lib.mbt)
 
@@ -324,30 +324,30 @@ flowchart LR
   t13[["index: buffer[1]"]]:::sink
   t14["total = ?"]:::step
   t15["#lt;ret#gt; = ?"]:::step
-  t16["source: values"]:::src
-  t17["source: index"]:::src
-  t18["source: values"]:::src
-  t19["source: index"]:::src
-  t20[["index: values[0]"]]:::sink
-  t21["#lt;ret#gt; = ?"]:::step
-  t22["source: values"]:::src
-  t23["source: index"]:::src
-  t24[["index: values[1]"]]:::sink
-  t25["#lt;ret#gt; = ?"]:::step
-  t26["source: values"]:::src
-  t27["source: index"]:::src
-  t28[["index: values[2]"]]:::sink
-  t29["#lt;ret#gt; = ?"]:::step
-  t30["source: n"]:::src
-  t31["#lt;ret#gt; = ?"]:::step
-  t32["source: n"]:::src
-  t33["#lt;ret#gt; = ?"]:::step
-  t34["source: n"]:::src
-  t35["#lt;ret#gt; = ?"]:::step
-  t36["source: n"]:::src
-  t37["#lt;ret#gt; = ?"]:::step
-  t38["source: s"]:::src
-  t39["n = 0"]:::step
+  t16["source: buffer"]:::src
+  t17["source: len"]:::src
+  t18[["index: buffer[0]"]]:::sink
+  t19["total = ?"]:::step
+  t20[["index: buffer[1]"]]:::sink
+  t21["total = ?"]:::step
+  t22[["index: buffer[2]"]]:::sink
+  t23["total = ?"]:::step
+  t24[["index: buffer[3]"]]:::sink
+  t25["total = ?"]:::step
+  t26[["index: buffer[4]"]]:::sink
+  t27["total = ?"]:::step
+  t28["#lt;ret#gt; = ?"]:::step
+  t29["source: buffer"]:::src
+  t30["source: len"]:::src
+  t31["source: buffer"]:::src
+  t32["source: len"]:::src
+  t33["source: buffer"]:::src
+  t34["source: len"]:::src
+  t35[["index: buffer[0]"]]:::sink
+  t36["total = 0"]:::step
+  t37["#lt;ret#gt; = 0"]:::step
+  t38["source: values"]:::src
+  t39["source: index"]:::src
   t4 -->|reaches-sink| t6
   t7 -->|propagates| t7
   t4 -->|propagates| t7
@@ -361,23 +361,32 @@ flowchart LR
   t14 -->|propagates| t14
   t9 -->|propagates| t14
   t14 -->|propagates| t15
-  t18 -->|reaches-sink| t20
+  t14 -->|reaches-sink| t18
+  t16 -->|reaches-sink| t18
+  t19 -->|propagates| t19
+  t16 -->|propagates| t19
   t19 -->|reaches-sink| t20
-  t18 -->|propagates| t21
-  t19 -->|propagates| t21
-  t22 -->|reaches-sink| t24
+  t16 -->|reaches-sink| t20
+  t21 -->|propagates| t21
+  t16 -->|propagates| t21
+  t21 -->|reaches-sink| t22
+  t16 -->|reaches-sink| t22
+  t23 -->|propagates| t23
+  t16 -->|propagates| t23
   t23 -->|reaches-sink| t24
-  t22 -->|propagates| t25
-  t23 -->|propagates| t25
-  t26 -->|reaches-sink| t28
-  t27 -->|reaches-sink| t28
-  t26 -->|propagates| t29
-  t27 -->|propagates| t29
-  t30 -->|propagates| t31
-  t32 -->|propagates| t33
-  t34 -->|propagates| t35
+  t16 -->|reaches-sink| t24
+  t25 -->|propagates| t25
+  t16 -->|propagates| t25
+  t25 -->|reaches-sink| t26
+  t16 -->|reaches-sink| t26
+  t27 -->|propagates| t27
+  t16 -->|propagates| t27
+  t27 -->|propagates| t28
+  t27 -->|reaches-sink| t35
+  t33 -->|reaches-sink| t35
+  t36 -->|propagates| t36
+  t33 -->|propagates| t36
   t36 -->|propagates| t37
-  t38 -->|propagates| t39
 ```
 
 ### 5.1 Taint sinks
@@ -386,6 +395,8 @@ flowchart LR
 | --- | --- | --- | --- | --- | --- | --- |
 | TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 | TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | make_window | lib.mbt:22 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | parse_len | lib.mbt:28 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
 | TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 | TAINT-INDEX | error | get_checked | lib.mbt:73 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 | TAINT-INDEX | error | get_unsafe | lib.mbt:81 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
@@ -401,6 +412,10 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | --- | --- | --- | --- | --- | --- | --- |
 | TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | make_window | lib.mbt:22 | tainted value may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | make_window | lib.mbt:22 | allocation size may be negative | L2-abstract | 0.9 |
+| TAINT-ALLOC | error | parse_len | lib.mbt:28 | tainted value may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | get_checked | lib.mbt:73 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | get_unsafe | lib.mbt:81 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | get_negative | lib.mbt:88 | tainted value may reach an array index / buffer offset | L2-abstract | 0.6 |
@@ -415,6 +430,7 @@ The index class is proved by the interval the abstract domain already computes �
 | --- | --- | --- | --- | --- | --- | --- |
 | INDEX-OOB | error | copy_prefix | lib.mbt:6 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | lookup | lib.mbt:17 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | parse_len | lib.mbt:29 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | get_checked | lib.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | get_unsafe | lib.mbt:81 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | get_negative | lib.mbt:88 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
@@ -526,12 +542,12 @@ Every definition event is keyed by function, source line and variable, so a valu
 | spin | 43 | n | 1, 2, 3, 4, 5, 6 |
 | parse_len | 27 | n | 0, 3, 16, 64 |
 | copy_prefix | 4 | i | 0 |
-| copy_prefix | 7 | i | 1, 2 |
+| copy_prefix | 7 | i | 1, 2, 3, 4, 5 |
 | sum_to | 61 | total | 0 |
 | sum_to | 63 | total | 0 |
-| parse_len | 28 | arr | ? |
+| parse_len | 28 | arr | [], [0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,... |
 | copy_prefix | 3 | total | 0 |
-| copy_prefix | 6 | total | ? |
+| copy_prefix | 6 | total | ?, 0 |
 
 ### 6.2 Function-level range union (L1)
 
@@ -540,15 +556,19 @@ Every definition event is keyed by function, source line and variable, so a valu
 | spin | n | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | lib.mbt:41:3 |
 | spin | <ret> | 64 | 64 | 1 | 64 | lib.mbt:40:5-46:2 |
 | parse_len | n | 0 | 64 | 4 | 0, 3, 16, 64 | lib.mbt:27:3 |
-| double | <ret> | -2 | 4 | 4 | -2, 0, 2, 4 | lib.mbt:95:5-97:2 |
-| lookup | <ret> | 0 | 0 | 1 | 0 | lib.mbt:13:5-18:2 |
-| sum_to | <ret> | 0 | 0 | 4 | 0 | lib.mbt:60:5-66:2 |
-| sum_to | total | 0 | 0 | 132 | 0 | lib.mbt:61:3 |
-| copy_prefix | i | 0 | 2 | 14 | 0, 1, 2 | lib.mbt:4:3 |
-| classify | <ret> | -1 | 1 | 4 | -1, 0, 1 | lib.mbt:49:5-57:2 |
-| copy_prefix | <ret> | 0 | 0 | 4 | 0 | lib.mbt:2:5-10:2 |
-| copy_prefix | total | 0 | 0 | 8 | 0 | lib.mbt:3:3 |
-| unreachable_demo | <ret> | -1 | 2 | 4 | -1, 0, 1, 2 | lib.mbt:33:5-37:2 |
+| double | <ret> | -2 | 10 | 5 | -2, 0, 2, 4, 10 | lib.mbt:95:5-97:2 |
+| lookup | <ret> | 0 | 0 | 3 | 0 | lib.mbt:13:5-18:2 |
+| sum_to | <ret> | 0 | 0 | 5 | 0 | lib.mbt:60:5-66:2 |
+| sum_to | total | 0 | 0 | 197 | 0 | lib.mbt:61:3 |
+| copy_prefix | i | 0 | 5 | 34 | 0, 1, 2, 3, 4, 5 | lib.mbt:4:3 |
+| classify | <ret> | -1 | 1 | 5 | -1, 0, 1 | lib.mbt:49:5-57:2 |
+| parse_len | <ret> | 0 | 0 | 3 | 0 | lib.mbt:26:5-30:2 |
+| get_unsafe | <ret> | 0 | 0 | 1 | 0 | lib.mbt:80:5-82:2 |
+| copy_prefix | <ret> | 0 | 0 | 10 | 0 | lib.mbt:2:5-10:2 |
+| copy_prefix | total | 0 | 0 | 18 | 0 | lib.mbt:3:3 |
+| get_checked | <ret> | 0 | 0 | 1 | 0 | lib.mbt:72:5-74:2 |
+| get_negative | <ret> | 0 | 0 | 1 | 0 | lib.mbt:87:5-89:2 |
+| unreachable_demo | <ret> | -1 | 5 | 5 | -1, 0, 1, 2, 5 | lib.mbt:33:5-37:2 |
 
 ### 6.3 Abstract may-ranges (L2)
 
@@ -610,7 +630,7 @@ Deductive verification is WP-style: each contract becomes verification condition
 | get_negative | index-bounds | lib.mbt:87 | failed | `((n >= 0) && (n < values.length()))` | preconditions or intervals refute the goal |
 | double | ensures | lib.mbt:95 | proved | `((n + n) >= 0)` | entailed by preconditions or interval arithmetic |
 
-Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `copy_prefix (lib.mbt:2)`, `lookup (lib.mbt:13)`, `parse_len (lib.mbt:26)`, `spin (lib.mbt:40)`
+Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `copy_prefix (lib.mbt:2)`, `lookup (lib.mbt:13)`, `make_window (lib.mbt:21)`, `parse_len (lib.mbt:26)`, `spin (lib.mbt:40)`
 
 ## 9. Method summary
 
@@ -634,5 +654,7 @@ Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `copy_prefix (l
 ```text
 LunaFlow analyze local/module@latest --out reports/ --funnel
 ```
+
+The findings tables above are bounded, so this report may not carry every finding. The ones it does not carry are in the `_findings.jsonl` sidecar beside this file -- one JSON object per finding, with the family, the severity, the function, the file, the line, the message, the method and the confidence. The sidecar holds EVERY finding the report rendered, so nothing is lost to the bound.
 
 Full method description, comparison with Frama-C/TIS, Joern, CodeQL, SVF and Soot, and the acceptance tests are in `docs/design.md`.

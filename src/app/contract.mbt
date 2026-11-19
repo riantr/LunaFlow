@@ -726,7 +726,13 @@ fn collect_expr_vcs(
       collect_expr_vcs(b, state, facts, fn_name, file, line, vcs)
     }
     ECall(f, args) => {
-      if f == "Array::make" || f == "FixedArray::make" {
+      // The parser renders a qualified path with a DOT, so the `::` spelling
+      // never arrives here. Both are accepted, because a caller may build
+      // the expression itself.
+      if f == "Array.make" ||
+        f == "Array::make" ||
+        f == "FixedArray.make" ||
+        f == "FixedArray::make" {
         if args.length() > 0 {
           let n = subst(args[0], state)
           let goal = Expr::new(
