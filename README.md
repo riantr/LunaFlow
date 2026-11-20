@@ -241,7 +241,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.29
+moon add riantr/LunaFlow@0.1.30
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -249,7 +249,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.29",
+  "riantr/LunaFlow@0.1.30",
 }
 ```
 
@@ -300,7 +300,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.29](https://mooncakes.io/docs/riantr/LunaFlow@0.1.29).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.30](https://mooncakes.io/docs/riantr/LunaFlow@0.1.30).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -588,6 +588,63 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.30
+
+**The findings table is BOUNDED, five rules that could never fire are alive, and the taint engine is a kill-exact fixpoint instead of a blanket rule. All three were found by measurement, and each one is now checked by a command that RUNS it.**
+
+**The bound.** A findings table can be long enough to bury the finding you were
+looking for, so it is capped at **300 rows** and the cap is stated in the table
+itself: the marker row reads *(truncated at 300 of 2535 rows)*, and the note
+under it says which of the whole set were not shown. **No finding is lost to the
+bound** — every one of them is in the report's `_findings.jsonl` sidecar, one
+JSON object per finding, and the count table above the rows is the **whole set,
+family by family**: it sums to exactly the number the marker names. Measured on
+the committed doubleML artefact, the L2's table shows 300 of **2,535**, its count
+table sums to **2,535**, and the sidecar holds **3,524**.
+
+**D1 — five rules that could never fire.** Five rules matched only the `::`
+spelling of a qualified path, and the parser renders a qualified path with a
+DOT — so `Array::make` never arrived, and the rules were **dead code**: the
+`TAINT-ALLOC` family reported **0** findings on any input, and the
+allocation-size VC and the L1's allocation taint never fired either. They answer
+to both spellings now, and the same repair covers the other route to the same
+call (`Array.make(n, 0)` is a *method* call, not a qualified path). The family
+that could not fire now reports **959** findings in the committed artefact.
+
+**D2 — the de-duplication dropped the file.** The findings array is the
+module's, and the key that kept it from growing had no file in it: the same
+finding at the same line in two files collided, and the second was dropped. The
+key carries the file now, and it is still exact *within* a file. Measured on
+doubleML with D2 alone, that is **+312** findings.
+
+**The taint engine.** The L2's taint was a blanket rule: a tainted value
+anywhere near a loop bound made the counter tainted. It is a **labelled,
+kill-exact, flow-sensitive fixpoint** now, with a shipped harness
+(`scripts/qa/ifds_spike.mjs`) that measures it against the L2 on three corpora —
+M1 (no lost sink), M2 (the rule's contribution), M3 (the model's coverage) — and
+a falsification mode that breaks each check on purpose and requires it to fail.
+
+**Four defects, found by measuring and repaired.** A boolean **literal** was
+modelled as a value that can be neither true nor false, and the contradiction
+pruned the branch that guarded a loop body — so the sinks inside it were never
+seen. The value domain could not relate two arrays' lengths, so eight
+provably-in-range accesses were reported. And a size that is provably constant
+was reported as a size untrusted input chose — the finding refuted itself, with
+the evidence `Array.make([1,1])` for a one-element array. The fix is the guard,
+not the model: a size whose interval is a singleton is not a size untrusted
+input chose.
+
+**The numbers moved because the layer had been silent, not because it got
+stricter.** The L2's findings on doubleML went **1,282 → 3,305** (the five dead
+rules and the de-duplication key) and then **3,321** (the boolean literal), and
+the L1's taint sinks went **123 → 199**.
+
+**And the checks are shipped.** `scripts/qa/loop_acceptance.mjs` re-checks the
+three items by **running** them, and `scripts/qa/readme_table.mjs` re-derives
+every number this page publishes — a published measurement goes stale the
+moment the tree moves, and this page had let one. Each check was broken on
+purpose and had to fail.
 
 ### What changed in 0.1.29
 
