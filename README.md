@@ -2631,6 +2631,8 @@ docs/qa/IFDS_SPIKE.md      the Phase-0 IFDS spike: four measurements and
 docs/qa/IFDS_PHASE1.md    IFDS Phase 1: the labelled, kill-exact taint
                            engine, the blanket rule's replacement, the CFG
                            defect and the coverage accounting
+docs/qa/LOOP_ACCEPTANCE.md  the LOOP's three items and the one command that
+                           re-checks each of them
 docs/host_requirements.txt  the published wasm's host contract, measured
 reports/                   generated reports for the validation modules
 scripts/verify.mjs         dependency-free acceptance checker
@@ -2670,6 +2672,7 @@ The gate, and the result it produced for this version:
 | `moon build . --target js` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
 | `node scripts/qa/readme_table.mjs` | **every count in the measured table above matches the tree** (the artefact rows against their summaries, the self-scan row against a live run, the test count against a live run) |
+| `node scripts/qa/loop_acceptance.mjs` | **every check pass** — the LOOP's three items (the bounded findings table, D1 + D2, the Phase-1 spike), each checked by running it |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |

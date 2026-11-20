@@ -227,6 +227,14 @@ jobs:
       - name: Check the README's live table against the tree
         run: node scripts/qa/readme_table.mjs --no-selfscan
 
+      # The LOOP's three items, each checked by RUNNING it rather than by
+      # reading a document that says so: the bounded findings table, D1 (the
+      # five dead rules) + D2 (the de-duplication key that dropped the file),
+      # and the Phase-1 spike. Each item was also broken on purpose and had
+      # to fail -- docs/qa/LOOP_ACCEPTANCE.md has the three cases.
+      - name: The LOOP's three items, checked by running them
+        run: node scripts/qa/loop_acceptance.mjs
+
       # The QA harness. These are the same scripts and the same thresholds the
       # README publishes, so a green run here is the claim in the README.
       - name: Acceptance scenarios (Gherkin)
