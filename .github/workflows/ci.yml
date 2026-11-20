@@ -210,6 +210,23 @@ jobs:
       - name: Verify the committed reports
         run: node scripts/verify.mjs
 
+      # The README publishes two measured tables -- the performance table and
+      # the gate table -- and every cell in them is a MEASUREMENT. The three
+      # committed-artefact rows are checked against the summaries they came
+      # from, the two places that repeat the self-scan numbers are checked
+      # against the README's own row, and the gate table's TEST COUNT is
+      # checked against a live run of the tests. The test count is this
+      # repository's own, so it does not depend on the toolchain.
+      #
+      # The LIVE self-scan is NOT run here: this runner installs the NEWEST
+      # toolchain, and a count the newest parser reads differently from the
+      # one that measured the numbers would fail for a reason that has
+      # nothing to do with this tree. The live measurement is the LOCAL
+      # release-prep check (`scripts/qa/readme_table.mjs` without the flag),
+      # where the toolchain is the one that produced the numbers.
+      - name: Check the README's live table against the tree
+        run: node scripts/qa/readme_table.mjs --no-selfscan
+
       # The QA harness. These are the same scripts and the same thresholds the
       # README publishes, so a green run here is the claim in the README.
       - name: Acceptance scenarios (Gherkin)

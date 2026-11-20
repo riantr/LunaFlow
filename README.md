@@ -358,10 +358,9 @@ local path needs the `./`.
 
 ### What the release was checked on
 
-`moon 0.1.20261104`, carrying `moonc v0.10.20+65efd5b93` — the toolchain every
-number in this file was measured on. The CI runner installs the **newest** one,
-`moon 0.1.20261117`, carrying `moonc v0.10.21`, and this release is verified
-against that one as well — see [Verification](#verification). The older
+`moon 0.1.20261117`, carrying `moonc v0.10.21+06da1ed44` — the toolchain the
+numbers in [Verification](#verification) were measured on, and the **newest** one,
+which is also what the CI runner installs. The older
 `moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715`, is still
 supported and is what the core-compatibility contract is measured against, so
 both build this module. The reason that is checked rather than hoped for is
@@ -653,8 +652,9 @@ funnel place, and **zero** published declarations — and so are the repairs. Th
 published `pkg.generated.mbti` is byte-identical to the one the release before
 them published.
 
-A **deep QA report for this tree** (`docs/qa/REPORT_0_1_29.md`) — sixteen dimensions
-plus a registry self-check and a peer scan, with every finding attributed. Two of
+A **deep QA report of the 0.1.29 pass** (`docs/qa/REPORT_0_1_29.md`) — sixteen
+dimensions plus a registry self-check and a peer scan, with every finding
+attributed. Two of
 the harness defects it records were fixed in the same pass, and both are the same
 shape: **a harness that measures something other than what it just produced.** The
 E2E harness ran whatever `cli.exe` was on disk, so it measured the analyser as it
@@ -2621,9 +2621,9 @@ fixtures/ipc_demo/          the IPC and buffer fixture: the short read, the
                            shared buffer, and the safe shapes next to them
 features/                  acceptance scenarios in Gherkin
 docs/design.md             design, comparison, acceptance criteria (A1-A18)
-docs/qa/REPORT_0_1_29.md   deep QA report for the current tree (security,
-                           coverage, metrics, the registry self-check and the
-                           peer scan)
+docs/qa/REPORT_0_1_29.md   deep QA report of the 0.1.29 pass, kept as that
+                           pass's record (security, coverage, metrics, the
+                           registry self-check and the peer scan)
 docs/qa/REPORT.md          the deep QA report of the 0.1.3 pass — kept as
                            that pass's record
 docs/qa/IFDS_SPIKE.md      the Phase-0 IFDS spike: four measurements and
@@ -2669,6 +2669,7 @@ The gate, and the result it produced for this version:
 | `moon build . --target wasm` | exit 0 |
 | `moon build . --target js` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
+| `node scripts/qa/readme_table.mjs` | **every count in the measured table above matches the tree** (the artefact rows against their summaries, the self-scan row against a live run, the test count against a live run) |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -2677,10 +2678,10 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
-| `node scripts/qa/host_requirements.mjs` | **108 imports, 107/107 covered** |
+| `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
 | `node scripts/qa/verify_published.mjs 0.1.29` | **4 passed, 0 failed** |
-`moon 0.1.20261104`, native backend, Windows 11, warm `.repos` cache.
+`moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
@@ -2716,6 +2717,29 @@ count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 an observation of this machine under this load. The same holds for the three
 committed artefacts: the same tree read **10.1 s** and **16.0 s** for doubleML
 in one session, and the **185,766** L2 steps did not move.
+
+**The table above is CHECKED, not remembered.** Every count in it is a
+measurement, and a measurement goes stale the moment the tree moves — which it
+did, twice, in one session. The D1+D2 commit left the **previous release's**
+numbers in the row: the tree at `7e35063` measures **53 files, 6,579 statements
+and 59 L2 findings** — measured with the analyser built from that tree — where
+the row still read 51 / 6,388 / 46, so the commit's own effect was missing from
+the table that reports it. The fourth-defect repair left the **previous
+commit's** numbers in it: 6,776 statements where the tree read 6,780, and a test
+count of 262 where the tests read 264. Nothing noticed, because every gate step
+that touched this README checked its HEADINGS or its version references, and no
+step compared its NUMBERS with anything.
+
+`node scripts/qa/readme_table.mjs` closes that. It compares the three
+committed-artefact rows against the summaries they came from, the self-scan row
+against a **LIVE run** of the analyser over this tree, the two places that
+repeat the self-scan numbers against the row, and the gate table's test count
+against a **LIVE run** of the tests. The CI runner runs the OFFLINE half
+(`--no-selfscan`): it installs the NEWEST toolchain, and a count the newest
+parser reads differently from the one that measured these numbers would fail
+there for a reason that has nothing to do with this tree. The live measurement
+is the LOCAL release-prep check, where the toolchain is the one that produced
+the numbers.
 
 The three committed artefacts are regenerated by this tree's build, with
 `--funnel --trials 4` and one slice each (`theta_hat@aggregate_coef_se` for doubleML,
@@ -2931,8 +2955,8 @@ fails on an identifier the coverage reporter **reserves** (the reporter's lexer
 is stricter than the compiler) and on a **stale trace tree** under the
 repository, either of which makes `moon coverage analyze` fail outright. The
 report of the last deep QA pass is
-`docs/qa/REPORT_0_1_29.md` — it covers the current tree (the 0.1.29 release candidate:
-the published 0.1.28 plus the Phase-0 IFDS spike, the abstract layer's scope fix and the
+`docs/qa/REPORT_0_1_29.md` — it covers the 0.1.29 release candidate tree (the
+published 0.1.28 plus the Phase-0 IFDS spike, the abstract layer's scope fix and the
 deprecation migration), is dated 2026-11-19, and measures sixteen dimensions plus
 the registry self-check and a peer scan. The 0.1.3 pass is kept as
 `docs/qa/REPORT.md`: it is a record of that pass, not a claim about this version.
