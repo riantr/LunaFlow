@@ -1,7 +1,7 @@
 ///|
 /// The allocation rules, and the de-duplication key.
 ///
-/// TWO REPAIRS, and both of them were measured on the real corpus.
+/// THREE REPAIRS, and all of them were measured on the real corpus.
 ///
 /// 1. THE ALLOCATION RULES WERE DEAD. The parser renders a qualified path
 ///    with a DOT -- `Array::make(n)` becomes the call name `Array.make` --
@@ -19,7 +19,17 @@
 ///    that happened to share its line number and its message. MEASURED on
 ///    `riantr/moonbit_doubleML`: 312 findings were lost that way.
 ///
-/// Both tests are falsifiable: they fail on the code as it was before the
+/// 3. A SIZE THAT IS PROVABLY CONSTANT IS NOT A SIZE THAT UNTRUSTED INPUT
+///    CHOSE. The rule fired on the taint of the size expression, and the
+///    length of a container inherits the container's CONTENT taint -- so an
+///    array holding one tainted element had a "tainted" length, and the
+///    finding said a tainted value may control that size while its own
+///    evidence said the size is `[1,1]`. The finding refuted itself. The
+///    guard is the same reasoning the TAINT-INDEX rule uses: an index that is
+///    provably inside the array it indexes is not an offset that untrusted
+///    input chose.
+///
+/// All the tests are falsifiable: they fail on the code as it was before the
 /// repairs.
 
 ///|
@@ -58,6 +68,36 @@ fn abs_messages(src : String, kind : FindingKind) -> Array[String] {
     }
   }
   out
+}
+
+///|
+test "a size that is provably constant is not an allocation size untrusted input chose" {
+  // The array holds ONE element, so its length is 1 whatever that element is.
+  // The layer's own value domain knows it: the size's interval is [1,1]. The
+  // claim "a tainted value may control an allocation size" is therefore
+  // refuted by the finding's own evidence -- no tainted value can control a
+  // size that is provably 1.
+  let src =
+    #|pub fn one_len(user : String) -> Array[Int] {
+    #|  let a = [user]
+    #|  let n = a.length()
+    #|  Array::make(n, 0)
+    #|}
+  inspect(abs_count(src, FTaintAlloc), content="0")
+}
+
+///|
+test "the length of a tainted parameter is still an allocation size untrusted input chose" {
+  // The other direction: the repair must not silence the case the ground
+  // truth names -- the length of a tainted container IS derived from the
+  // taint, so the size it reaches is tainted. The interval here is [0,64],
+  // not a constant, so the claim stands.
+  let src =
+    #|pub fn param_len(groups : Array[Int]) -> Array[Int] {
+    #|  let n = groups.length()
+    #|  Array::make(n, 0)
+    #|}
+  inspect(abs_count(src, FTaintAlloc), content="1")
 }
 
 ///|

@@ -18,7 +18,10 @@ what was done, what it cost, and what it did not settle.
 
 Phase 0 measured two things on three corpora. The first: a flow-sensitive,
 kill-exact, labelled fixpoint over the module's own CFG **loses no taint
-sink** the abstract layer finds — 0 lost sinks on all three corpora. The
+sink** the abstract layer finds — 0 lost sinks on all three corpora **as it
+stood then**. The layer has moved since, and §6.1 has the current numbers:
+the two differ by **three** sites on doubleML, in the direction that says the
+*fixpoint* lost them, and §8a.6 says why. The
 second: the abstract layer's **blanket loop rule** — "a tainted loop
 condition taints every number the condition reads" — puts a **false** claim
 at every site it touches, because the number it taints is the loop's
@@ -200,7 +203,7 @@ in file order; 811 functions had no CFG and can carry no CFG finding"*.
 
 ## 6. The measurements, after Phase 1
 
-### 6.1 No lost sink, on all three corpora
+### 6.1 The lost-sink measurement
 
 The Phase-0 harness's M1 check — *every taint site the layer found is also a
 site the flow-sensitive fixpoint found* — now compares against the **plain**
@@ -212,11 +215,27 @@ invents taint on both sides.
 | corpus | L2 taint sites | fixpoint (plain) | fixpoint (with rule) | sites the rule added | **L2 sites the fixpoint did NOT find** |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `fixtures/` | 7 | 8 | 10 | 2 | **0** |
-| doubleML 0.164.64 | 1,094 | 1,289 | 1,317 | 28 | **0** |
-| published LunaFlow 0.1.29 | 12 | 41 | 71 | 30 | **0** |
+| doubleML 0.164.64 | 1,110 | 1,289 | 1,317 | 28 | **3** |
+| published LunaFlow 0.1.29 | 11 | 41 | 71 | 30 | **0** |
 
-**0 lost sinks on all three corpora** — and this time the comparison is with
-the fixpoint the layer is now supposed to be.
+**Two of the three corpora still lose no sink; the third now loses three —
+to the fixpoint, not to the layer.** MEASURED (2026-11-20) on the tree of
+the value-domain repair (§8a), the three are `TAINT-ALLOC|did_aggregation.mbt|202`,
+`:203` and `:204`, and they are in the direction M1 reads as "a sink the
+flow-sensitive fixpoint LOST": the layer finds them and the fixpoint does
+not. Before the repair the layer found **1,094** sites on doubleML and the
+fixpoint **1,289**, and M1 held; the repair brought **16** sites back, and
+three of them are sites the fixpoint's model cannot reach (§8, and §8a.6).
+The layer
+is therefore **more complete** than the reference on that shape, and the
+reference is no longer a complete reference — which is exactly what M1 says
+when it fails.
+
+The other direction — the one the phase was about — did not go backwards. The
+fixpoint has **182** sites the layer does not have on doubleML (it had
+**195**), and **30** on the published module (it had **29**; the extra one is
+`src/app/conc.mbt:1841`, whose `cyc[min]` is provably in range because
+`min` is 0 or an index of the loop that ends at `cyc.length()`).
 
 ### 6.2 The scale
 
@@ -257,7 +276,7 @@ like any other, and Phase 1 shows up in it.
 | the 0.1.29 release (`8e50769`) | 51 | 6,388 | 9,903 | 46 | 7 |
 | the D1+D2 tree (`7e35063`) | 53 | 6,579 | 9,903 | **59** | 7 |
 | the Phase-1 tree | 54 | 6,644 | 10,198 | **54** | 8 |
-| the repaired tree | 57 | 6,776 | 10,201 | **46** | 8 |
+| the repaired tree | 57 | 6,780 | 10,201 | **46** | 8 |
 
 The **59 → 54** is Phase 1: the blanket rule invented **five** findings on this
 tree — four in `src/app/interp.mbt` and one in `fixtures/vuln_demo` — and they
@@ -316,25 +335,41 @@ the tool claims, only what it can prove about the claim.
 
 ## 8. What is NOT settled
 
-* **The 12 allocation sites the fixpoint has and the layer does not.** On
-  doubleML the fixpoint finds **12** tainted allocation sizes the layer does
-  not report, in one method of one corpus (`apo.mbt`, `irm.mbt`, `iivm.mbt`,
-  `pliv.mbt`, `plpr.mbt`, `did_cs_binary.mbt`). The layer's allocation rule
-  did not fire at those sites. The mechanism is **not characterised**: the
-  shapes were reproduced in isolation and each of them reports the finding
-  correctly, so it is something about the surrounding code that has not been
-  found yet. It is **pre-existing** — the D1+D2 tree does it too — and it is
-  **not** a lost sink (M1 is about the other direction).
+This section used to list three **defects** as open. They were root-caused
+and repaired on 2026-11-20 — §8a says what each was, what it cost, and what
+the repair was. What is left here is a scope statement, a measurement the
+phase deliberately left alone, a release obligation, and one limit that was
+characterised while the three defects were being repaired.
+
 * **The fixpoint is not the layer.** Phase 1 did **not** replace the
   abstract layer's walk with a CFG worklist. The layer's own walk is already
   a join-based fixpoint at the loop heads, and the measurement says the two
   agree on every sink; replacing it would be a rewrite with no measurable
   gain. The CFG fixpoint remains the **reference** the layer is measured
-  against.
+  against. (They no longer agree on every sink: §6.1 has the three sites
+  where the layer is the more complete of the two.)
 * **The L1 still has its implicit flow.** The dynamic layer marks the
   numbers a tainted loop condition reads as tainted. That is a different
   engine with different semantics — it reports what it *observed* — and
   Phase 1 left it alone.
+* **The length of a container inherits the container's CONTENT taint.** The
+  layer propagates a container's element taint to its **length**, and the
+  length is not a function of the elements' values. That is the same shape
+  as the blanket loop rule Phase 1 removed — "the tainted value is the bound,
+  and the counter does not carry the bound's taint"; here the tainted value
+  is the *element* and the count does not carry the element's taint.
+  MEASURED: the propagation makes a **provably constant** size look tainted
+  — `let a = [user]; Array::make(a.length(), 0)` has a size of `[1,1]` — and
+  the finding refuted itself; that case is guarded now (§8a.4), so the layer
+  makes no claim its own value domain can refute. What is left is the case
+  the value domain **cannot** refute: at the three doubleML sites of §6.1
+  the size is `top`, the claim is a *may*-claim, and it is **true** — the
+  count of distinct event times is a function of the tainted inputs — but
+  the layer cannot PROVE it, and the fixpoint cannot see it either. The
+  honest repair is to separate the taint that reached a container's **size**
+  from the taint that reached its **contents**, which is a change to the
+  value domain with a published-interface cost (`AbsVal`'s `AArr` would have
+  to carry the size's taint) and is **not** made here.
 * **Nothing here was published.** The published `.mbti` changed (see
   below), and the release notes for the next release have to declare it.
 
@@ -342,11 +377,16 @@ the tool claims, only what it can prove about the claim.
 
 ## 8a. The three defects this section listed, and what they were
 
-The three items above were recorded as open. They were **root-caused and
-repaired** on 2026-11-20, and the measurement is below. The repairs are in
-`src/app/abs.mbt` (the value domain), `src/app/relation.mbt` (the relations),
-`src/app/lockstep.mbt` (a new file: the function-level scan) and
-`src/app/eva.mbt` (the per-function facts).
+This section used to list three open defects: the boolean literal that
+pruned a loop (**D3**), the EVA's inability to relate two arrays' lengths,
+and the **12 allocation sites** the fixpoint had and the layer did not. All
+three were **root-caused and repaired** on 2026-11-20, and the measurement is
+below. The repairs are in `src/app/abs.mbt` (the value domain),
+`src/app/relation.mbt` (the relations), `src/app/lockstep.mbt` (a new file:
+the function-level scan) and `src/app/eva.mbt` (the per-function facts).
+
+A **fourth** defect turned up while the three were being repaired; it is in
+§8a.4, and §8a.6 says what the repair did to the M1 measurement.
 
 ### 8a.1 The boolean literal was not exact — this was D3, and it was all three
 
@@ -445,7 +485,41 @@ the state the left side's refinement gives.
 a unit fixture: the shape needs the whole function around it — the array that
 stays empty, the loop over a parameter and the second array beside it.
 
-### 8a.4 What the repair cost
+### 8a.4 A size that is provably constant is not a size untrusted input chose
+
+The allocation rule fired on the taint of the size expression, and the
+length of a container inherits the container's **content** taint — so an
+array holding one tainted element had a "tainted" length, and the layer said
+a tainted value may control the size that length became. The size was
+provably **1**: the array holds one element, whatever that element is.
+
+**MEASURED (2026-11-20):** the finding refuted itself. It read
+
+> tainted value from parameter `user` may control an allocation size
+> — evidence `Array.make([1,1])`
+
+`[1,1]` is the size's own interval: the size is 1, so no tainted value can
+control it. The layer was making a claim its own value domain disproved,
+which is the same standard the short-circuit repair (§8a.3) applied to a
+claim about a read that never happens.
+
+The repair is the same reasoning the `TAINT-INDEX` rule already uses: an
+index that is provably inside the array it indexes is not an offset that
+untrusted input chose, so it is not reported. A size whose interval is a
+singleton is not an allocation size untrusted input chose, so it is not
+reported either.
+
+The assertions are in `src/app/alloc_rules_wbtest.mbt` (**2** new ones, and
+they are falsifiable: with the guard reverted the first one fails and the
+other 263 pass). The guard is also **free**: the three committed artefacts
+have **zero** tainted allocations whose size interval is a singleton, so all
+three findings sidecars are **byte-identical** before and after it
+(`reports/`).
+
+What the guard does NOT settle is the propagation itself, which §8 records
+as still open.
+
+### 8a.5 What the repair cost
 
 | measurement | before | after |
 | --- | ---: | ---: |
@@ -454,13 +528,49 @@ stays empty, the loop over a parameter and the second array beside it.
 | static_analysis L2 findings | 190 | **188** |
 | this tree's L2 findings | 54 | **46** |
 | this tree's EVA findings | 41 | **32** |
+| committed artefacts changed by the constant-size guard (§8a.4) | — | **0** |
 
 The step count is the deterministic measure: the repair analyses the loop
 bodies the defective literal used to prune, and that is **more** work by
 design. The wall clock is machine-dependent — the same tree measured 8.4 s,
-10.1 s and 17.6 s for the *previous* commit's tree in one session — so the
+10.1 s and 17.6 s for the *previous* commit's tree in one session, and the
+repaired tree read 13.2 s and 16.0 s for doubleML in another — so the
 table in the README is the committed artefact's own `elapsed_ms`, and the
 comparison that counts is the step count.
+
+### 8a.6 What the repair did to the M1 measurement
+
+The repair made the layer **more complete**, and M1 is a check on the
+**reference**, so the check moved. MEASURED (2026-11-20), the spike over
+doubleML, on the tree before the repair and on the tree after it:
+
+| | before the repair | after |
+| --- | ---: | ---: |
+| L2 taint sites | 1,094 | **1,110** |
+| sites the fixpoint has and the L2 does not | 195 | **182** |
+| ... of which the L2's allocation rule did not fire | **12** | **1** |
+| sites the L2 has and the fixpoint does not | **0** | **3** |
+| M1 over doubleML | **PASS** | **FAIL** (3 sites) |
+
+The first two rows are the repair working: the allocation rule fires at
+**13** more sites, and the twelve it could not fire at are down to **one**.
+The last row is the cost: the layer now finds **16** sites it did not, and
+three of them are sites the fixpoint's model does not reach — the container
+whose length carries its content's taint (§8). So the fixpoint is no longer
+a complete reference, and M1 says so.
+
+**This is the harness doing its job, not a regression.** M1 exists to catch
+"a sink the flow-sensitive fixpoint LOST", and the fixpoint lost three. The
+harness is **not** weakened: it still fails on doubleML, it still passes on
+the other two corpora, and the three sites are named in §6.1. What the
+release gate runs is the harness over the **fixture** corpus, where M1 still
+holds (§6.1).
+
+The published LunaFlow corpus moved too, in the other direction: the L2
+found **12** taint sites there before the repair and **11** after, and the
+site that went is `src/app/conc.mbt:1841` — `cyc[min]`, where `min` is 0 or
+an index of the loop that ends at `cyc.length()`, so the access is provably
+in range. It was a false positive, and the repair removed it.
 
 ---
 

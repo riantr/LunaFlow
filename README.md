@@ -639,9 +639,19 @@ carries the module's analysable-function count to the report. It is one line in
 a flow-sensitive, kill-exact, labelled taint fixpoint over the module's own CFG,
 measured against the L2 on three corpora. It loses **no sink** on any of them, and
 it found **three real defects in this module** — the allocation-size family is dead
-code, the finding de-duplication omits the file, and an exact array length prunes
-loop bodies. It is a **measurement, not a feature**: no CLI flag, no report line, no
-funnel place, and **zero** published declarations.
+code, the finding de-duplication omits the file, and a boolean **literal** is
+modelled inexactly, so the branch that holds a loop body is pruned and the body is
+never analysed. (The spike first blamed an *exact array length* for the third one;
+the repair falsified that attribution — an empty array's length IS exactly 0, and
+the length was 0 because the array never grew. `docs/qa/IFDS_SPIKE.md` §7 has the
+measurement.) Repairing the three turned up a **fourth**: a size that is provably
+constant was reported as a size untrusted input chose, and the finding refuted
+itself — `Array.make([1,1])` for a one-element array.
+
+The spike is a **measurement, not a feature**: no CLI flag, no report line, no
+funnel place, and **zero** published declarations — and so are the repairs. The
+published `pkg.generated.mbti` is byte-identical to the one the release before
+them published.
 
 A **deep QA report for this tree** (`docs/qa/REPORT_0_1_29.md`) — sixteen dimensions
 plus a registry self-check and a peer scan, with every finding attributed. Two of
@@ -2649,9 +2659,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 80 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 80 warnings, 0 errors |
 | `moon check --target js` | exit 0, 105 warnings, 0 errors |
-| `moon test src/app --target native` | **262 passed, 0 failed** |
-| `moon test src/app --target wasm` | **262 passed, 0 failed** |
-| `moon test src/app --target js` | **262 passed, 0 failed** |
+| `moon test src/app --target native` | **264 passed, 0 failed** |
+| `moon test src/app --target wasm` | **264 passed, 0 failed** |
+| `moon test src/app --target js` | **264 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -2676,7 +2686,7 @@ The gate, and the result it produced for this version:
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
 `moon 0.1.20261117` (core 0.10.21+06da1ed44), installed into a scratch home next to
 the verified one: `moon check` gives **80 / 80 / 105 warnings, 0 errors** on native /
-wasm / js, `moon test src/app` gives **262 passed, 0 failed** on each of the three,
+wasm / js, `moon test src/app` gives **264 passed, 0 failed** on each of the three,
 `moon build src/cli --target native`, `moon build src/cli --target js`,
 `moon build . --target wasm` and `moon build . --target js` are exit 0, and
 `moon fmt --check` is exit 0. **The warning counts are identical to the verified
@@ -2692,18 +2702,20 @@ traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,321 | 0 (no specs) | 0 | 195 | 10.1 s |
-| `riantr/moonbit_static_analysis@latest` → 0.5.0 | 254 | 17,450 | 17,029 | 188 | 0 (no specs) | 0 | 9 | 1.6 s |
-| `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 57 | 6,776 | 10,201 | 46 | 2 / 1 / 3 | 0 | 8 | 695 ms |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,321 | 0 (no specs) | 0 | 195 | 16.0 s |
+| `riantr/moonbit_static_analysis@latest` → 0.5.0 | 254 | 17,450 | 17,029 | 188 | 0 (no specs) | 0 | 9 | 1.7 s |
+| `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
+| `LunaFlow` itself (`--dir .`) | 57 | 6,780 | 10,201 | 46 | 2 / 1 / 3 | 0 | 8 | 672 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: ten
-runs over the tree this commit names read **695 ms** to **1,202 ms**, while every
+runs over the tree this commit names read **672 ms** to **710 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all ten**. The counts are the deterministic measure; the time is
-an observation of this machine under this load.
+an observation of this machine under this load. The same holds for the three
+committed artefacts: the same tree read **10.1 s** and **16.0 s** for doubleML
+in one session, and the **185,766** L2 steps did not move.
 
 The three committed artefacts are regenerated by this tree's build, with
 `--funnel --trials 4` and one slice each (`theta_hat@aggregate_coef_se` for doubleML,
@@ -2799,7 +2811,9 @@ and the analyzer says so.
 
 **Reproduction status (2026-11-20).** The artefacts were regenerated on this
 tree with the recipe above, and they reproduce **byte-identically** — all three
-traces, all three findings sidecars; the reports differ only in their wall time.
+traces, all three findings sidecars; the reports differ in their wall time and
+in the one sentence of §5.2 that names the L2's rules (it now names three of
+them, not two).
 **The recipe had drifted, and this is where it says so:** the artefacts
 committed earlier on the same day were generated with the **default `--trials
 8`** instead of the documented `--trials 4`, so they no longer matched the
@@ -2840,7 +2854,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **57 files, 6,776 statements, 10,201 events, 46 L2
+On this tree the row reads **57 files, 6,780 statements, 10,201 events, 46 L2
 findings, 0 dead and 8 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third

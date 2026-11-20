@@ -9,7 +9,7 @@
   "unsupported_statements": 754,
   "trace_events": 17029,
   "steps": 4410,
-  "elapsed_ms": 1567,
+  "elapsed_ms": 1722,
   "dead_code": 0,
   "unreachable": 0,
   "infinite_loop": 0,

@@ -224,13 +224,15 @@ State: `Map[var -> AbsCell{value, sources}]`. Transfer functions:
 - `if`: evaluate the condition, refine the state on the true and false edges (`i >= 0`, `i < n`, `i == k`), execute both branches, join the results; a branch that cannot be taken is reported as unreachable **for the abstract input set**;
 - `while` / `for`: iterate to a bounded fixpoint (6 rounds), joining states; from round 3 a widening step pushes growing intervals to the default bound; the loop exit state is refined by the negated condition;
 - a comparison against another **variable** narrows the left-hand side by the right-hand side's interval (`i < len` gives `i ≤ len.hi − 1`), so a loop counter is bounded by the bound it is compared against;
-- array indexing: tainted index → `TAINT-INDEX` (mode `L2-abstract`, confidence 0.6), and the finding **names the source** — "tainted value from parameter `len` may reach an array index"; interval may exceed `[0, len-1]` → `RANGE-VIOLATION` (0.6 may, 0.95 when the interval proves it); allocation size tainted or possibly negative → `TAINT-ALLOC` / `RANGE-VIOLATION`;
+- array indexing: tainted index → `TAINT-INDEX` (mode `L2-abstract`, confidence 0.6), and the finding **names the source** — "tainted value from parameter `len` may reach an array index"; interval may exceed `[0, len-1]` → `RANGE-VIOLATION` (0.6 may, 0.95 when the interval proves it); allocation size tainted or possibly negative → `TAINT-ALLOC` / `RANGE-VIOLATION` — except when the size's own interval proves it **constant**, because no tainted value can control a size that is provably 1;
 - `assert`/`require`: "may fail" when the condition can be false;
 - the taint is **kill-exact**: `let` and `=` kill the variable's taint and re-bind it with the right-hand side's sources, so a tainted value that is overwritten leaves nothing behind.
 
 **There is no implicit flow in this layer.** The L2 used to taint every number a tainted loop condition read, so that `while i < len { a[i] }` was flagged although `i` starts at 0. That was a false claim — the tainted value is the *bound*, and the counter does not carry the bound's taint — and it was **removed** in IFDS Phase 1. What survives it is the honest claim, in the value domain: the counter's value is bounded by the bound, so the index may be out of bounds. The measurement and the falsification are in `docs/qa/IFDS_PHASE1.md`.
 
-Cost: linear in the number of statements × fixpoint rounds; measured 3,321 findings from the 1411 doubleML functions in the same run as L1 (10.1 s total), and 188 findings from the 1422 static_analysis functions (1.6 s total). The step count is the deterministic measure: **185,766** steps on doubleML, against 167,211 before the value domain was repaired — the repair analyses the loop bodies the defective boolean literal used to prune.
+**One exception is known and recorded.** The length of a container inherits the container's **content** taint, and the content's taint says nothing about the count — the same shape as the blanket rule above. The layer does not make a claim its own value domain can refute (a size that is provably constant is not reported), but at the three sites where the size is `top` the claim is a *may*-claim the layer cannot prove. The honest repair is to separate the taint that reached a container's **size** from the taint that reached its **contents**; that is a change to the value domain with a published-interface cost, and it is **not** made. `docs/qa/IFDS_PHASE1.md` §8 has the measurement and what it costs.
+
+Cost: linear in the number of statements × fixpoint rounds; measured 3,321 findings from the 1411 doubleML functions in the same run as L1 (16.0 s total), and 188 findings from the 1422 static_analysis functions (1.7 s total). The step count is the deterministic measure: **185,766** steps on doubleML, against 167,211 before the value domain was repaired — the repair analyses the loop bodies the defective boolean literal used to prune. The wall clock is the machine's: the same tree read 10.1 s and 16.0 s in one session, and the step count did not move.
 
 **The universe excludes the `test` BLOCKS, and nothing else.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt` — and `ModuleAst::all_funcs()` filters on the **function** (`fn.is_test`), not on the file. So an ordinary helper that lives in a `_test.mbt` file is analysed, and a `test "..." { }` block is not. For a module whose test files are most of its code that is worth stating: **129 of doubleML's 220 `.mbt` files are test files**. What says how much of the output is about test code is the finding split, not the scope line: measured on the committed doubleML artefact, **24 of the 926 findings shown in §5.2 (2.6 %) are in test files**, and every one of them is in a helper (`v120_check_enet`, `count_eq`, `expand_v091_iivm_data`, …), not in a test block.
 
@@ -1166,9 +1168,9 @@ cap:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.64 | 220 | 30,258 | 243,528 | **3,321** | 0 / 0 / 0 (no specs) | 0 | 195 | **10.1 s** | **384 KB** | 37.6 MB |
-| static_analysis 0.5.0 | 254 | 17,450 | 17,029 | **188** | 0 / 0 / 0 (no specs) | 0 | 9 | **1.6 s** | **149 KB** | 2.5 MB |
-| fixtures/vuln_demo | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms | 35 KB | 79 KB |
+| doubleML 0.164.64 | 220 | 30,258 | 243,528 | **3,321** | 0 / 0 / 0 (no specs) | 0 | 195 | **16.0 s** | **384 KB** | 37.6 MB |
+| static_analysis 0.5.0 | 254 | 17,450 | 17,029 | **188** | 0 / 0 / 0 (no specs) | 0 | 9 | **1.7 s** | **149 KB** | 2.5 MB |
+| fixtures/vuln_demo | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms | 35 KB | 79 KB |
 
 Sizes are in **KB = 1024 bytes**, against a 512 KB limit, so the doubleML report
 (392,781 B) sits at **75 %** of A12. The L2 column moved from 187 / 8 to 1,282 / 184
@@ -1336,7 +1338,7 @@ Interpretation:
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 262 passed, 0 failed | 262/262 |
+| A2 | Tests | `moon test src/app --target native` ≥ 264 passed, 0 failed | 264/264 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.5.0 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.82 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
@@ -1345,7 +1347,7 @@ Interpretation:
 | A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 8; doubleML 195; static 9 |
 | A9 | Ranges | per-point table non-empty; ≥ 1 numeric variable per module | non-empty on all reports |
 | A10 | Slicing | doubleML `theta_hat@aggregate_coef_se` ≥ 4 nodes; static `buf@render_reports` ≥ 1 node | 4, 1 |
-| A11 | Runtime | ≤ 60 s per module on a warm cache | 10.1 s, 1.6 s |
+| A11 | Runtime | ≤ 60 s per module on a warm cache | 16.0 s, 1.7 s |
 | A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 384 KB / 37.6 MB; 149 KB / 2.5 MB |
 | A13 | Determinism | two runs produce identical `summary.json` except `elapsed_ms` | verified |
 | A14 | Verifier | `node scripts/verify.mjs` exits 0 | 87/87 checks pass |

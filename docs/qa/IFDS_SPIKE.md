@@ -19,7 +19,10 @@ has no CLI flag, adds no published declaration, and changes
 > `docs/qa/IFDS_PHASE1.md` §6, and the harness that produces both is the same
 > (`scripts/qa/ifds_spike.mjs`). What this document still holds is the
 > *method* — the four measurements, the ground truths, and the reasoning —
-> and those did not change.
+> with **one** exception: §7's case study of D3 attributed the pruning to an
+> exact array length, and the repair of 2026-11-20 **falsified** that
+> attribution (§7 has the correction, and Phase 1's §8a.1 has the
+> measurement).
 
 **Date:** 2026-11-19. **Corpora:** `fixtures/` (6 files, 77 functions, 232
 statements), `riantr/moonbit_doubleML@0.164.64` (220 files, 2,529
@@ -40,15 +43,19 @@ someone else's code and a set of small demo fixtures.
 > acted on: the rule was **replaced**, not deleted, and the measurement that
 > replaced it is in `docs/qa/IFDS_PHASE1.md`. Items 1 and 2 below were
 > measured on the tree of 2026-11-19; the current numbers are in Phase 1's
-> §6, and they agree: **0 lost sinks on all three corpora**, this time
-> against the fixpoint **without** the blanket rule, which is the comparison
-> that matters once the layer no longer carries it.
+> §6. They no longer agree on all three corpora: the layer was repaired
+> after this record was written, it became **more complete**, and it now
+> finds **three** taint sites on doubleML that the fixpoint does not — the
+> fixpoint lost them, not the layer. Phase 1's §6.1 has the measurement and
+> its §8a.6 says what changed.
 
 1. **The flow-sensitive fixpoint loses no sink.** Every taint site the L2
    found on doubleML (81 of 81) is also a site the spike found — in the mode
    that carries the blanket rule. No sink was lost. (M1.) The same holds on
    the published module (14 of 14) and on the fixture corpus (5 of 5): **0
-   lost sinks on all three corpora.**
+   lost sinks on all three corpora** — *as measured on 2026-11-19*. The layer
+   has been repaired since, and it now finds three sites on doubleML that the
+   fixpoint does not (Phase 1's §6.1 and §8a.6).
 2. **Without the blanket rule, the fixpoint drops exactly the blanket rule's
    sites — and nothing else.** 30 sites on doubleML, every one of them
    explained mechanically by the rule's own source, not by a coincidence.
@@ -66,7 +73,12 @@ someone else's code and a set of small demo fixtures.
    in the taint path the spike was built to compare against (§7). The
    allocation-size family was **dead code**: it could not fire on any input.
    **D1 and D2 have since been repaired (2026-11-20)** — §7 says what each
-   cost and what they now report. D3 is still open.
+   cost and what they now report. **D3 has since been repaired too**
+   (2026-11-20): it was a boolean **literal** in the value domain that
+   pruned the branches it guarded, and Phase 1's §8a says what it cost. A
+   **fourth** defect turned up while D3 was being repaired — an allocation
+   size that is provably constant was reported as one that untrusted input
+   chose — and it is in Phase 1's §8a.4.
 
 ---
 
@@ -334,18 +346,33 @@ MEASURED on doubleML, with D2 alone and D1's repair switched off: **+312**
 findings (RANGE-VIOLATION +229, INDEX-OOB +60, INTEGER-OVERFLOW +20,
 TAINT-INDEX +3), L2 findings 1,282 → 1,594.
 
-### D3 — an exact array length prunes loop bodies
+### D3 — the loop bodies were pruned, and the exact length was not the cause
 
-The L2 gives an array literal `[]` the length **exactly 0**, and prunes a
-loop whose condition is then impossible. In `did_aggregation.mbt` this
-cascades:
+> **This case study's ATTRIBUTION was wrong, and the repair falsified it.**
+> It was written on 2026-11-19 from the measurement alone: the L2's findings
+> for `aggregate_event` stopped at line 187, the statement before the loop,
+> and the natural reading was that the **exact** length of an array literal
+> was what pruned the code. The repair (2026-11-20) showed the opposite: the
+> length was exactly 0 **because the array never grew**, and the append
+> never ran because the branch that holds it was pruned by a boolean
+> **literal** the value domain modelled inexactly. The literal, not the
+> length, was the defect — and an empty array literal's length IS exactly
+> 0. `docs/qa/IFDS_PHASE1.md` §8a.1 has the measurement.
+
+What the measurement showed, and what is still right: the L2's findings for
+`aggregate_event` stopped at line **187**, the statement *before* that loop
+(measured), and the cascade was:
 
 * `e_set_acc` starts as `[]`, so `for k = 0; k < e_set_acc.length(); ...`
-  is pruned — the L2's findings for `aggregate_event` stop at line **187**,
-  the statement *before* that loop (measured);
-* so `found = true` is never seen, so `e_set_acc = e_set_acc + [e]` is
-  "unreachable", so the array's length stays 0;
-* so `for ei = 0; ei < n_e; ...` is pruned too — and the two real sinks
+  is pruned — and **that pruning is correct**: the array is empty at the
+  loop's head, so the condition is impossible;
+* so `found = true` is never seen, so the branch `if !found { ... }` that
+  holds `e_set_acc = e_set_acc + [e]` is pruned as well — and **that** was
+  the defect. `found` is `false`, and the layer modelled the literal `false`
+  as a value that can be neither true nor false, so `!found` could not be
+  true and the branch could not be taken;
+* so the array's length stays 0, so `n_e` is 0, so
+  `for ei = 0; ei < n_e; ...` is pruned too — and the two real sinks
   inside it (`did_aggregation.mbt:229` and `:231`) go with it.
 
 The CFG-based fixpoint does not prune, and finds both. This is the one

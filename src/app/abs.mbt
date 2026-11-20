@@ -1066,7 +1066,31 @@ fn abs_eval(
         f == "FixedArray::make" {
         if cells.length() > 0 {
           let size = cells[0]
-          if srcs_tainted(size.srcs) {
+          // A size that is PROVABLY CONSTANT is not an allocation size that
+          // untrusted input chose. This is the same reasoning the TAINT-INDEX
+          // rule uses above: an index that is provably inside the array it
+          // indexes is not an offset that untrusted input chose, so it is not
+          // reported.
+          //
+          // MEASURED (2026-11-20): `let a = [user]; Array::make(a.length(), 0)`
+          // -- the array holds ONE element, so its length is 1 whatever the
+          // element is, and the layer's own value domain says so: the finding
+          // it made carried the evidence `Array.make([1,1])` and the claim
+          // "tainted value from parameter `user` may control an allocation
+          // size". The finding REFUTED ITSELF: no tainted value can control a
+          // size that is provably 1.
+          //
+          // The cause is that the length of a container inherits the
+          // container's CONTENT taint -- the element was tainted, so the
+          // length was too -- and the content's taint says nothing about the
+          // count. The guard below removes the cases the layer's own value
+          // domain refutes; the propagation itself is recorded as open in
+          // docs/qa/IFDS_PHASE1.md.
+          let constant_size = match size.v {
+            AInt(l, h) => l == h
+            _ => false
+          }
+          if srcs_tainted(size.srcs) && !constant_size {
             add_finding(
               ctx,
               FTaintAlloc,
