@@ -28,7 +28,7 @@
 | Interpreted steps | 4410 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 1619 ms |
+| Wall time (analyzer) | 1567 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -51,7 +51,7 @@ flowchart LR
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
   L1["L1 concrete: 12 findings"]:::l1
-  L2["L2 abstract: 190 findings, 188 new"]:::l2
+  L2["L2 abstract: 188 findings, 186 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -60,14 +60,14 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 12 findings | — | 150 functions | observed facts |
-| L2 abstract | 190 findings | 188 | 1422 functions, 196396 steps | exhaustive over the input abstraction |
+| L2 abstract | 188 findings | 186 | 1422 functions, 199764 steps | exhaustive over the input abstraction |
 | L3 contracts | 0 VCs | 0 failed, 0 unknown | 70 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
 
-Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `path_tail`, `mermaid_states`, `resolve_label`, `lower_if`, `pred_of`, `build_else`, `cfl_ordinary_from`, `cfl_chain`, `dominators`, `dominance_frontiers`, `reverse_postorder`, `compute_idom`, `intersect`, `pta_step`, `pta_sweep_heap`, `new_ssa`, `prepare`, `assign_versions`, `subscript`, `reaches`, `icfg_of`, `ifds_reach_rel`, `cprop_after`, `ir_blocks`, `ir_block_succ`, `join_of_nodes`, `ifds_tabulate`, `interval_state_join`, `interval_state_same`, `solve_widening`, `narrow_round`, `reaching_use_defs`, `solve_round_robin`, `solve_propagation`, `states_after`, `solve_edges`, `solve_worklist`, `cp_store_node`, `cp_call_node`, `powerset_of`, `pta_demand_run`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `as_array`, `enter_guard`, `closer_ahead`, `lit_step`, `parse_hex_double`, `collect_using`, `starts_variant`, `declared_name_after_kw`, `file_request`, `merge_group`, `taint_findings`, `taint_message`, `ident_from`, `line_head_identifier`
+Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `path_tail`, `mermaid_states`, `resolve_label`, `lower_if`, `Cfg::source_order`, `pred_of`, `build_else`, `cfl_ordinary_from`, `cfl_chain`, `dominators`, `dominance_frontiers`, `reverse_postorder`, `compute_idom`, `intersect`, `pta_step`, `pta_sweep_heap`, `new_ssa`, `prepare`, `assign_versions`, `subscript`, `reaches`, `icfg_of`, `ifds_reach_rel`, `cprop_after`, `ir_blocks`, `ir_block_succ`, `join_of_nodes`, `ifds_tabulate`, `interval_state_join`, `interval_state_same`, `solve_widening`, `narrow_round`, `reaching_use_defs`, `solve_round_robin`, `solve_propagation`, `states_after`, `solve_edges`, `solve_worklist`, `cp_store_node`, `cp_call_node`, `powerset_of`, `pta_demand_run`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `as_array`, `enter_guard`, `closer_ahead`, `lit_step`, `parse_hex_double`, `collect_using`, `starts_variant`, `declared_name_after_kw`, `file_request`, `merge_group`, `taint_findings`, `taint_message`, `ident_from`
 
-Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1697)`, `ok_segment (src/sa/main.mbt:1933)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:78)`, `mm_after_last (src/sa/mermaid_test.mbt:238)`, `path_tail (src/core/core.mbt:59)`, `lower_if (src/flow/ir.mbt:279)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2325)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:443)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:502)`, `line_head_identifier (src/moonfiles/moonfiles.mbt:1123)`
+Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1697)`, `ok_segment (src/sa/main.mbt:1933)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:78)`, `mm_after_last (src/sa/mermaid_test.mbt:238)`, `path_tail (src/core/core.mbt:59)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2325)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:443)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:502)`
 
 ## 4. Control-flow analysis
 
@@ -1092,7 +1092,7 @@ flowchart LR
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Two rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. And a tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose.
 
-**Scope.** The abstract layer analysed 1422 of 1422 — every function the abstract layer can analyse, in 196396 steps.
+**Scope.** The abstract layer analysed 1422 of 1422 — every function the abstract layer can analyse, in 199764 steps.
 
 | Rule | Severity | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1189,8 +1189,6 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | UNREACHABLE | info | taint_findings | src/pipeline/taintcheck.mbt:80 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:505 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:506 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| UNREACHABLE | info | line_head_identifier | src/moonfiles/moonfiles.mbt:1142 | then-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| UNREACHABLE | info | line_head_identifier | src/moonfiles/moonfiles.mbt:1142 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 
 ### 5.3 EVA findings (evolved value analysis)
 
@@ -1206,6 +1204,7 @@ The index class is proved by the interval the abstract domain already computes �
 | INDEX-OOB | error | mm_parsed_with | src/sa/mermaid_test.mbt:86 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | lower_if | src/flow/ir.mbt:304 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | lower_if | src/flow/ir.mbt:305 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | Cfg::source_order | src/flow/cfg.mbt:187 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | build_else | src/flow/cfg.mbt:494 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | dominators | src/flow/dom.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | intersect | src/flow/dom.mbt:289 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
@@ -1230,7 +1229,6 @@ The index class is proved by the interval the abstract domain already computes �
 | INDEX-OOB | error | ir_block_succ | src/flow/ir_cfg.mbt:266 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | ir_block_succ | src/flow/ir_cfg.mbt:267 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | ifds_tabulate | src/flow/ifds_tab.mbt:80 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ifds_tabulate | src/flow/ifds_tab.mbt:87 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | interval_state_join | src/flow/interval.mbt:546 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | interval_state_same | src/flow/interval.mbt:560 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | solve_widening | src/flow/interval.mbt:636 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
@@ -1929,9 +1927,9 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | bb_edges | b | [0, 1000001] | 6 |
 | bb_edges | k | [0, 1000001] | 30 |
 | bb_entry | k | [0, 1000001] | 6 |
-| bb_exits | b | [0, 0] | 1 |
-| bb_exits | i | [0, 1000001] | 12 |
-| bb_exits | k | [0, 1000001] | 60 |
+| bb_exits | b | [0, 1000001] | 6 |
+| bb_exits | i | [0, 1000001] | 30 |
+| bb_exits | k | [0, 1000001] | 150 |
 | ci_graph | i | [0, 1000001] | 7 |
 | dir_of | cut | [-1, -1] | 1 |
 | dist_int | i | [-1000000, 1000000] | 1 |
@@ -2117,7 +2115,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | count_range | n | [0, 0] | 1 |
 | cprop_after | v | [-1000000, 1000000] | 1 |
 | cs_sites_of | v | [0, 1000001] | 6 |
-| d_has_match | i | [0, 1000001] | 12 |
+| d_has_match | i | [0, 1000001] | 6 |
 | digit_value | v | [-1, -1] | 1 |
 | dist_let | line | [-1000000, 1000000] | 1 |
 | dist_new | line | [-1000000, 1000000] | 1 |
@@ -2171,7 +2169,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | bb_is_leader | v | [-1000000, 1000000] | 1 |
 | build_one | next | [-1000000, 1000000] | 1 |
 | build_seq | next | [-1000000, 1000000] | 1 |
-| closer_ahead | i | [-1000000, 1000000] | 3 |
+| closer_ahead | i | [-1000000, 1000000] | 5 |
 | closer_ahead | n | [0, 64] | 1 |
 | collect_defs | b | [0, 1000001] | 6 |
 | collect_defs | k | [0, 1000001] | 30 |
@@ -2315,7 +2313,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | lower_if | elif_at | [-1000000, 1000000] | 1 |
 | mk_v0521 | checked | [-1000000, 1000000] | 1 |
 | mm_parsed_with | n | [-1000000, 1000000] | 1 |
-| mm_state_id | seen | [0, 0] | 1 |
+| mm_state_id | seen | [0, 1000001] | 6 |
 | moonbit_fences | i | [0, 1000008] | 43 |
 | p_assign_at | line | [-1000000, 1000000] | 1 |
 | parse_double | div | [-10000000, 10000000] | 6 |
@@ -2464,7 +2462,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | ssa_check | dangling | [0, 0] | 1 |
 | strip_visibility | i | [0, 1000002] | 10 |
 | Cfg | source_order | [1, 1000001] | 6 |
-| Cfg | source_order | [0, 999999] | 5 |
+| Cfg | source_order | [-1, 999999] | 15 |
 | Cfg | source_order | [0, 1000001] | 7 |
 | Interp | report | [-1000000, 1000000] | 1 |
 | Interval | join | [-1000000, 1000000] | 1 |
@@ -2756,7 +2754,7 @@ Deductive verification is WP-style: each contract becomes verification condition
 
 _No verification condition generated._
 
-Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1697)`, `ok_segment (src/sa/main.mbt:1933)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:78)`, `mm_after_last (src/sa/mermaid_test.mbt:238)`, `path_tail (src/core/core.mbt:59)`, `lower_if (src/flow/ir.mbt:279)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2325)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:443)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:502)`, `line_head_identifier (src/moonfiles/moonfiles.mbt:1123)`
+Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1697)`, `ok_segment (src/sa/main.mbt:1933)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:78)`, `mm_after_last (src/sa/mermaid_test.mbt:238)`, `path_tail (src/core/core.mbt:59)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2325)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:443)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:502)`
 
 ## 9. Method summary
 

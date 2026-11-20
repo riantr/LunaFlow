@@ -28,7 +28,7 @@
 | Interpreted steps | 156 |
 | Observed functions | 12 |
 | Entry selection | the first 12 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 5 ms |
+| Wall time (analyzer) | 4 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -51,7 +51,7 @@ flowchart LR
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
   L1["L1 concrete: 16 findings"]:::l1
-  L2["L2 abstract: 14 findings, 7 new"]:::l2
+  L2["L2 abstract: 15 findings, 7 new"]:::l2
   L3["L3 contracts: 2 proved / 1 failed / 3 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -60,7 +60,7 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 16 findings | — | 12 functions | observed facts |
-| L2 abstract | 14 findings | 7 | 12 functions, 182 steps | exhaustive over the input abstraction |
+| L2 abstract | 15 findings | 7 | 12 functions, 182 steps | exhaustive over the input abstraction |
 | L3 contracts | 6 VCs | 1 failed, 3 unknown | 9 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
@@ -407,6 +407,7 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | RANGE-VIOLATION | warning | make_window | lib.mbt:22 | allocation size may be negative | L2-abstract | 0.9 |
 | TAINT-ALLOC | error | parse_len | lib.mbt:28 | tainted value from parameter `s` may control an allocation size | L2-abstract | 0.6 |
 | TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value from parameter `s` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| INFINITE-LOOP | warning | spin | lib.mbt:42 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
 | TAINT-INDEX | error | get_checked | lib.mbt:73 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | get_unsafe | lib.mbt:81 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | get_negative | lib.mbt:88 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |

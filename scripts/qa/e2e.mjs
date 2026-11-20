@@ -336,7 +336,14 @@ if (!skipModules) {
       // 11 findings the rule alone carried were false, and at every one of
       // their sites the layer already reported the honest claim, an index
       // out of bounds. See `docs/qa/IFDS_PHASE1.md`.
-      check('doubleML full: L2 findings within 50% of documented 3305', Math.abs(summary.abstract_findings - 3305) <= 1652, `${summary.abstract_findings}`);
+      //
+      // And once more, from 3305 to 3321, when the value domain was repaired:
+      // a boolean LITERAL was modelled as a value that can be NEITHER true nor
+      // false, and the contradiction pruned the branches it guarded -- so the
+      // allocation sites inside a pruned loop body were never seen. The repair
+      // brought 16 findings back, and took 3 false positives away; the net is
+      // the number the repaired tree produces.
+      check('doubleML full: L2 findings within 50% of documented 3321', Math.abs(summary.abstract_findings - 3321) <= 1661, `${summary.abstract_findings}`);
       checkSidecar('doubleML full', full, mdName.slice(0, -3), readFileSync(join(full, mdName), 'utf8'), summary);
     }
   }

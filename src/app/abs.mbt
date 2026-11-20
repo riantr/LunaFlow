@@ -184,6 +184,9 @@ fn abs_join_state(a : AbsState, b : AbsState) -> AbsState {
   // A length bound is a RELATION between two names, and a relation survives
   // a join only when it holds on both sides.
   prune_length_bounds(out, a, b)
+  // The same is true of a length EQUALITY: two arrays that grew together on
+  // one side may not have on the other.
+  prune_length_eq(out, a, b)
   out
 }
 
@@ -893,7 +896,27 @@ fn abs_eval(
   match e.kind {
     EInt(n) => AbsCell::new(AInt(n, n), [])
     EDouble(d) => AbsCell::new(ADouble(d, d), [])
-    EBool(b) => AbsCell::new(ABool(b, b), [])
+    EBool(b) =>
+      // A boolean LITERAL is known EXACTLY: `true` can be true and cannot be
+      // false, `false` can be false and cannot be true.
+      //
+      // `AbsVal`'s `ABool(t, f)` means "CAN be true" and "CAN be false", and
+      // every other construction here follows that reading -- the comparison
+      // results, the conjunction, the disjunction and the negation all swap
+      // or combine the two flags correctly. The literal was the one place
+      // that did not: it built `ABool(b, b)`, so `false` became a value that
+      // can be NEITHER true nor false.
+      //
+      // MEASURED (2026-11-20): the negation swaps the two flags, so `!flag`
+      // on that value could not be true either -- and `if !flag { ... }` with
+      // `flag` false was PRUNED. The branch was never analysed, everything it
+      // assigned was lost, and a loop whose bound came from that assignment
+      // was pruned with it. In `riantr/moonbit_doubleML@0.164.64`'s
+      // `did_aggregation.mbt` this cost two real sinks
+      // (`did_aggregation.mbt:229` and `:231`), because the array the branch
+      // grew stayed empty and the loop that read its length was decided
+      // impossible.
+      AbsCell::new(ABool(b, !b), [])
     EString(s) => AbsCell::new(AStr([s]), [])
     EBytes(s) => AbsCell::new(AStr([s]), [])
     EName(n) =>
@@ -909,21 +932,30 @@ fn abs_eval(
       }
     EBin(OpAnd, a, b) => {
       let ca = abs_eval(ctx, st, eva, a)
-      let cb = abs_eval(ctx, st, eva, b)
+      // The conjunction SHORT-CIRCUITS: the right side runs only when the
+      // left side is true, and then the left side's refinement holds.
+      //
+      // MEASURED (2026-11-20): without it the right side was read in a state
+      // the left side had already ruled out -- `j > 0 && xs[j - 1]` read the
+      // index at `j - 1` with `j` possibly zero, and reported an access
+      // below zero that the guard had excluded.
+      let cb = abs_eval(ctx, refine_cond(st, a, true), eva, b)
       let (at, af) = bool_of_abs(ca.v)
       let (bt, bf) = bool_of_abs(cb.v)
       AbsCell::new(ABool(at && bt, af || bf), srcs_union(ca.srcs, cb.srcs))
     }
     EBin(OpOr, a, b) => {
       let ca = abs_eval(ctx, st, eva, a)
-      let cb = abs_eval(ctx, st, eva, b)
+      // The disjunction short-circuits the other way round: the right side
+      // runs only when the left side is false.
+      let cb = abs_eval(ctx, refine_cond(st, a, false), eva, b)
       let (at, af) = bool_of_abs(ca.v)
       let (bt, bf) = bool_of_abs(cb.v)
       AbsCell::new(ABool(at || bt, af && bf), srcs_union(ca.srcs, cb.srcs))
     }
     EBin(op, a, b) => {
       let ca = abs_eval(ctx, st, eva, a)
-      let cb = abs_eval(ctx, st, eva, b)
+      let cb = abs_eval(ctx, refine_cond(st, a, true), eva, b)
       abs_binop(ctx, eva, op, a, b, ca, cb)
     }
     EUn(UnNeg, a) => {
@@ -1255,11 +1287,23 @@ fn abs_stmt(
       let out = copy_state(st)
       out.env[n] = c
       drop_length_bounds(out, n)
+      // The name may hold a different array now, and then its length is not
+      // the length the relation said it was.
+      drop_length_eq(out, n)
       // A value that is BELOW a length is inside that array.
       match length_bound_source(e) {
         Some((src, _)) => record_length_bound(out, n, src)
         None => ()
       }
+      // The name takes the VALUE of another name, so a bound below that name
+      // is a bound below this one.
+      match e.kind {
+        EName(src) => inherit_length_bound(out, n, src)
+        _ => ()
+      }
+      // The array may grow together with another one, and then the two have
+      // the same length.
+      relate_lockstep(eva, out, n, c.v)
       record_abs_range(ctx, n, c)
       // The EVA facts for a binding. The declared type wins over the
       // expression's own type, because the annotation is what the author
@@ -1278,11 +1322,23 @@ fn abs_stmt(
           if !assignment_keeps_bound(e, n) {
             drop_length_bounds(out, n)
           }
+          // The name may hold a different array now, and then its length is
+          // not the length the relation said it was.
+          drop_length_eq(out, n)
           // A value that is BELOW a length is inside that array.
           match length_bound_source(e) {
             Some((src, _)) => record_length_bound(out, n, src)
             None => ()
           }
+          // The name takes the VALUE of another name, so a bound below that
+          // name is a bound below this one.
+          match e.kind {
+            EName(src) => inherit_length_bound(out, n, src)
+            _ => ()
+          }
+          // The array may grow together with another one, and then the two
+          // have the same length.
+          relate_lockstep(eva, out, n, c.v)
           record_abs_range(ctx, n, c)
           eva_bind(eva, n, "", e)
           out
@@ -1816,6 +1872,10 @@ pub fn run_abstract(
     // The EVA facts are per FUNCTION: a name that is None in one function
     // says nothing about the same name in another.
     let eva = EvaState::new(rets)
+    // The arrays that grow together are a property of the FUNCTION too: the
+    // scan that finds them reads the function's statements, not a path
+    // through it.
+    eva.lockstep = lockstep_pairs(f.body)
     for p in f.params {
       st.env[p.name] = initial_cell(p.ty, p.name)
       record_abs_range(ctx, p.name, st.env[p.name])

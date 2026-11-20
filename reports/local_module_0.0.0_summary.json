@@ -9,17 +9,17 @@
   "unsupported_statements": 0,
   "trace_events": 604,
   "steps": 156,
-  "elapsed_ms": 5,
+  "elapsed_ms": 4,
   "dead_code": 3,
   "unreachable": 1,
   "infinite_loop": 1,
   "taint_sinks": 8,
   "range_vars": 13,
   "level": 3,
-  "abstract_findings": 14,
+  "abstract_findings": 15,
   "vcs_proved": 2,
   "vcs_failed": 1,
   "vcs_unknown": 3,
   "slices": 1,
-  "findings": 28
+  "findings": 29
 }

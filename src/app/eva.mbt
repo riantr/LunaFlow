@@ -73,6 +73,11 @@ struct EvaState {
   mut loop_depth : Int32
   /// Each function's return type, so the width of a call's result is known.
   rets : Map[String, String]
+  /// The arrays that GROW TOGETHER in this function, and the array each one
+  /// grows with. It is a property of the FUNCTION, not of a path through it,
+  /// so it is computed once by the scan in `lockstep.mbt` and read by the
+  /// value domain when a name is bound.
+  mut lockstep : Map[String, String]
 }
 
 ///|
@@ -85,6 +90,7 @@ fn EvaState::new(rets : Map[String, String]) -> EvaState {
     uninit_any: [],
     loop_depth: 0,
     rets,
+    lockstep: Map([]),
   }
 }
 
@@ -176,6 +182,9 @@ fn eva_join(a : EvaState, b : EvaState) -> EvaState {
   } else {
     b.loop_depth
   }
+  // The lockstep map is a property of the FUNCTION, not of a path through it,
+  // so a join does not change it.
+  out.lockstep = a.lockstep
   out
 }
 
@@ -207,6 +216,7 @@ fn eva_copy(a : EvaState) -> EvaState {
     out.uninit_any.push(n)
   }
   out.loop_depth = a.loop_depth
+  out.lockstep = a.lockstep
   out
 }
 
@@ -249,6 +259,7 @@ fn eva_assign(target : EvaState, src : EvaState) -> Unit {
     target.uninit_any.push(n)
   }
   target.loop_depth = src.loop_depth
+  target.lockstep = src.lockstep
 }
 
 ///|

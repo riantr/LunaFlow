@@ -257,6 +257,7 @@ like any other, and Phase 1 shows up in it.
 | the 0.1.29 release (`8e50769`) | 51 | 6,388 | 9,903 | 46 | 7 |
 | the D1+D2 tree (`7e35063`) | 53 | 6,579 | 9,903 | **59** | 7 |
 | the Phase-1 tree | 54 | 6,644 | 10,198 | **54** | 8 |
+| the repaired tree | 57 | 6,776 | 10,201 | **46** | 8 |
 
 The **59 → 54** is Phase 1: the blanket rule invented **five** findings on this
 tree — four in `src/app/interp.mbt` and one in `fixtures/vuln_demo` — and they
@@ -268,6 +269,12 @@ settled by building both trees side by side (`git worktree`) and diffing their
 inventing `INDEX-OOB` findings — is **false**: reverting the CFG repair alone
 leaves the count at 41, and reverting the three `abs.mbt` changes alone leaves
 it at 41 as well.
+
+The **54 → 46** is the value-domain repair recorded in §8: the eight false
+positives in `family_count_table` are gone, the two in `conc.mbt` are gone, and
+three new files (the lockstep scan and two whitebox test files) are new source.
+The EVA's own count on this tree reads **32** findings, **14** of them under
+`src/`.
 
 The `git worktree` of the 0.1.29 release also **reproduced the README's
 committed self-scan row exactly** — 51 files, 6,388 statements, 9,903 events,
@@ -328,25 +335,132 @@ the tool claims, only what it can prove about the claim.
   numbers a tainted loop condition reads as tainted. That is a different
   engine with different semantics — it reports what it *observed* — and
   Phase 1 left it alone.
-* **D3 is still open.** The layer's value domain gives an array literal the
-  length **exactly 0** and prunes a loop whose condition is then impossible;
-  the two real sinks inside the pruned loop are still lost.
-* **The EVA cannot relate two arrays' lengths, and on this analyzer's own source
-  that is a false positive.** `family_count_table` in `src/app/report.mbt` pushes
-  `codes` and `counts` in lockstep, so `counts.length()` is always
-  `codes.length()`, and every `counts[at]` in it is in range. The layer reports
-  **8** `INDEX-OOB` findings there. A paired fixture settles that this is the
-  layer's reasoning and not the code's: `safe_counts` (lockstep) and
-  `unsafe_counts` (`counts` never grows) produce **the same two findings** —
-  0.6 *"index may be out of bounds on some inputs"* on the safe one and 0.95
-  *"abstract interval proves the index is out of bounds"* on the unsafe one — so
-  the layer cannot tell the safe shape from the unsafe one. **Pre-existing**: the
-  0.1.29 release, the D1+D2 tree and the Phase-1 tree report it identically.
-  **Not fixed here** — it needs the value domain to relate two arrays' lengths,
-  which is a change to the value engine and not to the taint layer, and it is
-  outside the three items this phase was given.
 * **Nothing here was published.** The published `.mbti` changed (see
   below), and the release notes for the next release have to declare it.
+
+---
+
+## 8a. The three defects this section listed, and what they were
+
+The three items above were recorded as open. They were **root-caused and
+repaired** on 2026-11-20, and the measurement is below. The repairs are in
+`src/app/abs.mbt` (the value domain), `src/app/relation.mbt` (the relations),
+`src/app/lockstep.mbt` (a new file: the function-level scan) and
+`src/app/eva.mbt` (the per-function facts).
+
+### 8a.1 The boolean literal was not exact — this was D3, and it was all three
+
+`AbsVal`'s `ABool(t, f)` means "CAN be true" and "CAN be false". Every
+construction of it in `abs.mbt` follows that reading — the comparisons, the
+conjunction, the disjunction and the negation all swap or combine the two
+flags correctly — **except the literal**, which built `ABool(b, b)`.
+
+For `true` that was harmless. For `false` it was a **contradiction**: a value
+that can be neither true nor false. And a contradiction propagates:
+
+* `!flag` on it could not be true either, so `if !found { ... }` was
+  **pruned**, and everything the branch assigned was lost;
+* `while attempt < max_attempts && !succeeded` could not be true, so the
+  **loop body was never analysed**;
+* `if !succeeded { abort(...) }` reported **both** branches as unreachable,
+  and returned an **empty** state — wiping every binding made before it.
+
+**MEASURED (2026-11-20) on `riantr/moonbit_doubleML@0.164.64`:** the defect
+cost two real sinks in `did_aggregation.mbt` (lines **229** and **231**), and
+it made the layer claim both branches of one `if` unreachable in
+`riantr/moonbit_static_analysis@0.5.0`'s `moonfiles.mbt` (line 1142). The
+repair is one line — `EBool(b) => AbsCell::new(ABool(b, !b), [])` — and the
+assertions that pin it are in `src/app/bool_literal_wbtest.mbt` (**6** of
+them; **all 6 fail** when the repair is reverted, and all 6 pass when it is
+restored).
+
+**And the "12 allocation sites" were the same defect.** The spike's
+attribution counts the sites the fixpoint has and the layer does not, by
+cause; the `alloc` cause reads:
+
+| tree | `alloc` cause |
+| --- | ---: |
+| the 0.1.29-era spike | 12 |
+| the Phase-1 tree | 12 |
+| the repaired tree | **1** |
+
+The allocations the layer could not see were the ones **inside the pruned
+loop bodies** — `apo.mbt:606`, `irm.mbt:801`, `iivm.mbt:895`,
+`pliv.mbt:613`, `plpr.mbt:135` and `did_aggregation.mbt:202`, and their
+siblings. The same repair brought **14** `TAINT-ALLOC` findings back on
+doubleML.
+
+### 8a.2 The EVA could not relate two arrays' lengths
+
+`family_count_table` in `src/app/report.mbt` pushes `codes` and `counts` in
+lockstep, so `counts.length()` is always `codes.length()`, and every
+`counts[at]` in it is in range. The layer reported **8** `INDEX-OOB` findings
+there, and the paired fixture showed it could not tell the safe shape from
+the unsafe one: `safe_counts` (lockstep) and `unsafe_counts` (`counts` never
+grows) produced the same two findings.
+
+**The repair is four things, all of them in the value domain:**
+
+1. **The length-equality relation** (`src/app/lockstep.mbt`,
+   `src/app/relation.mbt`). Two arrays pushed in the **same statement list**,
+   **once each**, with no other resize and no `return`/`break`/`continue` in
+   that list, have the same length. The relation is established when the two
+   are bound with the **same known length**, and it is dropped when either is
+   rebound.
+2. **The bound is inherited** (`inherit_length_bound`). `at = j` gives `at`
+   the value `j` has, so a bound below `j` is a bound below `at`. Without it
+   the bound was lost at the assignment.
+3. **A smaller index is still below the length** (`index_is_bounded_by`). `j - 1`
+   is below `j`, so a bound below `j` is a bound below `j - 1`.
+4. **The relation survives the loop's join** (`prune_length_bounds`). The index
+   keeps the value it had before the loop when the loop never ran, so the
+   relation holds after the loop when that value is below the length too — and
+   a **negative** index is below every length, because a length is never
+   negative.
+
+**MEASURED (2026-11-20):** the eight findings in `family_count_table` are
+gone, and so are two more in `conc.mbt` (`min` really is below
+`cyc.length()`) and one in `ifds_tabulate` (`work_fact` and `work_node` are
+parallel worklists). On doubleML three `INDEX-OOB` findings went, and all
+three were checked against the source and were wrong: two of them are reads a
+short-circuiting guard means never happens, and the third is an index that is
+provably inside the array. The paired fixture now **tells the two shapes
+apart**: `safe_counts` reports nothing, `unsafe_counts` reports its one true
+finding. The assertions are in `src/app/lockstep_wbtest.mbt` (**5**), and
+each mechanism is falsifiable on its own — reverting the relation fails one
+assertion, reverting the inheritance fails two, reverting the subtraction
+rule fails one.
+
+### 8a.3 The short-circuit was not modelled
+
+`&&` and `||` short-circuit in MoonBit, and the layer evaluated **both**
+sides in the same state. So `acc[acc.length() - 1]` was read in a state the
+guard had already ruled out — the array was empty, so the index was exactly
+minus one, and the finding said the access was **provably** out of bounds: a
+claim about a read that never happens. The repair evaluates the right side in
+the state the left side's refinement gives.
+
+**MEASURED (2026-11-20):** two such findings went on doubleML
+(`did_cs.mbt:118` and `:125`). The evidence for this one is the corpus, not
+a unit fixture: the shape needs the whole function around it — the array that
+stays empty, the loop over a parameter and the second array beside it.
+
+### 8a.4 What the repair cost
+
+| measurement | before | after |
+| --- | ---: | ---: |
+| doubleML L2 findings | 3,305 | **3,321** |
+| doubleML L2 steps | 167,211 | **185,766** |
+| static_analysis L2 findings | 190 | **188** |
+| this tree's L2 findings | 54 | **46** |
+| this tree's EVA findings | 41 | **32** |
+
+The step count is the deterministic measure: the repair analyses the loop
+bodies the defective literal used to prune, and that is **more** work by
+design. The wall clock is machine-dependent — the same tree measured 8.4 s,
+10.1 s and 17.6 s for the *previous* commit's tree in one session — so the
+table in the README is the committed artefact's own `elapsed_ms`, and the
+comparison that counts is the step count.
 
 ---
 
