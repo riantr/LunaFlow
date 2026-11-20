@@ -4,9 +4,9 @@
 becomes a *labelled* may-taint computed by a flow-sensitive fixpoint, and the
 layer's blanket loop rule goes.
 
-**Status:** Phase 1, SHIPPED in the source tree. The findings families, the
-report's sections and the CLI's flags are unchanged; the taint's *meaning*
-and the *evidence* a taint finding carries are not.
+**Status:** Phase 1, SHIPPED in the source tree and PUBLISHED in 0.1.30. The
+findings families, the report's sections and the CLI's flags are unchanged;
+the taint's *meaning* and the *evidence* a taint finding carries are not.
 
 **Date:** 2026-11-20. **Phase 0:** `docs/qa/IFDS_SPIKE.md` — the
 measurement that asked whether this was worth doing. This document records
@@ -370,8 +370,14 @@ characterised while the three defects were being repaired.
   from the taint that reached its **contents**, which is a change to the
   value domain with a published-interface cost (`AbsVal`'s `AArr` would have
   to carry the size's taint) and is **not** made here.
-* **Nothing here was published.** The published `.mbti` changed (see
-  below), and the release notes for the next release have to declare it.
+* **This was published in 0.1.30.** The published `.mbti` changed (see
+  below), and the release notes declare it: the README's "What changed in
+  0.1.30" carries the before/after table, and `AbsCell::new`'s second
+  argument is `Array[String]` where it was `TaintMode`. The phase document
+  alone would not have reached a consumer — it lives under `docs/qa/` and
+  does not travel with the version, while the registry froze the 0.1.30
+  README page at publish time, so the declaration reached the next
+  release's page.
 
 ---
 
