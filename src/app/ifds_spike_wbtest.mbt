@@ -20,10 +20,10 @@
 /// LABELLED: the measurement can say WHICH source put the taint there.
 ///
 /// A STATE maps a variable name to its facts. Two states are joined by
-/// joining their fact sets, variable by variable. The join is a UNION, the
-/// same lattice the L2 uses in the sense that matters here: the L2's
-/// `TaintMode::join` is a union of the two modes' information, and the
-/// spike's union of two source sets carries strictly more information.
+/// joining their fact sets, variable by variable. The join is a UNION, and
+/// it is the SAME union the L2 performs: since IFDS Phase 1 the L2's taint
+/// is a set of sources as well, and `abs_join_state` unions the two source
+/// sets (`srcs_union`) exactly as the spike unions its fact sets.
 ///
 /// THE TRANSFER FUNCTIONS
 ///

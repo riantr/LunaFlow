@@ -625,6 +625,24 @@ kill-exact, flow-sensitive fixpoint** now, with a shipped harness
 M1 (no lost sink), M2 (the rule's contribution), M3 (the model's coverage) — and
 a falsification mode that breaks each check on purpose and requires it to fail.
 
+**One published-interface change, declared here.** The taint is a set of sources
+now, so the published `app` package changes with it:
+
+| before | after |
+| --- | --- |
+| `pub struct AbsCell { v : AbsVal, t : TaintMode }` | `pub struct AbsCell { v : AbsVal, srcs : Array[String] }` |
+| `pub fn AbsCell::new(AbsVal, TaintMode) -> Self` | `pub fn AbsCell::new(AbsVal, Array[String]) -> Self` |
+| `pub(all) enum TaintMode { TClean, TMaybe, TTainted }` | **removed** |
+| `pub fn TaintMode::{code, equal, join, not_equal}` | **removed** |
+| `pub(all) struct ReportInput { … abs_universe : Int32 }` | `… abs_universe : Int32, cfg_universe : Int32` |
+
+`TaintMode` is gone because a set of sources is not a mode. `AbsCell`'s fields are
+private, so a consumer can build a cell but cannot read it — the practical break is
+`AbsCell::new`'s second argument and `TaintMode`'s disappearance. `ReportInput` is a
+`pub(all)` struct no consumer can construct, and it gains one field. **A consumer
+that called `AbsCell::new` does not compile against 0.1.30** — that is the one thing
+in this release that needs a change on the consumer's side.
+
 **Four defects, found by measuring and repaired.** A boolean **literal** was
 modelled as a value that can be neither true nor false, and the contradiction
 pruned the branch that guarded a loop body — so the sinks inside it were never
