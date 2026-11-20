@@ -32,6 +32,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The TAGS are needed, not only the tip: the release-note checker
+          # compares the `.mbti` of every released version -- `git show
+          # <tag>:src/app/pkg.generated.mbti` -- against that version's
+          # notes. A shallow checkout has no tags to compare.
+          fetch-depth: 0
 
       - name: Install MoonBit
         run: |
@@ -226,6 +232,19 @@ jobs:
       # where the toolchain is the one that produced the numbers.
       - name: Check the README's live table against the tree
         run: node scripts/qa/readme_table.mjs --no-selfscan
+
+      # THE PUBLISHED INTERFACE, CHECKED AGAINST THE RELEASE NOTES. A release
+      # that changes the published `.mbti` can break a consumer's build, and
+      # the release notes are the only place a consumer reads that. This
+      # compares the `.mbti` of every released version against that version's
+      # notes, and fails when the version being prepared breaks the published
+      # interface without saying so -- it found a missing declaration the
+      # first time it ran.
+      #
+      # It needs the TAGS, which is why the checkout above fetches the whole
+      # history.
+      - name: Check the published interface against the release notes
+        run: node scripts/qa/release_interface.mjs
 
       # The LOOP's three items, each checked by RUNNING it rather than by
       # reading a document that says so: the bounded findings table, D1 (the

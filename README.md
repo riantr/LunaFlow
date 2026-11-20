@@ -625,8 +625,9 @@ kill-exact, flow-sensitive fixpoint** now, with a shipped harness
 M1 (no lost sink), M2 (the rule's contribution), M3 (the model's coverage) — and
 a falsification mode that breaks each check on purpose and requires it to fail.
 
-**One published-interface change, declared here.** The taint is a set of sources
-now, so the published `app` package changes with it:
+**The published-interface changes, declared here.** The taint is a set of sources
+now, and a findings table has a cap, so the published `app` package changes with
+both:
 
 | before | after |
 | --- | --- |
@@ -634,14 +635,26 @@ now, so the published `app` package changes with it:
 | `pub fn AbsCell::new(AbsVal, TaintMode) -> Self` | `pub fn AbsCell::new(AbsVal, Array[String]) -> Self` |
 | `pub(all) enum TaintMode { TClean, TMaybe, TTainted }` | **removed** |
 | `pub fn TaintMode::{code, equal, join, not_equal}` | **removed** |
-| `pub(all) struct ReportInput { … abs_universe : Int32 }` | `… abs_universe : Int32, cfg_universe : Int32` |
+| `pub(all) struct ReportInput { … abs_universe : Int32 }` | `pub(all) struct ReportInput { … abs_universe : Int32, cfg_universe : Int32 }` |
+| `pub(all) struct ReportOptions { max_cfg : Int32, max_taint_nodes : Int32, max_slice_nodes : Int32, max_path_events : Int32 }` | `pub(all) struct ReportOptions { … max_findings : Int32 }` |
 
 `TaintMode` is gone because a set of sources is not a mode. `AbsCell`'s fields are
 private, so a consumer can build a cell but cannot read it — the practical break is
-`AbsCell::new`'s second argument and `TaintMode`'s disappearance. `ReportInput` is a
-`pub(all)` struct no consumer can construct, and it gains one field. **A consumer
-that called `AbsCell::new` does not compile against 0.1.30** — that is the one thing
-in this release that needs a change on the consumer's side.
+`AbsCell::new`'s second argument and `TaintMode`'s disappearance. `ReportInput` and
+`ReportOptions` are `pub(all)`, so their fields are **public**, and a consumer that
+builds one has to name the new field: `cfg_universe` on the first, and
+`max_findings` — the cap on a findings table — on the second. **A consumer that
+called `AbsCell::new`, or that builds a `ReportInput` or a `ReportOptions`, does not
+compile against 0.1.30.** Those are the changes in this release that need a change
+on the consumer's side.
+
+`render_report` also grew an **optional** parameter, `findings_out? : Array[Finding]`.
+That one is additive: it has a default, so every existing call still compiles.
+
+**These declarations are checked, not remembered.** `scripts/qa/release_interface.mjs`
+compares the `.mbti` of every released version against that version's notes and
+fails when a break is not declared — it found the `ReportOptions` row above the
+first time it ran.
 
 **Four defects, found by measuring and repaired.** A boolean **literal** was
 modelled as a value that can be neither true nor false, and the contradiction
@@ -2747,6 +2760,7 @@ The gate, and the result it produced for this version:
 | `moon build . --target js` | exit 0 |
 | `node scripts/verify.mjs` | **87 passed, 0 failed** |
 | `node scripts/qa/readme_table.mjs` | **every count in the measured table above matches the tree** (the artefact rows against their summaries, the self-scan row against a live run, the test count against a live run) |
+| `node scripts/qa/release_interface.mjs` | **every check agrees** — the published `.mbti` of every released version against that version's release notes, and the version being prepared against the notes it will ship with |
 | `node scripts/qa/loop_acceptance.mjs` | **every check pass** — the LOOP's three items (the bounded findings table, D1 + D2, the Phase-1 spike), each checked by running it |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
