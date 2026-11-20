@@ -17,6 +17,13 @@ prints one line per check. It exits non-zero if any check fails.
 | **2. D1 (five dead rules) + D2** | the analyser over the fixture, over a two-file module, and the unit assertions | D1: a tainted allocation size **is** reported, for the parser's spelling and the qualified one (the rule was dead code and fired on no input). D2: the same finding in two files is **two** findings (the key had no file in it, so the second was dropped), and the same finding twice in one file is still one |
 | **3. Phase 1 (L2-IFDS)** | `scripts/qa/ifds_spike.mjs` over the fixture corpus, and its `--falsify` mode | M1 (no lost sink), M2 (the blanket rule's contribution), M3 (the model's coverage) — and the harness's own falsification mode, which breaks each check on purpose and requires it to fail |
 
+And the **published** artefact carries the same three items:
+
+```sh
+node scripts/qa/published_items.mjs 0.1.30
+```
+
+
 ## What the checks read on this tree
 
 Measured on the tree this commit names.
@@ -35,6 +42,26 @@ and `b.mbt`.
 them also sites of the flow-sensitive fixpoint; the plain spike's **8** sites
 are all sites of the spike with the rule; the rule added **2**, both carrying
 the rule's own source; **0** gaps. The falsification mode is OK.
+
+## The PUBLISHED artefact carries them too
+
+Every check above measures the **local** build. The registry serves a different
+artefact — the wasm one, built by CI — and that is the one a consumer actually
+runs. `scripts/qa/published_items.mjs` runs the **published** module over the
+fixture corpus (`moonx riantr/LunaFlow@0.1.30`, from a scratch directory of its
+own, because `moonx` materialises the source into the current directory's
+`.repos/`) and checks the same three items in *its* report:
+
+| what it checks | what the published 0.1.30 does |
+|---|---|
+| the findings table is bounded | **4** bounded tables at `--max-findings 3` — of 6, 8, 9 and 6 findings — each count table summing to the whole set it names |
+| the sidecar is lossless | **29** findings in the sidecar, **12** shown |
+| D1: the allocation-size rule fires | **4** `TAINT-ALLOC` findings |
+| D2: two files, two findings | **2** L2 findings, named `a.mbt` and `b.mbt` |
+| the published report against the local build | **identical** — 29 findings, the same 7 families |
+
+The published CLI accepts `--max-findings`, which is part of the release: the
+bound is in the artefact the registry serves, not only in the repository.
 
 ## Each item is falsifiable — and was
 
@@ -59,6 +86,7 @@ the analyser, so every case measured the product it had broken.
 | 3. Phase 1 (L2-IFDS) | `d838c0d`, `ec1e79a` |
 | the four defects the repairs turned up | `ec1e79a`, `e288eba` |
 | this check | the commit that adds `scripts/qa/loop_acceptance.mjs` |
+| the same check against the published artefact | the commit that adds `scripts/qa/published_items.mjs` |
 
 The items' own records are in `docs/qa/IFDS_SPIKE.md` (what the measurement
 found in the product), `docs/qa/IFDS_PHASE1.md` (the engine and the
