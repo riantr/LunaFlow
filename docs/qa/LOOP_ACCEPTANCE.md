@@ -63,6 +63,26 @@ own, because `moonx` materialises the source into the current directory's
 The published CLI accepts `--max-findings`, which is part of the release: the
 bound is in the artefact the registry serves, not only in the repository.
 
+## Item 1 changed the published interface, and the notes say so
+
+Bounding a findings table is a **cap a consumer sets**, so the option reached
+the published `app` package: `ReportOptions` gained the public field
+`max_findings : Int32`. A consumer that constructs a `ReportOptions` does not
+compile against 0.1.30, and the release notes are the only place a consumer
+reads that — so the README's "What changed in 0.1.30" section declares it, and
+the declaration is CHECKED rather than remembered:
+
+```sh
+node scripts/qa/release_interface.mjs
+```
+
+That command compares the `.mbti` at every release's tag against that release's
+notes, and fails when the version being prepared breaks the published interface
+without saying so. **It failed the first time it ran** — the `ReportOptions`
+row was missing — and it is in the release gate and in CI. Its own
+falsification: an undeclared break, a misspelled member, and a removal claimed
+for a symbol that is still there each make it fail.
+
 ## Each item is falsifiable — and was
 
 A check that cannot fail proves nothing. Each item was broken on purpose and
