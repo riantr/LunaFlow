@@ -196,15 +196,16 @@ The shape that tells the two taints apart is the one whose count is **not** a
 constant: `Array::make(n, user)` holds `n` copies of `user`, so its length is
 `n` and its length's taint must be `n`'s — never `user`'s.
 
-MEASURED (2026-11-22), each case run against the whole suite, the source
-restored afterwards and compared by SHA-256 (`_build/qa/size_taint/falsify.mjs`):
+MEASURED (2026-11-21), each case run against the whole suite, the source
+restored afterwards and compared by SHA-256
+(`scripts/qa/size_taint_falsify.mjs`):
 
 | what is broken | what must fail | what failed |
 |---|---|---|
 | **F1** the change is reverted entirely | the element shape's false claim returns, and the size's label names the ELEMENT | `the ELEMENTS of a sized array do not carry the size's taint`, `the length of a sized array names only the sources that decide the COUNT` |
 | **F2** the size's taint inherits the contents' again | the size's label names the ELEMENT again | `the length of a sized array names only the sources that decide the COUNT` |
 | **F3** the contents' taint inherits the size's again | the `Array::make(n, 0)` element shape's false claim returns | `the ELEMENTS of a sized array do not carry the size's taint` |
-| **F4** every size is clean (the size's taint is dropped where it is made) | the true claims that go through a SIZE stop firing | `the length of an array PARAMETER …`, `the length of a string PARAMETER …`, `the length of a string BUILT …`, `the length of a sized array names only the sources that decide the COUNT`, **and three pre-existing Phase-1 assertions** |
+| **F4** every size is clean (the size's taint is dropped where it is made) | the true claims that go through a SIZE stop firing | `the length of an array PARAMETER …`, `the length of a string PARAMETER …`, `the length of a string BUILT …`, `the length of a sized array names only the sources that decide the COUNT`, **and four pre-existing assertions** (three Phase-1 ones and `the length of a tainted parameter is still an allocation size untrusted input chose`) |
 | the release notes' declaration is removed | `release_interface.mjs` fails | the check that enforces the declaration |
 
 **F4 caught more than this phase's own assertions:** three Phase-1 assertions
@@ -222,9 +223,33 @@ pin that the `constant_size` guard keeps masking the literal shape — but they
 do **not** detect the separation, and the table above says so rather than
 claiming them as the falsification.
 
-The source came back **byte-identical** after every case:
-`src/app/abs.mbt` `771d479628970ffceddb581cf083ebfd67f92ff7b40a301ba5d8825d873b9f51`,
+The source came back **byte-identical** after every case, and the tree came
+back with no tracked file changed:
+`src/app/abs.mbt` `bc5d70286b54f9ecccf523fe00225b4e9f1d6e343f6feba4595dd05534579b67`,
 `src/app/relation.mbt` `ab499f72367cd33e99e5dac9801b755e4f7495f230b9d252efa60ddcdb4ffe09`.
+
+**The falsification was RE-RUN against the committed tree on 2026-11-21, and
+the record above was corrected.** The first run reported
+`771d479628970ffceddb581cf083ebfd67f92ff7b40a301ba5d8825d873b9f51` for
+`abs.mbt`: the hash of the working tree at that moment, which `moon fmt` had
+not yet rewritten. The formatter changed the file's bytes before it was
+committed, so the recorded hash belonged to a state the repository never held
+— a reader who hashed the committed file found no match, and "the source came
+back byte-identical" was therefore unverifiable from the repository. The
+repair itself did not change; the RECORD was stale. Re-running the cases
+against the committed tree reproduced every row of the table above (F1 → 2 of
+274 tests failed, F2 → 1, F3 → 1, F4 → 8: four of this phase's and four
+pre-existing), restored the source byte-identically, and left no tracked file
+changed.
+
+**The four cases ship as `scripts/qa/size_taint_falsify.mjs`** — a MANUAL,
+LOCAL tool, deliberately NOT a gate step and NOT wired into CI, because it
+rewrites tracked files. It refuses to run while a tracked file is modified,
+and it restores the source in a `finally` block. Run it with `node
+scripts/qa/size_taint_falsify.mjs`; F1 reverts to `v0.1.30` — the last
+published tree before the repair — and `--base <ref>` points it elsewhere. It
+exits 0 only when all four cases behaved as the table says and the source
+came back byte-identical.
 
 ---
 

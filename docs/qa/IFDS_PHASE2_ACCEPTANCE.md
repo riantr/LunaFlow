@@ -62,7 +62,13 @@ the whole suite, each with the source restored byte-identically afterwards
 | **F1** | the change is reverted entirely | `the ELEMENTS of a sized array do not carry the size's taint`, `the length of a sized array names only the sources that decide the COUNT` |
 | **F2** | the size's taint inherits the contents' again | `the length of a sized array names only the sources that decide the COUNT` |
 | **F3** | the contents' taint inherits the size's again | `the ELEMENTS of a sized array do not carry the size's taint` |
-| **F4** | every size is clean | four of this phase's assertions **and three pre-existing Phase-1 ones** |
+| **F4** | every size is clean | four of this phase's assertions **and four pre-existing ones** (three Phase-1, and the tainted-parameter one) |
+
+They ship as `scripts/qa/size_taint_falsify.mjs` — a manual, local tool that
+rewrites tracked files, so it refuses to run on a dirty tree and it is
+deliberately not wired into CI. It was re-run against the **committed** tree
+on 2026-11-21: F1 → 2 of 274 tests failed, F2 → 1, F3 → 1, F4 → 8, the source
+came back byte-identical, no tracked file changed, exit 0.
 
 `docs/qa/IFDS_PHASE2.md` §6 has the whole table, including the plan's own
 expectation that the measurement corrected.

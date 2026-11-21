@@ -652,6 +652,9 @@ and checks the same thing, plus the ledger. Four cases **falsify** the repair �
 the change reverted, the size inheriting the contents' again, the contents
 inheriting the size's again, and every size clean — and each fails the
 assertions it should, with the source restored **byte-identically** afterwards.
+Those four cases ship as `scripts/qa/size_taint_falsify.mjs`: a manual, local
+tool, because it rewrites tracked files — it refuses to run on a dirty tree
+and it is deliberately not a gate step.
 
 **The published-interface change, declared here.**
 
