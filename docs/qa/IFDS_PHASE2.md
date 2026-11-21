@@ -50,6 +50,9 @@ what this phase does.
 
 ### 2.1 The mechanism, site by site
 
+The line numbers are the **pre-change** tree's (`v0.1.30`), because this
+section measures what the tree does before anything is repaired.
+
 | site | what it computes | what it gets today |
 |---|---|---|
 | `abs.mbt:1252` | an array **literal** `[e1, e2]` | `AArr(n, n)` with the sources of the **elements** |
@@ -85,6 +88,29 @@ it, for the wrong reason). It is:
 2. **the size inheriting the contents' taint** — which the guard happens to
    mask whenever the count is provably constant, and which is the shape
    Phase 1's §8 recorded.
+
+**The split: the cases where the defect is PROVABLE-REFUTABLE, and the cases
+where it is not.** A defect is only *provable* where the tree files a claim
+that its own value domain refutes — where a reader can point at the claim and
+at the reason it is false. Where the guard suppresses the claim either way,
+the defect is real but **unprovable**: the tree cannot tell the two taints
+apart there, so no assertion can detect the repair (and none can be broken by
+re-breaking it).
+
+| case | the count | provable-refutable? | why |
+|---|---|---|---|
+| `Array::make(n, 0)` → `a[0]` → `Array::make(e, 0)` | not a constant | **YES — the false claim is filed today** | the size's taint reaches the CONTENTS' taint, and the claim is refuted by the layer's own value domain: `a[0]` is the zero that was put in |
+| `Array::make(n, user)` → `.length()` → `Array::make(len, 0)` | not a constant | **YES** | the contents' taint reaches the size's taint; the shape carries two claims, and neither may name `user` |
+| `[user]` → `.length()` → `Array::make(len, 0)` | constant (1) | **NO — unprovable** | the `constant_size` guard suppresses the claim either way (§6 says what this cost the plan) |
+| the same after a `push` | constant (2) | **NO — unprovable** | as above |
+| `.length()` on a value the layer cannot resolve (`ATop`) | unknown | **NO — out of scope** | the claim is a *may*-claim about a length the layer cannot compute, and it is TRUE (§7) |
+| an array grown inside a loop | the trip count | **NO — out of scope** | the model does not carry the loop condition's taint into the count's taint (§7) |
+
+The two provable shapes are the ones the assertions in
+`src/app/size_taint_wbtest.mbt` and the nine shapes in
+`scripts/qa/size_taint.mjs` are built on; the two unprovable literal shapes
+are pinned by assertions that hold in **every** case, including a reverted
+tree, and §6 says plainly that they do not detect the separation.
 
 ### 2.3 The baseline, on the three corpora
 
@@ -289,7 +315,7 @@ came back byte-identical.
 The harness is not weakened: it still fails on doubleML, it still passes on the
 other two corpora, and the three sites are still named.**
 
-MEASURED (2026-11-22), the spike over doubleML 0.164.64, on the tree of this
+MEASURED (2026-11-21), the spike over doubleML 0.164.64, on the tree of this
 phase and on the tree `IFDS_PHASE1.md` §8a.6 measured:
 
 | | Phase 1 (published) | Phase 2 (measured) |
@@ -365,7 +391,7 @@ repair working as intended.
 
 ## 10. The numbers this change moved
 
-MEASURED (2026-11-22), the analyser built from this tree, over the three
+MEASURED (2026-11-21), the analyser built from this tree, over the three
 committed corpora, before and after the change, with the same flags
 (`--funnel --trials 4` and one slice each):
 

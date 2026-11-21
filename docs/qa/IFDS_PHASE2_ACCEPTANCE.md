@@ -25,7 +25,7 @@ run as part of `moon test src/app` on all three targets.
 
 ## What the check reads on this tree
 
-MEASURED (2026-11-22), the analyser built from this tree, over the nine
+MEASURED (2026-11-21), the analyser built from this tree, over the nine
 shapes. **All 21 checks agree.**
 
 | shape | the claim | L2 allocation-size claims |
