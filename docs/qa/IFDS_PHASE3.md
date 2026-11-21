@@ -77,6 +77,15 @@ The chain, for `let a = xs + [user]; Array::make(a.length(), 0)`:
 So the size of a `+`-built array is computed **nowhere**, and the claim about
 it is made from the elements.
 
+**And the tree carries none of these today.** Measured over the three
+committed artefacts: **959 / 10 / 4** `TAINT-ALLOC` findings on doubleML /
+static_analysis / the fixture, and **zero** of them have a constant size — a
+finding's evidence names the size's value (`Array.make([2,2])`), so a claim
+whose size is a constant is visible in the artefact itself. **The three
+committed artefacts carry no self-refuting allocation-size claim at all.**
+The two the shapes below produce are therefore the first of their class since
+Phase 2, and they are a class the tool has already learned to remove.
+
 ### 2.2 The shapes, and what the analyser claims about them today
 
 Measured with `_build/qa/phase3/probe_plus_shapes.mjs` over
@@ -97,6 +106,13 @@ can only recognise that when the size is an `AInt` with `l == h`. Here the
 size is `ATop`: **the count is not modelled, so the guard cannot see that it
 is constant.** The missing count is not only a precision loss; it is what
 lets a false claim through.
+
+**A corpus caveat, stated so the shape is not over-read.** The shapes are a
+synthetic module, and the corpora do not all contain the self-refuting form:
+a concatenation of two **literals** has a constant count (the shapes), while
+doubleML's 105 sites are all `acc = acc + [x]` — a count that is the trip
+count, not a constant. So on doubleML this shape produces the **misattributed
+labels**, and the self-refuting case is what a **new** corpus would get.
 
 ### 2.3 The split: what the model can compute, and what it cannot
 
