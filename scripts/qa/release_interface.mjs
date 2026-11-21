@@ -449,6 +449,32 @@ function declaredRows(section) {
 }
 
 ///|
+///|
+/// A type cell's members, split on the commas that are not inside brackets.
+///
+/// The members of a published type can carry commas OF THEIR OWN: the enum
+/// variant `AArr(Int32, Int32, Array[String])` is ONE member, and a split on
+/// every comma would break it into three -- which is how the declaration of
+/// the 0.1.31 array case could not be written at all.
+function splitMembers(text) {
+  const out = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of text) {
+    if (ch === '[' || ch === '(' || ch === '{') depth += 1;
+    else if (ch === ']' || ch === ')' || ch === '}') depth -= 1;
+    if (ch === ',' && depth === 0) {
+      out.push(cur);
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur.trim()) out.push(cur);
+  return out.map((s) => s.trim()).filter((s) => s.length > 0);
+}
+
+///|
 /// A declaration cell, read as a shape:
 ///
 ///   fn      a full function declaration
@@ -477,7 +503,7 @@ function parseCell(cell) {
   const t = /^pub(\(all\))?\s+(struct|enum)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{(.*)\}$/.exec(text);
   if (t) {
     const members = [];
-    for (const part of t[4].split(',')) {
+    for (const part of splitMembers(t[4])) {
       const piece = member(part);
       if (!piece) continue;
       members.push(piece);

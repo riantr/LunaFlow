@@ -241,7 +241,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.30
+moon add riantr/LunaFlow@0.1.31
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -249,7 +249,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.30",
+  "riantr/LunaFlow@0.1.31",
 }
 ```
 
@@ -300,7 +300,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.30](https://mooncakes.io/docs/riantr/LunaFlow@0.1.30).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.31](https://mooncakes.io/docs/riantr/LunaFlow@0.1.31).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -588,6 +588,88 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.31
+
+**A container's SIZE taint is not its CONTENTS' taint any more, and the value domain says so. The change is published: `AbsVal`'s array case grew a component, so a consumer that constructs an `AbsVal::AArr` has to change.**
+
+**The defect.** A cell held **one** source set, and for an array that set meant
+"the elements may come from these sources". Reading the **length** produced a
+cell with the **same** source set, so an array whose element was tainted had a
+tainted length — and the count of the elements says **nothing** about the taint
+of the values in them. The claim it produced was false: *"a tainted value from
+parameter `n` may control an allocation size"*, where `n` said how **many**
+elements there were and not **what** they were.
+
+**The repair.** `AbsVal`'s array value carries the **size's** taint, and the
+size's taint is computed where the size is produced:
+
+| where the array comes from | the count is | the size's taint is |
+|---|---|---|
+| a literal `[e1, e2]` | fixed by the code | **empty** — the count is 1 whatever the elements are |
+| `Array::make(n, x)` | `n` | the sources of `n` |
+| a parameter `xs : Array[T]` | the caller's choice | the parameter's own source |
+| `a.push(x)` | the old count plus one | the old size's taint |
+| a join of two arrays | the two counts together | the union of the two size taints |
+
+And the contents' taint stops carrying the size's: for `Array::make(n, x)` it is
+the **element's** sources, not the union of all the arguments.
+
+**MEASURED**, the analyser built from this tree, over the three committed
+corpora, before and after, with the same flags:
+
+| corpus | L2 findings before | L2 findings after |
+| --- | ---: | ---: |
+| `fixtures/vuln_demo` | 15 | 15 |
+| `riantr/moonbit_static_analysis@0.5.0` | 188 | 188 |
+| `riantr/moonbit_doubleML@0.164.64` | 3,321 | **3,301** |
+
+Nothing else moved: the L1 events, the steps, the dead-code counts, the VCs and
+the taint sinks are identical on all three corpora. The **only** family that
+moved is `TAINT-INDEX`, and it moved by exactly the **twenty** claims that
+`docs/qa/IFDS_PHASE2_LEDGER.json` names — every one of them read against the
+source: **two** are self-refuting (the tainted parameter fixes only a loop's
+trip count, so its value cannot change the index), and **eighteen** are in
+bounds but data-dependent, which is a **coverage cost** and is registered
+rather than left silent.
+
+**M1 is not weakened.** Over doubleML the Phase-1 spike's M1 still **fails**, at
+the same three sites — `did_aggregation.mbt:202`, `:203` and `:204` — because
+they are the length of an array built by `+`, which is `ATop`, and
+`.length()` on an `ATop` is a different rule from the one this release
+repairs. The claim there is **true** (the count of distinct event times is a
+function of the tainted inputs), so the layer is still **more complete** than
+the reference, and the reference is still not a complete reference.
+
+**The assertions come in pairs**, so a repair that made every size clean would
+pass the first half and fail the second: a container whose **contents** are
+tainted and whose count is **not** the untrusted input's to choose must produce
+**no** allocation-size claim, and a size that **is** the untrusted input's to
+choose must still produce one — and must name only the sources that decide the
+size. Ten assertions in `src/app/size_taint_wbtest.mbt`, and
+`scripts/qa/size_taint.mjs` runs the **analyser** over nine shapes end to end
+and checks the same thing, plus the ledger. Four cases **falsify** the repair —
+the change reverted, the size inheriting the contents' again, the contents
+inheriting the size's again, and every size clean — and each fails the
+assertions it should, with the source restored **byte-identically** afterwards.
+
+**The published-interface change, declared here.**
+
+| before | after |
+| --- | --- |
+| `pub(all) enum AbsVal { AArr(Int32, Int32) }` | `pub(all) enum AbsVal { AArr(Int32, Int32, Array[String]) }` |
+
+`AbsVal` is `pub(all)`, so its variants are **public**, and a consumer that
+**constructs** an `AbsVal::AArr` — or that **matches** one with two fields —
+does not compile against 0.1.31. The third component is the **size's** taint:
+the sources whose values decide how many elements the array has. It is **not**
+the contents' taint, and that distinction is the whole point of the change.
+
+This declaration is **enforced**, not trusted:
+`scripts/qa/release_interface.mjs` compares the `.mbti` at every release's tag
+against that version's notes, and fails when the version being prepared breaks
+the published interface without saying so. It found its own first gap the day
+it was written — the `ReportOptions.max_findings` field of 0.1.30.
 
 ### What changed in 0.1.30
 
