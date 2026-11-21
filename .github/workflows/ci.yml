@@ -320,3 +320,24 @@ jobs:
 
       - name: Vendored-tree isolation
         run: node scripts/qa/vendor_isolation.mjs
+
+      # THE GATE'S VERDICTS: a FAIL is not an UNKNOWN.
+      #
+      # The harnesses under scripts/qa/ use exit 2 for "this check could not
+      # produce a verdict" -- the registry was unreachable, the analyser wrote
+      # no findings, there was nothing to compare -- and exit 1 for "the
+      # checks failed". The gate now READS that, so "I could not verify" is
+      # reported as such instead of as a defect in the tree.
+      #
+      # This check proves the three things that have to hold together: the
+      # classifier puts 0, 1 and 2 in their own buckets; three shipped checks
+      # really do exit 2 when they cannot decide; and the gate's own step
+      # list contains steps that CAN report UNKNOWN, so the bucket is not
+      # dead code.
+      #
+      # It drives the gate runner with its OWN step list, so it never runs the
+      # real gate. It needs a PowerShell -- `powershell` on Windows, `pwsh`
+      # on the Linux runner -- and it exits 2 if there is none, because a
+      # check that cannot run has no verdict.
+      - name: Check the gate's verdicts
+        run: node scripts/qa/gate_verdicts.mjs

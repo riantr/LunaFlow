@@ -2969,6 +2969,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/loop_acceptance.mjs` | **every check pass** — the LOOP's three items (the bounded findings table, D1 + D2, the Phase-1 spike), each checked by running it |
 | `node scripts/qa/size_taint.mjs` | **every check agrees** — the analyser over nine shapes: a container's SIZE taint is not its CONTENTS' taint, in both directions, and the twenty doubleML claims the repair removed stay removed |
 | `node scripts/qa/plus_size.mjs` | **every check agrees** — the analyser over six shapes: the size of a `+`-built array is the SUM of the two counts and names only the sources that decide the COUNT, and the claims the repair removed stay removed |
+| `node scripts/qa/gate_verdicts.mjs` | **every check agrees** — a FAIL, an UNKNOWN and a PASS are three different things, and the shipped checks exit 2 when they cannot decide |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -2981,6 +2982,24 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
 | `node scripts/qa/verify_published.mjs 0.1.32` | **4 passed, 0 failed** |
 `moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
+
+**The gate has THREE verdicts, not two.** A check can end in three ways, and
+the difference between them is the difference between *"the tree is broken"*
+and *"nobody knows"*. Exit **0** is a pass; exit **1** is a **FAIL** — the
+check ran, and a claim did not agree; exit **2** is an **UNKNOWN** — the check
+could not produce a verdict at all, because the registry was unreachable, the
+analyser wrote no findings, or there was nothing to compare. The harnesses
+under `scripts/qa/` already used exit 2 for that, and for that alone; the gate
+did not read it, so *"I could not verify"* was printed as `FAIL(2)` and
+weighed the same as a real defect. It does now, and the gate's own exit code
+says which of the two bad things happened: **1** for a FAIL, **2** for an
+UNKNOWN with no FAIL. An UNKNOWN still blocks — a release whose interface
+check could not run is not a release — but it is reported as **unverified**
+rather than as a broken tree, so it is re-run rather than fixed.
+`node scripts/qa/gate_verdicts.mjs` checks all of that, and the runner itself
+is tracked at `scripts/qa/gate.ps1` with its step list at
+`scripts/qa/gate-steps.json`, so the gate is reviewable instead of living in a
+scratch directory.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
