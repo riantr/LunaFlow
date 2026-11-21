@@ -172,7 +172,7 @@ test "phase3: the count of a `+`-built array of two caller's arrays is the sum o
 /// Two LITERALS: one element each, so TWO -- and a constant, which is what
 /// the `constant_size` guard needs to see to know the claim is false.
 test "phase3: the count of a `+`-built array of two literals is a constant" {
-  assert_eq(plus_count(plus_expr_literals(), []), "2,2")
+  assert_eq(plus_count(plus_expr_literals(), [("user", "String")]), "2,2")
 }
 
 ///|
@@ -202,11 +202,12 @@ test "phase3: the size's taint of a `+`-built array names every source that deci
 /// The count of two literals is fixed by the CODE, so no tainted value decides
 /// it and the size's taint is empty.
 test "phase3: the size's taint of a `+`-built array of two literals is empty" {
-  assert_eq(plus_size_srcs(plus_expr_literals(), []), "")
-  assert_eq(
-    plus_contents_srcs(plus_expr_literals(), [("user", "String")]),
-    "param:user",
-  )
+  // The count is TWO, fixed by the code: no tainted value decides it -- even
+  // though the ELEMENTS are tainted, and the element's taint is what the size
+  // used to inherit.
+  let binds = [("user", "String")]
+  assert_eq(plus_size_srcs(plus_expr_literals(), binds), "")
+  assert_eq(plus_contents_srcs(plus_expr_literals(), binds), "param:user")
 }
 
 // ---------------------------------------------------------------------------
