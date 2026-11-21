@@ -1,6 +1,12 @@
 # IFDS Phase 3 — the SIZE of a `+`-built array
 
-**Status:** NOT STARTED — this is the plan, written before any code.
+**Status:** Phase 3, SHIPPED as **`riantr/LunaFlow@0.1.32`** (2026-11-21,
+checksum `17b292826f4067de5691241348abf9d5124c33725e1e4e8383366dee7313cb02`).
+This document was written BEFORE any code changes; the measurements in §2 are
+the state of the tree the plan was made on, and the sections that were marked
+*to be filled* are filled in by the commit that carried the change. §9.1 records
+that **two** of the plan's own expectations were refuted by the measurement, and
+§8.1 that M1 now passes on a harness that was not weakened to make it pass.
 
 **Date:** 2026-11-21. **Phase 0:** `docs/qa/IFDS_SPIKE.md`. **Phase 1:**
 `docs/qa/IFDS_PHASE1.md`. **Phase 2:** `docs/qa/IFDS_PHASE2.md` — the plan,
@@ -113,7 +119,7 @@ concatenation of two **literals** has a constant count (the shapes), while
 doubleML's 105 sites are all `acc = acc + [x]` — a count that is the trip
 count, not a constant.
 
-**CORRECTED BY THE MEASUREMENT (2026-11-23).** This caveat originally said
+**CORRECTED BY THE MEASUREMENT (2026-11-21).** This caveat originally said
 that doubleML's sites produce the **misattributed labels**, and that is
 **wrong**: on all fourteen of the claims the repair removed, the label named
 the count's decider **correctly**, because the element's source and the
@@ -385,7 +391,7 @@ so.** Phase 2's own plan had one expectation the measurement corrected
 the reference is not taught to ignore the three sites, and no site is removed
 from either side of the comparison to make the check pass.
 
-### 8.1 What the measurement said — MEASURED (2026-11-23)
+### 8.1 What the measurement said — MEASURED (2026-11-21)
 
 **The path was (b), and the cost is FOURTEEN claims, not three.**
 
@@ -458,7 +464,7 @@ same commit that changes them.
 
 ### 9.1 What the measurement said — TWO expectations REFUTED
 
-MEASURED (2026-11-23), the analyser built from this tree, over the three
+MEASURED (2026-11-21), the analyser built from this tree, over the three
 committed corpora, before and after the change, with the same flags:
 
 | corpus | measurement | before | after |

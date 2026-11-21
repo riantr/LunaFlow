@@ -25,7 +25,7 @@ as part of `moon test src/app` on all three targets.
 
 ## What the check reads on this tree
 
-MEASURED (2026-11-23), the analyser built from this tree, over the six shapes.
+MEASURED (2026-11-21), the analyser built from this tree, over the six shapes.
 **All 22 checks agree.**
 
 | shape | the claim | L2 allocation-size claims |
@@ -88,7 +88,7 @@ the whole suite, each with the source restored byte-identically afterwards
 They ship as `scripts/qa/plus_size_falsify.mjs` — a manual, local tool that
 rewrites tracked files, so it refuses to run on a dirty tree and it is
 deliberately not wired into CI. It was re-run against the **committed** tree on
-2026-11-23: F1 → 11 of 286 tests failed, F2 → 5, F3 → 11, F4 → 5, the source
+2026-11-21: F1 → 11 of 286 tests failed, F2 → 5, F3 → 11, F4 → 5, the source
 came back byte-identically
 (`dc0357e52d48f1495f70742c92c606d7d61ac9a41b9c2510b96284efec032514`, the
 committed tree's hash), no tracked file changed, exit 0.
@@ -152,7 +152,7 @@ says so.
 
 ## The numbers the change moved
 
-MEASURED (2026-11-23), the analyser built from this tree, over the three
+MEASURED (2026-11-21), the analyser built from this tree, over the three
 committed corpora, before and after the change, with the same flags
 (`--funnel --trials 4` and one slice each):
 
@@ -196,4 +196,31 @@ assumed: `abs_binop` is a private `fn` and is absent from
 Array[String])` — is not touched by this phase. The declaration is **enforced**,
 not trusted: `scripts/qa/release_interface.mjs` compares the `.mbti` at every
 release's tag against that version's notes and fails when the version being
-prepared breaks the published interface without saying so.
+prepared breaks the published interface without saying so. Against `v0.1.31` the
+checker reports **0 break(s) a consumer can see**, and the release notes declare
+none, because there is none to declare.
+
+## The publish
+
+**Published as `riantr/LunaFlow@0.1.32`** (2026-11-21, checksum
+`17b292826f4067de5691241348abf9d5124c33725e1e4e8383366dee7313cb02`). MEASURED
+after the publish:
+
+| what | the reading |
+|---|---|
+| the registry | `latest_version` **0.1.32**, `build_status` **success**, checksum `17b2928…313cb02` |
+| a clean consumer | `moon add` resolves and **pins 0.1.32**, the consumer builds and runs, and the published library API answers — **4 of 4** |
+| the published artefact | over the fixture corpus the published report agrees with the local build — **29 findings on both sides**, **11 of 11** checks |
+| the published wasm | `moonx riantr/LunaFlow@latest` runs from a scratch directory outside the repository — exit 0 |
+| the published page | the registry froze the README at publish time, and the frozen page carries the **0.1.32** section, the install line at 0.1.32, the Verification row at 0.1.32, and the measured numbers |
+
+**The Verification row was right in the tag.** The registry takes a version's
+README at the moment it publishes it, so the page is the README as it stood at
+`v0.1.32` — and at that tag the Verification table's row already named
+**0.1.32**, because the row was written before the publish, not after it. The
+0.1.25 → 0.1.26 and 0.1.30 → 0.1.31 corrections did not have to be made here.
+
+**CI, on the runner's own toolchain:** `check master` (run 44906177384) and
+`publish LunaFlow v0.1.32` (run 44906188297) both **succeeded**, and both ran
+on **MoonBit 0.1.20261119** — the toolchain the CDN serves as `latest`, the one
+the local newest-toolchain gate was run against (11/11 green, `deprecated` 0).
