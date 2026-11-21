@@ -329,11 +329,12 @@ jobs:
       # checks failed". The gate now READS that, so "I could not verify" is
       # reported as such instead of as a defect in the tree.
       #
-      # This check proves the three things that have to hold together: the
+      # This check proves the four things that have to hold together: the
       # classifier puts 0, 1 and 2 in their own buckets; three shipped checks
-      # really do exit 2 when they cannot decide; and the gate's own step
-      # list contains steps that CAN report UNKNOWN, so the bucket is not
-      # dead code.
+      # really do exit 2 when they cannot decide; the gate's own step list
+      # contains steps that CAN report UNKNOWN, so the bucket is not dead
+      # code; and the runner resolves its own default step list on THIS
+      # platform -- a Windows path separator does not work on Linux.
       #
       # It drives the gate runner with its OWN step list, so it never runs the
       # real gate. It needs a PowerShell -- `powershell` on Windows, `pwsh`

@@ -18,7 +18,7 @@
 // missing was a gate that READS it, so "I could not verify" was printed as
 // `FAIL(2)` and weighed the same as a real defect.
 //
-// This check proves the three things that have to hold together:
+// This check proves the four things that have to hold together:
 //
 //   1. THE CLASSIFIER.  Given steps that exit 0, 1 and 2, the gate puts
 //      each in its own bucket, and its own exit code says which of the two
@@ -32,6 +32,11 @@
 //   3. THE REACHABILITY.  The shipped step list must contain a step whose
 //      script CAN exit 2, or the UNKNOWN bucket is dead code and a reader
 //      would be right to ignore it.
+//
+//   4. THE DEFAULT LIST.  The runner resolves its own step list when it is
+//      called without an argument, and that path has to resolve ON THE
+//      PLATFORM THE RUNNER IS ON -- a Windows separator does not work on
+//      Linux.  It is checked by resolution, not by reading the source.
 //
 // Usage: node scripts/qa/gate_verdicts.mjs
 //
@@ -90,16 +95,40 @@ mkdirSync(scratch, { recursive: true });
 
 ///|
 /// Run the gate against a step list of our own, and return its exit code
-/// and its output.
-function runGate(steps, label) {
-  const file = join(scratch, `${label}.json`);
-  writeFileSync(file, JSON.stringify(steps, null, 2), 'utf8');
-  const r = spawnSync(
-    ps,
-    ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', runner, '-Steps', file],
-    { cwd: root, encoding: 'utf8', timeout: 900000, maxBuffer: 64 * 1024 * 1024 },
-  );
+/// and its output.  With no list, the runner resolves its OWN default --
+/// which is the path that has to work on the platform the runner is on.
+function runGate(steps, label, opts = {}) {
+  const args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', runner];
+  if (steps) {
+    const file = join(scratch, `${label}.json`);
+    writeFileSync(file, JSON.stringify(steps, null, 2), 'utf8');
+    args.push('-Steps', file);
+  }
+  if (opts.listOnly) args.push('-ListOnly');
+  const r = spawnSync(ps, args, {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 900000,
+    maxBuffer: 64 * 1024 * 1024,
+  });
   return { code: r.status, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
+}
+
+///|
+/// The steps the runner printed in `-ListOnly` mode.
+///
+/// The split is on `/\r?\n/`, not on `'\n'`: Windows PowerShell writes CRLF
+/// and PowerShell Core on Linux writes LF, and in JavaScript's regex `.`
+/// does NOT match `\r` -- it is a line terminator -- so an anchored pattern
+/// over a CRLF line matches NOTHING at all.  A parser that silently
+/// collected no steps would report "0 steps resolved" and look like a
+/// defect in the runner rather than in the parser.
+function listedSteps(out) {
+  return out
+    .split(/\r?\n/)
+    .map((l) => /^ {2}step: (.*)$/.exec(l))
+    .filter(Boolean)
+    .map((m) => m[1]);
 }
 
 ///|
@@ -280,6 +309,29 @@ if (!existsSync(stepsFile)) {
     `${canBeUnknown.length} step(s) can exit 2`,
   );
   console.log(`      ${canBeUnknown.join('\n      ')}`);
+
+  // THE RUNNER'S OWN DEFAULT.  The runner is also runnable with no
+  // argument, and the path it builds for itself has to resolve ON THE
+  // PLATFORM IT RUNS ON.  A path built with a Windows separator resolves on
+  // Windows and NOT on Linux, where the backslash is an ordinary character
+  // in a file name -- the runner would find no step list at all, and the
+  // gate would answer "the step list does not exist".
+  //
+  // This is checked by RESOLUTION, not by reading the source: the runner is
+  // asked for its list, and the list it prints has to be the shipped one.
+  const defaultList = runGate(null, 'default_list', { listOnly: true });
+  check(
+    'the runner resolves its own default step list on this platform',
+    defaultList.code === 0,
+    `exit ${defaultList.code}`,
+  );
+  const defaultSteps = listedSteps(defaultList.out);
+  check(
+    '  and that default is the shipped list — the same steps, in the same order',
+    defaultSteps.length === shipped.length &&
+      defaultSteps.every((s, i) => s === shipped[i]),
+    `${defaultSteps.length} step(s) resolved, ${shipped.length} shipped`,
+  );
 }
 
 console.log('');

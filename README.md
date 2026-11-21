@@ -2969,7 +2969,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/loop_acceptance.mjs` | **every check pass** — the LOOP's three items (the bounded findings table, D1 + D2, the Phase-1 spike), each checked by running it |
 | `node scripts/qa/size_taint.mjs` | **every check agrees** — the analyser over nine shapes: a container's SIZE taint is not its CONTENTS' taint, in both directions, and the twenty doubleML claims the repair removed stay removed |
 | `node scripts/qa/plus_size.mjs` | **every check agrees** — the analyser over six shapes: the size of a `+`-built array is the SUM of the two counts and names only the sources that decide the COUNT, and the claims the repair removed stay removed |
-| `node scripts/qa/gate_verdicts.mjs` | **every check agrees** — a FAIL, an UNKNOWN and a PASS are three different things, and the shipped checks exit 2 when they cannot decide |
+| `node scripts/qa/gate_verdicts.mjs` | **every check agrees** — a FAIL, an UNKNOWN and a PASS are three different things, the shipped checks exit 2 when they cannot decide, and the runner resolves its own default list on the platform it runs on |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -2999,7 +2999,11 @@ rather than as a broken tree, so it is re-run rather than fixed.
 `node scripts/qa/gate_verdicts.mjs` checks all of that, and the runner itself
 is tracked at `scripts/qa/gate.ps1` with its step list at
 `scripts/qa/gate-steps.json`, so the gate is reviewable instead of living in a
-scratch directory.
+scratch directory. The runner also resolves **its own** default list when it is
+called without an argument, and that path has to resolve on the platform the
+runner runs on — a Windows separator is not a separator on Linux — so the check
+asks the runner for its list (`gate.ps1 -ListOnly`) and compares it with the
+shipped one.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On

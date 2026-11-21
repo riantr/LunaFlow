@@ -50,14 +50,25 @@
   `.github/workflows/ci.yml`, because the CI runner installs a different
   toolchain and a different PATH.
 
+.PARAMETER ListOnly
+  Resolve the step list, print it, and STOP -- without running a single
+  check.  This is how the DEFAULT list is tested: the path the runner
+  builds for itself has to work on the platform the runner is ON, and a
+  path built with a Windows separator does not (a backslash is an ordinary
+  character in a file name on Linux).
+
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\qa\gate.ps1
+
+.EXAMPLE
+  pwsh -NoProfile -File scripts/qa/gate.ps1 -ListOnly
 
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\qa\gate.ps1 -Steps _build\qa\fixture.json
 #>
 param(
-  [string]$Steps = ''
+  [string]$Steps = '',
+  [switch]$ListOnly
 )
 
 $ErrorActionPreference = 'Continue'
@@ -67,7 +78,12 @@ $here = Split-Path -Parent $PSScriptRoot   # <repo>/scripts
 $root = Split-Path -Parent $here            # <repo>
 Set-Location -LiteralPath $root
 
-if ($Steps -eq '') { $Steps = Join-Path $here 'qa\gate-steps.json' }
+# The default is built with NESTED Join-Path calls, never with a literal
+# separator: a backslash is a separator on Windows and an ordinary character
+# in a file name on Linux, where `Join-Path $here 'qa\gate-steps.json'`
+# produces a path that does not exist and the runner finds no step list at
+# all.  Join-Path always uses the platform's own separator.
+if ($Steps -eq '') { $Steps = Join-Path (Join-Path $here 'qa') 'gate-steps.json' }
 if (-not (Test-Path -LiteralPath $Steps)) {
   Write-Error "the step list does not exist: $Steps"
   exit 2
@@ -85,6 +101,14 @@ if ($list.Count -eq 0) {
   exit 2
 }
 Write-Output "the gate: $($list.Count) step(s), from $Steps"
+
+# Resolve the list and stop.  The step list is printed so the caller can
+# compare it with the list it thinks is shipped -- which is how the DEFAULT
+# list is checked without running the whole gate.
+if ($ListOnly) {
+  foreach ($s in $list) { Write-Output "  step: $s" }
+  exit 0
+}
 
 $results = @()
 foreach ($s in $list) {
