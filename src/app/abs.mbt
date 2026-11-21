@@ -565,6 +565,32 @@ fn abs_binop(
       } else {
         AbsCell::new(ATop, t)
       }
+    (AArr(al, ah, asz), AArr(bl, bh, bsz)) =>
+      if op == OpAdd {
+        // The COUNT of a concatenation is the SUM of the two counts: `a + b`
+        // holds `a`'s elements and then `b`'s, so it holds `a.len + b.len` of
+        // them.
+        //
+        // And what decides the count is what decides the two counts -- so the
+        // size's taint is the union of the two SIZE taints, and NEVER the
+        // elements' taint. `xs + [user]` has a count that `xs` decides and a
+        // content that `user` decides; a claim about the SIZE must name the
+        // first and not the second.
+        //
+        // The CONTENTS' taint is the union of the two operands' contents'
+        // taints: what the elements are says nothing about how many there
+        // are. That separation is what Phase 2 put in the value, and this is
+        // where a CONCATENATION has to keep it.
+        let (lo, hi) = eva_clamp32(
+          al.to_int64() + bl.to_int64(),
+          ah.to_int64() + bh.to_int64(),
+        )
+        AbsCell::new(AArr(lo, hi, srcs_union(asz, bsz)), t)
+      } else {
+        // MoonBit has no `Sub` for arrays, so `OpAdd` is the only operation
+        // that can reach this arm with two arrays; the rest is TOP.
+        AbsCell::new(ATop, t)
+      }
     _ => AbsCell::new(ATop, t)
   }
 }
