@@ -343,7 +343,12 @@ if (!skipModules) {
       // allocation sites inside a pruned loop body were never seen. The repair
       // brought 16 findings back, and took 3 false positives away; the net is
       // the number the repaired tree produces.
-      check('doubleML full: L2 findings within 50% of documented 3321', Math.abs(summary.abstract_findings - 3321) <= 1661, `${summary.abstract_findings}`);
+      //
+      // And once more, DOWN, from 3321 to 3301, when the value domain learned
+      // to tell a container's SIZE taint from its CONTENTS' taint: the twenty
+      // `TAINT-INDEX` claims that the size's taint carried into an array's
+      // elements are gone. See `docs/qa/IFDS_PHASE2.md`.
+      check('doubleML full: L2 findings within 50% of documented 3301', Math.abs(summary.abstract_findings - 3301) <= 1651, `${summary.abstract_findings}`);
       checkSidecar('doubleML full', full, mdName.slice(0, -3), readFileSync(join(full, mdName), 'utf8'), summary);
     }
   }

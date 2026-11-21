@@ -296,7 +296,7 @@ pub(all) enum AbsVal {
   ADouble(Double, Double)
   ABool(Bool, Bool)
   AStr(Array[String])
-  AArr(Int32, Int32)
+  AArr(Int32, Int32, Array[String])
   ATuple(Array[AbsVal])
   ATop
 }

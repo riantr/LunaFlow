@@ -233,7 +233,7 @@ fn index_below_length(st : AbsState, index : String, array : String) -> Bool {
           match st.env.get(array) {
             Some(acell) =>
               match acell.v {
-                AArr(lo, _) => hi < lo
+                AArr(lo, _, _) => hi < lo
                 _ => false
               }
             None => false
@@ -326,14 +326,14 @@ fn relate_lockstep(
   v : AbsVal,
 ) -> Unit {
   match v {
-    AArr(l, h) =>
+    AArr(l, h, _) =>
       if l == h {
         match eva.lockstep.get(name) {
           Some(partner) =>
             match st.env.get(partner) {
               Some(cell) =>
                 match cell.v {
-                  AArr(pl, ph) =>
+                  AArr(pl, ph, _) =>
                     if pl == l && ph == h {
                       record_length_eq(st, name, partner)
                       record_length_eq(st, partner, name)

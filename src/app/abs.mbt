@@ -5,7 +5,14 @@ pub(all) enum AbsVal {
   ADouble(Double, Double)
   ABool(Bool, Bool)
   AStr(Array[String])
-  AArr(Int32, Int32)
+  /// The LENGTH INTERVAL of an array, and the taint of what determines the
+  /// COUNT.
+  ///
+  /// The third component is the SIZE's taint: the sources whose values decide
+  /// how many elements the array has. It is NOT the contents' taint -- that is
+  /// the CELL's source set, and the count of the elements says nothing about
+  /// the taint of the values in them. See `docs/qa/IFDS_PHASE2.md`.
+  AArr(Int32, Int32, Array[String])
   ATuple(Array[AbsVal])
   ATop
 }
@@ -27,7 +34,7 @@ pub fn AbsVal::code(self : AbsVal) -> String {
         "{}"
       }
     AStr(xs) => "{" + truncate(xs.join(", "), 30) + "}"
-    AArr(l, h) => "len[" + l.to_string() + "," + h.to_string() + "]"
+    AArr(l, h, _) => "len[" + l.to_string() + "," + h.to_string() + "]"
     ATuple(xs) => "(" + xs.length().to_string() + " tuple)"
     ATop => "top"
   }
@@ -155,8 +162,22 @@ fn abs_join_val(a : AbsVal, b : AbsVal) -> AbsVal {
       }
       AStr(out)
     }
-    (AArr(al, ah), AArr(bl, bh)) =>
-      AArr(if al < bl { al } else { bl }, if ah > bh { ah } else { bh })
+    (AArr(al, ah, asz), AArr(bl, bh, bsz)) =>
+      // The count of a join is the two counts TOGETHER, so the size's taint is
+      // the union of the two sizes' taints.
+      AArr(
+        if al < bl {
+          al
+        } else {
+          bl
+        },
+        if ah > bh {
+          ah
+        } else {
+          bh
+        },
+        srcs_union(asz, bsz),
+      )
     _ => ATop
   }
 }
@@ -197,7 +218,7 @@ fn abs_val_equal(a : AbsVal, b : AbsVal) -> Bool {
     (AInt(al, ah), AInt(bl, bh)) => al == bl && ah == bh
     (ADouble(al, ah), ADouble(bl, bh)) => al == bl && ah == bh
     (ABool(at, af), ABool(bt, bf)) => at == bt && af == bf
-    (AArr(al, ah), AArr(bl, bh)) => al == bl && ah == bh
+    (AArr(al, ah, _), AArr(bl, bh, _)) => al == bl && ah == bh
     (AStr(xs), AStr(ys)) => xs.length() == ys.length() && xs == ys
     _ => false
   }
@@ -801,7 +822,7 @@ fn refine_array_length(
   match st.env.get(arr) {
     Some(cell) =>
       match cell.v {
-        AArr(l, h) => {
+        AArr(l, h, sz) => {
           let mut nl = l
           let mut nh = h
           match op {
@@ -824,7 +845,13 @@ fn refine_array_length(
             _ => ()
           }
           if nl <= nh {
-            st.env[arr] = AbsCell::new(AArr(nl, nh), cell.srcs)
+            // The refinement narrows the COUNT's interval; it does not change
+            // what determines the count, so the size's taint is carried over
+            // unchanged. (A count narrowed to a single point is a constant,
+            // and the allocation rule's `constant_size` guard suppresses the
+            // claim for it -- that guard is where the "provably constant"
+            // reasoning lives.)
+            st.env[arr] = AbsCell::new(AArr(nl, nh, sz), cell.srcs)
           } else {
             st.env[arr] = AbsCell::new(ABottom, cell.srcs)
           }
@@ -988,14 +1015,14 @@ fn abs_eval(
       // container's RUNTIME type, and it is the layer that files the
       // witnessed claim.
       let is_array = match cb.v {
-        AArr(_, _) => true
+        AArr(_, _, _) => true
         _ => false
       }
       // An index that is PROVABLY inside the array it indexes is not a
       // risk: not an out-of-bounds access, and not an offset that untrusted
       // input chose.
       let arr_lo = match cb.v {
-        AArr(l, _) => l
+        AArr(l, _, _) => l
         _ => 0
       }
       let bounded = match ci.v {
@@ -1017,7 +1044,7 @@ fn abs_eval(
         )
       }
       match (cb.v, ci.v) {
-        (AArr(lo_len, hi_len), AInt(il, ih)) =>
+        (AArr(lo_len, hi_len, _), AInt(il, ih)) =>
           if !bounded && !index_is_length_relative(base, idx, lo_len) {
             eva_check_index_oob(ctx, il, ih, lo_len, hi_len, e.span.start_line)
           }
@@ -1085,7 +1112,19 @@ fn abs_eval(
           // length was too -- and the content's taint says nothing about the
           // count. The guard below removes the cases the layer's own value
           // domain refutes; the propagation itself is recorded as open in
-          // docs/qa/IFDS_PHASE1.md.
+          // docs/qa/IFDS_PHASE1.md, and FIXED in docs/qa/IFDS_PHASE2.md: the
+          // size's taint now lives in the array VALUE, apart from the
+          // contents' taint.
+          //
+          // The CONTENTS of the new array are the ELEMENT's values, so the
+          // contents' taint is the ELEMENT's sources -- what the elements are
+          // says nothing about how many of them there are. The size says how
+          // many, and the size's taint is the size's own.
+          let contents_taint = if cells.length() > 1 {
+            cells[1].srcs
+          } else {
+            []
+          }
           let constant_size = match size.v {
             AInt(l, h) => l == h
             _ => false
@@ -1114,15 +1153,31 @@ fn abs_eval(
                   "size [" + l.to_string() + "," + h.to_string() + "]",
                 )
               }
+              // The COUNT of the new array is `size`, so the size's taint is
+              // the SIZE's sources. The CONTENTS are the ELEMENT's values, so
+              // the contents' taint is the element's -- what the elements are
+              // says nothing about how many of them there are.
               AbsCell::new(
-                AArr(if l < 0 { 0 } else { l }, if h < 0 { 0 } else { h }),
-                t,
+                AArr(
+                  if l < 0 {
+                    0
+                  } else {
+                    l
+                  },
+                  if h < 0 {
+                    0
+                  } else {
+                    h
+                  },
+                  size.srcs,
+                ),
+                contents_taint,
               )
             }
-            _ => AbsCell::new(AArr(0, 64), t)
+            _ => AbsCell::new(AArr(0, 64, size.srcs), contents_taint)
           }
         } else {
-          AbsCell::new(AArr(0, 0), t)
+          AbsCell::new(AArr(0, 0, []), [])
         }
       } else if f == "abort" || f == "panic" || f == "fail" {
         if srcs_tainted(t) {
@@ -1202,7 +1257,11 @@ fn abs_eval(
         }
         if m == "length" {
           match cr.v {
-            AArr(l, h) => AbsCell::new(AInt(l, h), t)
+            // The LENGTH is the array's SIZE, so the length's taint is the
+            // size's taint -- the sources that decide HOW MANY elements there
+            // are. It is NOT the contents' taint: the count of the elements
+            // says nothing about the taint of the values in them.
+            AArr(l, h, sz) => AbsCell::new(AInt(l, h), sz)
             AStr(xs) => {
               let mut lo = 999
               let mut hi = 0
@@ -1224,8 +1283,13 @@ fn abs_eval(
               match st.env.get(n) {
                 Some(cell) =>
                   match cell.v {
-                    AArr(l, h) =>
-                      st.env[n] = AbsCell::new(AArr(l + 1, h + 1), cell.srcs)
+                    // The count grows by ONE, and what decides the count does
+                    // not change -- so the size's taint is carried over.
+                    AArr(l, h, sz) =>
+                      st.env[n] = AbsCell::new(
+                        AArr(l + 1, h + 1, sz),
+                        cell.srcs,
+                      )
                     _ => ()
                   }
                 None => ()
@@ -1249,7 +1313,10 @@ fn abs_eval(
       for x in xs {
         t = srcs_union(t, abs_eval(ctx, st, eva, x).srcs)
       }
-      AbsCell::new(AArr(xs.length(), xs.length()), t)
+      // The count of a LITERAL is fixed by the code -- it is one element per
+      // expression -- so the size's taint is EMPTY, whatever the elements are.
+      // The contents' taint is the elements' sources.
+      AbsCell::new(AArr(xs.length(), xs.length(), []), t)
     }
     ETuple(xs) => {
       let vals : Array[AbsVal] = []
@@ -1784,7 +1851,10 @@ pub struct AbsResult {
 fn initial_cell(ty : String, name : String) -> AbsCell {
   let srcs = [param_source(name)]
   if ty.contains("Array") || ty.contains("FixedArray") {
-    AbsCell::new(AArr(0, 64), srcs)
+    // The count of a CALLER-SUPPLIED array is the caller's choice, so the
+    // size's taint is the parameter's own source -- the same source as the
+    // contents', because the whole value is untrusted.
+    AbsCell::new(AArr(0, 64, srcs), srcs)
   } else if ty.contains("Bool") {
     AbsCell::new(ABool(true, true), srcs)
   } else if ty.contains("Double") {

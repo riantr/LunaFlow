@@ -28,7 +28,7 @@
 | Interpreted steps | 47835 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 16024 ms |
+| Wall time (analyzer) | 11347 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -51,7 +51,7 @@ flowchart LR
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
   L1["L1 concrete: 233 findings"]:::l1
-  L2["L2 abstract: 3321 findings, 3231 new"]:::l2
+  L2["L2 abstract: 3301 findings, 3211 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -60,7 +60,7 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 233 findings | — | 150 functions | observed facts |
-| L2 abstract | 3321 findings | 3231 | 1411 functions, 185766 steps | exhaustive over the input abstraction |
+| L2 abstract | 3301 findings | 3211 | 1411 functions, 185516 steps | exhaustive over the input abstraction |
 | L3 contracts | 0 VCs | 0 failed, 0 unknown | 681 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
@@ -860,13 +860,13 @@ flowchart LR
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Three rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. A tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose. And an allocation size that is PROVABLY CONSTANT is not claimed as one that untrusted input chose: no tainted value controls a size that is the same on every input.
 
-**Scope.** The abstract layer analysed 1411 of 1411 — every function the abstract layer can analyse, in 185766 steps.
+**Scope.** The abstract layer analysed 1411 of 1411 — every function the abstract layer can analyse, in 185516 steps.
 
 | Family | Findings |
 | --- | ---: |
 | RANGE-VIOLATION | 1404 |
 | TAINT-ALLOC | 883 |
-| TAINT-INDEX | 227 |
+| TAINT-INDEX | 207 |
 | UNSUPPORTED | 21 |
 
 | Rule | Severity | Function | Location | Message | Method | Confidence |
@@ -1171,9 +1171,9 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:717 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
 | TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:718 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
 | TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:719 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| ... | ... | ... | ... | (truncated at 300 of 2535 rows) | ... | ... |
+| ... | ... | ... | ... | (truncated at 300 of 2515 rows) | ... | ... |
 
-_This table shows the first 300 of 2535 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 2235 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
+_This table shows the first 300 of 2515 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 2215 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
 
 
 ### 5.3 EVA findings (evolved value analysis)

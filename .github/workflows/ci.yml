@@ -254,6 +254,25 @@ jobs:
       - name: The LOOP's three items, checked by running them
         run: node scripts/qa/loop_acceptance.mjs
 
+      # IFDS PHASE 2 -- the SIZE of a container, and the taint of its CONTENTS.
+      # The check runs the ANALYSER over nine shapes and compares what it says
+      # with what the phase claims: a container whose CONTENTS are tainted and
+      # whose count is not the untrusted input's to choose must produce NO
+      # allocation-size claim, and a size that really IS the untrusted input's
+      # to choose must still produce one -- and must name only the sources
+      # that decide the SIZE.
+      #
+      # It also checks the COVERAGE LEDGER: the twenty doubleML claims the
+      # repair removed are named in docs/qa/IFDS_PHASE2_LEDGER.json, and none
+      # of them may be back in the committed artefact.
+      #
+      # The `--falsify` run inverts one expectation on purpose and requires
+      # the check to fail. A check that cannot fail is not a check.
+      - name: Check the size-taint separation
+        run: |
+          node scripts/qa/size_taint.mjs
+          node scripts/qa/size_taint.mjs --no-build --falsify
+
       # The QA harness. These are the same scripts and the same thresholds the
       # README publishes, so a green run here is the claim in the README.
       - name: Acceptance scenarios (Gherkin)

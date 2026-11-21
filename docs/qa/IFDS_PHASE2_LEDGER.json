@@ -1,0 +1,206 @@
+{
+  "what": "The doubleML claims the Phase-2 repair removed, and why each one went.",
+  "measured_on": "2026-11-22",
+  "corpus": "riantr/moonbit_doubleML@latest",
+  "version": "0.164.64",
+  "method": "The analyser was run over the corpus before and after the repair with the same flags (--funnel --trials 4 --slice theta_hat@aggregate_coef_se), and the two findings sidecars were diffed by (rule, file, line, message, evidence). Twenty claims disappeared and none appeared.",
+  "before": {
+    "l2_findings": 3321,
+    "sidecar_findings": 3524,
+    "taint_index": 227,
+    "taint_alloc": 883
+  },
+  "after": {
+    "l2_findings": 3301,
+    "sidecar_findings": 3504,
+    "taint_index": 207,
+    "taint_alloc": 883
+  },
+  "added": [],
+  "verdicts": {
+    "self-refuting": "The tainted parameter's VALUE cannot change the index's value at all: only the loop's trip count depends on it. The claim was false, and the repair removed a false claim.",
+    "in-bounds-data-dependent": "The index's value IS influenced by the parameter's values (the order of a permutation, or the size of a group of equal elements), so the claim was not vacuous. But the index is always inside the array it indexes -- a permutation index into an array of the same length, or a group offset the code guards itself -- and the layer's own bar is that such an index is not a finding ('an index that is PROVABLY inside the array it indexes is not a risk'). The L2 has no value-flow path for a permutation or a derived count, and the COUNT's taint was the only path it had, so the repair drops the claim. This is a coverage cost, registered here and pinned by scripts/qa/size_taint.mjs."
+  },
+  "removed": [
+    {
+      "file": "rdd.mbt",
+      "line": 2692,
+      "rule": "TAINT-INDEX",
+      "evidence": "u_r[top]",
+      "source": "parameter `u_r`",
+      "shape": "a permutation of 0..n_r-1, sorted on |u_r|",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2845,
+      "rule": "TAINT-INDEX",
+      "evidence": "dups[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos + rpos + 1 >= n`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2847,
+      "rule": "TAINT-INDEX",
+      "evidence": "dups[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos - lpos - 1 < 0`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2849,
+      "rule": "TAINT-INDEX",
+      "evidence": "x[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos - lpos - 1 < 0`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2850,
+      "rule": "TAINT-INDEX",
+      "evidence": "x[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos + rpos + 1 >= n`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2854,
+      "rule": "TAINT-INDEX",
+      "evidence": "dups[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos + rpos + 1 >= n`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2856,
+      "rule": "TAINT-INDEX",
+      "evidence": "dups[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos - lpos - 1 < 0`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2858,
+      "rule": "TAINT-INDEX",
+      "evidence": "dups[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos + rpos + 1 >= n`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2859,
+      "rule": "TAINT-INDEX",
+      "evidence": "dups[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, guarded by `pos - lpos - 1 < 0`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "rdd.mbt",
+      "line": 2869,
+      "rule": "TAINT-INDEX",
+      "evidence": "y[top]",
+      "source": "parameter `x`",
+      "shape": "a group offset, bounded by the loop's own `lo`/`hi`",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 99,
+      "rule": "TAINT-INDEX",
+      "evidence": "unadjusted[top]",
+      "source": "parameter `unadjusted`",
+      "shape": "the insertion-sort permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 152,
+      "rule": "TAINT-INDEX",
+      "evidence": "abs_t[top]",
+      "source": "parameter `t_stats`",
+      "shape": "the descending permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 183,
+      "rule": "TAINT-INDEX",
+      "evidence": "abs_t[top]",
+      "source": "parameter `t_stats`",
+      "shape": "the descending permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 204,
+      "rule": "TAINT-INDEX",
+      "evidence": "p_sorted[top]",
+      "source": "parameter `t_stats`",
+      "shape": "the inverse permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 246,
+      "rule": "TAINT-INDEX",
+      "evidence": "p_sorted[top]",
+      "source": "parameter `unadjusted`",
+      "shape": "the inverse permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 310,
+      "rule": "TAINT-INDEX",
+      "evidence": "p_sorted[top]",
+      "source": "parameter `unadjusted`",
+      "shape": "the inverse permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 358,
+      "rule": "TAINT-INDEX",
+      "evidence": "p_sorted[top]",
+      "source": "parameter `unadjusted`",
+      "shape": "the inverse permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "p_adjust.mbt",
+      "line": 646,
+      "rule": "TAINT-INDEX",
+      "evidence": "p_sorted[top]",
+      "source": "parameter `unadjusted`",
+      "shape": "the inverse permutation of 0..n-1",
+      "verdict": "in-bounds-data-dependent"
+    },
+    {
+      "file": "dgp_pliv_cluster.mbt",
+      "line": 121,
+      "rule": "TAINT-INDEX",
+      "evidence": "ca_effects[top]",
+      "source": "parameter `n_obs`",
+      "shape": "a cluster id taken mod n_clusters_a, into an array of that length",
+      "verdict": "self-refuting"
+    },
+    {
+      "file": "dgp_pliv_cluster.mbt",
+      "line": 122,
+      "rule": "TAINT-INDEX",
+      "evidence": "cb_effects[top]",
+      "source": "parameter `n_obs`",
+      "shape": "a cluster id taken mod n_clusters_b, into an array of that length",
+      "verdict": "self-refuting"
+    }
+  ]
+}
