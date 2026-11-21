@@ -671,6 +671,16 @@ against that version's notes, and fails when the version being prepared breaks
 the published interface without saying so. It found its own first gap the day
 it was written — the `ReportOptions.max_findings` field of 0.1.30.
 
+**Published as `riantr/LunaFlow@0.1.31`, and the page is frozen.** The registry
+takes a version's README **at the moment it publishes it**, so the 0.1.31 page
+is the README as it stood at that tag — and at that tag the Verification
+table's row still named **0.1.30**, because 0.1.31 was not published yet and
+the check could not be measured against it. The row is corrected **here**,
+after the publish, so the next page carries it; the same thing happened for
+0.1.25 (fixed in 0.1.26) and for 0.1.30. The **declaration** is in the tag, so
+the published page carries it: `scripts/qa/release_interface.mjs` fails the tag
+without it.
+
 ### What changed in 0.1.30
 
 **The findings table is BOUNDED, five rules that could never fire are alive, and the taint engine is a kill-exact fixpoint instead of a blanket rule. All three were found by measurement, and each one is now checked by a command that RUNS it.**
@@ -2855,7 +2865,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.30` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.31` | **4 passed, 0 failed** |
 `moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs

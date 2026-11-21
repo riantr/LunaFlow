@@ -86,3 +86,13 @@ release. The declaration is **enforced**, not trusted:
 `scripts/qa/release_interface.mjs` compares the `.mbti` at every release's tag
 against that version's notes and fails when the version being prepared breaks
 the published interface without saying so.
+
+**Published as `riantr/LunaFlow@0.1.31`** (2026-11-21, checksum
+`09713b24686b132bfd559efab90b3e6ba158503926187df67864a1dae2862134`). The
+published module was verified from a clean consumer — `moon add` resolves and
+pins 0.1.31, the consumer builds and runs, and the published library API
+answers (**4 of 4**) — and over the fixture corpus the published report agrees
+with the local build (**29 findings on both sides**, 11 of 11 checks). The
+published page carries the declaration: the registry freezes a version's README
+at publish time, and the declaration was in the tag.
+

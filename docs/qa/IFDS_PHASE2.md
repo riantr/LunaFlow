@@ -4,12 +4,13 @@
 container's **size** is separated from the taint that reaches its
 **contents**.
 
-**Status:** Phase 2, SHIPPED. This document was written BEFORE any code
-changes; the measurements in §2 are the state of the tree the plan was made
-on, and the sections that were marked *to be filled* are filled in by the
-commit that carried the change. §6 records that one of the plan's own
-expectations was wrong, and §9 records a coverage cost the plan did not
-foresee.
+**Status:** Phase 2, SHIPPED as **`riantr/LunaFlow@0.1.31`** (2026-11-21,
+checksum `09713b24686b132bfd559efab90b3e6ba158503926187df67864a1dae2862134`).
+This document was written BEFORE any code changes; the measurements in §2 are
+the state of the tree the plan was made on, and the sections that were marked
+*to be filled* are filled in by the commit that carried the change. §6 records
+that one of the plan's own expectations was wrong, and §9 records a coverage
+cost the plan did not foresee.
 
 **Date:** 2026-11-21. **Phase 0:** `docs/qa/IFDS_SPIKE.md`. **Phase 1:**
 `docs/qa/IFDS_PHASE1.md` — the labelled, kill-exact taint engine, and the
