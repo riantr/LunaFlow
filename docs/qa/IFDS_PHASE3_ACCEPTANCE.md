@@ -46,7 +46,10 @@ allocation rule, and this phase changed the L2's value domain. The L2 filed
 **4** findings in total, **0** of them not about an allocation size.
 
 **The falsification mode fails, as it must:** with one expectation inverted it
-reports `1 of 23 checks FAILED` and exits 0.
+reports the one inverted check as `FAIL  size_of_plus_parameter: 0 L2
+allocation-size claim(s) — got 1`, then
+`PASS  the falsification mode broke the check, as it must — 1 failure(s)`, and
+exits 0.
 
 ## `+` and `push` build the same array, and now the model says so
 

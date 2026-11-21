@@ -673,8 +673,8 @@ which is the other side of the same trade.
 **THE ASSERTIONS COME IN PAIRS**, so a repair that made every `+`-built size
 clean would pass the first half and fail the second: a count the caller really
 does choose must still be claimed, and the claim must name the caller and not
-the element. Twelve assertions in `src/app/plus_size_wbtest.mbt` — five on the
-**value** the layer computes and seven on the **claims** it files — and
+the element. Twelve assertions in `src/app/plus_size_wbtest.mbt` — six on the
+**value** the layer computes and six on the **claims** it files — and
 `scripts/qa/plus_size.mjs` runs the **analyser** over six shapes end to end and
 checks the same thing, plus the ledger. Four cases **falsify** the repair — the
 change reverted, the count's taint inheriting the contents' again, the count
