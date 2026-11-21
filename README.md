@@ -359,8 +359,10 @@ local path needs the `./`.
 ### What the release was checked on
 
 `moon 0.1.20261117`, carrying `moonc v0.10.21+06da1ed44` — the toolchain the
-numbers in [Verification](#verification) were measured on, and the **newest** one,
-which is also what the CI runner installs. The older
+numbers in [Verification](#verification) were measured on. The **newest** one,
+`moon 0.1.20261119`, carrying `moonc v0.10.22+124d61d05`, is what the CI runner
+installs, so the whole gate is re-run against it side by side before every
+release, and its numbers are published in the same row. The older
 `moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715`, is still
 supported and is what the core-compatibility contract is measured against, so
 both build this module. The reason that is checked rather than hoped for is
@@ -690,13 +692,13 @@ without it.
 
 **The bound.** A findings table can be long enough to bury the finding you were
 looking for, so it is capped at **300 rows** and the cap is stated in the table
-itself: the marker row reads *(truncated at 300 of 2515 rows)*, and the note
+itself: the marker row reads *(truncated at 300 of 2503 rows)*, and the note
 under it says which of the whole set were not shown. **No finding is lost to the
 bound** — every one of them is in the report's `_findings.jsonl` sidecar, one
 JSON object per finding, and the count table above the rows is the **whole set,
 family by family**: it sums to exactly the number the marker names. Measured on
-the committed doubleML artefact, the L2's table shows 300 of **2,515**, its count
-table sums to **2,515**, and the sidecar holds **3,504**.
+the committed doubleML artefact, the L2's table shows 300 of **2,503**, its count
+table sums to **2,503**, and the sidecar holds **3,519**.
 
 **D1 — five rules that could never fire.** Five rules matched only the `::`
 spelling of a qualified path, and the parser renders a qualified path with a
@@ -705,7 +707,7 @@ DOT — so `Array::make` never arrived, and the rules were **dead code**: the
 allocation-size VC and the L1's allocation taint never fired either. They answer
 to both spellings now, and the same repair covers the other route to the same
 call (`Array.make(n, 0)` is a *method* call, not a qualified path). The family
-that could not fire now reports **959** findings in the committed artefact.
+that could not fire now reports **945** findings in the committed artefact.
 
 **D2 — the de-duplication dropped the file.** The findings array is the
 module's, and the key that kept it from growing had no file in it: the same
@@ -2847,9 +2849,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 80 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 80 warnings, 0 errors |
 | `moon check --target js` | exit 0, 105 warnings, 0 errors |
-| `moon test src/app --target native` | **274 passed, 0 failed** |
-| `moon test src/app --target wasm` | **274 passed, 0 failed** |
-| `moon test src/app --target js` | **274 passed, 0 failed** |
+| `moon test src/app --target native` | **286 passed, 0 failed** |
+| `moon test src/app --target wasm` | **286 passed, 0 failed** |
+| `moon test src/app --target js` | **286 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -2861,6 +2863,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/release_interface.mjs` | **every check agrees** — the published `.mbti` of every released version against that version's release notes, and the version being prepared against the notes it will ship with |
 | `node scripts/qa/loop_acceptance.mjs` | **every check pass** — the LOOP's three items (the bounded findings table, D1 + D2, the Phase-1 spike), each checked by running it |
 | `node scripts/qa/size_taint.mjs` | **every check agrees** — the analyser over nine shapes: a container's SIZE taint is not its CONTENTS' taint, in both directions, and the twenty doubleML claims the repair removed stay removed |
+| `node scripts/qa/plus_size.mjs` | **every check agrees** — the analyser over six shapes: the size of a `+`-built array is the SUM of the two counts and names only the sources that decide the COUNT, and the claims the repair removed stay removed |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -2876,38 +2879,48 @@ The gate, and the result it produced for this version:
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
-`moon 0.1.20261117` (core 0.10.21+06da1ed44), installed into a scratch home next to
-the verified one: `moon check` gives **80 / 80 / 105 warnings, 0 errors** on native /
-wasm / js, `moon test src/app` gives **274 passed, 0 failed** on each of the three,
-`moon build src/cli --target native`, `moon build src/cli --target js`,
-`moon build . --target wasm` and `moon build . --target js` are exit 0, and
-`moon fmt --check` is exit 0. **The warning counts are identical to the verified
-toolchain's, and `deprecated` is 0 on both** — which is the point of migrating the
-87 deprecated APIs: the fix holds on the toolchain the runner will actually take.
-The toolchain the CDN serves as `latest` is still that one — its binary has not been
-rebuilt since this release was verified — but the runner takes whatever `latest` is
-on the day it runs, so this row is a measurement of a moving target and is kept
-honest by re-running it against the newest one before every release. The measured
+`moon 0.1.20261119` (738607b, 2026-11-19; core 0.10.22+124d61d05), installed into a
+scratch home next to the verified one: `moon check` gives **82 / 82 / 107 warnings,
+0 errors** on native / wasm / js, `moon test src/app` gives **286 passed, 0 failed**
+on each of the three, `moon build src/cli --target native`, `moon build src/cli
+--target js`, `moon build . --target wasm` and `moon build . --target js` are exit
+0, and `moon fmt --check` is exit 0. **`deprecated` is 0 on both toolchains** —
+which is the point of migrating the 87 deprecated APIs: the fix holds on the
+toolchain the runner will actually take. The warning counts are **not** identical
+any more — **82 / 82 / 107** against the verified toolchain's **80 / 80 / 105** —
+and the difference is **exactly two warnings per target, all of them the same
+code**: `[0029] unused_package`, *"Unused package 'moonbitlang/core/async'"* (and
+on js, of `…/async/fs` and `…/async/process`), at `moon.pkg:32` and
+`src/cli/moon.pkg:13`. The newer core resolves the import where the older one did
+not, so an import the project keeps **deliberately** — the runtime comes from the
+toolchain — is now **reported** rather than resolved; it is **recorded, not
+silenced**. Every other warning code is identical in count on both toolchains, on
+all three targets.
+The toolchain the CDN serves as `latest` **has been rebuilt** since this release
+was verified — it was `moon 0.1.20261117` then, it is `moon 0.1.20261119` now —
+but the runner takes whatever `latest` is on the day it runs, so this row is a
+measurement of a moving target and is kept honest by re-running it against the
+newest one before every release. The measured
 runs committed with the reports — the
 **Time** column is the `elapsed_ms` of the committed artefact itself, so every cell is
 traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,301 | 0 (no specs) | 0 | 195 | 11.3 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 9.6 s |
 | `riantr/moonbit_static_analysis@latest` → 0.5.0 | 254 | 17,450 | 17,029 | 188 | 0 (no specs) | 0 | 9 | 1.7 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 58 | 6,822 | 10,201 | 46 | 2 / 1 / 3 | 0 | 8 | 721 ms |
+| `LunaFlow` itself (`--dir .`) | 59 | 6,876 | 10,201 | 46 | 2 / 1 / 3 | 0 | 8 | 946 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **721 ms** to **755 ms**, while every
+runs over the tree this commit names read **946 ms** to **1,352 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
-committed artefacts: the committed doubleML artefact read **11.3 s**, and the
-**185,516** L2 steps are the deterministic measure behind it.
+committed artefacts: the committed doubleML artefact read **9.6 s**, and the
+**272,316** L2 steps are the deterministic measure behind it.
 
 **The table above is CHECKED, not remembered.** Every count in it is a
 measurement, and a measurement goes stale the moment the tree moves — which it
@@ -3095,7 +3108,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **58 files, 6,822 statements, 10,201 events, 46 L2
+On this tree the row reads **59 files, 6,876 statements, 10,201 events, 46 L2
 findings, 0 dead and 8 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
@@ -3129,7 +3142,7 @@ binds the **dynamic** layer's entry points, and with them the trace.
 
 **The abstract layer's scope is NOT that cap.** It analyses the whole module — all
 **1,411** doubleML functions — and is bounded by its own step budget instead, so the
-L2 row of the funnel reads **3301 findings, 1411 functions, 185516 steps** in *both*
+L2 row of the funnel reads **3316 findings, 1411 functions, 272316 steps** in *both*
 runs — the capped run's L1 row drops to 120 functions and its L2 row does not move.
 Report §5.2 states that scope in words, so a reader can tell a complete analysis
 from a truncated one instead of having to infer it.
@@ -3140,7 +3153,7 @@ and vendored trees, not `_test.mbt` — and the abstract layer's universe filter
 on the **function**, so a plain helper in a test file is analysed and a
 `test "..." { }` block is not. For doubleML that is **129 of 220 files**. What says
 how much of the output is about test code is the finding split: on the committed
-doubleML artefact, **486 of the 2,515** findings in §5.2 (**19.3 %**) are in the
+doubleML artefact, **486 of the 2,503** findings in §5.2 (**19.4 %**) are in the
 129 files named `*_test.mbt` — and every one of them is in a helper, not in a
 test block.
 

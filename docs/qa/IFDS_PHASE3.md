@@ -108,11 +108,21 @@ is constant.** The missing count is not only a precision loss; it is what
 lets a false claim through.
 
 **A corpus caveat, stated so the shape is not over-read.** The shapes are a
-synthetic module, and the corpora do not all contain the self-refuting form:
-a concatenation of two **literals** has a constant count (the shapes), while
+synthetic module, and the corpora do not all contain these forms: a
+concatenation of two **literals** has a constant count (the shapes), while
 doubleML's 105 sites are all `acc = acc + [x]` — a count that is the trip
-count, not a constant. So on doubleML this shape produces the **misattributed
-labels**, and the self-refuting case is what a **new** corpus would get.
+count, not a constant.
+
+**CORRECTED BY THE MEASUREMENT (2026-11-23).** This caveat originally said
+that doubleML's sites produce the **misattributed labels**, and that is
+**wrong**: on all fourteen of the claims the repair removed, the label named
+the count's decider **correctly**, because the element's source and the
+count's source are the same parameter there (`uniq_acc`'s elements are ids,
+and its count is the number of distinct ids). So doubleML carries **neither**
+of the two defect forms: not the self-refuting one (its count is a trip
+count) and not the misattributed one (its labels were right). The two forms
+are the shape of a **new** corpus, and the measurement is what says so — see
+§8.1.
 
 ### 2.3 The split: what the model can compute, and what it cannot
 
@@ -375,6 +385,57 @@ so.** Phase 2's own plan had one expectation the measurement corrected
 the reference is not taught to ignore the three sites, and no site is removed
 from either side of the comparison to make the check pass.
 
+### 8.1 What the measurement said — MEASURED (2026-11-23)
+
+**The path was (b), and the cost is FOURTEEN claims, not three.**
+
+| | before | after |
+|---|---:|---:|
+| the L2's taint sites | 1,090 | **1,078** |
+| sites the L2 has and the fixpoint does not (**M1**) | **3** | **0** |
+| sites the fixpoint has and the L2 does not | 202 | **211** |
+
+**M1 now PASSES.** The harness is unchanged: the same definition, the same
+reference, the same comparison — and the reference's own surplus grew by
+nine, which is the other side of the same trade.
+
+The plan said **three** claims would go; **fourteen** went. The three it named
+(`did_aggregation.mbt:202/203/204`) are the same shape as the other eleven —
+a `+`-built array grown inside a loop, whose count is the **trip count** —
+and the measurement is what says so. All fourteen were **true** claims: the
+count of distinct ids, the count of kept units, the count of distinct event
+times are all functions of the tainted input. They are a **registered coverage
+cost**, in `docs/qa/IFDS_PHASE3_LEDGER.json`, and the trip count is the next
+phase's work (§7).
+
+**The plan's §2.2 reading of the corpus was wrong in one place, and the
+measurement corrected it.** The plan said doubleML's sites "produce the
+misattributed labels". They do not: on all fourteen of them the label named
+the count's decider CORRECTLY, because the element's source and the count's
+source are the same parameter there (`uniq_acc`'s elements are ids and its
+count is the number of distinct ids). The misattributed label is the shape of
+the **synthetic** module, not of doubleML — and the corpus caveat §2.2
+already carries says the corpora do not all contain the self-refuting form.
+The same caveat now says the misattributed form is not in doubleML either.
+
+### 8.2 The parity measurement — what the change actually is
+
+`acc + [x]` and `acc.push(x)` append the same element to the same array, and
+the model has always known the count of a **push**-built one. Before this
+phase a `+`-built array had no value at all. MEASURED over two shapes that
+build the same array the two ways
+(`_build/qa/phase3/probe_plus_vs_push.mjs`):
+
+| shape | the L2 says |
+|---|---|
+| `plus_shape` (`acc = acc + [i]`) | `INDEX-OOB … index [0,0] vs length [0,6]` |
+| `push_shape` (`acc.push(i)`) | `INDEX-OOB … index [0,0] vs length [0,6]` |
+
+**Identical.** The phase does not invent a rule for `+` — it makes the model
+treat the two ways of building an array the same. That is also why the phase
+**ADDS** claims on doubleML: the index rules already reached every
+push-built array, and they now reach the `+`-built ones too.
+
 ---
 
 ## 9. The numbers this change is expected to move
@@ -394,6 +455,50 @@ Every one of them is falsifiable.
 The three committed artefacts are regenerated with the same recipe
 (`--funnel --trials 4`, one slice each) and the numbers are updated in the
 same commit that changes them.
+
+### 9.1 What the measurement said — TWO expectations REFUTED
+
+MEASURED (2026-11-23), the analyser built from this tree, over the three
+committed corpora, before and after the change, with the same flags:
+
+| corpus | measurement | before | after |
+|---|---|---:|---:|
+| `fixtures/vuln_demo` | sidecar rows / L2 rows | 29 / 9 | **29 / 9 — unchanged** |
+| `riantr/moonbit_static_analysis@0.5.0` | sidecar rows / L2 rows | 198 / 93 | **198 / 93 — unchanged** |
+| `riantr/moonbit_doubleML@0.164.64` | sidecar rows | 3,504 | **3,519** |
+| `riantr/moonbit_doubleML@0.164.64` | L2 table rows | 2,515 | **2,503** |
+| `riantr/moonbit_doubleML@0.164.64` | `TAINT-ALLOC` | 959 | **945** |
+| `riantr/moonbit_doubleML@0.164.64` | `TAINT-INDEX` | 326 | **328** |
+| `riantr/moonbit_doubleML@0.164.64` | `INDEX-OOB` | 682 | **709** |
+| `riantr/moonbit_doubleML@0.164.64` | the L2's steps | 185,516 | **272,316** |
+
+**The first expectation is CONFIRMED**: the fixtures and the static-analysis
+corpus do not move — neither has a concatenation site.
+
+**The second is REFUTED.** The plan said "the **only** family that can move
+is `TAINT-ALLOC`", and the measurement says `INDEX-OOB` (+27) and
+`TAINT-INDEX` (+2) move as well. The reason is §8.2's parity measurement: the
+container is now known to be an array, so the index rules reach it — and they
+already reached every push-built array. The plan's expectation was written
+before the model knew what a `+`-built array is, and the correction is
+recorded here rather than fixed in advance.
+
+**The third is CONFIRMED and UNDERSTATED**: the M1 sites drop — and so do
+**eleven** more, for the same reason (§8.1).
+
+**And a cost the plan did not anticipate: the L2's steps rose by 47 %.** The
+count of a `+`-built array grows inside the loop fixpoint, so the fixpoint
+does not converge early — exactly as it does not for a push-built array. The
+L2's own step budget did **not** bind: the artefact still analyses all
+**1,411** functions and files no `BUDGET-EXCEEDED` finding of the L2's own.
+
+**The static-analysis corpus was measured at the version the committed
+artefact names.** `@latest` served **0.5.2** on the day of the measurement
+while the committed artefact is 0.5.0, and a diff between two corpora
+measures the corpus rather than the change — so the measurement was taken
+against **0.5.0**, and it shows nothing moved. Upgrading the committed
+artefact to 0.5.2 is a corpus upgrade with its own published numbers, and it
+is **not** this phase's work. It is named here so that it is not silent.
 
 ---
 

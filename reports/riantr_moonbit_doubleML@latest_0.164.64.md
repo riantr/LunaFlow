@@ -28,7 +28,7 @@
 | Interpreted steps | 47835 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 11347 ms |
+| Wall time (analyzer) | 9636 ms |
 | Selected level | L3 (funnel: L1 â†’ L2 â†’ L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -51,7 +51,7 @@ flowchart LR
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
   L1["L1 concrete: 233 findings"]:::l1
-  L2["L2 abstract: 3301 findings, 3211 new"]:::l2
+  L2["L2 abstract: 3316 findings, 3226 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -60,7 +60,7 @@ flowchart LR
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
 | L1 concrete | 233 findings | â€” | 150 functions | observed facts |
-| L2 abstract | 3301 findings | 3211 | 1411 functions, 185516 steps | exhaustive over the input abstraction |
+| L2 abstract | 3316 findings | 3226 | 1411 functions, 272316 steps | exhaustive over the input abstraction |
 | L3 contracts | 0 VCs | 0 failed, 0 unknown | 681 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
@@ -860,13 +860,13 @@ flowchart LR
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Three rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. A tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose. And an allocation size that is PROVABLY CONSTANT is not claimed as one that untrusted input chose: no tainted value controls a size that is the same on every input.
 
-**Scope.** The abstract layer analysed 1411 of 1411 â€” every function the abstract layer can analyse, in 185516 steps.
+**Scope.** The abstract layer analysed 1411 of 1411 â€” every function the abstract layer can analyse, in 272316 steps.
 
 | Family | Findings |
 | --- | ---: |
 | RANGE-VIOLATION | 1404 |
-| TAINT-ALLOC | 883 |
-| TAINT-INDEX | 207 |
+| TAINT-ALLOC | 869 |
+| TAINT-INDEX | 209 |
 | UNSUPPORTED | 21 |
 
 | Rule | Severity | Function | Location | Message | Method | Confidence |
@@ -1171,9 +1171,9 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:717 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
 | TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:718 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
 | TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:719 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| ... | ... | ... | ... | (truncated at 300 of 2515 rows) | ... | ... |
+| ... | ... | ... | ... | (truncated at 300 of 2503 rows) | ... | ... |
 
-_This table shows the first 300 of 2515 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 2215 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
+_This table shows the first 300 of 2503 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 2203 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
 
 
 ### 5.3 EVA findings (evolved value analysis)
@@ -1184,7 +1184,7 @@ The index class is proved by the interval the abstract domain already computes â
 
 | Family | Findings |
 | --- | ---: |
-| INDEX-OOB | 682 |
+| INDEX-OOB | 709 |
 | INTEGER-OVERFLOW | 90 |
 | DIVISION-BY-ZERO | 14 |
 
@@ -1310,8 +1310,17 @@ The index class is proved by the interval the abstract domain already computes â
 | INDEX-OOB | error | transform_panel | plpr.mbt:336 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | transform_panel | plpr.mbt:339 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | transform_panel | plpr.mbt:348 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:360 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:369 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:373 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:405 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:409 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:414 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:415 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:443 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | transform_panel | plpr.mbt:454 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | transform_panel | plpr.mbt:455 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | transform_panel | plpr.mbt:459 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | transform_panel | plpr.mbt:463 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | tune_score_outcome | tune.mbt:191 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | tune_argmin | tune.mbt:217 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
@@ -1335,6 +1344,15 @@ The index class is proved by the interval the abstract domain already computes â
 | INDEX-OOB | error | discover_groups_times | did_cs.mbt:123 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1487 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1509 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1692 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1694 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1787 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1788 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1792 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1799 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1800 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1809 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1810 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | solve_spd | linalg.mbt:83 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | LinearRegression::fit_weighted | linear.mbt:220 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | LinearRegression::fit_weighted | linear.mbt:222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
@@ -1472,27 +1490,9 @@ The index class is proved by the interval the abstract domain already computes â
 | INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:65 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:66 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | build_panel_dgp | plpr_test.mbt:21 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | build_panel_dgp | plpr_test.mbt:22 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | build_panel_dgp | plpr_test.mbt:42 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | aggregate_coef_se | aggregator.mbt:46 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | aggregate_coef_se | aggregator.mbt:57 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | aggregate_coef_se | aggregator.mbt:60 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::hac_se | blp_policy.mbt:1128 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1187 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1188 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1189 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1218 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1230 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLBLP::cluster_hac_se | blp_policy.mbt:1239 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1318 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1319 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1322 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | policy_tree_build | blp_policy.mbt:1323 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| ... | ... | ... | ... | (truncated at 300 of 786 rows) | ... | ... |
+| ... | ... | ... | ... | (truncated at 300 of 813 rows) | ... | ... |
 
-_This table shows the first 300 of 786 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 486 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
+_This table shows the first 300 of 813 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 513 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
 
 
 ### 5.4 The global region
@@ -2293,8 +2293,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | build_row_dgp | p | [3, 3] | 1 |
 | compute_score | n | [0, 64] | 1 |
 | count_eq | target | [-1000000, 1000000] | 1 |
-| default_5fold | i | [0, 1000001] | 6 |
-| default_5fold | j | [0, 1000000] | 18 |
+| default_5fold | i | [0, 1000001] | 7 |
+| default_5fold | j | [0, 1000000] | 42 |
 | default_5fold | k | [5, 5] | 1 |
 | default_5fold | n | [-1000000, 1000000] | 1 |
 | lplr_score_at | n | [0, 64] | 1 |
@@ -2443,6 +2443,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | rdd_pilot_stage | m | [-1000000, 1000000] | 1 |
 | transform_panel | c | [0, 1000001] | 12 |
 | transform_panel | k | [0, 1000000] | 7 |
+| transform_panel | n | [0, 6] | 1 |
 | tune_score_grid | n | [0, 64] | 1 |
 | v084_apo_dgp | seed | [-1000000, 1000000] | 1 |
 | v085_policy_dgp | n | [300, 300] | 1 |
@@ -2485,7 +2486,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | expand_v100_flat | g | [-1000000, 1000000] | 1 |
 | expand_v100_flat | t | [-1000000, 1000000] | 1 |
 | fill_normal_pool | i | [0, 1000002] | 6 |
-| fit_cs_bin_g | sub_n | [0, 1000001] | 6 |
+| fit_cs_bin_g | sub_n | [0, 1000001] | 7 |
 | kfold_stratified | n | [-1000000, 1000000] | 1 |
 | lpq_score_ipw | comp | [-1000000, 1000000] | 1 |
 | lpq_score_ipw | data | [-1000000, 1000000] | 1 |
@@ -2505,8 +2506,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | reg_fit_means | yacc | [0, 0] | 1 |
 | seed_to_bytes | seed | [-1000000, 1000000] | 1 |
 | solve_pq | treatment | [-1000000, 1000000] | 1 |
-| stratified_kfold | i | [0, 1000000] | 3 |
-| stratified_kfold | j | [1, 64] | 8 |
+| stratified_kfold | i | [0, 1000000] | 7 |
+| stratified_kfold | j | [1, 64] | 16 |
 | v096_side_wls | pred | [0, 0] | 2 |
 | v096_side_wls | quad | [0, 0] | 2 |
 | v096_side_wls | side | [-1000000, 1000000] | 1 |
@@ -2534,6 +2535,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | RDDKernel | weight | [-1000000, 1000000] | 1 |
 | RDDKernel | weight | [-1000000, 1000000] | 1 |
 | aggregate_coef_se | n | [0, 64] | 1 |
+| aggregate_event | n_e | [0, 36] | 1 |
 | aggregate_time | flat | [0, 0] | 4 |
 | bh_step_up_sorted | k | [-2, 62] | 2 |
 | bh_step_up_sorted | n | [0, 64] | 1 |
@@ -2606,7 +2608,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | rdd_rb_side | nnmatch | [-1000000, 1000000] | 1 |
 | slice_matrix_rows | n | [0, 64] | 1 |
 | storey_m0_hat | alpha | [0.05, 0.05] | 1 |
-| transform_panel | end | [0, 1000004] | 36 |
+| transform_panel | end | [0, 6] | 21 |
 | tsbh_p_adjust | alpha | [0.05, 0.05] | 1 |
 | v096_dgp_lopsided | n | [-1000000, 1000000] | 1 |
 | v096_side_wls | ridge | [-1000000, 1000000] | 1 |
@@ -2720,7 +2722,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | v1450_lplr_fit | alpha | [-1000000, 1000000] | 1 |
 | v1480_cell_fit | d_val | [-1000000, 1000000] | 1 |
 | v1480_cell_fit | t_val | [-1000000, 1000000] | 1 |
-| v1510_resid_after | nb | [0, 1000001] | 6 |
+| v1510_resid_after | nb | [0, 1000001] | 7 |
 | DoubleMLAPO | fit | [-1000000, 1000000] | 1 |
 | DoubleMLAPO | new | [-1000000, 1000000] | 1 |
 | DoubleMLBLP | fit | [-1000000, 1000000] | 1 |
@@ -2803,6 +2805,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | solve_pq | newton_steps | [0, 100] | 6 |
 | storey_m0_hat | n_above | [0, 1000001] | 6 |
 | stratified_kfold | seed | [-1000000, 1000000] | 1 |
+| transform_panel | n_out | [0, 36] | 1 |
 | v098_small_leaf_dgp | n | [-1000000, 1000000] | 1 |
 | v107_plpr_data | theta0 | [1, 1] | 1 |
 | v109_drawn_reps | n_rep | [-1000000, 1000000] | 1 |
@@ -3059,8 +3062,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | outcome_indicator | theta | [-1000000, 1000000] | 1 |
 | policy_tree_build | depth | [-1000000, 1000000] | 1 |
 | policy_tree_predict | row | [-1000000, 1000000] | 1 |
-| preprocess_did_binary | i | [0, 1000000] | 4 |
-| preprocess_did_binary | j | [1, 1000005] | 18 |
+| preprocess_did_binary | i | [0, 1000000] | 7 |
+| preprocess_did_binary | j | [1, 1000005] | 36 |
 | rdd_kernel_weights | data | [-1000000, 1000000] | 1 |
 | rdd_nn_matched_sigma4 | a | [-1000001, 999999] | 12 |
 | rdd_nn_matched_sigma4 | b | [0, 1000004] | 12 |
@@ -3088,7 +3091,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLCVAR | n_obs | [-1000000, 1000000] | 1 |
 | DoubleMLCVAR | new | [-1000000, 1000000] | 1 |
 | DoubleMLCVAR | tune | [-1000000, 1000000] | 1 |
-| DoubleMLDIDCS | fit | [0, 1000001] | 18 |
+| DoubleMLDIDCS | fit | [0, 1000001] | 252 |
 | DoubleMLDIDCS | new | [-1000000, 1000000] | 1 |
 | DoubleMLDIDCS | tune | [-1000000, 1000000] | 1 |
 | DoubleMLDIDCSData | new | [0, 64] | 1 |
@@ -3267,6 +3270,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | sandwich_variance_hc3 | eps | [1, 1] | 1 |
 | sort_indices_by_feature | j | [-1, 0] | 6 |
 | sort_indices_by_feature | n | [0, 64] | 1 |
+| stratified_kfold | n_strata | [0, 6] | 1 |
 | v115_exact_quadratic | jump | [-1000000, 1000000] | 1 |
 | v125_lpq_floor_dominant | n | [500, 500] | 1 |
 | v128_cs_data | cohort_count | [3, 3] | 1 |
@@ -3335,7 +3339,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | expand_v089_ref_cluster | m2 | [-1000000000000, 1000000000000] | 1 |
 | expand_v092_lplr_data | need | [-2147483648, 2147483647] | 1 |
 | expand_v100_didcs_data | row | [0, 0] | 3 |
-| fit_g_subset_predict | sub_n | [0, 1000001] | 6 |
+| fit_g_subset_predict | sub_n | [0, 1000001] | 7 |
 | holm_bonferroni_p_adjust | n | [0, 64] | 1 |
 | irm_style_sensitivity | cf_d | [-1000000, 1000000] | 1 |
 | irm_style_sensitivity | cf_y | [-1000000, 1000000] | 1 |
@@ -3681,7 +3685,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | policy_tree_cache_encode | slot | [0, 12] | 1 |
 | policy_tree_ints_to_doubles | n | [0, 64] | 1 |
 | preprocess_did_binary | g_value | [-1000000, 1000000] | 1 |
-| preprocess_did_binary | pre_idx | [-1, -1] | 3 |
+| preprocess_did_binary | pre_idx | [-1, -1] | 6 |
 | rdd_nn_matched_sigma4 | nnmatch | [-1000000, 1000000] | 1 |
 | single_psi_sensitivity | mb_sum | [0, 0] | 1 |
 | solve_ipw_root | widen_attempts | [0, 20] | 6 |
@@ -3767,7 +3771,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | make_irm_discrete_treatments | s | [0, 0] | 3 |
 | make_pliv_multiway_cluster | acc | [-700000, 700000] | 18 |
 | newton_solve_score | theta_start | [-1000000, 1000000] | 1 |
-| preprocess_did_binary | eval_idx | [-1, -1] | 3 |
+| preprocess_did_binary | eval_idx | [-1, -1] | 6 |
 | sandwich_variance_hc0 | n_params | [-1000000, 1000000] | 1 |
 | sandwich_variance_hc1 | n_params | [-1000000, 1000000] | 1 |
 | sandwich_variance_hc2 | n_params | [-1000000, 1000000] | 1 |
@@ -3852,7 +3856,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLAPO | fit_cluster | [0, 0] | 2 |
 | DoubleMLAPOS | tune | [-1000000, 1000000] | 1 |
 | DoubleMLBLP | cluster_hac_se | [-1000000, 1000000] | 1 |
-| DoubleMLBLP | confint_joint | [0, 0] | 2 |
+| DoubleMLBLP | confint_joint | [0, 0] | 6 |
 | DoubleMLBLP | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLCVAR | predictions_g | [-1000000, 1000000] | 1 |
 | DoubleMLCVAR | predictions_m | [-1000000, 1000000] | 1 |
@@ -3860,7 +3864,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLDID | enable_memoize | [-1000000, 1000000] | 1 |
 | DoubleMLDID | predictions_g0 | [-1000000, 1000000] | 1 |
 | DoubleMLDID | predictions_g1 | [-1000000, 1000000] | 1 |
-| DoubleMLDIDBinary | fit | [0, 0] | 7 |
+| DoubleMLDIDBinary | fit | [0, 0] | 16 |
 | DoubleMLDIDCS | cell_flat_at | [-1000000, 1000000] | 1 |
 | DoubleMLDIDCS | coef_at | [-1000000, 1000000] | 1 |
 | DoubleMLDIDCS | m_inv_1x1_at | [-1000000, 1000000] | 1 |
@@ -3976,7 +3980,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLDIDBinary | learner_m | [-1000000, 1000000] | 1 |
 | DoubleMLDIDBinaryData | n_obs | [-1000000, 1000000] | 1 |
 | DoubleMLDIDCS | coef_at | [-1000000, 1000000] | 1 |
-| DoubleMLDIDCS | fit | [-1, 0] | 6 |
+| DoubleMLDIDCS | fit | [-1, 0] | 18 |
 | DoubleMLDIDCS | group_at | [-1000000, 1000000] | 1 |
 | DoubleMLDIDCS | predictions_m | [-1000000, 1000000] | 1 |
 | DoubleMLDIDCS | tune | [-1000000, 1000000] | 1 |
@@ -4130,7 +4134,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | DoubleMLAPOS | sample_splitting | [-1000000, 1000000] | 1 |
 | DoubleMLAPOS | treatment_levels | [-1000000, 1000000] | 1 |
 | DoubleMLBLP | cluster_hac_se | [-1, -1] | 1 |
-| DoubleMLBLP | confint_joint | [0, 0] | 2 |
+| DoubleMLBLP | confint_joint | [0, 0] | 6 |
 | DoubleMLCVAR | bootstrap | [-1000000, 1000000] | 1 |
 | DoubleMLCVAR | sample_splitting | [-1000000, 1000000] | 1 |
 | DoubleMLDIDBinary | clear_cache | [-1000000, 1000000] | 1 |

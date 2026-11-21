@@ -282,6 +282,25 @@ jobs:
           node scripts/qa/size_taint.mjs
           node scripts/qa/size_taint.mjs --no-build --falsify
 
+      # IFDS PHASE 3 -- the size of a `+`-built array. The analyser over six
+      # shapes: the count of a concatenation is the SUM of the two counts, and
+      # the claim about the size names only the sources that decide the COUNT
+      # and never the elements'.
+      #
+      # It also checks the COVERAGE LEDGER in BOTH directions: the fourteen
+      # doubleML claims the repair removed are named in
+      # docs/qa/IFDS_PHASE3_LEDGER.json and none of them may be back in the
+      # committed artefact, and the twenty-nine it added are named too, so the
+      # half of the trade that ADDS claims is registered as carefully as the
+      # half that removes them.
+      #
+      # The `--falsify` run inverts one expectation on purpose and requires
+      # the check to fail. A check that cannot fail is not a check.
+      - name: Check the size of a `+`-built array
+        run: |
+          node scripts/qa/plus_size.mjs
+          node scripts/qa/plus_size.mjs --no-build --falsify
+
       # The QA harness. These are the same scripts and the same thresholds the
       # README publishes, so a green run here is the claim in the README.
       - name: Acceptance scenarios (Gherkin)

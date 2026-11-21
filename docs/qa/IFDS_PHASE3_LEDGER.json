@@ -1,0 +1,438 @@
+{
+  "what": "The doubleML claims the Phase-3 repair REMOVED, the claims it ADDED, and why each one went or came.",
+  "measured_on": "2026-11-23",
+  "corpus": "riantr/moonbit_doubleML@latest",
+  "version": "0.164.64",
+  "method": "The analyser was run over the corpus before and after the repair with the same flags (--funnel --trials 4 --slice theta_hat@aggregate_coef_se), and the two findings sidecars were diffed by (rule, file, line, message, evidence). Fourteen allocation-size claims disappeared, twenty-nine claims appeared, and six findings stayed but carried a sharper length.",
+  "before": {
+    "sidecar_findings": 3504,
+    "l2_rows": 2515,
+    "taint_alloc": 959,
+    "taint_index": 326,
+    "l2_steps": 185516
+  },
+  "after": {
+    "sidecar_findings": 3519,
+    "l2_rows": 2503,
+    "taint_alloc": 945,
+    "taint_index": 328,
+    "l2_steps": 272316
+  },
+  "verdicts": {
+    "trip-count-true": "The claim was TRUE: the count of a `+`-built array grown inside a loop is the loop's TRIP COUNT, and the trip count is a function of the tainted input. The model does not carry the loop bound's taint into the count, so the count's taint comes out clean and the claim is lost. This is a coverage cost of fourteen findings, registered here and pinned by scripts/qa/plus_size.mjs. The trip count is the next phase's work.",
+    "container-known-array": "The container is now KNOWN to be an array, so the index rules reach it — the same rules that already reached every `push`-built array (682 such claims on this corpus, measured). The index is in bounds in the source: the counter is bounded by the array's OWN length, through a binding (`n = arr.length()`) the model does not relate to the array, and the count's lower bound is 0, so the model's own value domain cannot refute the claim. It is a limitation of the model, not a false reading of the program.",
+    "same-finding-sharper-length": "The finding stayed and its evidence got sharper: the length in the evidence is the count the model now computes, instead of the unknown range an array of unknown count carried."
+  },
+  "removed": [
+    {
+      "file": "did_aggregation.mbt",
+      "line": 202,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameters `groups` and `periods`",
+      "shape": "the number of DISTINCT event times — the count of `e_set_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "did_aggregation.mbt",
+      "line": 203,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameters `groups` and `periods`",
+      "shape": "the number of DISTINCT event times — the count of `e_set_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "did_aggregation.mbt",
+      "line": 204,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameters `groups` and `periods`",
+      "shape": "the number of DISTINCT event times — the count of `e_set_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "learner.mbt",
+      "line": 417,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `folds`",
+      "shape": "the number of KEPT folds — the count of `tr_idx`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 135,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `id`",
+      "shape": "the number of DISTINCT ids — the count of `uniq_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 136,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `id`",
+      "shape": "the number of DISTINCT ids — the count of `uniq_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 356,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 357,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 358,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 371,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 439,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 440,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 441,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 457,
+      "rule": "TAINT-ALLOC",
+      "evidence": "Array.make(top)",
+      "source": "parameter `data`",
+      "shape": "the number of KEPT units — the count of `keep_acc`, a `+`-built array",
+      "verdict": "trip-count-true"
+    }
+  ],
+  "added": [
+    {
+      "file": "did_aggregation.mbt",
+      "line": 206,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_binary.mbt",
+      "line": 881,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,1]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1684,
+      "rule": "TAINT-INDEX",
+      "evidence": "full_idx_acc[top]",
+      "source": "parameters `ml_g~` and `ml_m~`",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1692,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1694,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1787,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1788,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1792,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1799,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1800,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1809,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "did_cs.mbt",
+      "line": 1810,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,36]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "expand_v151_test.mbt",
+      "line": 96,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,1]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "expand_v151_test.mbt",
+      "line": 98,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,1]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "expand_v151_test.mbt",
+      "line": 108,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,1] vs length [1,2]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "expand_v151_test.mbt",
+      "line": 110,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,1] vs length [1,2]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 360,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 369,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 373,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 405,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 409,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 414,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 415,
+      "rule": "INDEX-OOB",
+      "evidence": "index [1,1] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 443,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 459,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "resampling.mbt",
+      "line": 55,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "resampling.mbt",
+      "line": 56,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "resampling.mbt",
+      "line": 78,
+      "rule": "TAINT-INDEX",
+      "evidence": "stratum_idx_acc[top]",
+      "source": "parameters `seed` and `n_folds`",
+      "verdict": "container-known-array"
+    },
+    {
+      "file": "resampling.mbt",
+      "line": 93,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "source": "",
+      "verdict": "container-known-array"
+    }
+  ],
+  "sharpened": [
+    {
+      "file": "plpr.mbt",
+      "line": 141,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "was": "index [0,0] vs length [0,64]",
+      "verdict": "same-finding-sharper-length"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 142,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "was": "index [0,0] vs length [0,64]",
+      "verdict": "same-finding-sharper-length"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 152,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "was": "index [0,0] vs length [0,64]",
+      "verdict": "same-finding-sharper-length"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 454,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "was": "index [0,0] vs length [0,64]",
+      "verdict": "same-finding-sharper-length"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 455,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "was": "index [0,0] vs length [0,64]",
+      "verdict": "same-finding-sharper-length"
+    },
+    {
+      "file": "plpr.mbt",
+      "line": 463,
+      "rule": "INDEX-OOB",
+      "evidence": "index [0,0] vs length [0,6]",
+      "was": "index [0,0] vs length [0,64]",
+      "verdict": "same-finding-sharper-length"
+    }
+  ]
+}

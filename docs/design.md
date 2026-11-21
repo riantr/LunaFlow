@@ -15,7 +15,7 @@ This document is the design record for the implementation in `src/app` and `src/
 | Analysis paradigm | Dynamic-first: concrete execution of parsed function bodies produces the trace that drives CFG coverage, taint, ranges and slicing; static syntax-directed CFG supplements it |
 | Visualization carrier | Markdown with embedded Mermaid diagrams only (no server, no HTML, no binary images) |
 | Version policy | `@latest` is resolved once by `moon fetch`, the resolved version is recorded in the report and pinned for every later stage |
-| Toolchain | `moon 0.1.20261104`, `moonc v0.10.20+65efd5b93`, native backend — and the release is verified against the NEWEST toolchain as well (`moon 0.1.20261117`, `moonc v0.10.21+06da1ed44`), because the CI runner installs that one; the async runtime is the toolchain-bundled `moonbitlang/core/async` |
+| Toolchain | `moon 0.1.20261104`, `moonc v0.10.20+65efd5b93`, native backend — and the release is verified against the NEWEST toolchain as well (`moon 0.1.20261119`, `moonc v0.10.22+124d61d05`), because the CI runner installs that one; the async runtime is the toolchain-bundled `moonbitlang/core/async` |
 
 The analyzer never mutates the analyzed module. It reads source files, executes a model of them, and writes only under `reports/`.
 
@@ -232,9 +232,9 @@ State: `Map[var -> AbsCell{value, sources}]`. Transfer functions:
 
 **The one exception was known and recorded, and it is now closed.** The length of a container used to inherit the container's **content** taint, and the content's taint says nothing about the count — the same shape as the blanket rule above. The layer did not make a claim its own value domain could refute (a size that is provably constant is not reported), but at the three sites where the size is `top` the claim was a *may*-claim the layer could not prove. The repair separates the taint that reaches a container's **size** from the taint that reaches its **contents**: `AbsVal`'s array value carries the **size's** taint, and the size's taint is computed where the size is produced — a literal's count is fixed by the code, `Array::make(n, x)`'s count is `n`, a caller's array's count is the caller's choice, a `push` carries the old count's taint, and a join unions the two. That is a change to the value domain with a published-interface cost (`AbsVal::AArr` grew a third component), and it was **made** in IFDS Phase 2, declared in the release notes and enforced by `scripts/qa/release_interface.mjs`. `docs/qa/IFDS_PHASE2.md` has the plan, the measurement and the adjudication; `docs/qa/IFDS_PHASE2_ACCEPTANCE.md` has the acceptance record.
 
-Cost: linear in the number of statements × fixpoint rounds; measured 3,301 findings from the 1411 doubleML functions in the same run as L1 (11.3 s total), and 188 findings from the 1422 static_analysis functions (1.7 s total). The step count is the deterministic measure: **185,516** steps on doubleML, against 167,211 before the value domain was repaired — the repair analyses the loop bodies the defective boolean literal used to prune — and 185,766 before the size/contents separation. The wall clock is the machine's: the same tree read 10.1 s and 16.0 s in one session, and the step count did not move.
+Cost: linear in the number of statements × fixpoint rounds; measured 3,316 findings from the 1411 doubleML functions in the same run as L1 (9.6 s total), and 188 findings from the 1422 static_analysis functions (1.7 s total). The step count is the deterministic measure: **272,316** steps on doubleML, against 167,211 before the value domain was repaired — the repair analyses the loop bodies the defective boolean literal used to prune — and 185,766 before the size/contents separation. The wall clock is the machine's: the same tree read 10.1 s and 16.0 s in one session, and the step count did not move.
 
-**The universe excludes the `test` BLOCKS, and nothing else.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt` — and `ModuleAst::all_funcs()` filters on the **function** (`fn.is_test`), not on the file. So an ordinary helper that lives in a `_test.mbt` file is analysed, and a `test "..." { }` block is not. For a module whose test files are most of its code that is worth stating: **129 of doubleML's 220 `.mbt` files are test files**. What says how much of the output is about test code is the finding split, not the scope line: measured on the committed doubleML artefact, **486 of the 2,515 findings shown in §5.2 (19.3 %) are in test files**, and every one of them is in a helper (`v120_check_enet`, `count_eq`, `expand_v091_iivm_data`, …), not in a test block.
+**The universe excludes the `test` BLOCKS, and nothing else.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt` — and `ModuleAst::all_funcs()` filters on the **function** (`fn.is_test`), not on the file. So an ordinary helper that lives in a `_test.mbt` file is analysed, and a `test "..." { }` block is not. For a module whose test files are most of its code that is worth stating: **129 of doubleML's 220 `.mbt` files are test files**. What says how much of the output is about test code is the finding split, not the scope line: measured on the committed doubleML artefact, **486 of the 2,503 findings shown in §5.2 (19.4 %) are in test files**, and every one of them is in a helper (`v120_check_enet`, `count_eq`, `expand_v091_iivm_data`, …), not in a test block.
 
 Precision: sound relative to the abstract semantics, but joins and widening lose path and value precision; the default interval bound (`±1,000,000`) is a practical closure, not the mathematical top. Every L2 finding carries `mode = L2-abstract` so it is never confused with an observed L1 fact.
 
@@ -1168,7 +1168,7 @@ cap:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.64 | 220 | 30,258 | 243,528 | **3,301** | 0 / 0 / 0 (no specs) | 0 | 195 | **11.3 s** | **384 KB** | 37.6 MB |
+| doubleML 0.164.64 | 220 | 30,258 | 243,528 | **3,316** | 0 / 0 / 0 (no specs) | 0 | 195 | **9.6 s** | **384 KB** | 37.6 MB |
 | static_analysis 0.5.0 | 254 | 17,450 | 17,029 | **188** | 0 / 0 / 0 (no specs) | 0 | 9 | **1.7 s** | **149 KB** | 2.5 MB |
 | fixtures/vuln_demo | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms | 35 KB | 79 KB |
 
@@ -1344,7 +1344,7 @@ Interpretation:
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 274 passed, 0 failed | 274/274 |
+| A2 | Tests | `moon test src/app --target native` ≥ 286 passed, 0 failed | 286/286 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.5.0 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.82 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
