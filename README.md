@@ -241,7 +241,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.31
+moon add riantr/LunaFlow@0.1.32
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -249,7 +249,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.31",
+  "riantr/LunaFlow@0.1.32",
 }
 ```
 
@@ -300,7 +300,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.31](https://mooncakes.io/docs/riantr/LunaFlow@0.1.31).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.32](https://mooncakes.io/docs/riantr/LunaFlow@0.1.32).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -590,6 +590,111 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.32
+
+**The SIZE of a `+`-built array is computed, not inherited from the elements'. The published interface is UNCHANGED, and that is measured rather than claimed.**
+
+**The defect.** `abs_binop` had no case for two arrays, so an array built by `+`
+— MoonBit's concatenation — had **no value at all**: it was TOP, and
+`.length()` on a TOP fell back to the receiver's own sources, the **elements'**
+taint. So the claim about the size named the element, and when the count was a
+constant the claim was false outright: `[user] + [user]` holds **two**
+elements, and the claim said that a tainted value from parameter `user` might
+control the allocation size.
+
+**The repair.** The concatenation has a value now, and the two taints stay
+apart:
+
+| | the result |
+|---|---|
+| the **count** | the **sum** of the two counts — `a + b` holds `a.len + b.len` elements |
+| the **size's** taint | the union of the two **size** taints — the sources that decide the COUNT |
+| the **contents'** taint | the union of the two **contents'** taints — the sources that decide the VALUES |
+
+`xs + [user]` has a count that `xs` decides and a content that `user` decides,
+and the claim about the size must name the first and not the second. Phase 2's
+`AbsVal::AArr` already carried the size's taint as its third component, so
+**no new value-domain shape is needed** — this is a case in a match.
+
+**`+` and `push` build the same array, and now the model says so.** `acc + [x]`
+and `acc.push(x)` append the same element, and the model has always known the
+count of a **push**-built one. MEASURED over two shapes that build the same
+array the two ways, the L2's answer is now **identical**: both report
+`INDEX-OOB … index [0,0] vs length [0,6]`. The phase does not invent a rule
+for `+`; it makes the model treat the two ways of building an array the same.
+
+**MEASURED**, the analyser built from this tree, over the three committed
+corpora, before and after, with the same flags (`--funnel --trials 4` and one
+slice each):
+
+| corpus | measurement | before | after |
+|---|---|---:|---:|
+| `fixtures/vuln_demo` | sidecar rows / L2 rows | 29 / 9 | **29 / 9 — unchanged** |
+| `riantr/moonbit_static_analysis@0.5.0` | sidecar rows / L2 rows | 198 / 93 | **198 / 93 — unchanged** |
+| `riantr/moonbit_doubleML@0.164.64` | sidecar rows | 3,504 | **3,519** |
+| `riantr/moonbit_doubleML@0.164.64` | L2 table rows | 2,515 | **2,503** |
+| `riantr/moonbit_doubleML@0.164.64` | `TAINT-ALLOC` | 959 | **945** |
+| `riantr/moonbit_doubleML@0.164.64` | `TAINT-INDEX` | 326 | **328** |
+| `riantr/moonbit_doubleML@0.164.64` | `INDEX-OOB` | 682 | **709** |
+| `riantr/moonbit_doubleML@0.164.64` | the L2's steps | 185,516 | **272,316** |
+
+**The trade is a real one and it is registered in BOTH directions.**
+`docs/qa/IFDS_PHASE3_LEDGER.json` names the **fourteen** allocation-size claims
+the repair **removed** and the **twenty-nine** it **added**, with the class each
+belongs to and the reason, and `scripts/qa/plus_size.mjs` fails if a removed
+claim comes back **or** an added claim goes missing.
+
+* The **fourteen removed** claims were **true**: their count is the **trip
+  count** of a loop that grows a `+`-built array — the number of distinct ids,
+  the number of kept units, the number of distinct event times — and the trip
+  count is a function of the tainted input. The model does not carry the loop
+  bound's taint into the count, so the count's taint comes out clean and the
+  claim is lost. **A coverage cost of fourteen findings, registered rather than
+  silent**, and the trip count is the next phase's work.
+* The **twenty-nine added** claims are the index rules reaching a class of
+  arrays they could not reach before: the container is now **known** to be an
+  array, so `INDEX-OOB` and `TAINT-INDEX` apply to it, exactly as they already
+  applied to every push-built array (682 such claims on this corpus). The index
+  is in bounds in the source — the counter is bounded by the array's **own**
+  length, through a binding (`n = arr.length()`) the model does not relate to
+  the array — and the count's lower bound is 0, so the model's own value domain
+  **cannot refute** the claim.
+
+**M1 now PASSES.** M1 is "no lost sink": every taint site the L2 found must
+also be a site the independent flow-sensitive fixpoint found. Over doubleML the
+L2's sites went **1,090 → 1,078** and the sites the L2 has and the fixpoint
+does not went **3 → 0** — so the check that failed at
+`did_aggregation.mbt:202/203/204` in 0.1.31 passes now. **The harness is not
+weakened**: the same definition, the same reference, the same comparison, and
+no site removed from either side. The reference's own surplus grew by nine,
+which is the other side of the same trade.
+
+**THE ASSERTIONS COME IN PAIRS**, so a repair that made every `+`-built size
+clean would pass the first half and fail the second: a count the caller really
+does choose must still be claimed, and the claim must name the caller and not
+the element. Twelve assertions in `src/app/plus_size_wbtest.mbt` — five on the
+**value** the layer computes and seven on the **claims** it files — and
+`scripts/qa/plus_size.mjs` runs the **analyser** over six shapes end to end and
+checks the same thing, plus the ledger. Four cases **falsify** the repair — the
+change reverted, the count's taint inheriting the contents' again, the count
+dropped, and the count's taint dropped — and each fails the assertions it
+should, with the source restored **byte-identically** afterwards. Those four
+cases ship as `scripts/qa/plus_size_falsify.mjs`: a manual, local tool, because
+it rewrites tracked files — it refuses to run on a dirty tree and it is
+deliberately not a gate step.
+
+**The published interface is UNCHANGED**, and that is **measured**, not claimed:
+`abs_binop` is a private `fn` and is absent from `src/app/pkg.generated.mbti`,
+and `AbsVal`'s shape — `AArr(Int32, Int32, Array[String])` — is not touched.
+`scripts/qa/release_interface.mjs` compares the `.mbti` at every release's tag
+against that version's notes and fails when the version being prepared breaks
+the published interface without saying so; this release declares **no break**.
+
+**The plan is in `docs/qa/IFDS_PHASE3.md`, and the measurement corrected two of
+its expectations** — that only `TAINT-ALLOC` could move, and that three claims
+would go rather than fourteen. Both corrections are recorded in the plan, and
+the acceptance record is `docs/qa/IFDS_PHASE3_ACCEPTANCE.md`.
 
 ### What changed in 0.1.31
 
@@ -2874,7 +2979,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.31` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.32` | **4 passed, 0 failed** |
 `moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
