@@ -14,7 +14,9 @@ cost the plan did not foresee.
 
 **Date:** 2026-11-21. **Phase 0:** `docs/qa/IFDS_SPIKE.md`. **Phase 1:**
 `docs/qa/IFDS_PHASE1.md` — the labelled, kill-exact taint engine, and the
-section §8 of that document left this open.
+section §8 of that document left this open. **Phase 3:**
+`docs/qa/IFDS_PHASE3.md` — the SIZE of a `+`-built array, which is the shape
+§7's `ATop` fallback left behind.
 
 ---
 
