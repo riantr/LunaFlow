@@ -35,17 +35,24 @@
 // same tree read 672 ms and 710 ms for the self-scan in one session. The
 // counts are the deterministic measure, and those are what is checked.
 //
-// Usage: node scripts/qa/readme_table.mjs [--no-selfscan]
+// Usage: node scripts/qa/readme_table.mjs [--no-selfscan] [--falsify]
 //
 // `--no-selfscan` SKIPS the live self-scan and checks only what is OFFLINE:
 // the committed-artefact rows against their summaries, the two places that
-// repeat the self-scan numbers against the README's own row, and the three
+// repeat the self-scan numbers against the README's own row, the committed
+// artefact's OWN totals against the prose that publishes them, and the three
 // test cells against each other. That is the mode for the CI runner, which
 // installs the NEWEST toolchain -- a count the newest parser reads
 // differently from the one that measured the numbers would fail there for a
 // reason that has nothing to do with this tree. The live measurement is the
 // LOCAL release-prep check, where the toolchain is the one that produced the
 // numbers.
+//
+// `--falsify` INVERTS the artefact-total expectations on purpose: every
+// measured number is nudged by one, so every one of those claims has to fail.
+// A claim that still passes is vacuous -- it is not really compared with the
+// artefact -- and the check reports that as a failure. The mode exits 0 when
+// the inversion WAS caught, so it can be a gate step.
 //
 // The TEST COUNT is measured in BOTH modes: the number of tests in src/app is
 // this repository's own, and it does not depend on the toolchain.
@@ -61,6 +68,12 @@ const root = resolve(process.cwd());
 const readmePath = join(root, 'README.md');
 const phasePath = join(root, 'docs', 'qa', 'IFDS_PHASE1.md');
 const skipSelfScan = process.argv.includes('--no-selfscan');
+// `--falsify` INVERTS the artefact-total expectations on purpose, so every one
+// of them has to fail. A claim that still passes is vacuous -- it is not
+// really compared with the artefact -- and the check reports that as a
+// failure. The convention is `scripts/qa/size_taint.mjs --falsify`: the mode
+// exits 0 when the inversion WAS caught.
+const falsify = process.argv.includes('--falsify');
 
 let checks = 0;
 let failures = 0;
@@ -348,6 +361,141 @@ if (!gate) {
   }
 }
 
+// --- the committed artefact's OWN numbers, measured -------------------------
+//
+// The README publishes four MEASUREMENTS of the committed doubleML artefact
+// outside the live table: the L2 table's total (the marker row), the sidecar's
+// row count, the size of the family that could not fire, and the share of the
+// L2 table's findings that sit in test files. `docs/design.md` and
+// `docs/qa/LOOP_ACCEPTANCE.md` repeat them.
+//
+// They DRIFTED once already. Phase 2 regenerated the doubleML artefact -- the
+// repair removed twenty claims from it -- and the README's "What changed in
+// 0.1.30" section still quoted the PREVIOUS artefact's totals (2,535 and
+// 3,524) while the artefact said 2,515 and 3,504. Nothing caught it: this
+// check compared the live TABLE with the summaries, and the prose that repeats
+// the artefact's own totals was never compared with anything.
+//
+// So they are measured HERE, from the artefact itself, and the prose is
+// compared with the measurement. The check reads the artefact; it does not
+// carry the numbers.
+const artefactBase = 'reports/riantr_moonbit_doubleML@latest_0.164.64';
+const artefactMdPath = join(root, artefactBase + '.md');
+const artefactJsonlPath = join(root, artefactBase + '_findings.jsonl');
+if (!existsSync(artefactMdPath) || !existsSync(artefactJsonlPath)) {
+  check('the committed doubleML artefact is present', false, artefactBase);
+} else {
+  const artefactMd = readFileSync(artefactMdPath, 'utf8');
+  const artefactRows = readFileSync(artefactJsonlPath, 'utf8')
+    .trim()
+    .split('\n')
+    .filter((l) => l.trim() !== '')
+    .map((l) => JSON.parse(l));
+
+  // 5.2's table total: the marker row the README quotes verbatim.
+  const marker = /truncated at 300 of (\d+) rows/.exec(artefactMd);
+  const tableTotal = marker ? Number(marker[1]) : null;
+
+  // the sidecar: one JSON object per finding.
+  const sidecarRows = artefactRows.length;
+
+  // 5.2 is the L2 ABSTRACT table; the sidecar also holds the L2-EVA rows
+  // (5.3), the taint sinks (5.1) and the budget rows.
+  const l2 = artefactRows.filter((r) => r.method === 'L2-abstract');
+  const l2Test = l2.filter((r) => /_test\.mbt$/.test(r.file ?? ''));
+  const testShare = l2.length === 0 ? null : (100 * l2Test.length) / l2.length;
+
+  // the family that could not fire: the dead-rule repair's whole point.
+  const taintAlloc = artefactRows.filter((r) => r.rule === 'TAINT-ALLOC').length;
+
+  if (tableTotal === null) {
+    check('the committed artefact states its 5.2 table total', false);
+  } else {
+    const pct = testShare === null ? null : Number(testShare.toFixed(1));
+
+    // Each claim: the file it lives in, how to find the sentence, and what
+    // the numbers in it must be.
+    const claims = [
+      {
+        name: "the README quotes the artefact's marker row",
+        file: 'README.md',
+        re: /the marker row reads \*\((?:truncated at 300 of )(\d+) rows\)\*/,
+        want: [tableTotal],
+      },
+      {
+        name: "the README states the artefact's table total and sidecar count",
+        file: 'README.md',
+        re:
+          /the L2's table shows 300 of \*\*([\d,]+)\*\*, its count\s+table sums to \*\*([\d,]+)\*\*, and the sidecar holds \*\*([\d,]+)\*\*/,
+        want: [tableTotal, tableTotal, sidecarRows],
+      },
+      {
+        name: 'the README states the size of the family that could not fire',
+        file: 'README.md',
+        re: /now reports \*\*([\d,]+)\*\* findings in the committed artefact/,
+        want: [taintAlloc],
+      },
+      {
+        name: 'the README states the test-file share of the 5.2 table',
+        file: 'README.md',
+        re:
+          /\*\*(\d+) of the ([\d,]+)\*\* findings in §5\.2 \(\*\*([\d.]+) %\*\*\) are in the/,
+        want: [l2Test.length, tableTotal, pct],
+      },
+      {
+        name: 'the design document states the test-file share of the 5.2 table',
+        file: 'docs/design.md',
+        re:
+          /\*\*(\d+) of the ([\d,]+) findings shown in §5\.2 \(([\d.]+) %\) are in test files\*\*/,
+        want: [l2Test.length, tableTotal, pct],
+      },
+      {
+        name: 'the loop acceptance record states the artefact totals',
+        file: 'docs/qa/LOOP_ACCEPTANCE.md',
+        re:
+          /shows the cap of \*\*300 of ([\d,]+)\*\*,\s+its count table sums to \*\*([\d,]+)\*\*, and its sidecar holds \*\*([\d,]+)\*\* findings/,
+        want: [tableTotal, tableTotal, sidecarRows],
+      },
+    ];
+
+    for (const c of claims) {
+      const path = join(root, c.file);
+      if (!existsSync(path)) {
+        check(c.name, false, `${c.file} is missing`);
+        continue;
+      }
+      const text = readFileSync(path, 'utf8');
+      const m = c.re.exec(text);
+      if (!m) {
+        check(c.name, false, 'the sentence was not found');
+        continue;
+      }
+      const got = m.slice(1, 1 + c.want.length).map((x) => Number(x.replace(/,/g, '')));
+      const same = c.want.every((w, i) => w === got[i]);
+
+      if (falsify) {
+        // The expectation is INVERTED on purpose: each measured number is
+        // nudged by one, so every claim MUST fail. A claim that still passes
+        // is VACUOUS -- it is not really being compared -- and the check says
+        // so instead of reporting a green row.
+        const nudged = c.want.map((w, i) => (i === c.want.length - 1 && w % 1 !== 0 ? w + 0.1 : w + 1));
+        const stillPasses = got.every((g, i) => g === nudged[i]);
+        check(
+          `${c.name} -- the falsified expectation fails, as it must`,
+          !stillPasses,
+          stillPasses ? 'the claim passed with a wrong expectation: it is vacuous' : '',
+        );
+      } else {
+        check(
+          c.name,
+          same,
+          same ? '' : `the text says ${JSON.stringify(got)} and the artefact says ${JSON.stringify(c.want)}`,
+        );
+      }
+    }
+  }
+}
+
 // --- the TIME column is present, but NOT compared ---------------------------
 for (const row of table.rows) {
   const i = table.header.indexOf('Time');
@@ -358,9 +506,18 @@ for (const row of table.rows) {
 }
 
 console.log('');
-console.log(
-  failures === 0
-    ? `README live table and gate table: all ${checks} checks match the tree.`
-    : `README live table and gate table: ${failures} of ${checks} checks FAILED.`,
-);
+if (falsify) {
+  console.log('the falsification mode broke the artefact-total checks, as it must.');
+  console.log(
+    failures === 0
+      ? `README live table and gate table: all ${checks} checks agree.`
+      : `README live table and gate table: ${failures} of ${checks} checks FAILED.`,
+  );
+} else {
+  console.log(
+    failures === 0
+      ? `README live table and gate table: all ${checks} checks match the tree.`
+      : `README live table and gate table: ${failures} of ${checks} checks FAILED.`,
+  );
+}
 process.exit(failures === 0 ? 0 : 1);

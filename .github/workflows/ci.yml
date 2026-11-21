@@ -233,6 +233,15 @@ jobs:
       - name: Check the README's live table against the tree
         run: node scripts/qa/readme_table.mjs --no-selfscan
 
+      # The same check, with its artefact-total expectations INVERTED on
+      # purpose: every one of them has to fail. A claim that still passes is
+      # vacuous -- it is not really compared with the artefact -- so this
+      # proves the drift detector can actually fail. Those totals drifted
+      # once already: Phase 2 regenerated the artefact and the prose kept
+      # the previous ones.
+      - name: Check that the README's drift detector can fail
+        run: node scripts/qa/readme_table.mjs --no-selfscan --falsify
+
       # THE PUBLISHED INTERFACE, CHECKED AGAINST THE RELEASE NOTES. A release
       # that changes the published `.mbti` can break a consumer's build, and
       # the release notes are the only place a consumer reads that. This

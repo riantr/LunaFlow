@@ -413,5 +413,27 @@ The self-scan row moved because this tree gained a file: **57 → 58 files**,
 **6,780 → 6,822 statements**, and the L2 findings, the events, the dead-code
 count and the taint sinks are unchanged (46 / 10,201 / 0 / 8).
 
+**Two MORE numbers moved with the artefact, and the README's prose kept the
+previous ones.** Regenerating the doubleML artefact also changed the L2
+table's own total (**2,535 → 2,515**) and the sidecar's row count
+(**3,524 → 3,504**), and the README's "What changed in 0.1.30" section — which
+states them in the present tense, as facts about "the committed doubleML
+artefact" — still quoted the PREVIOUS artefact's totals. **Nothing caught it**:
+`scripts/qa/readme_table.mjs` compared the live TABLE with the summaries, and
+the prose that repeats the artefact's own totals was compared with nothing.
+That is exactly the drift this project does not allow to pass silently, and it
+passed silently.
+
+The check now measures the artefact — its marker row, its sidecar's row count,
+the size of the family that could not fire, and the share of the L2 table's
+findings that sit in test files (**486 of 2,515, 19.3 %**) — and compares each
+one with the prose that publishes it in `README.md`, `docs/design.md` and
+`docs/qa/LOOP_ACCEPTANCE.md`. `node scripts/qa/readme_table.mjs --no-selfscan
+--falsify` inverts those expectations on purpose and requires every one of
+them to fail, so the detector is proved to be able to fail rather than merely
+to be green. The check was falsified against the drift itself: the old
+numbers were put back, both claims failed, and the files came back
+byte-identically.
+
 The published interface changed too — `AbsVal`'s array case grew a third
 component — and §4 says what that costs and who enforces the declaration.
