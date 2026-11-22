@@ -1554,6 +1554,37 @@ Interpretation:
 - Against Joern/CodeQL, the trade is **static closure for runtime evidence**: those tools answer "can this happen on any path?" (with aliasing approximations); LunaFlow answers "did this happen on these inputs, and through which values?" and avoids database construction. CodeQL/Joern scale to very large repos better; LunaFlow's caps and single-package design favor modules, which is exactly the mooncakes.io unit.
 - Against SVF/Soot, MoonBit has no LLVM/Java IR in this pipeline; the array-index/allocation sink model replaces pointer arithmetic, and the GC removes ownership/alias complexity that those tools must model.
 
+### 8.1 A borrowing examined and not adopted: the gate policy file
+
+The `Veriflow` verification project (`NineSense9/Veriflow`) runs its gate with a **policy file** whose thresholds live in one machine-readable place. The six keys, from its `packages/verify/veriflow_verify/gate.py`:
+
+```python
+DEFAULT_POLICY = {
+    "fail_on": {"severity": ["CRITICAL", "HIGH"]},
+    "unknown_policy": {"runtime": "warning", "safety": "fail"},
+    "requirements": {"minimum_coverage": 0.9},
+    "repair": {"allow_auto_repair": False},
+    "regression": {"allow_new_high_severity": False},
+    "benchmark": {"minimum_detection_f1": None},
+}
+```
+
+The proposal was to give this project's gate the same shape: one file of thresholds, read by the checks, instead of the thresholds living inside the harnesses.
+
+**Not adopted — and the reason is the shape of a threshold, not the inconvenience of a file.** Every comparison this project makes between a published number and a measured number is an **exact equality**: `scripts/qa/readme_table.mjs` writes `cell !== s[f]` for a difference and `want.every((w, i) => w === got[i])` for a match, and the file contains **no `<=` and no `>=` at all**. The only way such a check passes is for the number to *be* the number, and that is what makes a published number falsifiable.
+
+A threshold is the one shape that can pass **vacuously**. "The tree's L2 findings must be at most 300" is satisfied by a tree with three million findings: the check goes green while the tree gets worse, and nothing in the run says so. Veriflow shows that shape's edge in its own code — its coverage criterion reads `if coverage is not None and coverage < minimum`, so a coverage that was **never measured** passes the floor, and an unmeasured value is not a good value (that is the whole subject of §5.17). Moving this project's thresholds into a policy file would make the vacuous shape the default, and would trade away the discipline the whole harness rests on.
+
+The second reason is that **there is nothing to put in the file yet**. This project's thresholds are not values; they are the checks themselves, and each check is a program that measures something and compares it. `scripts/qa/gate.ps1` writes one line per step (`ok`, `FAIL(n)`, `UNKNOWN(2)`), and `scripts/qa/gate-steps.json` holds the step list in the repository, so the gate's decisions are already auditable in place and reviewable in a diff.
+
+**What would reverse this decision.** A policy file becomes **mandatory** the moment a threshold is introduced — the first check whose verdict is "the tree is good enough" rather than "the tree is exactly what it claims". Concretely: a `fail_on: severity` rule over the findings sidecar, a `minimum_coverage` floor, or a per-family `unknown_policy`. Then three things have to hold, or the file is only a place to hide a criterion that can pass vacuously:
+
+1. the thresholds live in **one** place and are **read** by the checks, never duplicated in a script;
+2. every threshold is a falsifier's subject — the check has to be shown to go red when the threshold is crossed, the way `readme_table.mjs --falsify` inverts its own expectations today;
+3. a threshold that is satisfied by a **worse** tree is rejected at the design stage: "at most N" is admissible only where a larger N is not a regression.
+
+**And this closes a record gap.** The comparison with that project produced several borrowings that were examined and not adopted — the guarded self-repair loop, the web UI, the natural-language→IR pipeline, and this policy file — and until now **none of them was written down**: §5.16–§5.19 describe what the analyser does, not what this project declined to borrow. The other three are still conversation-only; this one is recorded because its reason is a property of the harness that a later change could quietly undo.
+
 ---
 
 ## 9. Applicability, strengths, limitations
