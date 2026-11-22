@@ -34,6 +34,8 @@
   "node scripts/qa/headings.mjs docs/design.md",
   "node scripts/qa/headings.mjs docs/qa/IFDS_SPIKE.md",
   "node scripts/qa/gate_verdicts.mjs",
+  "node scripts/qa/finding_verdicts.mjs",
+  "node scripts/qa/metamorphic.mjs",
   "python .github/scripts/check_readme_sync.py",
   "typos"
 ]

@@ -342,3 +342,23 @@ jobs:
       # check that cannot run has no verdict.
       - name: Check the gate's verdicts
         run: node scripts/qa/gate_verdicts.mjs
+
+      # THE VERDICT, INSIDE THE ANALYSER.  The gate above reads an exit code;
+      # this reads the analyser's own third state.  A claim the analyser could
+      # NOT decide must not look like a claim it decided and found clean, so a
+      # finding carries a verdict, the report has a Verdict column and a
+      # section for the claims that could not be decided, and the POLICY
+      # decides what an undecided claim means.
+      #
+      # It runs the analyser over a module whose loop is past the
+      # interpreter's budget, so the undecided state is reached for real.
+      - name: Check that an undecided claim is reported as undecided
+        run: node scripts/qa/finding_verdicts.mjs
+
+      # THE METAMORPHIC GATE.  The findings must not depend on how the source
+      # is written down: the same program with other identifiers, with its
+      # functions in another order, or with `a + b` written as `b + a`, must
+      # make the same claims.  A check that runs the analyser once measures
+      # ONE shape of the input; this one measures the analyser.
+      - name: Check that the findings do not depend on the source's spelling
+        run: node scripts/qa/metamorphic.mjs

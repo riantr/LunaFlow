@@ -630,15 +630,15 @@ if (existsSync(join(ROOT, 'fixtures', 'memory_demo', 'lib.mbt'))) {
   );
   check(
     'the global collection that is trimmed is not reported',
-    !/UNBOUNDED-GROWTH \| warning \|.*ring/.test(memText),
+    !/UNBOUNDED-GROWTH \| warning \| certain \|.*ring/.test(memText),
   );
   check(
     'the local collection is not reported',
-    !/UNBOUNDED-GROWTH \| warning \|.*scratch/.test(memText),
+    !/UNBOUNDED-GROWTH \| warning \| certain \|.*scratch/.test(memText),
   );
   check(
     'the collection filled in a bounded loop is not reported',
-    !/UNBOUNDED-GROWTH \| warning \|.*few/.test(memText),
+    !/UNBOUNDED-GROWTH \| warning \| certain \|.*few/.test(memText),
   );
   const growthContract = run(['--explain', 'UNBOUNDED-GROWTH']);
   const growthText = growthContract.stdout ?? '';
@@ -754,7 +754,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   check(
     'the length finding is on the call with the wrong length, not on the right one',
-    /FFI-LENGTH-MISMATCH \| warning \| wrong_length/.test(ffiText),
+    /FFI-LENGTH-MISMATCH \| warning \| certain \| wrong_length/.test(ffiText),
   );
   // The classes safe MoonBit cannot express, and that the C boundary CAN.
   // The fixture carries the defect half AND the safe half of each one, and
@@ -765,13 +765,13 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   check(
     'the allocation that is released is not reported as a leak',
-    !/FFI-ALLOCATION-NOT-RELEASED \| warning \| release_the_region/.test(
+    !/FFI-ALLOCATION-NOT-RELEASED \| warning \| certain \| release_the_region/.test(
       ffiText,
     ),
   );
   check(
     'the allocation that is handed back is not reported as a leak',
-    !/FFI-ALLOCATION-NOT-RELEASED \| warning \| hand_back_the_region/.test(
+    !/FFI-ALLOCATION-NOT-RELEASED \| warning \| certain \| hand_back_the_region/.test(
       ffiText,
     ),
   );
@@ -781,7 +781,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   check(
     'the format slot filled with the module\'s own text is not reported',
-    !/FFI-FORMAT-STRING \| error \| log_own_text/.test(ffiText),
+    !/FFI-FORMAT-STRING \| error \| certain \| log_own_text/.test(ffiText),
   );
   check(
     'an address past the end of the region is reported',
@@ -789,7 +789,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   check(
     'the address inside the region is not reported',
-    !/FFI-ADDRESS-OOB \| error \| write_inside_the_region/.test(ffiText),
+    !/FFI-ADDRESS-OOB \| error \| certain \| write_inside_the_region/.test(ffiText),
   );
   // The reserved EVA families point at the boundary families that cover their
   // class, so `--explain` answers the question the reader is asking.

@@ -969,13 +969,17 @@ fn exec_block(
     if p.steps >= p.max_steps {
       if !p.budget {
         p.budget = true
+        // The execution budget ran out, so the rest of this function was NOT
+        // executed.  Nothing about it was decided -- that is the difference
+        // between this finding and a claim about the module, and the verdict
+        // is what says so.
         p.findings.push(
-          Finding::new(
+          Finding::undecided(
             FBudget,
             p.file,
             s.span.start_line,
             fn_name,
-            "execution budget exhausted; loop may be non-terminating or inputs too large",
+            "the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided",
             "dynamic",
             0.6,
             "max_steps=" + p.max_steps.to_string(),

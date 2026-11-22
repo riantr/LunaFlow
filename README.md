@@ -2954,9 +2954,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 80 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 80 warnings, 0 errors |
 | `moon check --target js` | exit 0, 105 warnings, 0 errors |
-| `moon test src/app --target native` | **286 passed, 0 failed** |
-| `moon test src/app --target wasm` | **286 passed, 0 failed** |
-| `moon test src/app --target js` | **286 passed, 0 failed** |
+| `moon test src/app --target native` | **296 passed, 0 failed** |
+| `moon test src/app --target wasm` | **296 passed, 0 failed** |
+| `moon test src/app --target js` | **296 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -2970,6 +2970,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/size_taint.mjs` | **every check agrees** — the analyser over nine shapes: a container's SIZE taint is not its CONTENTS' taint, in both directions, and the twenty doubleML claims the repair removed stay removed |
 | `node scripts/qa/plus_size.mjs` | **every check agrees** — the analyser over six shapes: the size of a `+`-built array is the SUM of the two counts and names only the sources that decide the COUNT, and the claims the repair removed stay removed |
 | `node scripts/qa/gate_verdicts.mjs` | **every check agrees** — a FAIL, an UNKNOWN and a PASS are three different things, the shipped checks exit 2 when they cannot decide, and the runner resolves its own default list on the platform it runs on |
+| `node scripts/qa/finding_verdicts.mjs` | **every check agrees** — a claim the analyser could not decide is reported as UNDECIDED, with the reason, and the policy decides what an undecided claim means |
+| `node scripts/qa/metamorphic.mjs` | **every check agrees** — the findings do not depend on the source's spelling: the same program with other identifiers, with its functions in another order, or with `a + b` written as `b + a`, makes the same claims |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -3005,11 +3007,62 @@ runner runs on — a Windows separator is not a separator on Linux — so the ch
 asks the runner for its list (`gate.ps1 -ListOnly`) and compares it with the
 shipped one.
 
+**The ANALYSER has three verdicts too, and they are the same three.** A finding
+is a CLAIM, and a claim can end in three ways: the analyser decided it, the
+analyser decided it is false, or the analyser **could not decide it at all**.
+Before this, the third one had nowhere to go: the claim was simply absent, and
+an absent claim is indistinguishable from a claim that was decided and found
+clean — which is exactly the price Phase 3 paid, where fourteen true claims
+vanished and the report could not say *why*. A finding now carries a **verdict**
+(`certain` or `unknown`), the findings table has a **Verdict column**, the
+sidecar carries it per finding, and the report has a section — **5.10 Claims
+that could not be decided** — that lists them with the reason instead of
+leaving the reader to infer them from a row that is not there.
+
+**What an undecided claim MEANS is a policy, and the policy is fail-closed.**
+An undecided claim about a **safety** property is an **error**: the module's
+safety is then not established, and *"we could not decide"* is not *"it is
+fine"*. An undecided claim about anything else is a **warning** — worth
+knowing, and not by itself a safety claim. An undecided claim is never merely
+informational: `info` is how this project renders the families that never fire,
+and a claim that could not be decided is not a claim that never applies. The
+policy lives in one table, `src/app/policy.mbt`, because adding a family should
+be a decision somebody has to make.
+
+The producer today is the analyser's own **step budget**: a loop that runs past
+it means the rest of the function was never analysed, so nothing about it was
+decided — and that is now said in words rather than implied by silence.
+`node scripts/qa/finding_verdicts.mjs` drives the analyser into that state and
+checks all of it: the vocabulary, the producer, the policy, the column, and the
+count.
+
+**THE METAMORPHIC GATE: the findings must not depend on how the source is
+written down.** A check that runs the analyser once measures ONE shape of the
+input. `node scripts/qa/metamorphic.mjs` runs it over the same program written
+several ways and compares the claims:
+
+- **RENAME** — the same program with different identifiers makes the same
+  claims. An analyser whose claims depend on the *name* of a local is not
+  analysing the program.
+- **REORDER** — the same program with its functions in another order makes the
+  same claims. A finding that depends on how many functions happen to precede
+  it is a finding about the file order, and the report already says the CFG
+  pass takes the FIRST functions in file order.
+- **SWAP** — `a + b` and `b + a` make the same claims. The count of a
+  `+`-built array is the sum of the two counts, and a sum does not remember
+  which side was first.
+
+And two more, because a metamorphic gate that cannot fail is decoration: the
+comparison must be able to **tell two programs apart** (a program whose claims
+really are different gets a different signature), and the same program analysed
+**twice** must give the same findings **in the same order** — a hash-order
+artefact would show up there and nowhere else.
+
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
 `moon 0.1.20261119` (738607b, 2026-11-19; core 0.10.22+124d61d05), installed into a
 scratch home next to the verified one: `moon check` gives **82 / 82 / 107 warnings,
-0 errors** on native / wasm / js, `moon test src/app` gives **286 passed, 0 failed**
+0 errors** on native / wasm / js, `moon test src/app` gives **296 passed, 0 failed**
 on each of the three, `moon build src/cli --target native`, `moon build src/cli
 --target js`, `moon build . --target wasm` and `moon build . --target js` are exit
 0, and `moon fmt --check` is exit 0. **`deprecated` is 0 on both toolchains** —
@@ -3036,14 +3089,14 @@ traceable to a file in `reports/`:
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 9.6 s |
-| `riantr/moonbit_static_analysis@latest` → 0.5.0 | 254 | 17,450 | 17,029 | 188 | 0 (no specs) | 0 | 9 | 1.7 s |
+| `riantr/moonbit_static_analysis@latest` → 0.5.3 | 262 | 17,797 | 11,564 | 188 | 0 (no specs) | 0 | 7 | 2.6 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 59 | 6,876 | 10,201 | 46 | 2 / 1 / 3 | 0 | 8 | 946 ms |
+| `LunaFlow` itself (`--dir .`) | 61 | 6,983 | 10,249 | 46 | 2 / 1 / 3 | 0 | 8 | 715 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **946 ms** to **1,352 ms**, while every
+runs over the tree this commit names read **715 ms** to **747 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
@@ -3206,6 +3259,23 @@ are **not** byte-identical to the ones the 0.1.29 release committed: the
 repaired allocation rule records an `EvAlloc`, so the trace carries the
 allocation it was silently skipping.
 
+**Reproduction status (2026-11-22).** The artefacts were regenerated on this
+tree with the same recipe (`--funnel --trials 4` and one slice each), and two
+things moved.
+
+- **The static-analysis module moved from 0.5.0 to 0.5.3.** The registry served
+  a newer version, and the artefact records the version it was generated from,
+  so its committed set is now the **0.5.3** one and the acceptance verifier's
+  pin follows it. Its counts moved with it: **254 → 262** files, **17,450 →
+  17,797** statements, **198 → 195** findings. That is the corpus moving, not
+  the analyser: the **doubleML** and **fixture** artefacts are on the same
+  corpora as before, and both of their **traces are byte-identical** to the
+  ones they replace.
+- **The findings tables gained a Verdict column, and the sidecar a `verdict`
+  key.** That is the analyser changing: a claim it could not decide is now
+  reported as one, so the doubleML artefact's eight exhausted-budget findings
+  and the static-analysis module's one are `unknown` rather than `certain`.
+
 LunaFlow's OWN row moves because the analyzer is one of the modules it analyses, and
 because the new checks are new source: 0.1.7 moved the statement count, 3,126 →
 3,145, when the `#cfg` guards and the stubs behind them became statements, the
@@ -3236,7 +3306,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **59 files, 6,876 statements, 10,201 events, 46 L2
+On this tree the row reads **61 files, 6,983 statements, 10,249 events, 46 L2
 findings, 0 dead and 8 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third

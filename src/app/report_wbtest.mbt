@@ -31,10 +31,13 @@ test "a findings table shows every finding when they fit" {
   inspect(md.contains("truncated"), content="false")
   inspect(md.contains("| Family |"), content="false")
   inspect(
-    md.contains("| RANGE-VIOLATION | warning | f | t.mbt:1 |"),
+    md.contains("| RANGE-VIOLATION | warning | certain | f | t.mbt:1 |"),
     content="true",
   )
-  inspect(md.contains("| INDEX-OOB | error | f | t.mbt:3 |"), content="true")
+  inspect(
+    md.contains("| INDEX-OOB | error | certain | f | t.mbt:3 |"),
+    content="true",
+  )
   inspect(sink.length(), content="3")
 }
 
@@ -51,11 +54,11 @@ test "a findings table is bounded, and says what it left out" {
   let md = findings_table(fs, 2, sink)
   // The bound holds: two rows of findings, and the marker says which rows.
   inspect(
-    md.contains("| RANGE-VIOLATION | warning | f | t.mbt:1 |"),
+    md.contains("| RANGE-VIOLATION | warning | certain | f | t.mbt:1 |"),
     content="true",
   )
   inspect(
-    md.contains("| RANGE-VIOLATION | warning | f | t.mbt:2 |"),
+    md.contains("| RANGE-VIOLATION | warning | certain | f | t.mbt:2 |"),
     content="true",
   )
   inspect(md.contains("t.mbt:3"), content="false")
@@ -113,4 +116,32 @@ test "the report's findings are collected, not just its tables" {
   let md = findings_table(many, 10, sink)
   inspect(md.contains("(truncated at 10 of 500 rows)"), content="true")
   inspect(sink.length(), content="500")
+}
+
+///|
+test "the truncated findings table's marker row has the header's shape" {
+  // The marker row is the ONE row the findings table writes by hand, so it is
+  // the one a column change can leave behind.  And a row with the wrong
+  // number of cells is what makes the checks that MATCH a row by its columns
+  // stop matching -- silently, and in the wrong direction: a NEGATIVE check
+  // over that shape stops failing because it stops matching at all.
+  //
+  // That happened when the Verdict column was added: four negative checks
+  // over the FFI and memory rows went quiet, and only the one POSITIVE check
+  // over a row went red.
+  let many : Array[Finding] = []
+  let mut i = 0
+  while i < 500 {
+    many.push(f_at(FRangeViolation, i))
+    i = i + 1
+  }
+  let sink : Array[Finding] = []
+  let md = findings_table(many, 10, sink)
+  // Eight cells, the same as the header's eight columns.
+  inspect(
+    md.contains(
+      "| ... | ... | ... | ... | ... | (truncated at 10 of 500 rows) | ... | ... |",
+    ),
+    content="true",
+  )
 }

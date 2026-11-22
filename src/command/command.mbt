@@ -497,7 +497,12 @@ fn findings_jsonl(fs : Array[@app.Finding]) -> String {
     out.write_string("{\"rule\":\"")
     out.write_string(f.kind.code())
     out.write_string("\",\"severity\":\"")
-    out.write_string(f.kind.severity())
+    // The POLICY's severity, not the family's: an undecided claim carries the
+    // severity the policy gives it, and the report's table reads the same
+    // value, so the two cannot disagree.
+    out.write_string(f.severity())
+    out.write_string("\",\"verdict\":\"")
+    out.write_string(f.verdict.code())
     out.write_string("\",\"fn\":\"")
     out.write_string(@app.json_escape(f.fn_name))
     out.write_string("\",\"file\":\"")

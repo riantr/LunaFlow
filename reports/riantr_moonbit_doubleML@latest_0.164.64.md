@@ -28,7 +28,7 @@
 | Interpreted steps | 47835 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 9636 ms |
+| Wall time (analyzer) | 13352 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -580,22 +580,22 @@ flowchart TD
 
 ### 4.2 CFG findings
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| BUDGET-EXCEEDED | warning | slice_matrix_rows | kfold.mbt:496 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:468 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | draw_bootstrap_weights | did_multi.mbt:1154 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:474 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:474 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | DoubleMLAPOS::confint | apo.mbt:2127 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | DoubleMLAPOS::causal_contrast | apo.mbt:2250 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | DoubleMLDID::fit | did.mbt:611 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:474 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | GBLearner::fit_weighted | gbl.mbt:188 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:474 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | draw_bootstrap_weights | did_multi.mbt:1154 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:474 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:468 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| BUDGET-EXCEEDED | warning | unknown | slice_matrix_rows | kfold.mbt:496 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | kfold | kfold.mbt:468 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | draw_bootstrap_weights | did_multi.mbt:1154 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | kfold | kfold.mbt:474 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | kfold | kfold.mbt:474 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | DoubleMLAPOS::confint | apo.mbt:2127 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | DoubleMLAPOS::causal_contrast | apo.mbt:2250 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | DoubleMLDID::fit | did.mbt:611 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | kfold | kfold.mbt:474 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | GBLearner::fit_weighted | gbl.mbt:188 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | kfold | kfold.mbt:474 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | draw_bootstrap_weights | did_multi.mbt:1154 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | kfold | kfold.mbt:474 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | kfold | kfold.mbt:468 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
 
 ### 4.3 Static vs dynamic attribution
 
@@ -658,203 +658,203 @@ flowchart LR
 
 ### 5.1 Taint sinks
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TAINT-ALLOC | error | indicator_level | apo.mbt:252 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cross_fit_apo | apo.mbt:286 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cross_fit_apo | apo.mbt:287 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | clip_vec | irm.mbt:329 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | clip_vec | irm.mbt:331 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | normalize_ipw | ps_processor.mbt:927 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | normalize_ipw | ps_processor.mbt:929 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | normalize_ipw | ps_processor.mbt:935 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | normalize_ipw | ps_processor.mbt:936 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | normalize_ipw | ps_processor.mbt:940 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | normalize_ipw | ps_processor.mbt:942 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | normalize_ipw | ps_processor.mbt:943 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | slice_matrix_rows | kfold.mbt:493 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | slice_matrix_rows | kfold.mbt:491 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | unique_units | plpr.mbt:175 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | build_row_unit_map | kfold.mbt:590 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | build_row_unit_map | kfold.mbt:592 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPO::fit_cluster | apo.mbt:576 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:579 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:580 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:581 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:582 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | psi_at | sandwich.mbt:224 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | psi_at | sandwich.mbt:226 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cluster_sandwich_variance | sandwich.mbt:550 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cluster_sandwich_variance | sandwich.mbt:559 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cluster_sandwich_variance | sandwich.mbt:560 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cluster_sandwich_variance | sandwich.mbt:562 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cluster_sandwich_variance | sandwich.mbt:563 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cluster_sandwich_variance | sandwich.mbt:564 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cluster_sandwich_variance | sandwich.mbt:569 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | cluster_sandwich_variance | sandwich.mbt:582 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-ALLOC | error | draw_bootstrap_weights | did_multi.mbt:1132 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | kfold | kfold.mbt:466 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1100 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1102 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1111 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1112 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1114 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1117 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1119 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1121 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_analysis | apo.mbt:1135 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPO::sensitivity_analysis | apo.mbt:1137 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_from_elements | sensitivity.mbt:94 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_from_elements | sensitivity.mbt:95 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_from_elements | sensitivity.mbt:99 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_from_elements | sensitivity.mbt:100 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_from_elements | sensitivity.mbt:103 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_from_elements | sensitivity.mbt:104 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_from_elements | sensitivity.mbt:112 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_from_elements | sensitivity.mbt:113 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | compute_sensitivity_bias | sensitivity.mbt:580 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1167 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1169 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:253 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:254 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:260 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:261 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:262 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:265 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:266 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:267 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:268 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:269 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:273 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:274 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:275 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:276 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:283 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:284 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:285 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:290 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:291 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:294 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:295 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:299 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:300 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPOS::psi_b_row_at | apo.mbt:1822 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPOS::psi_b_row_at | apo.mbt:1825 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPOS::psi_a_row_at | apo.mbt:1850 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPOS::sandwich_se_at | apo.mbt:1930 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1977 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2028 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPOS::bootstrap | apo.mbt:2058 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPOS::confint | apo.mbt:2108 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPOS::confint | apo.mbt:2116 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPOS::confint | apo.mbt:2120 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLAPOS::confint | apo.mbt:2121 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | DoubleMLAPOS::causal_contrast | apo.mbt:2217 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX | error | DoubleMLAPOS::causal_contrast | apo.mbt:2220 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPOS::sensitivity_analysis | apo.mbt:2273 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLAPOS::sensitivity_analysis_cluster | apo.mbt:2322 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | check_sample_splitting | kfold.mbt:300 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | check_sample_splitting | kfold.mbt:312 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | DoubleMLDIDData::new | did.mbt:55 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-ALLOC | error | cross_fit_did | did.mbt:443 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cross_fit_did | did.mbt:444 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cross_fit_did | did.mbt:445 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:553 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:554 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:555 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::fit | did.mbt:606 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::fit | did.mbt:607 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::fit | did.mbt:608 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | generic_bootstrap_t_stat | bootstrap_helper.mbt:74 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:885 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:886 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:893 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:894 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:896 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:897 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:924 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:926 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_analysis | did.mbt:950 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::sensitivity_analysis | did.mbt:952 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:987 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:989 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | GBLearner::fit_weighted | gbl.mbt:146 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | GBLearner::fit_weighted | gbl.mbt:150 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | GBLearner::fit_weighted | gbl.mbt:154 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | GBLearner::fit_weighted | gbl.mbt:156 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | GBLearner::fit_weighted | gbl.mbt:185 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | GBLearner::fit_weighted | gbl.mbt:140 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-ALLOC | error | predict | gbl.mbt:251 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cross_fit_irm | irm.mbt:363 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cross_fit_irm | irm.mbt:364 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | cross_fit_irm | irm.mbt:365 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:384 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:385 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:399 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:400 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:408 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:409 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLIRM::fit_cluster | irm.mbt:760 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:762 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:763 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:764 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:765 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:766 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:767 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1097 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1098 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1100 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1101 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1108 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1110 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | vector_subtract | vectorized.mbt:81 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | vector_subtract | vectorized.mbt:83 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_analysis | irm.mbt:1132 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLIRM::sensitivity_analysis | irm.mbt:1134 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1170 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1172 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | mean | matrix.mbt:252 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX-RANGE | warning | sample_sd | kde.mbt:40 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX | error | percentile_sorted | kde.mbt:77 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | lpq_score | lpq.mbt:48 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lpq_score | lpq.mbt:51 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lpq_score | lpq.mbt:52 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lpq_score | lpq.mbt:53 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lpq_score | lpq.mbt:54 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | lpq_score_ipw | lpq.mbt:77 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lpq_score_ipw | lpq.mbt:81 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lpq_score_ipw | lpq.mbt:82 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | generic_bootstrap_single_psi | bootstrap_helper.mbt:113 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | single_psi_sensitivity | sensitivity.mbt:503 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | single_psi_sensitivity | sensitivity.mbt:504 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | single_psi_sensitivity | sensitivity.mbt:510 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | single_psi_sensitivity | sensitivity.mbt:514 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | single_psi_sensitivity | sensitivity.mbt:515 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | single_psi_sensitivity | sensitivity.mbt:517 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | single_psi_sensitivity | sensitivity.mbt:518 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:622 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:625 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:627 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:339 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:340 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster | sensitivity.mbt:346 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster | sensitivity.mbt:347 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:350 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:351 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:352 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:353 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:357 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:358 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:359 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:366 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:367 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster | sensitivity.mbt:375 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | irm_style_sensitivity_cluster | sensitivity.mbt:376 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:378 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | irm_style_sensitivity_cluster | sensitivity.mbt:379 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | aggregate_coef_se | aggregator.mbt:53 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | aggregate_coef_se | aggregator.mbt:55 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | aggregate_coef_se | aggregator.mbt:60 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| TAINT-ALLOC | error | certain | indicator_level | apo.mbt:252 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cross_fit_apo | apo.mbt:286 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cross_fit_apo | apo.mbt:287 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | clip_vec | irm.mbt:329 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | clip_vec | irm.mbt:331 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | normalize_ipw | ps_processor.mbt:927 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | normalize_ipw | ps_processor.mbt:929 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | normalize_ipw | ps_processor.mbt:935 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | normalize_ipw | ps_processor.mbt:936 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | normalize_ipw | ps_processor.mbt:940 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | normalize_ipw | ps_processor.mbt:942 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | normalize_ipw | ps_processor.mbt:943 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | slice_matrix_rows | kfold.mbt:493 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | slice_matrix_rows | kfold.mbt:491 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | unique_units | plpr.mbt:175 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | build_row_unit_map | kfold.mbt:590 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | build_row_unit_map | kfold.mbt:592 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:576 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:579 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:580 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:581 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:582 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | psi_at | sandwich.mbt:224 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | psi_at | sandwich.mbt:226 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cluster_sandwich_variance | sandwich.mbt:550 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cluster_sandwich_variance | sandwich.mbt:559 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cluster_sandwich_variance | sandwich.mbt:560 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cluster_sandwich_variance | sandwich.mbt:562 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cluster_sandwich_variance | sandwich.mbt:563 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cluster_sandwich_variance | sandwich.mbt:564 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cluster_sandwich_variance | sandwich.mbt:569 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | cluster_sandwich_variance | sandwich.mbt:582 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-ALLOC | error | certain | draw_bootstrap_weights | did_multi.mbt:1132 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | kfold | kfold.mbt:466 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1100 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1102 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1111 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1112 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1114 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1117 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1119 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1121 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_analysis | apo.mbt:1135 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPO::sensitivity_analysis | apo.mbt:1137 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:94 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:95 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:99 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:100 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:103 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:104 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:112 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_from_elements | sensitivity.mbt:113 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | compute_sensitivity_bias | sensitivity.mbt:580 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1167 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1169 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:253 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:254 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:260 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:261 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:262 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:265 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:266 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:267 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:268 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:269 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:273 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:274 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:275 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:276 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:283 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:284 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:285 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:290 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:291 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:294 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:295 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:299 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster_from_elements | sensitivity.mbt:300 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1822 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1825 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::psi_a_row_at | apo.mbt:1850 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::sandwich_se_at | apo.mbt:1930 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1977 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2028 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::bootstrap | apo.mbt:2058 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::confint | apo.mbt:2108 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::confint | apo.mbt:2116 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::confint | apo.mbt:2120 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::confint | apo.mbt:2121 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | DoubleMLAPOS::causal_contrast | apo.mbt:2217 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::causal_contrast | apo.mbt:2220 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::sensitivity_analysis | apo.mbt:2273 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::sensitivity_analysis_cluster | apo.mbt:2322 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | check_sample_splitting | kfold.mbt:300 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | check_sample_splitting | kfold.mbt:312 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | DoubleMLDIDData::new | did.mbt:55 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-ALLOC | error | certain | cross_fit_did | did.mbt:443 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cross_fit_did | did.mbt:444 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cross_fit_did | did.mbt:445 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:553 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:554 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:555 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::fit | did.mbt:606 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::fit | did.mbt:607 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::fit | did.mbt:608 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | generic_bootstrap_t_stat | bootstrap_helper.mbt:74 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:885 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:886 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:893 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:894 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:896 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:897 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:924 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:926 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_analysis | did.mbt:950 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::sensitivity_analysis | did.mbt:952 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:987 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:989 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | GBLearner::fit_weighted | gbl.mbt:146 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | GBLearner::fit_weighted | gbl.mbt:150 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | GBLearner::fit_weighted | gbl.mbt:154 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | GBLearner::fit_weighted | gbl.mbt:156 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | GBLearner::fit_weighted | gbl.mbt:185 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | GBLearner::fit_weighted | gbl.mbt:140 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-ALLOC | error | certain | predict | gbl.mbt:251 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cross_fit_irm | irm.mbt:363 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cross_fit_irm | irm.mbt:364 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | cross_fit_irm | irm.mbt:365 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:384 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:385 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:399 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:400 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:408 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:409 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:760 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:762 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:763 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:764 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:765 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:766 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:767 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1097 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1098 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1100 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1101 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1108 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1110 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | vector_subtract | vectorized.mbt:81 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | vector_subtract | vectorized.mbt:83 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_analysis | irm.mbt:1132 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLIRM::sensitivity_analysis | irm.mbt:1134 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1170 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1172 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | mean | matrix.mbt:252 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | sample_sd | kde.mbt:40 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | percentile_sorted | kde.mbt:77 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | lpq_score | lpq.mbt:48 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lpq_score | lpq.mbt:51 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lpq_score | lpq.mbt:52 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lpq_score | lpq.mbt:53 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lpq_score | lpq.mbt:54 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | lpq_score_ipw | lpq.mbt:77 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lpq_score_ipw | lpq.mbt:81 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lpq_score_ipw | lpq.mbt:82 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | generic_bootstrap_single_psi | bootstrap_helper.mbt:113 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | single_psi_sensitivity | sensitivity.mbt:503 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | single_psi_sensitivity | sensitivity.mbt:504 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | single_psi_sensitivity | sensitivity.mbt:510 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | single_psi_sensitivity | sensitivity.mbt:514 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | single_psi_sensitivity | sensitivity.mbt:515 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | single_psi_sensitivity | sensitivity.mbt:517 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | single_psi_sensitivity | sensitivity.mbt:518 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:622 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:625 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:627 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:339 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:340 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:346 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:347 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:350 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:351 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:352 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:353 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:357 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:358 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:359 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:366 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:367 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:375 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:376 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:378 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | irm_style_sensitivity_cluster | sensitivity.mbt:379 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | aggregate_coef_se | aggregator.mbt:53 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | aggregate_coef_se | aggregator.mbt:55 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | aggregate_coef_se | aggregator.mbt:60 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 
 ### 5.2 L2 abstract findings (may-analysis)
 
@@ -869,309 +869,309 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | TAINT-INDEX | 209 |
 | UNSUPPORTED | 21 |
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| RANGE-VIOLATION | warning | DoubleMLAPO::new | apo.mbt:116 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::new | apo.mbt:117 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::new | apo.mbt:118 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::new | apo.mbt:119 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::new | apo.mbt:120 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::coef | apo.mbt:198 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::se | apo.mbt:209 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::confint | apo.mbt:220 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::predictions_g | apo.mbt:231 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::predictions_m | apo.mbt:242 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | indicator_level | apo.mbt:252 | tainted value from parameter `d` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_apo | apo.mbt:286 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_apo | apo.mbt:287 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit | apo.mbt:409 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit | apo.mbt:410 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit | apo.mbt:413 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit | apo.mbt:475 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::fit_cluster | apo.mbt:556 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::fit_cluster | apo.mbt:562 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:579 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:580 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:581 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:582 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:606 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:607 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:648 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::fit_cluster | apo.mbt:649 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sandwich_se | apo.mbt:771 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sandwich_se | apo.mbt:773 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sandwich_se | apo.mbt:776 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sandwich_se | apo.mbt:779 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::cluster_sandwich_se | apo.mbt:804 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::cluster_sandwich_se | apo.mbt:806 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::cluster_sandwich_se | apo.mbt:807 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::cluster_sandwich_se | apo.mbt:810 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::cluster_sandwich_se | apo.mbt:819 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::bias_corrected_coef | apo.mbt:860 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::bootstrap | apo.mbt:902 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::bootstrap | apo.mbt:903 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::bootstrap | apo.mbt:906 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::tune | apo.mbt:976 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::tune | apo.mbt:977 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::tune | apo.mbt:986 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::tune | apo.mbt:1032 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::tune | apo.mbt:1033 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::tune | apo.mbt:1034 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1097 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1100 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1111 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1112 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1119 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sensitivity_analysis | apo.mbt:1132 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_analysis | apo.mbt:1135 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1163 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1166 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1167 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::new | apo.mbt:1304 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::new | apo.mbt:1305 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::new | apo.mbt:1306 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::new | apo.mbt:1307 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::new | apo.mbt:1308 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::new | apo.mbt:1309 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| UNSUPPORTED | info | DoubleMLAPOS::new | apo.mbt:1340 | tainted value from parameter `treatment_levels` may reach abort/panic | L2-abstract | 0.5 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::fit | apo.mbt:1391 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::coefs | apo.mbt:1695 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::ses | apo.mbt:1706 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_b_row_at | apo.mbt:1814 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_b_row_at | apo.mbt:1815 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_b_row_at | apo.mbt:1816 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_b_row_at | apo.mbt:1817 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_b_row_at | apo.mbt:1818 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_b_row_at | apo.mbt:1820 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_b_row_at | apo.mbt:1821 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPOS::psi_b_row_at | apo.mbt:1822 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_a_row_at | apo.mbt:1844 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_a_row_at | apo.mbt:1845 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_a_row_at | apo.mbt:1846 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_a_row_at | apo.mbt:1848 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::psi_a_row_at | apo.mbt:1849 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPOS::psi_a_row_at | apo.mbt:1850 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::m_inv_1x1_at | apo.mbt:1875 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::sandwich_se_at | apo.mbt:1925 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::sandwich_se_at | apo.mbt:1932 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1971 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1974 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1981 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2024 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2025 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2026 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2027 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::bootstrap | apo.mbt:2052 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::bootstrap | apo.mbt:2053 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::bootstrap | apo.mbt:2056 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPOS::bootstrap | apo.mbt:2058 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::confint | apo.mbt:2100 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::confint | apo.mbt:2101 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::confint | apo.mbt:2103 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPOS::confint | apo.mbt:2108 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPOS::confint | apo.mbt:2116 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | DoubleMLAPOS::confint | apo.mbt:2132 | tainted value from parameter `self` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::boot_t_stats | apo.mbt:2150 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| UNSUPPORTED | info | DoubleMLAPOS::causal_contrast | apo.mbt:2227 | tainted value from parameter `reference_levels` may reach abort/panic | L2-abstract | 0.5 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::sensitivity_analysis | apo.mbt:2271 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPOS::sensitivity_analysis | apo.mbt:2273 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLAPOS::sensitivity_analysis_cluster | apo.mbt:2320 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLAPOS::sensitivity_analysis_cluster | apo.mbt:2322 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDIDData::new | did.mbt:40 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDIDData::new | did.mbt:46 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::new | did.mbt:277 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::new | did.mbt:278 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::new | did.mbt:279 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::new | did.mbt:280 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::new | did.mbt:281 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::new | did.mbt:282 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::new | did.mbt:284 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::coef | did.mbt:347 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::se | did.mbt:358 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::confint | did.mbt:375 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::confint | did.mbt:376 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_did | did.mbt:443 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_did | did.mbt:444 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_did | did.mbt:445 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:553 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:554 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:555 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:612 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:613 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:614 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:649 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:650 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:651 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::fit | did.mbt:656 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::bootstrap | did.mbt:800 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::bootstrap | did.mbt:801 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::bootstrap | did.mbt:804 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sensitivity_nu2_elements | did.mbt:876 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sensitivity_nu2_elements | did.mbt:880 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:893 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:894 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:924 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sensitivity_analysis | did.mbt:945 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_analysis | did.mbt:950 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:981 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:986 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:987 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sandwich_se | did.mbt:1032 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sandwich_se | did.mbt:1036 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::sandwich_se | did.mbt:1039 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::cluster_sandwich_se | did.mbt:1062 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::cluster_sandwich_se | did.mbt:1064 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::cluster_sandwich_se | did.mbt:1067 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::cluster_sandwich_se | did.mbt:1076 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::bias_corrected_coef | did.mbt:1116 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::tune | did.mbt:1204 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLDID::tune | did.mbt:1205 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:132 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:133 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:134 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:135 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:136 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:137 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:138 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | GBLearner::fit_weighted | gbl.mbt:140 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | GBLearner::fit_weighted | gbl.mbt:150 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | GBLearner::fit_weighted | gbl.mbt:154 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | predict | gbl.mbt:251 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::new | irm.mbt:122 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::new | irm.mbt:123 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::new | irm.mbt:124 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::new | irm.mbt:125 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::new | irm.mbt:126 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::coef | irm.mbt:186 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::se | irm.mbt:197 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::confint | irm.mbt:215 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::confint | irm.mbt:216 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-INDEX | error | filter_indices | irm.mbt:317 | tainted value from parameter `idx` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | clip_vec | irm.mbt:329 | tainted value from parameter `v` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_irm | irm.mbt:363 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_irm | irm.mbt:364 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | cross_fit_irm | irm.mbt:365 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:375 | tainted value from parameter `folds` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | cross_fit_irm | irm.mbt:379 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cross_fit_irm | irm.mbt:390 | tainted value from parameter `folds` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | cross_fit_irm | irm.mbt:394 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::fit | irm.mbt:469 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:551 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:552 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:554 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:555 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:556 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:557 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:616 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:617 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:639 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit | irm.mbt:640 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::fit_cluster | irm.mbt:737 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::fit_cluster | irm.mbt:743 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:762 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:763 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:764 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:765 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:766 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:767 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:801 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:802 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:850 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::fit_cluster | irm.mbt:851 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::bootstrap | irm.mbt:942 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::bootstrap | irm.mbt:943 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::bootstrap | irm.mbt:946 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::tune | irm.mbt:1022 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::tune | irm.mbt:1023 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::tune | irm.mbt:1024 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1092 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1096 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1097 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1098 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1108 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sensitivity_analysis | irm.mbt:1121 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_analysis | irm.mbt:1132 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1160 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1165 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1170 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sandwich_se | irm.mbt:1202 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sandwich_se | irm.mbt:1213 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::sandwich_se | irm.mbt:1221 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1243 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1245 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1248 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1257 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLIRM::bias_corrected_coef | irm.mbt:1298 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | silverman_bandwidth | kde.mbt:17 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-INDEX | error | percentile_sorted | kde.mbt:77 | tainted value from parameters `p` and `sorted` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | gaussian_kde | kde.mbt:91 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | gaussian_kde | kde.mbt:92 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | gaussian_kde_weighted | kde.mbt:133 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | gaussian_kde_weighted | kde.mbt:134 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | gaussian_kde_weighted | kde.mbt:135 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQData::new | lpq.mbt:21 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQData::new | lpq.mbt:22 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQData::new | lpq.mbt:23 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | lpq_score | lpq.mbt:48 | tainted value from parameter `data` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | lpq_score_ipw | lpq.mbt:77 | tainted value from parameter `data` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::new | lpq.mbt:188 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::new | lpq.mbt:189 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::new | lpq.mbt:190 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::new | lpq.mbt:191 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::fit | lpq.mbt:239 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLLPQ::fit | lpq.mbt:284 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLLPQ::fit | lpq.mbt:304 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLLPQ::fit | lpq.mbt:305 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLLPQ::fit | lpq.mbt:418 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLLPQ::fit | lpq.mbt:465 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::bootstrap | lpq.mbt:543 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::bootstrap | lpq.mbt:544 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::bootstrap | lpq.mbt:547 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::sensitivity_analysis | lpq.mbt:585 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:614 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:616 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:625 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::confint | lpq.mbt:661 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::confint | lpq.mbt:662 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::coef | lpq.mbt:679 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::se | lpq.mbt:690 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::predictions_g0 | lpq.mbt:703 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::predictions_g1 | lpq.mbt:716 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::predictions_m | lpq.mbt:729 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:840 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:841 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:842 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:844 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::sandwich_se | lpq.mbt:887 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::cluster_sandwich_se | lpq.mbt:918 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::cluster_sandwich_se | lpq.mbt:926 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLLPQ::bias_corrected_coef | lpq.mbt:958 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::new | plr.mbt:107 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::new | plr.mbt:108 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::new | plr.mbt:109 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::coef | plr.mbt:160 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::se | plr.mbt:173 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::confint | plr.mbt:193 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::confint | plr.mbt:194 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | plr_score_elements | plr.mbt:355 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | plr_score_elements | plr.mbt:355 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-ALLOC | error | plr_score_elements | plr.mbt:356 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | plr_score_elements | plr.mbt:356 | allocation size may be negative | L2-abstract | 0.9 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::fit | plr.mbt:423 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::fit | plr.mbt:424 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::fit | plr.mbt:431 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit | plr.mbt:517 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit | plr.mbt:518 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit | plr.mbt:520 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit | plr.mbt:521 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::fit_cluster | plr.mbt:682 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::fit_cluster | plr.mbt:688 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | DoubleMLPLR::fit_cluster | plr.mbt:695 | assertion may fail on some inputs | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:716 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:717 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:718 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | DoubleMLPLR::fit_cluster | plr.mbt:719 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
-| ... | ... | ... | ... | (truncated at 300 of 2503 rows) | ... | ... |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::new | apo.mbt:116 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::new | apo.mbt:117 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::new | apo.mbt:118 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::new | apo.mbt:119 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::new | apo.mbt:120 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::coef | apo.mbt:198 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::se | apo.mbt:209 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::confint | apo.mbt:220 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::predictions_g | apo.mbt:231 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::predictions_m | apo.mbt:242 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | indicator_level | apo.mbt:252 | tainted value from parameter `d` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_apo | apo.mbt:286 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_apo | apo.mbt:287 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit | apo.mbt:409 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit | apo.mbt:410 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit | apo.mbt:413 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit | apo.mbt:475 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::fit_cluster | apo.mbt:556 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::fit_cluster | apo.mbt:562 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:579 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:580 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:581 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:582 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:606 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:607 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:648 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::fit_cluster | apo.mbt:649 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sandwich_se | apo.mbt:771 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sandwich_se | apo.mbt:773 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sandwich_se | apo.mbt:776 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sandwich_se | apo.mbt:779 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::cluster_sandwich_se | apo.mbt:804 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::cluster_sandwich_se | apo.mbt:806 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::cluster_sandwich_se | apo.mbt:807 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::cluster_sandwich_se | apo.mbt:810 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::cluster_sandwich_se | apo.mbt:819 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::bias_corrected_coef | apo.mbt:860 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::bootstrap | apo.mbt:902 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::bootstrap | apo.mbt:903 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::bootstrap | apo.mbt:906 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::tune | apo.mbt:976 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::tune | apo.mbt:977 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::tune | apo.mbt:986 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::tune | apo.mbt:1032 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::tune | apo.mbt:1033 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::tune | apo.mbt:1034 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1097 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1100 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1111 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1112 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1119 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sensitivity_analysis | apo.mbt:1132 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_analysis | apo.mbt:1135 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1163 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1166 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPO::sensitivity_analysis_cluster | apo.mbt:1167 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::new | apo.mbt:1304 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::new | apo.mbt:1305 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::new | apo.mbt:1306 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::new | apo.mbt:1307 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::new | apo.mbt:1308 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::new | apo.mbt:1309 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | certain | DoubleMLAPOS::new | apo.mbt:1340 | tainted value from parameter `treatment_levels` may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::fit | apo.mbt:1391 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::coefs | apo.mbt:1695 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::ses | apo.mbt:1706 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1814 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1815 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1816 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1817 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1818 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1820 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1821 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::psi_b_row_at | apo.mbt:1822 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_a_row_at | apo.mbt:1844 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_a_row_at | apo.mbt:1845 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_a_row_at | apo.mbt:1846 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_a_row_at | apo.mbt:1848 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::psi_a_row_at | apo.mbt:1849 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::psi_a_row_at | apo.mbt:1850 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::m_inv_1x1_at | apo.mbt:1875 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::sandwich_se_at | apo.mbt:1925 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::sandwich_se_at | apo.mbt:1932 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1971 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1974 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::cluster_sandwich_se_at | apo.mbt:1981 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2024 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2025 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2026 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::bias_corrected_coef_at | apo.mbt:2027 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::bootstrap | apo.mbt:2052 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::bootstrap | apo.mbt:2053 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::bootstrap | apo.mbt:2056 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::bootstrap | apo.mbt:2058 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::confint | apo.mbt:2100 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::confint | apo.mbt:2101 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::confint | apo.mbt:2103 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::confint | apo.mbt:2108 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::confint | apo.mbt:2116 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | DoubleMLAPOS::confint | apo.mbt:2132 | tainted value from parameter `self` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::boot_t_stats | apo.mbt:2150 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| UNSUPPORTED | info | certain | DoubleMLAPOS::causal_contrast | apo.mbt:2227 | tainted value from parameter `reference_levels` may reach abort/panic | L2-abstract | 0.5 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::sensitivity_analysis | apo.mbt:2271 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::sensitivity_analysis | apo.mbt:2273 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLAPOS::sensitivity_analysis_cluster | apo.mbt:2320 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLAPOS::sensitivity_analysis_cluster | apo.mbt:2322 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDIDData::new | did.mbt:40 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDIDData::new | did.mbt:46 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::new | did.mbt:277 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::new | did.mbt:278 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::new | did.mbt:279 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::new | did.mbt:280 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::new | did.mbt:281 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::new | did.mbt:282 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::new | did.mbt:284 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::coef | did.mbt:347 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::se | did.mbt:358 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::confint | did.mbt:375 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::confint | did.mbt:376 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_did | did.mbt:443 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_did | did.mbt:444 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_did | did.mbt:445 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:553 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:554 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:555 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:612 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:613 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:614 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:649 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:650 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:651 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::fit | did.mbt:656 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::bootstrap | did.mbt:800 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::bootstrap | did.mbt:801 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::bootstrap | did.mbt:804 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:876 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:880 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:893 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:894 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:924 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sensitivity_analysis | did.mbt:945 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_analysis | did.mbt:950 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:981 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:986 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLDID::sensitivity_analysis_cluster | did.mbt:987 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sandwich_se | did.mbt:1032 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sandwich_se | did.mbt:1036 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::sandwich_se | did.mbt:1039 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::cluster_sandwich_se | did.mbt:1062 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::cluster_sandwich_se | did.mbt:1064 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::cluster_sandwich_se | did.mbt:1067 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::cluster_sandwich_se | did.mbt:1076 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::bias_corrected_coef | did.mbt:1116 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::tune | did.mbt:1204 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLDID::tune | did.mbt:1205 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:132 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:133 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:134 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:135 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:136 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:137 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:138 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | GBLearner::fit_weighted | gbl.mbt:140 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | GBLearner::fit_weighted | gbl.mbt:150 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | GBLearner::fit_weighted | gbl.mbt:154 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | predict | gbl.mbt:251 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::new | irm.mbt:122 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::new | irm.mbt:123 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::new | irm.mbt:124 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::new | irm.mbt:125 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::new | irm.mbt:126 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::coef | irm.mbt:186 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::se | irm.mbt:197 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::confint | irm.mbt:215 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::confint | irm.mbt:216 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | filter_indices | irm.mbt:317 | tainted value from parameter `idx` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | clip_vec | irm.mbt:329 | tainted value from parameter `v` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_irm | irm.mbt:363 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_irm | irm.mbt:364 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | cross_fit_irm | irm.mbt:365 | tainted value from parameter `x` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:375 | tainted value from parameter `folds` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | cross_fit_irm | irm.mbt:379 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cross_fit_irm | irm.mbt:390 | tainted value from parameter `folds` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | cross_fit_irm | irm.mbt:394 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::fit | irm.mbt:469 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:551 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:552 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:554 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:555 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:556 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:557 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:616 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:617 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:639 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit | irm.mbt:640 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::fit_cluster | irm.mbt:737 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::fit_cluster | irm.mbt:743 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:762 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:763 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:764 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:765 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:766 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:767 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:801 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:802 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:850 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::fit_cluster | irm.mbt:851 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::bootstrap | irm.mbt:942 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::bootstrap | irm.mbt:943 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::bootstrap | irm.mbt:946 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::tune | irm.mbt:1022 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::tune | irm.mbt:1023 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::tune | irm.mbt:1024 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1092 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1096 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1097 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1098 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1108 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sensitivity_analysis | irm.mbt:1121 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_analysis | irm.mbt:1132 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1160 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1165 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLIRM::sensitivity_analysis_cluster | irm.mbt:1170 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sandwich_se | irm.mbt:1202 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sandwich_se | irm.mbt:1213 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::sandwich_se | irm.mbt:1221 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1243 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1245 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1248 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::cluster_sandwich_se | irm.mbt:1257 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLIRM::bias_corrected_coef | irm.mbt:1298 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | silverman_bandwidth | kde.mbt:17 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | percentile_sorted | kde.mbt:77 | tainted value from parameters `p` and `sorted` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | gaussian_kde | kde.mbt:91 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | gaussian_kde | kde.mbt:92 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | gaussian_kde_weighted | kde.mbt:133 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | gaussian_kde_weighted | kde.mbt:134 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | gaussian_kde_weighted | kde.mbt:135 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQData::new | lpq.mbt:21 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQData::new | lpq.mbt:22 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQData::new | lpq.mbt:23 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | lpq_score | lpq.mbt:48 | tainted value from parameter `data` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | lpq_score_ipw | lpq.mbt:77 | tainted value from parameter `data` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::new | lpq.mbt:188 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::new | lpq.mbt:189 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::new | lpq.mbt:190 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::new | lpq.mbt:191 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::fit | lpq.mbt:239 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLLPQ::fit | lpq.mbt:284 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLLPQ::fit | lpq.mbt:304 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLLPQ::fit | lpq.mbt:305 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLLPQ::fit | lpq.mbt:418 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLLPQ::fit | lpq.mbt:465 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::bootstrap | lpq.mbt:543 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::bootstrap | lpq.mbt:544 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::bootstrap | lpq.mbt:547 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::sensitivity_analysis | lpq.mbt:585 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:614 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:616 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLLPQ::sensitivity_analysis_cluster | lpq.mbt:625 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::confint | lpq.mbt:661 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::confint | lpq.mbt:662 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::coef | lpq.mbt:679 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::se | lpq.mbt:690 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::predictions_g0 | lpq.mbt:703 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::predictions_g1 | lpq.mbt:716 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::predictions_m | lpq.mbt:729 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:840 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:841 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:842 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::m_inv_1x1 | lpq.mbt:844 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::sandwich_se | lpq.mbt:887 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::cluster_sandwich_se | lpq.mbt:918 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::cluster_sandwich_se | lpq.mbt:926 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLLPQ::bias_corrected_coef | lpq.mbt:958 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::new | plr.mbt:107 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::new | plr.mbt:108 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::new | plr.mbt:109 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::coef | plr.mbt:160 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::se | plr.mbt:173 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::confint | plr.mbt:193 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::confint | plr.mbt:194 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | plr_score_elements | plr.mbt:355 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | plr_score_elements | plr.mbt:355 | allocation size may be negative | L2-abstract | 0.9 |
+| TAINT-ALLOC | error | certain | plr_score_elements | plr.mbt:356 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | plr_score_elements | plr.mbt:356 | allocation size may be negative | L2-abstract | 0.9 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::fit | plr.mbt:423 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::fit | plr.mbt:424 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::fit | plr.mbt:431 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit | plr.mbt:517 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit | plr.mbt:518 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit | plr.mbt:520 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit | plr.mbt:521 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::fit_cluster | plr.mbt:682 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::fit_cluster | plr.mbt:688 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | DoubleMLPLR::fit_cluster | plr.mbt:695 | assertion may fail on some inputs | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit_cluster | plr.mbt:716 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit_cluster | plr.mbt:717 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit_cluster | plr.mbt:718 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | DoubleMLPLR::fit_cluster | plr.mbt:719 | tainted value from parameter `self` may control an allocation size | L2-abstract | 0.6 |
+| ... | ... | ... | ... | ... | (truncated at 300 of 2503 rows) | ... | ... |
 
 _This table shows the first 300 of 2503 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 2203 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
 
@@ -1188,309 +1188,309 @@ The index class is proved by the interval the abstract domain already computes �
 | INTEGER-OVERFLOW | 90 |
 | DIVISION-BY-ZERO | 14 |
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| INDEX-OOB | error | DoubleMLAPO::fit | apo.mbt:456 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLAPO::fit | apo.mbt:457 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1117 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1121 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:606 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:607 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:608 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:616 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:617 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:618 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:669 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:675 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:702 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:703 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:712 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::fit | did.mbt:713 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDID::sensitivity_nu2_elements | did.mbt:926 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | GBLearner::fit_weighted | gbl.mbt:146 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | GBLearner::fit_weighted | gbl.mbt:156 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | GBLearner::fit_weighted | gbl.mbt:216 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | predict | gbl.mbt:258 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | clip_vec | irm.mbt:331 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1110 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | sample_sd | kde.mbt:40 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | percentile_sorted | kde.mbt:71 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | gaussian_kde | kde.mbt:97 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | gaussian_kde_weighted | kde.mbt:140 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | gaussian_kde_weighted | kde.mbt:141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lpq_score | lpq.mbt:51 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lpq_score | lpq.mbt:52 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lpq_score | lpq.mbt:53 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lpq_score | lpq.mbt:54 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lpq_score_ipw | lpq.mbt:81 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lpq_score_ipw | lpq.mbt:82 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | plr_score_elements | plr.mbt:364 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | plr_score_elements | plr.mbt:365 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | plr_score_elements | plr.mbt:370 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | plr_score_elements | plr.mbt:371 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLPLR::sensitivity_analysis_cluster | plr.mbt:1161 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLPLR::sensitivity_analysis_cluster | plr.mbt:1162 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | weighted_xtx_transpose | rdd.mbt:413 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1482 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1483 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1484 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1492 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1501 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLRDD::cluster_hac_se | rdd.mbt:1510 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2692 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2697 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2703 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2724 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2725 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2729 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_nn_matched_sigma4 | rdd.mbt:2730 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | nn_residual | rdd.mbt:2826 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | nn_residual | rdd.mbt:2841 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | nn_residual | rdd.mbt:2842 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | nn_residual | rdd.mbt:2849 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | nn_residual | rdd.mbt:2850 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | nn_residual | rdd.mbt:2871 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | nn_residual | rdd.mbt:2872 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3039 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3041 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3050 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3056 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3058 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3060 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3076 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3078 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3082 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3084 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3086 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3101 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3102 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3109 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3143 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | rdd_rb_side | rdd.mbt:3147 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cart_fit | rfl.mbt:232 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cart_fit | rfl.mbt:237 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cart_fit | rfl.mbt:240 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cart_leaf_value | rfl.mbt:510 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cart_leaf_value | rfl.mbt:520 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cart_leaf_value | rfl.mbt:533 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cart_leaf_value | rfl.mbt:542 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | augment_one_col | ssm.mbt:561 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:811 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:812 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:813 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:814 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:831 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:832 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:833 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:834 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLSSM::fit | ssm.mbt:856 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLCVAR::sensitivity_analysis | cvar.mbt:415 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cvar_ipw_score | cvar.mbt:548 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cvar_ipw_score | cvar.mbt:551 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_ipw_root | cvar.mbt:580 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_ipw_root | cvar.mbt:581 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | prelim_beta_per_fold | lplr.mbt:95 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lplr_score_at | lplr.mbt:199 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lplr_score_at | lplr.mbt:200 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | newton_solve_score | lplr.mbt:252 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | newton_solve_score | lplr.mbt:253 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | concat_d_x | lplr.mbt:613 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cross_fit_predict_inner | lplr.mbt:1629 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | unit_means | plpr.mbt:123 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | unit_means | plpr.mbt:138 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | unit_means | plpr.mbt:141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | unit_means | plpr.mbt:142 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | unit_means | plpr.mbt:149 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | unit_means | plpr.mbt:152 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | est_coef_cluster | plpr.mbt:209 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | var_est_cluster | plpr.mbt:269 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | var_est_cluster | plpr.mbt:281 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | var_est_cluster | plpr.mbt:282 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:336 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:339 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:348 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:360 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:369 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:373 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:405 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:409 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:414 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:415 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:443 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:454 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:455 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:459 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | transform_panel | plpr.mbt:463 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | tune_score_outcome | tune.mbt:191 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | tune_argmin | tune.mbt:217 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | GBClassifier::fit_weighted | gbclf.mbt:189 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | GBClassifier::fit_weighted | gbclf.mbt:208 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | GBClassifier::fit_weighted | gbclf.mbt:209 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | GBClassifier::fit_weighted | gbclf.mbt:273 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | check_sample_splitting | kfold.mbt:294 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | check_sample_splitting | kfold.mbt:312 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | kfold_stratified | kfold.mbt:368 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| DIVISION-BY-ZERO | error | kfold | kfold.mbt:458 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
-| INDEX-OOB | error | slice_matrix_rows | kfold.mbt:491 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | expand_unit_folds_to_rows | kfold.mbt:557 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_row_unit_map | kfold.mbt:592 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_row_unit_map | kfold.mbt:595 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cluster_causal_param_and_se | kfold.mbt:654 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | discover_groups_times | did_cs.mbt:91 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | discover_groups_times | did_cs.mbt:93 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | discover_groups_times | did_cs.mbt:94 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | discover_groups_times | did_cs.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | discover_groups_times | did_cs.mbt:123 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1487 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1509 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1692 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1694 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1787 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1788 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1792 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1799 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1800 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1809 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDCS::fit | did_cs.mbt:1810 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_spd | linalg.mbt:83 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LinearRegression::fit_weighted | linear.mbt:220 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LinearRegression::fit_weighted | linear.mbt:222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LinearRegression::sandwich_se_weighted | linear.mbt:318 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LinearRegression::sandwich_se_weighted | linear.mbt:319 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LinearRegression::sandwich_se | linear.mbt:379 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | Matrix::zeros | matrix.mbt:21 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | Matrix::ones | matrix.mbt:28 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | Matrix::from_array | matrix.mbt:41 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | Matrix::from_rows | matrix.mbt:113 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | Matrix::from_rows | matrix.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | matvec | matrix.mbt:175 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | matvec_t | matrix.mbt:200 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | dot | matrix.mbt:226 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | make_irm_data | dgp_irm.mbt:49 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | make_irm_data | dgp_irm.mbt:51 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | make_irm_data | dgp_irm.mbt:71 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_irm_data | dgp_irm.mbt:99 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_irm_data | dgp_irm.mbt:100 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_irm_data | dgp_irm.mbt:106 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | make_ssm_data | dgp_ssm.mbt:46 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | make_ssm_data | dgp_ssm.mbt:48 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | make_ssm_data | dgp_ssm.mbt:68 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_ssm_data | dgp_ssm.mbt:97 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_ssm_data | dgp_ssm.mbt:98 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_ssm_data | dgp_ssm.mbt:105 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | var_est | var_est.mbt:43 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | var_est_with_jacobian | var_est.mbt:84 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | make_iivm_data | dgp_iivm.mbt:50 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | make_iivm_data | dgp_iivm.mbt:52 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | make_iivm_data | dgp_iivm.mbt:72 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_iivm_data | dgp_iivm.mbt:106 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_iivm_data | dgp_iivm.mbt:108 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_iivm_data | dgp_iivm.mbt:112 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:59 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:63 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:64 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:65 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:72 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:74 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:75 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:76 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:77 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_lplr_LZZ2020 | dgp_lplr.mbt:84 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | make_pliv_CHS2015 | dgp_pliv.mbt:36 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | make_pliv_CHS2015 | dgp_pliv.mbt:38 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | make_pliv_CHS2015 | dgp_pliv.mbt:58 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_pliv_CHS2015 | dgp_pliv.mbt:88 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_pliv_CHS2015 | dgp_pliv.mbt:89 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_pliv_CHS2015 | dgp_pliv.mbt:90 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_pliv_CHS2015 | dgp_pliv.mbt:93 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | make_plpr_CP2025 | dgp_plpr.mbt:53 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | make_plpr_CP2025 | dgp_plpr.mbt:55 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:74 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:120 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:121 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:124 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:128 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:131 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:132 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | make_plpr_CP2025 | dgp_plpr.mbt:136 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LogisticRegression::fit | logistic.mbt:168 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LogisticRegression::fit | logistic.mbt:174 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LogisticRegression::fit | logistic.mbt:185 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | LogisticRegression::fit | logistic.mbt:194 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | argsort_asc | p_adjust.mbt:99 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | argsort_asc | p_adjust.mbt:100 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | argsort_asc | p_adjust.mbt:101 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| DIVISION-BY-ZERO | error | romano_wolf_p_adjust | p_adjust.mbt:135 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:145 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:152 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:153 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:154 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:176 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:183 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:197 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:198 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | romano_wolf_p_adjust | p_adjust.mbt:204 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | holm_bonferroni_p_adjust | p_adjust.mbt:239 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | holm_bonferroni_p_adjust | p_adjust.mbt:240 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | holm_bonferroni_p_adjust | p_adjust.mbt:246 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bonferroni_p_adjust | p_adjust.mbt:258 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bh_fdr_p_adjust | p_adjust.mbt:303 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bh_fdr_p_adjust | p_adjust.mbt:304 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bh_fdr_p_adjust | p_adjust.mbt:310 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | by_fdr_p_adjust | p_adjust.mbt:351 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | by_fdr_p_adjust | p_adjust.mbt:352 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | by_fdr_p_adjust | p_adjust.mbt:358 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bh_step_up_sorted | p_adjust.mbt:399 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bh_step_up_sorted | p_adjust.mbt:402 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bh_step_up_sorted | p_adjust.mbt:411 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | bh_step_up_sorted | p_adjust.mbt:412 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | tsbh_p_adjust | p_adjust.mbt:519 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | storey_m0_hat | p_adjust.mbt:548 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | tsby_p_adjust | p_adjust.mbt:633 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | tsby_p_adjust | p_adjust.mbt:639 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | tsby_p_adjust | p_adjust.mbt:640 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | tsby_p_adjust | p_adjust.mbt:646 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | array_min | quantile.mbt:11 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | array_max | quantile.mbt:30 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | pq_score_ipw | quantile.mbt:127 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | pq_score_orthogonal | quantile.mbt:167 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLQTE::fit_cluster | quantile.mbt:1934 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2827 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2828 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2829 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2838 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2853 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | psi_at | sandwich.mbt:226 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | sandwich_variance_hc0 | sandwich.mbt:291 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | sandwich_variance_hc2 | sandwich.mbt:390 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | sandwich_variance_hc3 | sandwich.mbt:438 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:550 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:562 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:563 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:569 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cluster_sandwich_variance | sandwich.mbt:582 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | did_bootstrap_t_stat | bootstrap.mbt:74 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | did_bootstrap_t_stat | bootstrap.mbt:79 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | did_bootstrap_t_stat | bootstrap.mbt:90 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | did_bootstrap_t_stat | bootstrap.mbt:91 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | expand_gt_keyword | did_multi.mbt:222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | expand_gt_keyword | did_multi.mbt:233 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | DoubleMLDIDMulti::bootstrap | did_multi.mbt:794 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | draw_bootstrap_weights | did_multi.mbt:1132 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:44 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:49 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:50 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:51 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:61 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:62 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:63 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:64 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:65 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:66 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_lzz2020_dgp | lplr_test.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| ... | ... | ... | ... | (truncated at 300 of 813 rows) | ... | ... |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| INDEX-OOB | error | certain | DoubleMLAPO::fit | apo.mbt:456 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLAPO::fit | apo.mbt:457 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1117 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLAPO::sensitivity_nu2_elements | apo.mbt:1121 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:606 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:607 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:608 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:616 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:617 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:618 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:669 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:675 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:702 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:703 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:712 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::fit | did.mbt:713 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDID::sensitivity_nu2_elements | did.mbt:926 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | GBLearner::fit_weighted | gbl.mbt:146 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | GBLearner::fit_weighted | gbl.mbt:156 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | GBLearner::fit_weighted | gbl.mbt:216 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | predict | gbl.mbt:258 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | clip_vec | irm.mbt:331 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLIRM::sensitivity_nu2_elements | irm.mbt:1110 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | sample_sd | kde.mbt:40 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | percentile_sorted | kde.mbt:71 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | gaussian_kde | kde.mbt:97 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | gaussian_kde_weighted | kde.mbt:140 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | gaussian_kde_weighted | kde.mbt:141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lpq_score | lpq.mbt:51 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lpq_score | lpq.mbt:52 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lpq_score | lpq.mbt:53 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lpq_score | lpq.mbt:54 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lpq_score_ipw | lpq.mbt:81 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lpq_score_ipw | lpq.mbt:82 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | plr_score_elements | plr.mbt:364 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | plr_score_elements | plr.mbt:365 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | plr_score_elements | plr.mbt:370 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | plr_score_elements | plr.mbt:371 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLPLR::sensitivity_analysis_cluster | plr.mbt:1161 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLPLR::sensitivity_analysis_cluster | plr.mbt:1162 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | weighted_xtx_transpose | rdd.mbt:413 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLRDD::cluster_hac_se | rdd.mbt:1482 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLRDD::cluster_hac_se | rdd.mbt:1483 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLRDD::cluster_hac_se | rdd.mbt:1484 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLRDD::cluster_hac_se | rdd.mbt:1492 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLRDD::cluster_hac_se | rdd.mbt:1501 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLRDD::cluster_hac_se | rdd.mbt:1510 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_nn_matched_sigma4 | rdd.mbt:2692 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_nn_matched_sigma4 | rdd.mbt:2697 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_nn_matched_sigma4 | rdd.mbt:2703 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_nn_matched_sigma4 | rdd.mbt:2724 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_nn_matched_sigma4 | rdd.mbt:2725 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_nn_matched_sigma4 | rdd.mbt:2729 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_nn_matched_sigma4 | rdd.mbt:2730 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | nn_residual | rdd.mbt:2826 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | nn_residual | rdd.mbt:2841 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | nn_residual | rdd.mbt:2842 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | nn_residual | rdd.mbt:2849 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | nn_residual | rdd.mbt:2850 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | nn_residual | rdd.mbt:2871 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | nn_residual | rdd.mbt:2872 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3039 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3041 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3050 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3056 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3058 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3060 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3076 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3078 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3082 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3084 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3086 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3101 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3102 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3109 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3143 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | rdd_rb_side | rdd.mbt:3147 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cart_fit | rfl.mbt:232 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cart_fit | rfl.mbt:237 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cart_fit | rfl.mbt:240 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cart_leaf_value | rfl.mbt:510 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cart_leaf_value | rfl.mbt:520 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cart_leaf_value | rfl.mbt:533 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cart_leaf_value | rfl.mbt:542 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | augment_one_col | ssm.mbt:561 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:811 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:812 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:813 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:814 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:831 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:832 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:833 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:834 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLSSM::fit | ssm.mbt:856 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLCVAR::sensitivity_analysis | cvar.mbt:415 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cvar_ipw_score | cvar.mbt:548 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cvar_ipw_score | cvar.mbt:551 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_ipw_root | cvar.mbt:580 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_ipw_root | cvar.mbt:581 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | prelim_beta_per_fold | lplr.mbt:95 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lplr_score_at | lplr.mbt:199 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lplr_score_at | lplr.mbt:200 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | newton_solve_score | lplr.mbt:252 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | newton_solve_score | lplr.mbt:253 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | concat_d_x | lplr.mbt:613 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cross_fit_predict_inner | lplr.mbt:1629 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | unit_means | plpr.mbt:123 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | unit_means | plpr.mbt:138 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | unit_means | plpr.mbt:141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | unit_means | plpr.mbt:142 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | unit_means | plpr.mbt:149 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | unit_means | plpr.mbt:152 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | est_coef_cluster | plpr.mbt:209 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | var_est_cluster | plpr.mbt:269 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | var_est_cluster | plpr.mbt:281 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | var_est_cluster | plpr.mbt:282 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:336 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:339 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:348 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:360 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:369 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:373 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:405 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:409 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:414 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:415 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:443 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:454 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:455 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:459 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | transform_panel | plpr.mbt:463 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | tune_score_outcome | tune.mbt:191 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | tune_argmin | tune.mbt:217 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | GBClassifier::fit_weighted | gbclf.mbt:189 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | GBClassifier::fit_weighted | gbclf.mbt:208 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | GBClassifier::fit_weighted | gbclf.mbt:209 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | GBClassifier::fit_weighted | gbclf.mbt:273 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | check_sample_splitting | kfold.mbt:294 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | check_sample_splitting | kfold.mbt:312 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | kfold_stratified | kfold.mbt:368 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| DIVISION-BY-ZERO | error | certain | kfold | kfold.mbt:458 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | slice_matrix_rows | kfold.mbt:491 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | expand_unit_folds_to_rows | kfold.mbt:557 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_row_unit_map | kfold.mbt:592 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_row_unit_map | kfold.mbt:595 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cluster_causal_param_and_se | kfold.mbt:654 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | discover_groups_times | did_cs.mbt:91 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | discover_groups_times | did_cs.mbt:93 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | discover_groups_times | did_cs.mbt:94 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | discover_groups_times | did_cs.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | discover_groups_times | did_cs.mbt:123 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1487 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1509 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1692 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1694 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1787 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1788 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1792 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1799 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1800 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1809 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDCS::fit | did_cs.mbt:1810 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_spd | linalg.mbt:83 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LinearRegression::fit_weighted | linear.mbt:220 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LinearRegression::fit_weighted | linear.mbt:222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LinearRegression::sandwich_se_weighted | linear.mbt:318 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LinearRegression::sandwich_se_weighted | linear.mbt:319 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LinearRegression::sandwich_se | linear.mbt:379 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | Matrix::zeros | matrix.mbt:21 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | Matrix::ones | matrix.mbt:28 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | Matrix::from_array | matrix.mbt:41 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | Matrix::from_rows | matrix.mbt:113 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | Matrix::from_rows | matrix.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | matvec | matrix.mbt:175 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | matvec_t | matrix.mbt:200 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | dot | matrix.mbt:226 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | make_irm_data | dgp_irm.mbt:49 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | make_irm_data | dgp_irm.mbt:51 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | make_irm_data | dgp_irm.mbt:71 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_irm_data | dgp_irm.mbt:99 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_irm_data | dgp_irm.mbt:100 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_irm_data | dgp_irm.mbt:106 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | make_ssm_data | dgp_ssm.mbt:46 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | make_ssm_data | dgp_ssm.mbt:48 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | make_ssm_data | dgp_ssm.mbt:68 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_ssm_data | dgp_ssm.mbt:97 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_ssm_data | dgp_ssm.mbt:98 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_ssm_data | dgp_ssm.mbt:105 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | var_est | var_est.mbt:43 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | var_est_with_jacobian | var_est.mbt:84 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | make_iivm_data | dgp_iivm.mbt:50 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | make_iivm_data | dgp_iivm.mbt:52 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | make_iivm_data | dgp_iivm.mbt:72 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_iivm_data | dgp_iivm.mbt:106 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_iivm_data | dgp_iivm.mbt:108 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_iivm_data | dgp_iivm.mbt:112 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:59 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:63 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:64 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:65 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:72 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:74 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:75 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:76 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:77 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_lplr_LZZ2020 | dgp_lplr.mbt:84 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | make_pliv_CHS2015 | dgp_pliv.mbt:36 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | make_pliv_CHS2015 | dgp_pliv.mbt:38 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | make_pliv_CHS2015 | dgp_pliv.mbt:58 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_pliv_CHS2015 | dgp_pliv.mbt:88 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_pliv_CHS2015 | dgp_pliv.mbt:89 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_pliv_CHS2015 | dgp_pliv.mbt:90 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_pliv_CHS2015 | dgp_pliv.mbt:93 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:53 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:55 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:74 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:120 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:121 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:124 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:128 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:131 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:132 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | make_plpr_CP2025 | dgp_plpr.mbt:136 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LogisticRegression::fit | logistic.mbt:168 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LogisticRegression::fit | logistic.mbt:174 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LogisticRegression::fit | logistic.mbt:185 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | LogisticRegression::fit | logistic.mbt:194 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | argsort_asc | p_adjust.mbt:99 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | argsort_asc | p_adjust.mbt:100 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | argsort_asc | p_adjust.mbt:101 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| DIVISION-BY-ZERO | error | certain | romano_wolf_p_adjust | p_adjust.mbt:135 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:145 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:152 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:153 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:154 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:176 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:183 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:197 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:198 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | romano_wolf_p_adjust | p_adjust.mbt:204 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | holm_bonferroni_p_adjust | p_adjust.mbt:239 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | holm_bonferroni_p_adjust | p_adjust.mbt:240 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | holm_bonferroni_p_adjust | p_adjust.mbt:246 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bonferroni_p_adjust | p_adjust.mbt:258 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bh_fdr_p_adjust | p_adjust.mbt:303 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bh_fdr_p_adjust | p_adjust.mbt:304 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bh_fdr_p_adjust | p_adjust.mbt:310 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | by_fdr_p_adjust | p_adjust.mbt:351 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | by_fdr_p_adjust | p_adjust.mbt:352 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | by_fdr_p_adjust | p_adjust.mbt:358 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bh_step_up_sorted | p_adjust.mbt:399 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bh_step_up_sorted | p_adjust.mbt:402 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bh_step_up_sorted | p_adjust.mbt:411 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | bh_step_up_sorted | p_adjust.mbt:412 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | tsbh_p_adjust | p_adjust.mbt:519 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | storey_m0_hat | p_adjust.mbt:548 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | tsby_p_adjust | p_adjust.mbt:633 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | tsby_p_adjust | p_adjust.mbt:639 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | tsby_p_adjust | p_adjust.mbt:640 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | tsby_p_adjust | p_adjust.mbt:646 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | array_min | quantile.mbt:11 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | array_max | quantile.mbt:30 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | pq_score_ipw | quantile.mbt:127 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | pq_score_orthogonal | quantile.mbt:167 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLQTE::fit_cluster | quantile.mbt:1934 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2827 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2828 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2829 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2838 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLQTE::cluster_joint_covariance | quantile.mbt:2853 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | psi_at | sandwich.mbt:226 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | sandwich_variance_hc0 | sandwich.mbt:291 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | sandwich_variance_hc2 | sandwich.mbt:390 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | sandwich_variance_hc3 | sandwich.mbt:438 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cluster_sandwich_variance | sandwich.mbt:550 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cluster_sandwich_variance | sandwich.mbt:562 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cluster_sandwich_variance | sandwich.mbt:563 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cluster_sandwich_variance | sandwich.mbt:569 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cluster_sandwich_variance | sandwich.mbt:582 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | did_bootstrap_t_stat | bootstrap.mbt:74 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | did_bootstrap_t_stat | bootstrap.mbt:79 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | did_bootstrap_t_stat | bootstrap.mbt:90 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | did_bootstrap_t_stat | bootstrap.mbt:91 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | expand_gt_keyword | did_multi.mbt:222 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | expand_gt_keyword | did_multi.mbt:233 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | DoubleMLDIDMulti::bootstrap | did_multi.mbt:794 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | draw_bootstrap_weights | did_multi.mbt:1132 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:44 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:49 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:50 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:51 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:61 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:62 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:63 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:64 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:65 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:66 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_lzz2020_dgp | lplr_test.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| ... | ... | ... | ... | ... | (truncated at 300 of 813 rows) | ... | ... |
 
 _This table shows the first 300 of 813 findings, in the order the analysis produced them. The count table above is the whole set, family by family, and every finding -- the 513 not shown here among them -- is in the report's `_findings.jsonl` sidecar._
 
@@ -1635,6 +1635,22 @@ The model is sound about what it reports and silent about the rest, so here is e
 - **The C side of a socket.** What arrives is whatever the peer sent. §5.7 says the same about the other side of a C boundary.
 
 _No findings._
+
+### 5.10 Claims that could not be decided
+
+8 claim(s) could not be decided. They are listed here rather than being absent: an absent claim and a claim that was decided and found clean are NOT the same thing, and only the second is good news.
+
+| Family | Severity | Function | Location | What could not be decided |
+| --- | --- | --- | --- | --- |
+| BUDGET-EXCEEDED | warning | slice_matrix_rows | kfold.mbt:496 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:468 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | draw_bootstrap_weights | did_multi.mbt:1154 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | kfold | kfold.mbt:474 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | DoubleMLAPOS::confint | apo.mbt:2127 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | DoubleMLAPOS::causal_contrast | apo.mbt:2250 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | DoubleMLDID::fit | did.mbt:611 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | GBLearner::fit_weighted | gbl.mbt:188 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+
 
 ## 6. Value ranges
 

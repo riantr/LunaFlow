@@ -60,6 +60,8 @@ pub fn count_calls(Func) -> Int32
 
 pub fn count_occurrences(String, String) -> Int32
 
+pub fn count_undecided(Array[Finding]) -> Int32
+
 pub fn critical_functions(Array[Finding]) -> Array[String]
 
 pub fn dirname(String) -> String
@@ -243,6 +245,10 @@ pub fn tainted_value(Value) -> Val
 pub fn truncate(String, Int32) -> String
 
 pub fn type_decls_of(ModuleAst) -> Array[TypeDecl]
+
+pub fn undecided_findings(Array[Finding]) -> Array[Finding]
+
+pub fn undecided_severity(FindingKind) -> String
 
 pub fn unique_findings(Array[Finding]) -> Array[Finding]
 
@@ -658,10 +664,13 @@ pub struct Finding {
   mode : String
   confidence : Double
   evidence : String
+  verdict : FindingVerdict
 }
 pub fn Finding::equal(Self, Self) -> Bool
 pub fn Finding::new(FindingKind, String, Int32, String, String, String, Double, String) -> Self
 pub fn Finding::not_equal(Self, Self) -> Bool
+pub fn Finding::severity(Self) -> String
+pub fn Finding::undecided(FindingKind, String, Int32, String, String, String, Double, String) -> Self
 
 #derive(Eq)
 pub(all) enum FindingKind {
@@ -711,6 +720,15 @@ pub fn FindingKind::code(Self) -> String
 pub fn FindingKind::equal(Self, Self) -> Bool
 pub fn FindingKind::not_equal(Self, Self) -> Bool
 pub fn FindingKind::severity(Self) -> String
+
+#derive(Eq)
+pub(all) enum FindingVerdict {
+  VerdictCertain
+  VerdictUnknown
+}
+pub fn FindingVerdict::code(Self) -> String
+pub fn FindingVerdict::equal(Self, Self) -> Bool
+pub fn FindingVerdict::not_equal(Self, Self) -> Bool
 
 pub struct Func {
   name : String

@@ -1039,6 +1039,81 @@ reports **20 rows**. Neither tool invents a defect on the other's code.
 
 Cost: one peer run per release, plus a probe file per disputed claim.
 
+### 5.17 The verdict of a finding: a claim that could not be decided
+
+A finding is a **CLAIM**, and a claim can end in three ways: the analyser
+decided it, the analyser decided it is false, or the analyser **could not
+decide it at all**. The third state is the one the finding model had no room
+for. Without it, a claim the analyser could not decide is simply **absent**,
+and an absent claim is indistinguishable from a claim that was decided and
+found clean — which is the price Phase 3 paid, where fourteen true claims
+vanished and the report could say nothing about why.
+
+The vocabulary already existed elsewhere: the L3 has `VCStatus::VCUnknown`
+("insufficient facts for a decision") and the abstract layer has `EUnknown`.
+What was missing was the same state **on the finding**, so that the difference
+reaches the reader.
+
+| | |
+| --- | --- |
+| `Finding.verdict` | `VerdictCertain` or `VerdictUnknown`. `Finding::new` makes a decided claim; `Finding::undecided` makes one that could not be decided. |
+| the findings table | a **Verdict** column, next to the severity. |
+| the `_findings.jsonl` sidecar | a `verdict` key per finding. |
+| report §5.10 | **Claims that could not be decided** — the count, and each one with its reason. |
+
+**WHAT AN UNDECIDED CLAIM MEANS IS A POLICY, AND THE POLICY IS FAIL-CLOSED.**
+An undecided claim about a **safety** property is an **error**: the module's
+safety is then not established, and "we could not decide" is not "it is fine".
+An undecided claim about anything else is a **warning** — worth knowing, and
+not by itself a safety claim. An undecided claim is never merely
+*informational*: `info` is how this project renders the families that never
+fire, and a claim that could not be decided is not a claim that never applies.
+The policy is one table, `src/app/policy.mbt`, because adding a family should
+be a decision somebody has to make.
+
+**THE PRODUCER TODAY IS THE ANALYSER'S OWN BUDGET.** A loop that runs past the
+step budget means the rest of that function was never analysed, so nothing
+about it was decided — and the report now says so in words instead of implying
+it by silence. It is the smallest honest "we could not tell" there is, and it
+is reachable from the command line.
+
+**THE CHANGE TO THE PUBLISHED INTERFACE.** `Finding` gains a field, so the
+`.mbti` changes: `Finding` carries `verdict : FindingVerdict`, and
+`FindingVerdict`, `Finding::undecided`, `Finding::severity`,
+`undecided_severity`, `undecided_findings` and `count_undecided` are new
+declarations. `Finding::new`'s signature is unchanged, so a consumer that
+BUILDS findings is unaffected; a consumer that constructs one by struct
+literal is not, and the release that carries this must say so in its notes —
+`scripts/qa/release_interface.mjs` enforces exactly that.
+
+Cost: one field on the finding model, one policy table, one report section.
+
+### 5.18 The metamorphic gate: the findings must not depend on the spelling
+
+A check that runs the analyser once measures ONE shape of the input. The
+metamorphic relations measure the **analyser**, by running it over the same
+program written several ways and comparing the claims:
+
+| relation | the claim |
+| --- | --- |
+| **RENAME** | the same program with different identifiers makes the same claims. An analyser whose claims depend on the *name* of a local is not analysing the program. |
+| **REORDER** | the same program with its functions in another order makes the same claims. A finding that depends on how many functions happen to precede it is a finding about the file order — and the CFG pass takes the FIRST functions in file order. |
+| **SWAP** | `a + b` and `b + a` make the same claims. The count of a `+`-built array is the sum of the two counts, and a sum does not remember which side was first. |
+
+The signature of a finding is its rule, severity, verdict, function, method,
+message and evidence, with the renamed identifiers folded to one placeholder.
+The **line is not in the signature**: the reorder relation legitimately moves a
+finding's line, and what has to be invariant is *which* claims the analyser
+makes and *what* it says — not where they sit in a file.
+
+Two more relations, because a metamorphic gate that cannot fail is decoration:
+the comparison must be able to **tell two programs apart** (a program whose
+claims really are different gets a different signature), and the same program
+analysed **twice** must give the same findings **in the same order** — a
+hash-order artefact would show up there and nowhere else.
+
+Cost: one script, four analyser runs.
+
 ---
 
 ## 6. Visualization

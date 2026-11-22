@@ -9,7 +9,7 @@
 | Requested coordinate | `local/module` |
 | Resolved version | `0.0.0` |
 | Pinning strategy | explicit local directory without moon.mod |
-| Source root | `fixtures\vuln_demo` |
+| Source root | `fixtures/vuln_demo` |
 | Declared target | `` |
 | Direct dependencies | (none) |
 
@@ -282,14 +282,14 @@ Observed path (trial 0, first 2 events): `index@81` -> `def@80`
 
 ### 4.2 CFG findings
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| DEAD-CODE | info | unreachable_demo | lib.mbt:35 | statement is unreachable after an unconditional exit | static | 0.95 |
-| DEAD-CODE | info | unreachable_demo | lib.mbt:36 | statement is unreachable after an unconditional exit | static | 0.95 |
-| UNREACHABLE | info | spin | lib.mbt:42 | CFG node has no incoming edge | static | 0.9 |
-| DEAD-CODE | info | spin | lib.mbt:45 | statement is unreachable after an unconditional exit | static | 0.95 |
-| INFINITE-LOOP | warning | spin | lib.mbt:42 | loop has a back edge but no exit edge (condition is constant true or unparsed) | static | 0.75 |
-| INFINITE-LOOP | warning | spin | lib.mbt:42 | loop did not terminate within the iteration cap (possible infinite loop) | dynamic | 0.7 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| DEAD-CODE | info | certain | unreachable_demo | lib.mbt:35 | statement is unreachable after an unconditional exit | static | 0.95 |
+| DEAD-CODE | info | certain | unreachable_demo | lib.mbt:36 | statement is unreachable after an unconditional exit | static | 0.95 |
+| UNREACHABLE | info | certain | spin | lib.mbt:42 | CFG node has no incoming edge | static | 0.9 |
+| DEAD-CODE | info | certain | spin | lib.mbt:45 | statement is unreachable after an unconditional exit | static | 0.95 |
+| INFINITE-LOOP | warning | certain | spin | lib.mbt:42 | loop has a back edge but no exit edge (condition is constant true or unparsed) | static | 0.75 |
+| INFINITE-LOOP | warning | certain | spin | lib.mbt:42 | loop did not terminate within the iteration cap (possible infinite loop) | dynamic | 0.7 |
 
 ### 4.3 Static vs dynamic attribution
 
@@ -383,16 +383,16 @@ flowchart LR
 
 ### 5.1 Taint sinks
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TAINT-INDEX | error | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | make_window | lib.mbt:22 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-ALLOC | error | parse_len | lib.mbt:28 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_checked | lib.mbt:73 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:81 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | get_negative | lib.mbt:88 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| TAINT-INDEX | error | certain | copy_prefix | lib.mbt:6 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lookup | lib.mbt:17 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | make_window | lib.mbt:22 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | parse_len | lib.mbt:28 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | parse_len | lib.mbt:29 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | get_checked | lib.mbt:73 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | get_unsafe | lib.mbt:81 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | get_negative | lib.mbt:88 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 
 ### 5.2 L2 abstract findings (may-analysis)
 
@@ -400,17 +400,17 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 
 **Scope.** The abstract layer analysed 12 of 12 — every function the abstract layer can analyse, in 182 steps.
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TAINT-INDEX | error | lookup | lib.mbt:17 | tainted value from parameter `index` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | make_window | lib.mbt:22 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | make_window | lib.mbt:22 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-ALLOC | error | parse_len | lib.mbt:28 | tainted value from parameter `s` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | parse_len | lib.mbt:29 | tainted value from parameter `s` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| INFINITE-LOOP | warning | spin | lib.mbt:42 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
-| TAINT-INDEX | error | get_checked | lib.mbt:73 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | get_unsafe | lib.mbt:81 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | get_negative | lib.mbt:88 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| TAINT-INDEX | error | certain | lookup | lib.mbt:17 | tainted value from parameter `index` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | make_window | lib.mbt:22 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | make_window | lib.mbt:22 | allocation size may be negative | L2-abstract | 0.9 |
+| TAINT-ALLOC | error | certain | parse_len | lib.mbt:28 | tainted value from parameter `s` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | parse_len | lib.mbt:29 | tainted value from parameter `s` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| INFINITE-LOOP | warning | certain | spin | lib.mbt:42 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
+| TAINT-INDEX | error | certain | get_checked | lib.mbt:73 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | get_unsafe | lib.mbt:81 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | get_negative | lib.mbt:88 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
 
 ### 5.3 EVA findings (evolved value analysis)
 
@@ -418,14 +418,14 @@ The evolved value analysis rides on the same fixpoint and asks the second questi
 
 The index class is proved by the interval the abstract domain already computes — the array's length and the index's range are both known, so the comparison covers the whole input abstraction — and it is filed here because an index is a value USED to address storage.
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| INDEX-OOB | error | copy_prefix | lib.mbt:6 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lookup | lib.mbt:17 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | parse_len | lib.mbt:29 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | get_checked | lib.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | get_unsafe | lib.mbt:81 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | get_negative | lib.mbt:88 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| INDEX-OOB | error | certain | copy_prefix | lib.mbt:6 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lookup | lib.mbt:17 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | parse_len | lib.mbt:29 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | get_checked | lib.mbt:73 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | get_unsafe | lib.mbt:81 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | get_negative | lib.mbt:88 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 
 ### 5.4 The global region
 
@@ -519,6 +519,11 @@ The model is sound about what it reports and silent about the rest, so here is e
 - **The C side of a socket.** What arrives is whatever the peer sent. §5.7 says the same about the other side of a C boundary.
 
 _No findings._
+
+### 5.10 Claims that could not be decided
+
+_Every claim the analyser made was decided; nothing was left unverified._
+
 
 ## 6. Value ranges
 

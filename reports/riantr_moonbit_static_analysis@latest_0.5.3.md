@@ -1,4 +1,4 @@
-# LunaFlow analysis report — riantr/moonbit_static_analysis@0.5.0
+# LunaFlow analysis report — riantr/moonbit_static_analysis@0.5.3
 
 > Trace-driven (dynamic-first) control-flow, data-flow, value-range and slicing analysis for a mooncakes.io module.
 
@@ -7,9 +7,9 @@
 | Item | Value |
 | --- | --- |
 | Requested coordinate | `riantr/moonbit_static_analysis@latest` |
-| Resolved version | `0.5.0` |
-| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.5.0` for ingestion, execution and reporting |
-| Source root | `./.repos/riantr/moonbit_static_analysis/0.5.0` |
+| Resolved version | `0.5.3` |
+| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.5.3` for ingestion, execution and reporting |
+| Source root | `./.repos/riantr/moonbit_static_analysis/0.5.3` |
 | Declared target | `wasm` |
 | Direct dependencies | (none) |
 
@@ -17,18 +17,18 @@
 
 | Metric | Value |
 | --- | --- |
-| Source files parsed | 254 |
-| Functions extracted | 3173 |
-| Statements understood | 17450 |
-| Statements unsupported | 754 |
-| Frontend coverage | 95.8% |
+| Source files parsed | 262 |
+| Functions extracted | 3236 |
+| Statements understood | 17797 |
+| Statements unsupported | 760 |
+| Frontend coverage | 95.9% |
 | Parse issues | 0 |
-| CFG functions | 600 of 1422 — the first 600 in file order; 822 functions had no CFG and can carry no CFG finding |
-| Trace events | 17029 |
-| Interpreted steps | 4410 |
+| CFG functions | 600 of 1436 — the first 600 in file order; 836 functions had no CFG and can carry no CFG finding |
+| Trace events | 11564 |
+| Interpreted steps | 2412 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 1722 ms |
+| Wall time (analyzer) | 2602 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -50,7 +50,7 @@ flowchart LR
   classDef l1 fill:#dcedc8,stroke:#33691e
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
-  L1["L1 concrete: 12 findings"]:::l1
+  L1["L1 concrete: 9 findings"]:::l1
   L2["L2 abstract: 188 findings, 186 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
@@ -59,15 +59,15 @@ flowchart LR
 
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
-| L1 concrete | 12 findings | — | 150 functions | observed facts |
-| L2 abstract | 188 findings | 186 | 1422 functions, 199764 steps | exhaustive over the input abstraction |
-| L3 contracts | 0 VCs | 0 failed, 0 unknown | 70 critical functions | specs required |
+| L1 concrete | 9 findings | — | 150 functions | observed facts |
+| L2 abstract | 188 findings | 186 | 1436 functions, 200236 steps | exhaustive over the input abstraction |
+| L3 contracts | 0 VCs | 0 failed, 0 unknown | 69 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
 
-Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `path_tail`, `mermaid_states`, `resolve_label`, `lower_if`, `Cfg::source_order`, `pred_of`, `build_else`, `cfl_ordinary_from`, `cfl_chain`, `dominators`, `dominance_frontiers`, `reverse_postorder`, `compute_idom`, `intersect`, `pta_step`, `pta_sweep_heap`, `new_ssa`, `prepare`, `assign_versions`, `subscript`, `reaches`, `icfg_of`, `ifds_reach_rel`, `cprop_after`, `ir_blocks`, `ir_block_succ`, `join_of_nodes`, `ifds_tabulate`, `interval_state_join`, `interval_state_same`, `solve_widening`, `narrow_round`, `reaching_use_defs`, `solve_round_robin`, `solve_propagation`, `states_after`, `solve_edges`, `solve_worklist`, `cp_store_node`, `cp_call_node`, `powerset_of`, `pta_demand_run`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `as_array`, `enter_guard`, `closer_ahead`, `lit_step`, `parse_hex_double`, `collect_using`, `starts_variant`, `declared_name_after_kw`, `file_request`, `merge_group`, `taint_findings`, `taint_message`, `ident_from`
+Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `mermaid_states`, `resolve_label`, `lower_if`, `Cfg::source_order`, `pred_of`, `build_else`, `cfl_ordinary_from`, `cfl_chain`, `dominators`, `dominance_frontiers`, `reverse_postorder`, `compute_idom`, `intersect`, `pta_step`, `pta_sweep_heap`, `new_ssa`, `prepare`, `assign_versions`, `subscript`, `reaches`, `icfg_of`, `ifds_reach_rel`, `cprop_after`, `ir_blocks`, `ir_block_succ`, `join_of_nodes`, `ifds_tabulate`, `interval_state_join`, `interval_state_same`, `solve_widening`, `narrow_round`, `reaching_use_defs`, `solve_round_robin`, `solve_propagation`, `states_after`, `solve_edges`, `solve_worklist`, `cp_store_node`, `cp_call_node`, `powerset_of`, `pta_demand_run`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `as_array`, `enter_guard`, `closer_ahead`, `lit_step`, `parse_hex_double`, `collect_using`, `starts_variant`, `declared_name_after_kw`, `file_request`, `merge_group`, `taint_findings`, `taint_message`, `ident_from`
 
-Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1697)`, `ok_segment (src/sa/main.mbt:1933)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:78)`, `mm_after_last (src/sa/mermaid_test.mbt:238)`, `path_tail (src/core/core.mbt:59)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2325)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:443)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:502)`
+Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`
 
 ## 4. Control-flow analysis
 
@@ -766,7 +766,7 @@ flowchart TD
   n67 --> n1
 ```
 
-Observed path (trial 0, first 8 events): `def@300` -> `def@301` -> `def@302` -> `def@303` -> `call@304` -> `def@304` -> `cond@355` -> `def@299`
+Observed path (trial 0, first 8 events): `def@307` -> `def@308` -> `def@309` -> `def@310` -> `call@311` -> `def@311` -> `cond@362` -> `def@306`
 
 #### `apply_nosec` (src/sa/profile.mbt)
 
@@ -856,7 +856,7 @@ flowchart TD
   n32 --> n1
 ```
 
-Observed path (trial 0, first 9 events): `def@300` -> `def@301` -> `cond@302` -> `ret@306` -> `def@300` -> `def@301` -> `cond@302` -> `ret@306` -> `def@296`
+Observed path (trial 0, first 9 events): `def@384` -> `def@385` -> `cond@386` -> `ret@390` -> `def@384` -> `def@385` -> `cond@386` -> `ret@390` -> `def@380`
 
 #### `pta_site_names` (src/flow/pta.mbt)
 
@@ -1004,9 +1004,7 @@ flowchart TD
 
 ### 4.2 CFG findings
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| BUDGET-EXCEEDED | warning | path_tail | src/core/core.mbt:70 | execution budget exhausted; loop may be non-terminating or inputs too large | dynamic | 0.6 |
+_No findings._
 
 ### 4.3 Static vs dynamic attribution
 
@@ -1076,119 +1074,117 @@ flowchart LR
 
 ### 5.1 Taint sinks
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TAINT-INDEX-RANGE | warning | dir_of | src/sa/main.mbt:1702 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1937 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1940 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | ssa_cost_over_files | src/sa/ssa_cost.mbt:111 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX-RANGE | warning | ssa_cost_over_files | src/sa/ssa_cost.mbt:112 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX-RANGE | warning | mm_parsed_with | src/sa/mermaid_test.mbt:86 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX | error | mm_after_last | src/sa/mermaid_test.mbt:240 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | path_tail | src/core/core.mbt:65 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX-RANGE | warning | path_tail | src/core/core.mbt:69 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| TAINT-INDEX-RANGE | warning | certain | dir_of | src/sa/main.mbt:1783 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | ok_segment | src/sa/main.mbt:2047 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ok_segment | src/sa/main.mbt:2050 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | ssa_cost_over_files | src/sa/ssa_cost.mbt:111 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | ssa_cost_over_files | src/sa/ssa_cost.mbt:112 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | mm_parsed_with | src/sa/mermaid_test.mbt:93 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | mm_after_last | src/sa/mermaid_test.mbt:247 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 
 ### 5.2 L2 abstract findings (may-analysis)
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Three rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. A tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose. And an allocation size that is PROVABLY CONSTANT is not claimed as one that untrusted input chose: no tainted value controls a size that is the same on every input.
 
-**Scope.** The abstract layer analysed 1422 of 1422 — every function the abstract layer can analyse, in 199764 steps.
+**Scope.** The abstract layer analysed 1436 of 1436 — every function the abstract layer can analyse, in 200236 steps.
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1937 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ok_segment | src/sa/main.mbt:1940 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | mermaid_states | src/sa/mermaid.mbt:89 | tainted value from parameters `verdicts` and `max_files` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | mm_parsed_with | src/sa/mermaid_test.mbt:86 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | lower_if | src/flow/ir.mbt:304 | tainted value from parameter `elif_at` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | lower_if | src/flow/ir.mbt:305 | tainted value from parameter `elif_at` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | pred_of | src/flow/cfg.mbt:285 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | build_else | src/flow/cfg.mbt:494 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cfl_ordinary_from | src/flow/cfl.mbt:290 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| INFINITE-LOOP | warning | cfl_chain | src/flow/cfl.mbt:523 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
-| TAINT-ALLOC | error | dominators | src/flow/dom.mbt:97 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominators | src/flow/dom.mbt:117 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:162 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:163 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:162 | tainted value from parameters `bb` and `dom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dominance_frontiers | src/flow/dom.mbt:163 | tainted value from parameters `bb` and `dom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | reverse_postorder | src/flow/dom.mbt:190 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | reverse_postorder | src/flow/dom.mbt:192 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reverse_postorder | src/flow/dom.mbt:197 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reverse_postorder | src/flow/dom.mbt:201 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| INFINITE-LOOP | warning | reverse_postorder | src/flow/dom.mbt:195 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
-| TAINT-ALLOC | error | compute_idom | src/flow/dom.mbt:235 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | compute_idom | src/flow/dom.mbt:253 | tainted value from parameters `bb` and `rpo` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | compute_idom | src/flow/dom.mbt:262 | tainted value from parameter `rpo` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameter `a` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:290 | tainted value from parameter `a` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:290 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:292 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:292 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:293 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:292 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:293 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | intersect | src/flow/dom.mbt:289 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | pta_step | src/flow/pta.mbt:515 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | pta_sweep_heap | src/flow/pta.mbt:615 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | new_ssa | src/flow/ssa.mbt:369 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | prepare | src/flow/ssa.mbt:530 | tainted value from parameter `s` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | subscript | src/flow/ssa.mbt:1197 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | reaches | src/flow/icfg.mbt:251 | tainted value from parameter `succ` may control an allocation size | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:262 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:263 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | reaches | src/flow/icfg.mbt:264 | tainted value from parameters `from` and `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_reach_rel | src/flow/ifds.mbt:261 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_reach_rel | src/flow/ifds.mbt:268 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_after | src/flow/cprop.mbt:401 | tainted value from parameter `v` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | join_of_nodes | src/flow/lattice.mbt:112 | tainted value from parameter `nodes` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:80 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:92 | tainted value from parameter `x` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ifds_tabulate | src/flow/ifds_tab.mbt:93 | tainted value from parameter `x` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | solve_propagation | src/flow/worklist.mbt:91 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | solve_propagation | src/flow/worklist.mbt:91 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:108 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:109 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_propagation | src/flow/worklist.mbt:111 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | solve_edges | src/flow/worklist.mbt:191 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | solve_edges | src/flow/worklist.mbt:191 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:208 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:209 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | solve_edges | src/flow/worklist.mbt:211 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-ALLOC | error | solve_worklist | src/flow/worklist.mbt:275 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
-| RANGE-VIOLATION | warning | solve_worklist | src/flow/worklist.mbt:275 | allocation size may be negative | L2-abstract | 0.9 |
-| TAINT-INDEX | error | solve_worklist | src/flow/worklist.mbt:293 | tainted value from parameter `succs` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cp_store_node | src/flow/icfg_test.mbt:116 | tainted value from parameter `nth` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cp_call_node | src/flow/icfg_test.mbt:131 | tainted value from parameter `nth` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:97 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:98 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_distributes | src/flow/ifds_distrib.mbt:141 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:163 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:164 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dl_taint_facts_of | src/flow/datalog_taint.mbt:201 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ss_step | src/flow/pta_storeless.mbt:327 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ss_sweep | src/flow/pta_storeless.mbt:404 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | union_of | src/flow/reaching_test.mbt:62 | tainted value from parameter `nodes` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | dl_facts_of | src/flow/datalog_pointer.mbt:88 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | as_array | src/walk/walk.mbt:1291 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| UNREACHABLE | info | enter_guard | src/walk/guardfacts.mbt:484 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:337 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:338 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:339 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:340 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:344 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:345 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | closer_ahead | src/lexer/lexer.mbt:352 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | collect_using | src/parser/parser.mbt:1539 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | collect_using | src/parser/parser.mbt:1547 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | starts_variant | src/parser/parser.mbt:1609 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | declared_name_after_kw | src/parser/parser.mbt:3083 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | declared_name_after_kw | src/parser/parser.mbt:3086 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| UNREACHABLE | info | taint_findings | src/pipeline/taintcheck.mbt:80 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
-| TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:505 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | ident_from | src/moonfiles/moonfiles.mbt:506 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| TAINT-INDEX | error | certain | ok_segment | src/sa/main.mbt:2047 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ok_segment | src/sa/main.mbt:2050 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | mermaid_states | src/sa/mermaid.mbt:89 | tainted value from parameters `verdicts` and `max_files` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | mm_parsed_with | src/sa/mermaid_test.mbt:93 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | lower_if | src/flow/ir.mbt:304 | tainted value from parameter `elif_at` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | lower_if | src/flow/ir.mbt:305 | tainted value from parameter `elif_at` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | pred_of | src/flow/cfg.mbt:285 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | build_else | src/flow/cfg.mbt:494 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cfl_ordinary_from | src/flow/cfl.mbt:290 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| INFINITE-LOOP | warning | certain | cfl_chain | src/flow/cfl.mbt:523 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
+| TAINT-ALLOC | error | certain | dominators | src/flow/dom.mbt:97 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | dominators | src/flow/dom.mbt:117 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:162 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:163 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:162 | tainted value from parameters `bb` and `dom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:163 | tainted value from parameters `bb` and `dom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | reverse_postorder | src/flow/dom.mbt:190 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | reverse_postorder | src/flow/dom.mbt:192 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | reverse_postorder | src/flow/dom.mbt:197 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | reverse_postorder | src/flow/dom.mbt:201 | tainted value from parameter `bb` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| INFINITE-LOOP | warning | certain | reverse_postorder | src/flow/dom.mbt:195 | loop condition is true for the whole abstract input set and has no break | L2-abstract | 0.7 |
+| TAINT-ALLOC | error | certain | compute_idom | src/flow/dom.mbt:235 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | compute_idom | src/flow/dom.mbt:253 | tainted value from parameters `bb` and `rpo` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | compute_idom | src/flow/dom.mbt:262 | tainted value from parameter `rpo` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:289 | tainted value from parameter `a` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:289 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:290 | tainted value from parameter `a` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:289 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:290 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:292 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:292 | tainted value from parameters `a` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:293 | tainted value from parameter `b` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:292 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:293 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | intersect | src/flow/dom.mbt:289 | tainted value from parameters `b` and `idom` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | pta_step | src/flow/pta.mbt:515 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | pta_sweep_heap | src/flow/pta.mbt:615 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | new_ssa | src/flow/ssa.mbt:369 | tainted value from parameter `bb` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | prepare | src/flow/ssa.mbt:530 | tainted value from parameter `s` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | subscript | src/flow/ssa.mbt:1197 | tainted value from parameter `n` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | reaches | src/flow/icfg.mbt:251 | tainted value from parameter `succ` may control an allocation size | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | reaches | src/flow/icfg.mbt:262 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | reaches | src/flow/icfg.mbt:263 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | reaches | src/flow/icfg.mbt:264 | tainted value from parameters `from` and `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ifds_reach_rel | src/flow/ifds.mbt:261 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ifds_reach_rel | src/flow/ifds.mbt:268 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cprop_after | src/flow/cprop.mbt:401 | tainted value from parameter `v` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | join_of_nodes | src/flow/lattice.mbt:112 | tainted value from parameter `nodes` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ifds_tabulate | src/flow/ifds_tab.mbt:80 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ifds_tabulate | src/flow/ifds_tab.mbt:92 | tainted value from parameter `x` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ifds_tabulate | src/flow/ifds_tab.mbt:93 | tainted value from parameter `x` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | solve_propagation | src/flow/worklist.mbt:91 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | solve_propagation | src/flow/worklist.mbt:91 | allocation size may be negative | L2-abstract | 0.9 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:108 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:109 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:111 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | solve_edges | src/flow/worklist.mbt:191 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | solve_edges | src/flow/worklist.mbt:191 | allocation size may be negative | L2-abstract | 0.9 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:208 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:209 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:211 | tainted value from parameter `succ` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-ALLOC | error | certain | solve_worklist | src/flow/worklist.mbt:275 | tainted value from parameter `n` may control an allocation size | L2-abstract | 0.6 |
+| RANGE-VIOLATION | warning | certain | solve_worklist | src/flow/worklist.mbt:275 | allocation size may be negative | L2-abstract | 0.9 |
+| TAINT-INDEX | error | certain | solve_worklist | src/flow/worklist.mbt:293 | tainted value from parameter `succs` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cp_store_node | src/flow/icfg_test.mbt:116 | tainted value from parameter `nth` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cp_call_node | src/flow/icfg_test.mbt:131 | tainted value from parameter `nth` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:97 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:98 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cprop_distributes | src/flow/ifds_distrib.mbt:141 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cprop_distribution_report | src/flow/ifds_distrib.mbt:163 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | cprop_distribution_report | src/flow/ifds_distrib.mbt:164 | tainted value from parameter `node` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | dl_taint_facts_of | src/flow/datalog_taint.mbt:201 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ss_step | src/flow/pta_storeless.mbt:327 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ss_sweep | src/flow/pta_storeless.mbt:404 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | union_of | src/flow/reaching_test.mbt:62 | tainted value from parameter `nodes` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | dl_facts_of | src/flow/datalog_pointer.mbt:88 | tainted value from parameter `fi` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | as_array | src/walk/walk.mbt:1291 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| UNREACHABLE | info | certain | enter_guard | src/walk/guardfacts.mbt:484 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:337 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:338 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:339 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:340 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:344 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:345 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:352 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | collect_using | src/parser/parser.mbt:1539 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | collect_using | src/parser/parser.mbt:1547 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | starts_variant | src/parser/parser.mbt:1609 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | declared_name_after_kw | src/parser/parser.mbt:3083 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | declared_name_after_kw | src/parser/parser.mbt:3086 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| UNREACHABLE | info | certain | taint_findings | src/pipeline/taintcheck.mbt:80 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
+| TAINT-INDEX | error | certain | ident_from | src/moonfiles/moonfiles.mbt:512 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | ident_from | src/moonfiles/moonfiles.mbt:513 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
 
 ### 5.3 EVA findings (evolved value analysis)
 
@@ -1196,103 +1192,103 @@ The evolved value analysis rides on the same fixpoint and asks the second questi
 
 The index class is proved by the interval the abstract domain already computes — the array's length and the index's range are both known, so the comparison covers the whole input abstraction — and it is filed here because an index is a value USED to address storage.
 
-| Rule | Severity | Function | Location | Message | Method | Confidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| INDEX-OOB | error | ok_segment | src/sa/main.mbt:1937 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ok_segment | src/sa/main.mbt:1940 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | resolve_label | src/sa/provenance.mbt:276 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | mm_parsed_with | src/sa/mermaid_test.mbt:86 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lower_if | src/flow/ir.mbt:304 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | lower_if | src/flow/ir.mbt:305 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | Cfg::source_order | src/flow/cfg.mbt:187 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | build_else | src/flow/cfg.mbt:494 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | dominators | src/flow/dom.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | intersect | src/flow/dom.mbt:289 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | intersect | src/flow/dom.mbt:290 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | intersect | src/flow/dom.mbt:292 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | intersect | src/flow/dom.mbt:293 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | pta_step | src/flow/pta.mbt:515 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | pta_sweep_heap | src/flow/pta.mbt:615 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | assign_versions | src/flow/ssa.mbt:631 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | assign_versions | src/flow/ssa.mbt:646 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | assign_versions | src/flow/ssa.mbt:647 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | assign_versions | src/flow/ssa.mbt:649 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | subscript | src/flow/ssa.mbt:1197 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | icfg_of | src/flow/icfg.mbt:302 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | icfg_of | src/flow/icfg.mbt:303 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | icfg_of | src/flow/icfg.mbt:315 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | icfg_of | src/flow/icfg.mbt:347 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ifds_reach_rel | src/flow/ifds.mbt:261 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ifds_reach_rel | src/flow/ifds.mbt:268 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cprop_after | src/flow/cprop.mbt:401 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ir_blocks | src/flow/ir_cfg.mbt:176 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ir_block_succ | src/flow/ir_cfg.mbt:266 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ir_block_succ | src/flow/ir_cfg.mbt:267 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ifds_tabulate | src/flow/ifds_tab.mbt:80 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | interval_state_join | src/flow/interval.mbt:546 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | interval_state_same | src/flow/interval.mbt:560 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_widening | src/flow/interval.mbt:636 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_widening | src/flow/interval.mbt:642 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_widening | src/flow/interval.mbt:644 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | narrow_round | src/flow/interval.mbt:685 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | narrow_round | src/flow/interval.mbt:690 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | reaching_use_defs | src/flow/reaching.mbt:264 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_round_robin | src/flow/worklist.mbt:54 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_round_robin | src/flow/worklist.mbt:55 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_propagation | src/flow/worklist.mbt:102 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_propagation | src/flow/worklist.mbt:104 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_propagation | src/flow/worklist.mbt:106 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_propagation | src/flow/worklist.mbt:107 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | states_after | src/flow/worklist.mbt:140 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_edges | src/flow/worklist.mbt:202 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_edges | src/flow/worklist.mbt:204 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_edges | src/flow/worklist.mbt:206 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_edges | src/flow/worklist.mbt:207 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_edges | src/flow/worklist.mbt:208 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_worklist | src/flow/worklist.mbt:281 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_worklist | src/flow/worklist.mbt:284 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_worklist | src/flow/worklist.mbt:285 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_worklist | src/flow/worklist.mbt:291 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | solve_worklist | src/flow/worklist.mbt:292 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cp_store_node | src/flow/icfg_test.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cp_call_node | src/flow/icfg_test.mbt:131 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | powerset_of | src/flow/laws_test.mbt:86 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | pta_demand_run | src/flow/pta_demand.mbt:428 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:97 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:98 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cprop_distributes | src/flow/ifds_distrib.mbt:141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:163 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | cprop_distribution_report | src/flow/ifds_distrib.mbt:164 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | dl_taint_facts_of | src/flow/datalog_taint.mbt:201 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | dl_same_triple | src/flow/datalog_taint.mbt:367 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ss_step | src/flow/pta_storeless.mbt:327 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ss_sweep | src/flow/pta_storeless.mbt:404 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | dl_facts_of | src/flow/datalog_pointer.mbt:88 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | dl_has_tuple | src/flow/datalog_pointer.mbt:307 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | as_array | src/walk/walk.mbt:1291 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | closer_ahead | src/lexer/lexer.mbt:337 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | closer_ahead | src/lexer/lexer.mbt:338 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | closer_ahead | src/lexer/lexer.mbt:339 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | closer_ahead | src/lexer/lexer.mbt:340 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | closer_ahead | src/lexer/lexer.mbt:344 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | closer_ahead | src/lexer/lexer.mbt:345 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | closer_ahead | src/lexer/lexer.mbt:352 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INTEGER-OVERFLOW | error | lit_step | src/lexer/lexer.mbt:583 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| DIVISION-BY-ZERO | error | lit_step | src/lexer/lexer.mbt:583 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
-| INTEGER-OVERFLOW | error | lit_step | src/lexer/lexer.mbt:586 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
-| INDEX-OOB | error | parse_hex_double | src/lexer/lexer.mbt:2379 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | parse_hex_double | src/lexer/lexer.mbt:2384 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | collect_using | src/parser/parser.mbt:1539 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | collect_using | src/parser/parser.mbt:1547 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | starts_variant | src/parser/parser.mbt:1609 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | declared_name_after_kw | src/parser/parser.mbt:3083 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | declared_name_after_kw | src/parser/parser.mbt:3086 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | file_request | src/jsoncli/main.mbt:447 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | file_request | src/jsoncli/main.mbt:448 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | merge_group | src/pipeline/pipeline.mbt:454 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | taint_message | src/pipeline/taintcheck.mbt:145 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ident_from | src/moonfiles/moonfiles.mbt:505 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | ident_from | src/moonfiles/moonfiles.mbt:506 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| INDEX-OOB | error | certain | ok_segment | src/sa/main.mbt:2047 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ok_segment | src/sa/main.mbt:2050 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | resolve_label | src/sa/provenance.mbt:276 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | mm_parsed_with | src/sa/mermaid_test.mbt:93 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lower_if | src/flow/ir.mbt:304 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | lower_if | src/flow/ir.mbt:305 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | Cfg::source_order | src/flow/cfg.mbt:187 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | build_else | src/flow/cfg.mbt:494 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | dominators | src/flow/dom.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | intersect | src/flow/dom.mbt:289 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | intersect | src/flow/dom.mbt:290 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | intersect | src/flow/dom.mbt:292 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | intersect | src/flow/dom.mbt:293 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | pta_step | src/flow/pta.mbt:515 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | pta_sweep_heap | src/flow/pta.mbt:615 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | assign_versions | src/flow/ssa.mbt:631 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | assign_versions | src/flow/ssa.mbt:646 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | assign_versions | src/flow/ssa.mbt:647 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | assign_versions | src/flow/ssa.mbt:649 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | subscript | src/flow/ssa.mbt:1197 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | icfg_of | src/flow/icfg.mbt:302 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | icfg_of | src/flow/icfg.mbt:303 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | icfg_of | src/flow/icfg.mbt:315 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | icfg_of | src/flow/icfg.mbt:347 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ifds_reach_rel | src/flow/ifds.mbt:261 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ifds_reach_rel | src/flow/ifds.mbt:268 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cprop_after | src/flow/cprop.mbt:401 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ir_blocks | src/flow/ir_cfg.mbt:176 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ir_block_succ | src/flow/ir_cfg.mbt:266 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ir_block_succ | src/flow/ir_cfg.mbt:267 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ifds_tabulate | src/flow/ifds_tab.mbt:80 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | interval_state_join | src/flow/interval.mbt:546 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | interval_state_same | src/flow/interval.mbt:560 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_widening | src/flow/interval.mbt:636 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_widening | src/flow/interval.mbt:642 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_widening | src/flow/interval.mbt:644 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | narrow_round | src/flow/interval.mbt:685 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | narrow_round | src/flow/interval.mbt:690 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | reaching_use_defs | src/flow/reaching.mbt:264 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_round_robin | src/flow/worklist.mbt:54 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_round_robin | src/flow/worklist.mbt:55 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_propagation | src/flow/worklist.mbt:102 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_propagation | src/flow/worklist.mbt:104 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_propagation | src/flow/worklist.mbt:106 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_propagation | src/flow/worklist.mbt:107 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | states_after | src/flow/worklist.mbt:140 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_edges | src/flow/worklist.mbt:202 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_edges | src/flow/worklist.mbt:204 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_edges | src/flow/worklist.mbt:206 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_edges | src/flow/worklist.mbt:207 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_edges | src/flow/worklist.mbt:208 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_worklist | src/flow/worklist.mbt:281 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_worklist | src/flow/worklist.mbt:284 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_worklist | src/flow/worklist.mbt:285 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_worklist | src/flow/worklist.mbt:291 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | solve_worklist | src/flow/worklist.mbt:292 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cp_store_node | src/flow/icfg_test.mbt:116 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cp_call_node | src/flow/icfg_test.mbt:131 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | powerset_of | src/flow/laws_test.mbt:86 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | pta_demand_run | src/flow/pta_demand.mbt:428 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:97 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cprop_whole_and_apart | src/flow/ifds_distrib.mbt:98 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cprop_distributes | src/flow/ifds_distrib.mbt:141 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cprop_distribution_report | src/flow/ifds_distrib.mbt:163 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | cprop_distribution_report | src/flow/ifds_distrib.mbt:164 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | dl_taint_facts_of | src/flow/datalog_taint.mbt:201 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | dl_same_triple | src/flow/datalog_taint.mbt:367 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ss_step | src/flow/pta_storeless.mbt:327 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ss_sweep | src/flow/pta_storeless.mbt:404 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | dl_facts_of | src/flow/datalog_pointer.mbt:88 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | dl_has_tuple | src/flow/datalog_pointer.mbt:307 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | as_array | src/walk/walk.mbt:1291 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | closer_ahead | src/lexer/lexer.mbt:337 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | closer_ahead | src/lexer/lexer.mbt:338 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | closer_ahead | src/lexer/lexer.mbt:339 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | closer_ahead | src/lexer/lexer.mbt:340 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | closer_ahead | src/lexer/lexer.mbt:344 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | closer_ahead | src/lexer/lexer.mbt:345 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | closer_ahead | src/lexer/lexer.mbt:352 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INTEGER-OVERFLOW | error | certain | lit_step | src/lexer/lexer.mbt:583 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| DIVISION-BY-ZERO | error | certain | lit_step | src/lexer/lexer.mbt:583 | the divisor may be zero, and the runtime turns that into a panic | L2-EVA | 0.7 |
+| INTEGER-OVERFLOW | error | certain | lit_step | src/lexer/lexer.mbt:586 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
+| INDEX-OOB | error | certain | parse_hex_double | src/lexer/lexer.mbt:2389 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | parse_hex_double | src/lexer/lexer.mbt:2394 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | collect_using | src/parser/parser.mbt:1539 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | collect_using | src/parser/parser.mbt:1547 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | starts_variant | src/parser/parser.mbt:1609 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | declared_name_after_kw | src/parser/parser.mbt:3083 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | declared_name_after_kw | src/parser/parser.mbt:3086 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | file_request | src/jsoncli/main.mbt:447 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | file_request | src/jsoncli/main.mbt:448 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | merge_group | src/pipeline/pipeline.mbt:479 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | taint_message | src/pipeline/taintcheck.mbt:145 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ident_from | src/moonfiles/moonfiles.mbt:512 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | ident_from | src/moonfiles/moonfiles.mbt:513 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 
 ### 5.4 The global region
 
@@ -1365,19 +1361,19 @@ Allocation sites: 404 — HEAP 207, FRAME 197.
 | split_findings | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:120 | bound to the local aggregated and never leaves the frame |
 | notice_lines | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:237 | returned, so it outlives the frame |
 | count_by_shape | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:272 | returned as the last expression of the function, so it outlives the frame |
-| metrics_lines | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:543 | returned as the last expression of the function, so it outlives the frame |
-| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:781 | bound to the local files and never leaves the frame |
-| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:792 | bound to the local iface_dirs and never leaves the frame |
-| scan | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:833 | passed to a call the analyzer cannot see into, so it may outlive the frame |
-| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:843 | bound to the local kinds and never leaves the frame |
-| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:849 | bound to the local aggregated_notices and never leaves the frame |
-| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:1067 | bound to the local declared and never leaves the frame |
-| collect | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:1276 | bound to the local stack and never leaves the frame |
-| filtered_reports | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:1375 | bound to the local nosecs and never leaves the frame |
-| filtered_reports | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:1380 | returned as the last expression of the function, so it outlives the frame |
-| parse_moon_mod_imports | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:1823 | returned as the last expression of the function, so it outlives the frame |
-| collect_iface_symtabs | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:1980 | bound to the local stack and never leaves the frame |
-| method_segments | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:2102 | returned as the last expression of the function, so it outlives the frame |
+| metrics_lines | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:584 | returned as the last expression of the function, so it outlives the frame |
+| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:842 | bound to the local files and never leaves the frame |
+| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:853 | bound to the local iface_dirs and never leaves the frame |
+| scan | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:894 | passed to a call the analyzer cannot see into, so it may outlive the frame |
+| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:904 | bound to the local kinds and never leaves the frame |
+| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:910 | bound to the local aggregated_notices and never leaves the frame |
+| scan | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:1128 | bound to the local declared and never leaves the frame |
+| collect | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:1337 | bound to the local stack and never leaves the frame |
+| filtered_reports | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:1436 | bound to the local nosecs and never leaves the frame |
+| filtered_reports | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:1441 | returned as the last expression of the function, so it outlives the frame |
+| parse_moon_mod_imports | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:1925 | returned as the last expression of the function, so it outlives the frame |
+| collect_iface_symtabs | array literal | **FRAME** — frame (does not escape) | src/sa/main.mbt:2090 | bound to the local stack and never leaves the frame |
+| method_segments | array literal | **HEAP** — heap (escapes the frame) | src/sa/main.mbt:2212 | returned as the last expression of the function, so it outlives the frame |
 | pick_files | array literal | **HEAP** — heap (escapes the frame) | src/sa/mermaid.mbt:110 | returned, so it outlives the frame |
 | pick_files | array literal | **HEAP** — heap (escapes the frame) | src/sa/mermaid.mbt:152 | returned as the last expression of the function, so it outlives the frame |
 | emit_file | array literal | **HEAP** — heap (escapes the frame) | src/sa/mermaid.mbt:300 | passed to a call the analyzer cannot see into, so it may outlive the frame |
@@ -1388,19 +1384,19 @@ Allocation sites: 404 — HEAP 207, FRAME 197.
 | validate_profile | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:92 | returned, so it outlives the frame |
 | family_ids | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:117 | returned as the last expression of the function, so it outlives the frame |
 | apply_profile | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:171 | returned as the last expression of the function, so it outlives the frame |
-| parse_nosec | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:225 | returned as the last expression of the function, so it outlives the frame |
-| parse_nosec | array literal | **FRAME** — frame (does not escape) | src/sa/profile.mbt:252 | bound to the local ids and never leaves the frame |
-| split_tokens | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:264 | returned as the last expression of the function, so it outlives the frame |
-| apply_nosec | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:300 | returned, so it outlives the frame |
-| apply_nosec | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:301 | returned, so it outlives the frame |
-| Nosec::stale_message | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:361 | returned, so it outlives the frame |
+| parse_nosec | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:286 | returned as the last expression of the function, so it outlives the frame |
+| parse_nosec | array literal | **FRAME** — frame (does not escape) | src/sa/profile.mbt:336 | bound to the local ids and never leaves the frame |
+| split_tokens | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:348 | returned as the last expression of the function, so it outlives the frame |
+| apply_nosec | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:384 | returned, so it outlives the frame |
+| apply_nosec | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:385 | returned, so it outlives the frame |
+| Nosec::stale_message | array literal | **HEAP** — heap (escapes the frame) | src/sa/profile.mbt:445 | returned, so it outlives the frame |
 | version_parts | array literal | **HEAP** — heap (escapes the frame) | src/sa/version.mbt:76 | returned as the last expression of the function, so it outlives the frame |
 | print_ssa_cost | array literal | **FRAME** — frame (does not escape) | src/sa/ssa_cost.mbt:79 | bound to the local files and never leaves the frame |
 | resolve_label | array literal | **HEAP** — heap (escapes the frame) | src/sa/provenance.mbt:266 | passed to a call the analyzer cannot see into, so it may outlive the frame |
 | resolve_label | array literal | **FRAME** — frame (does not escape) | src/sa/provenance.mbt:274 | bound to the local shorter and never leaves the frame |
 | path_segments | array literal | **HEAP** — heap (escapes the frame) | src/sa/provenance.mbt:308 | returned as the last expression of the function, so it outlives the frame |
 | moonbit_version | array literal | **HEAP** — heap (escapes the frame) | src/sa/provenance.mbt:444 | passed to a call the analyzer cannot see into, so it may outlive the frame |
-| mm_parsed_with | array literal | **FRAME** — frame (does not escape) | src/sa/mermaid_test.mbt:79 | bound to the local fams and never leaves the frame |
+| mm_parsed_with | array literal | **FRAME** — frame (does not escape) | src/sa/mermaid_test.mbt:86 | bound to the local fams and never leaves the frame |
 
 _Showing the first 40 of 404 allocation sites._
 
@@ -1479,6 +1475,11 @@ The model is sound about what it reports and silent about the rest, so here is e
 
 _No findings._
 
+### 5.10 Claims that could not be decided
+
+_Every claim the analyser made was decided; nothing was left unverified._
+
+
 ## 6. Value ranges
 
 Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.
@@ -1489,82 +1490,74 @@ Every definition event is keyed by function, source line and variable, so a valu
 
 | Function | Line | Variable | Observed values |
 | --- | --- | --- | --- |
-| scan | 766 | s | "", "x" |
-| bump | 1634 | n | ? |
+| scan | 827 | s | "", "x" |
+| bump | 1715 | n | ? |
 | slug | 324 | buf | ? |
 | slug | 343 | out | "?" |
-| dir_of | 1700 | i | -1, 2, 15, 63 |
-| dir_of | 1706 | i | 1, 0, -1, 14, 13, 12 |
-| is_dir | 1249 | d | ? |
+| dir_of | 1781 | i | -1, 2, 15, 63 |
+| dir_of | 1787 | i | 1, 0, -1, 14, 13, 12 |
+| is_dir | 1310 | d | ? |
 | note | 370 | line | ?, "stand behind them -- a form it does n...", "resolve. ... |
-| scan | 772 | root | "" |
-| wanted | 1325 | n | () |
-| wanted | 1326 | s | () |
-| analyze | 1443 | n | () |
-| analyze | 1444 | k | () |
-| ctx_line | 667 | t | ? |
+| scan | 833 | root | "" |
+| wanted | 1386 | n | () |
+| wanted | 1387 | s | () |
+| analyze | 1504 | n | () |
+| analyze | 1505 | k | () |
+| ctx_line | 728 | t | ? |
 | is_hiding | 81 | h | 0, 1 |
-| kind_of | 1336 | s | () |
-| kind_of | 1337 | n | () |
-| path_tail | 61 | i | 0 |
-| path_tail | 63 | n | 0, 3, 16, 64 |
-| path_tail | 66 | j | 2, 3, 4, 5, 6, 7 |
-| path_tail | 70 | j | 3, 4, 5, 6, 7, 8 |
-| path_tail | 74 | i | 1, 2, 3, 4, 5, 6 |
-| reify | 1872 | buf | ? |
-| scan | 762 | taint | ? |
+| kind_of | 1397 | s | () |
+| kind_of | 1398 | n | () |
+| reify | 1982 | buf | ? |
+| row0616 | 60 | out | "" |
+| scan | 823 | taint | ? |
 | show_plan | 64 | c | ? |
-| aggregate | 436 | v | 0, 1, -1 |
-| aggregate | 437 | n | ? |
-| dir_of | 1699 | cut | -1 |
+| aggregate | 467 | v | 0, 1, -1 |
+| aggregate | 468 | n | ? |
+| dir_of | 1780 | cut | -1 |
 | version_gt | 53 | i | 0 |
 | version_gt | 55 | x | ? |
 | version_gt | 56 | y | ? |
-| analyze | 1442 | src | () |
-| base_of | 1671 | out | "" |
-| collect | 1281 | dir | ? |
+| analyze | 1503 | src | () |
+| base_of | 1752 | out | "" |
+| collect | 1342 | dir | ? |
 | family_ids | 118 | n | 1 |
-| path_tail | 60 | out | "" |
-| path_tail | 67 | buf | ? |
-| path_tail | 72 | out | "?" |
 | sanitize | 461 | buf | ? |
 | version_gt | 51 | pa | () |
 | version_gt | 52 | pb | () |
 | <global> | 155 | flow | "let k = 3 if k {   print("yes") } fn ..." |
 | <global> | 94 | clean | "fn fact(n: int) -> int {   if n <= 1 ..." |
-| apply_nosec | 319 | n | 0, 1, -1 |
-| dir_of | 1698 | chars | [], ["a", "b", "c"], [".", ".", "/", ".", ".", "/", "e", ... |
+| apply_nosec | 403 | n | 0, 1, -1 |
+| dir_of | 1779 | chars | [], ["a", "b", "c"], [".", ".", "/", ".", ".", "/", "e", ... |
 | family_ids | 120 | id | ""MSA-"()" |
-| mm_check | 300 | errs | [] |
+| mm_check | 307 | errs | [] |
 | stamp_utc | 138 | sec | ? |
 | by_rank | 437 | sorted | [], [0], [0, 1, -1], [1, 0] |
-| collect | 1276 | stack | [""] |
+| collect | 1337 | stack | [""] |
 | emit_file | 216 | head | ? |
 | emit_file | 227 | head | ? |
 | emit_file | 338 | head | ? |
 | emit_file | 343 | body | [?, """diagram caps a file at \{limit}. Pe...", "Re-run w... |
-| emit_mmd | 1134 | prov | () |
-| emit_mmd | 1135 | text | () |
-| emit_mmd | 1138 | path | ? |
+| emit_mmd | 1195 | prov | () |
+| emit_mmd | 1196 | text | () |
+| emit_mmd | 1199 | path | ? |
 | family_ids | 117 | out | [] |
 | first_line | 481 | out | ? |
-| mm_check | 302 | edges | [] |
-| mm_check | 304 | lines | () |
-| mm_label | 253 | parts | ? |
-| path_tail | 62 | chars | [], ["a", "b", "c"], [".", ".", "/", ".", ".", "/", "e", ... |
+| mm_check | 309 | edges | [] |
+| mm_check | 311 | lines | () |
+| mm_label | 260 | parts | ? |
 | pick_files | 110 | idx | [] |
 | show_plan | 65 | shown | ? |
 | slug | 325 | last_dash | false |
 | stamp_utc | 137 | days | ? |
 | <global> | 142 | typing | "fn shout(s: str) -> int {   return le..." |
-| aggregate | 430 | total | 0 |
-| aggregate | 438 | total | ? |
-| apply_nosec | 320 | hit | false |
+| aggregate | 456 | total | 0 |
+| aggregate | 469 | total | ? |
+| apply_nosec | 404 | hit | false |
 | apply_profile | 172 | r | 0, 1, -1 |
 | count_notices | 201 | n | 0 |
 | count_notices | 202 | r | 0, 1, -1 |
 | count_notices | 204 | n | 1, 2, 3 |
-| count_rows0521 | 68 | n | 0 |
+| count_rows0521 | 75 | n | 0 |
 | emit_file | 238 | limit | () |
 | emit_file | 325 | parts | "" |
 | explain_family | 36 | s | "\{f.id()}  \{f.name()} " |
@@ -1577,80 +1570,82 @@ Every definition event is keyed by function, source line and variable, so a valu
 | explain_roster | 62 | s | """"families: id, name, and the proper..." |
 | first_line | 482 | done | false |
 | lens_list | 426 | names | [] |
-| mm_parsed_with | 85 | i | 0, 1, 2 |
-| parse_nosec | 225 | out | [] |
+| mm_parsed_with | 92 | i | 0, 1, 2 |
+| parse_nosec | 286 | out | [] |
 | print_ssa_cost | 80 | _ | () |
-| suffix_of | 1653 | tail | "" |
+| row_for0611 | 142 | out | "" |
+| suffix_of | 1734 | tail | "" |
 | <global> | 573 | lit_max | 2147483647 |
-| apply_nosec | 300 | kept | [] |
-| collect | 1285 | entries | ? |
+| apply_nosec | 384 | kept | [] |
+| collect | 1346 | entries | ? |
 | count_by_shape | 265 | r | 0, 1, -1 |
 | count_by_shape | 266 | c | ? |
-| ctx_line | 665 | per_sig | "n/a (no signature was executed)" |
-| ctx_line | 668 | per_sig | "\{t / 100}.\{t % 100 / 10}\{t % 10} e..." |
+| ctx_line | 726 | per_sig | "n/a (no signature was executed)" |
+| ctx_line | 729 | per_sig | "\{t / 100}.\{t % 100 / 10}\{t % 10} e..." |
 | emit_file | 239 | counts | ? |
-| line_with0521 | 55 | out | "" |
-| metrics_lines | 595 | hi | ? |
-| metrics_lines | 596 | lo | ? |
-| metrics_lines | 597 | un | ? |
-| mm_check | 303 | in_note | false |
-| mm_state_id | 277 | seen | 0 |
-| mm_state_id | 279 | tail | ? |
-| mm_state_id | 290 | rest | () |
+| line_with0521 | 62 | out | "" |
+| metrics_lines | 656 | hi | ? |
+| metrics_lines | 657 | lo | ? |
+| metrics_lines | 658 | un | ? |
+| mm_check | 310 | in_note | false |
+| mm_state_id | 284 | seen | 0 |
+| mm_state_id | 286 | tail | ? |
+| mm_state_id | 297 | rest | () |
 | notice_lines | 237 | out | [] |
 | profile_keeps | 149 | id | ? |
 | render_reports | 258 | r | 0, 1, -1 |
-| split_coord | 1227 | mod | "" |
-| split_coord | 1228 | ver | "" |
-| split_coord | 1242 | ver | "" |
-| split_tokens | 264 | out | [] |
+| split_coord | 1288 | mod | "" |
+| split_coord | 1289 | ver | "" |
+| split_coord | 1303 | ver | "" |
+| split_tokens | 348 | out | [] |
 | stamp_utc | 136 | day_ms | ? |
 | version_parts | 77 | cur | 0 |
 | <global> | 32 | max_files | 20000 |
 | <global> | 67 | iface_bad | "// Generated using `moon info`, DON'T..." |
 | <global> | 80 | proof_bad | "///\| predicate is_hot(s : Severity) {..." |
-| aggregate | 427 | notices | 0 |
-| aggregate | 432 | n_calls | 0 |
-| aggregate | 441 | n_calls | ? |
-| aggregate | 448 | notices | ? |
-| apply_nosec | 301 | stale | [] |
+| aggregate | 453 | notices | 0 |
+| aggregate | 458 | n_calls | 0 |
+| aggregate | 472 | n_calls | ? |
+| aggregate | 484 | notices | ? |
+| apply_nosec | 385 | stale | [] |
 | civil_from_days | 158 | z | ?, 719467, 719468, 719469, 719470 |
 | civil_from_days | 162 | y | ?, 1969 |
 | civil_from_days | 165 | d | ?, 31, 1, 2, 3 |
 | emit_file | 184 | defects | ? |
 | emit_file | 321 | dropped | ? |
+| line_with0611 | 105 | out | "" |
 | measure_file | 122 | text | ? |
 | mermaid_states | 51 | out | ? |
-| metrics_lines | 543 | out | [] |
-| metrics_lines | 544 | pct | ? |
-| mm_check | 301 | declared | [] |
-| mm_count_quotes | 217 | n | 0 |
-| mm_valid_id | 201 | first | true |
+| metrics_lines | 584 | out | [] |
+| metrics_lines | 585 | pct | ? |
+| mm_check | 308 | declared | [] |
+| mm_count_quotes | 224 | n | 0 |
+| mm_valid_id | 208 | first | true |
 | <global> | 106 | undefined | "fn g() -> int {   return missing + 1 ..." |
 | <global> | 116 | structure | "fn f(x: int, y: int) -> int {   z = x..." |
-| aggregate | 429 | withheld | 0 |
-| aggregate | 458 | withheld | ? |
+| aggregate | 455 | withheld | 0 |
+| aggregate | 494 | withheld | ? |
 | apply_profile | 171 | kept | [] |
 | civil_from_days | 164 | mp | ?, 9, 10 |
 | civil_from_days | 166 | mo | ? |
 | civil_from_days | 167 | yy | ? |
-| collect | 1277 | seen_dirs | 0 |
-| collect | 1279 | last_dirs | 0 |
-| collect | 1310 | seen_dirs | 1, 2, 3, 4, 5, 6 |
+| collect | 1338 | seen_dirs | 0 |
+| collect | 1340 | last_dirs | 0 |
+| collect | 1371 | seen_dirs | 1, 2, 3, 4, 5, 6 |
 | count_by_shape | 272 | out | [] |
 | measure_function | 148 | c | ? |
-| metrics_lines | 598 | n_hi | 0 |
-| metrics_lines | 599 | n_lo | 0 |
-| metrics_lines | 600 | n_un | 0 |
-| mm_parsed_with | 79 | fams | [(?, "local variable 'x' assigned but may n..."), (?, "ar... |
-| mm_parsed_with | 84 | reps | [] |
+| metrics_lines | 659 | n_hi | 0 |
+| metrics_lines | 660 | n_lo | 0 |
+| metrics_lines | 661 | n_un | 0 |
+| mm_parsed_with | 86 | fams | [(?, "local variable 'x' assigned but may n..."), (?, "ar... |
+| mm_parsed_with | 91 | reps | [] |
 | newest_version | 31 | best | "" |
 | newest_version | 32 | name | "", "x" |
 | newest_version | 34 | best | "", "x" |
 | path_segments | 308 | segs | [] |
 | print_ssa_cost | 81 | cost | () |
 | render_reports | 257 | buf | ? |
-| run_exit_code | 1762 | res | ? |
+| run_exit_code | 1843 | res | ? |
 | validate_profile | 81 | id | "", "x" |
 | version_parts | 76 | parts | [] |
 | version_parts | 78 | named | false |
@@ -1659,178 +1654,192 @@ Every definition event is keyed by function, source line and variable, so a valu
 | <global> | 194 | FOLD_LIMIT | 46340 |
 | <global> | 37 | SAMPLE_FLOW | "let k = 3 if k {   print("yes") } fn ..." |
 | <global> | 54 | script_mbtx | "import {   "moonbitlang/core/list" @l..." |
-| aggregate | 433 | n_checked | 0 |
-| aggregate | 442 | n_checked | ? |
+| aggregate | 459 | n_checked | 0 |
+| aggregate | 473 | n_checked | ? |
 | civil_from_days | 159 | era | ?, 4 |
 | civil_from_days | 160 | doe | ?, 135079, 135080, 135081, 135082 |
 | civil_from_days | 161 | yoe | ?, 369 |
 | civil_from_days | 163 | doy | ?, 305, 306, 307, 308 |
-| collect | 1278 | last_files | 0 |
+| collect | 1339 | last_files | 0 |
 | measure_function | 147 | ir | ? |
-| metrics_lines | 562 | other | ? |
-| metrics_lines | 567 | share | ? |
-| metrics_lines | 586 | agree | ? |
-| mm_after_last | 239 | parts | ? |
+| metrics_lines | 612 | other | ? |
+| metrics_lines | 617 | share | ? |
+| metrics_lines | 647 | agree | ? |
+| mm_after_last | 246 | parts | ? |
 | moonbit_version | 449 | res | ? |
-| parse_nosec | 226 | line_no | 0 |
+| parse_nosec | 287 | line_no | 0 |
 | primary_lens | 411 | sorted | () |
 | print_ssa_cost | 79 | files | [] |
 | <global> | 22 | SAMPLE_CLEAN | "fn fact(n: int) -> int {   if n <= 1 ..." |
-| aggregate | 426 | actionable | 0 |
-| aggregate | 428 | unreliable | 0 |
-| aggregate | 439 | unreliable | ? |
-| aggregate | 449 | actionable | ? |
+| aggregate | 452 | actionable | 0 |
+| aggregate | 454 | unreliable | 0 |
+| aggregate | 470 | unreliable | ? |
+| aggregate | 485 | actionable | ? |
 | mermaid_states | 50 | target | ? |
 | mermaid_states | 74 | picked | [] |
 | moonbit_version | 444 | args | ["version"] |
 | moonbit_version | 452 | text | ? |
-| split_coord | 1229 | seen_at | false |
-| suffix_of | 1654 | after_dot | false |
+| split_coord | 1290 | seen_at | false |
+| suffix_of | 1735 | after_dot | false |
 | <global> | 28 | SAMPLE_TYPING | "fn shout(s: str) -> int {   return le..." |
-| aggregate | 431 | n_unchecked | 0 |
-| aggregate | 440 | n_unchecked | ? |
+| aggregate | 457 | n_unchecked | 0 |
+| aggregate | 471 | n_unchecked | ? |
 | count_by_shape | 264 | counts | ? |
 | emit_file | 192 | parsed_note | ? |
-| filtered_reports | 1380 | all | [] |
-| is_module_coord | 1889 | base | ? |
-| locate | 1153 | _destructured | () |
-| method_segments | 2102 | segs | [] |
+| filtered_reports | 1441 | all | [] |
+| is_module_coord | 1999 | base | ? |
+| locate | 1214 | _destructured | () |
+| method_segments | 2212 | segs | [] |
 | ssa_cost_over_files | 106 | i | 0 |
 | ssa_cost_over_files | 114 | i | 1, 2, 3 |
 | <global> | 35 | progress_every | 500 |
-| aggregate | 424 | parsed_files | 0 |
-| aggregate | 451 | parsed_files | 1, 2, 3 |
+| aggregate | 450 | parsed_files | 0 |
+| aggregate | 462 | n_unknown_fn | 0 |
+| aggregate | 464 | n_unresolved | 0 |
+| aggregate | 476 | n_unknown_fn | ? |
+| aggregate | 478 | n_unresolved | ? |
+| aggregate | 487 | parsed_files | 1, 2, 3 |
 | split_findings | 119 | printed | [] |
 | validate_profile | 69 | roster | () |
-| aggregate | 425 | partial_files | 0 |
-| aggregate | 453 | partial_files | 1, 2, 3 |
-| mm_state_id | 278 | after_close | false |
+| aggregate | 451 | partial_files | 0 |
+| aggregate | 465 | n_method_call | 0 |
+| aggregate | 466 | n_dotdot_call | 0 |
+| aggregate | 479 | n_method_call | ? |
+| aggregate | 480 | n_dotdot_call | ? |
+| aggregate | 489 | partial_files | 1, 2, 3 |
+| metrics_lines | 629 | split_sum | ? |
+| mm_state_id | 285 | after_close | false |
 | scan_artifact_name | 226 | stem | ? |
 | ssa_cost_over_files | 90 | cost | ? |
 | stamp_utc | 139 | _destructured | () |
-| tally_partial_reasons | 687 | v | 0, 1, -1 |
-| tally_partial_reasons | 689 | r | ? |
-| tally_partial_reasons | 690 | c | ? |
+| tally_partial_reasons | 748 | v | 0, 1, -1 |
+| tally_partial_reasons | 750 | r | ? |
+| tally_partial_reasons | 751 | c | ? |
 | validate_profile | 92 | overlap | [] |
 | <global> | 25 | SAMPLE_UNDEFINED | "fn g() -> int {   return missing + 1 ..." |
 | <global> | 34 | SAMPLE_STRUCTURE | "fn f(x: int, y: int) -> int {   z = x..." |
-| aggregate | 435 | n_arity_agrees | 0 |
-| aggregate | 444 | n_arity_agrees | ? |
-| filtered_reports | 1375 | nosecs | [] |
-| filtered_reports | 1377 | nosecs | () |
+| aggregate | 461 | n_arity_agrees | 0 |
+| aggregate | 463 | n_not_callable | 0 |
+| aggregate | 475 | n_arity_agrees | ? |
+| aggregate | 477 | n_not_callable | ? |
+| filtered_reports | 1436 | nosecs | [] |
+| filtered_reports | 1438 | nosecs | () |
 | first_quoted_after | 110 | parts | ? |
 | parse_moon_version | 468 | parts | ? |
 | provenance_for | 381 | from_tree | () |
-| tally_partial_reasons | 695 | ex | ? |
+| tally_partial_reasons | 756 | ex | ? |
 | validate_profile | 68 | warnings | [] |
 | <global> | 31 | SAMPLE_DEADBRANCH | "fn h(x: int) -> int {   if 1 > 2 {   ..." |
-| aggregate | 434 | n_sig_available | 0 |
-| aggregate | 443 | n_sig_available | ? |
-| collect_iface_symtabs | 1977 | ri | ? |
+| aggregate | 460 | n_sig_available | 0 |
+| aggregate | 474 | n_sig_available | ? |
+| collect_iface_symtabs | 2087 | ri | ? |
 | emit_file | 240 | notices_dropped | 0 |
 | split_findings | 120 | aggregated | [] |
-| collect_iface_symtabs | 1967 | tab | ? |
-| collect_iface_symtabs | 1975 | own | ? |
-| collect_iface_symtabs | 1982 | dir | ? |
-| collect_private_symtabs | 2042 | f | "", "x" |
-| filtered_reports | 1374 | filtered | () |
-| collect_iface_symtabs | 1977 | root | ? |
-| mm_parsed_with | 86 | _destructured | (?, "local variable 'x' assigned but may n..."), (?, "arg... |
-| parse_moon_mod_imports | 1823 | out | [] |
+| collect_iface_symtabs | 2077 | tab | ? |
+| collect_iface_symtabs | 2085 | own | ? |
+| collect_iface_symtabs | 2092 | dir | ? |
+| collect_private_symtabs | 2152 | f | "", "x" |
+| filtered_reports | 1435 | filtered | () |
+| collect_iface_symtabs | 2087 | root | ? |
+| mm_parsed_with | 93 | _destructured | (?, "local variable 'x' assigned but may n..."), (?, "arg... |
+| parse_moon_mod_imports | 1925 | out | [] |
 | provenance_for | 382 | tree_version | ? |
-| collect_iface_symtabs | 1980 | stack | [?] |
-| collect_private_symtabs | 2041 | out | ? |
-| fetch_moon_mod_imports | 1769 | text | () |
+| collect_iface_symtabs | 2090 | stack | [?] |
+| collect_private_symtabs | 2151 | out | ? |
+| fetch_moon_mod_imports | 1850 | text | () |
 | target_version | 412 | _destructured | () |
-| tally_partial_reasons | 685 | reasons | ? |
-| collect_iface_symtabs | 1986 | entries | ? |
-| tally_partial_reasons | 686 | examples | ? |
-| filtered_reports | 1379 | _destructured | ([], []) |
-| fetch_moon_mod_imports | 1768 | mod_path | """"/moon.mod"", ""abc""/moon.mod"", ""../../etc/passwd""... |
-| collect_iface_symtabs | 1979 | user_named | ? |
-| parse_moon_mod_imports | 1824 | in_import | false |
-| collect_iface_symtabs | 1976 | skipped_dot | 0 |
+| tally_partial_reasons | 746 | reasons | ? |
+| collect_iface_symtabs | 2096 | entries | ? |
+| tally_partial_reasons | 747 | examples | ? |
+| filtered_reports | 1440 | _destructured | ([], []) |
+| fetch_moon_mod_imports | 1849 | mod_path | """"/moon.mod"", ""abc""/moon.mod"", ""../../etc/passwd""... |
+| collect_iface_symtabs | 2089 | user_named | ? |
+| parse_moon_mod_imports | 1926 | in_import | false |
+| collect_iface_symtabs | 2086 | skipped_dot | 0 |
 | <global> | 53 | default_findings_shown_per_file | 40 |
 
 ### 6.2 Function-level range union (L1)
 
 | Function | Variable | Min | Max | Samples | Observed values | First site |
 | --- | --- | --- | --- | --- | --- | --- |
-| dir_of | i | -1 | 63 | 87 | -1, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 | src/sa/main.mbt:1700:3 |
-| dir_of | cut | -1 | -1 | 4 | -1 | src/sa/main.mbt:1699:3 |
-| aggregate | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:436:3-461:4 |
+| dir_of | i | -1 | 63 | 87 | -1, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 | src/sa/main.mbt:1781:3 |
+| dir_of | cut | -1 | -1 | 4 | -1 | src/sa/main.mbt:1780:3 |
+| aggregate | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:467:3-497:4 |
 | is_hiding | h | 0 | 1 | 3 | 0, 1 | src/sa/main.mbt:81:3-85:4 |
-| path_tail | i | 0 | 17 | 38 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/core/core.mbt:61:3 |
-| path_tail | j | 2 | 64 | 1085 | 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 | src/core/core.mbt:66:7 |
-| path_tail | n | 0 | 64 | 4 | 0, 3, 16, 64 | src/core/core.mbt:63:3 |
 | family_ids | n | 1 | 1 | 5 | 1 | src/sa/profile.mbt:118:3 |
-| is_dir | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1248:7-1252:2 |
+| is_dir | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1309:7-1313:2 |
 | version_gt | i | 0 | 0 | 4 | 0 | src/sa/version.mbt:53:3 |
-| wanted | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1324:1-1332:2 |
-| apply_nosec | n | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:319:3-329:4 |
-| collect | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1271:11-1321:2 |
+| wanted | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1385:1-1393:2 |
+| apply_nosec | n | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:403:3-413:4 |
+| collect | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1332:11-1382:2 |
 | slug | last_dash | 0 | 0 | 20 | false | src/sa/provenance.mbt:325:3 |
-| aggregate | total | 0 | 0 | 4 | 0 | src/sa/main.mbt:430:3 |
-| apply_nosec | hit | 0 | 0 | 6 | false | src/sa/profile.mbt:320:5 |
+| aggregate | total | 0 | 0 | 4 | 0 | src/sa/main.mbt:456:3 |
+| apply_nosec | hit | 0 | 0 | 6 | false | src/sa/profile.mbt:404:5 |
 | apply_profile | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:172:3-176:4 |
 | count_notices | n | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:201:3 |
 | count_notices | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:202:3-206:4 |
 | first_line | done | 0 | 0 | 5 | false | src/sa/provenance.mbt:482:3 |
 | is_hiding | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:80:5-87:2 |
 | count_by_shape | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:265:3-271:4 |
-| count_rows0521 | n | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:68:3 |
-| mm_check | in_note | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:303:3 |
-| mm_id_char | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:190:1-192:2 |
-| mm_parsed_with | i | 0 | 2 | 6 | 0, 1, 2 | src/sa/mermaid_test.mbt:85:3-88:4 |
-| mm_state_id | seen | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:277:3 |
-| ok_segment | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:1933:1-1944:2 |
+| count_rows0521 | n | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:75:3 |
+| mm_check | in_note | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:310:3 |
+| mm_id_char | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:197:1-199:2 |
+| mm_parsed_with | i | 0 | 2 | 6 | 0, 1, 2 | src/sa/mermaid_test.mbt:92:3-95:4 |
+| mm_state_id | seen | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:284:3 |
+| ok_segment | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:2043:1-2054:2 |
 | render_reports | r | -1 | 1 | 6 | 0, 1, -1 | src/report/report.mbt:258:3-260:4 |
-| aggregate | n_calls | 0 | 0 | 4 | 0 | src/sa/main.mbt:432:3 |
-| aggregate | notices | 0 | 0 | 4 | 0 | src/sa/main.mbt:427:3 |
+| aggregate | n_calls | 0 | 0 | 4 | 0 | src/sa/main.mbt:458:3 |
+| aggregate | notices | 0 | 0 | 4 | 0 | src/sa/main.mbt:453:3 |
 | civil_from_days | d | 1 | 31 | 4 | 31, 1, 2, 3 | src/sa/provenance.mbt:165:3 |
 | civil_from_days | y | 1969 | 1969 | 4 | 1969 | src/sa/provenance.mbt:162:3 |
 | civil_from_days | z | 719467 | 719470 | 4 | 719467, 719468, 719469, 719470 | src/sa/provenance.mbt:158:3 |
-| collect | last_dirs | 0 | 0 | 8 | 0 | src/sa/main.mbt:1279:3 |
-| collect | seen_dirs | 0 | 64 | 520 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/main.mbt:1277:3 |
-| mm_count_quotes | n | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:217:3 |
-| mm_id_start | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:185:1-187:2 |
-| mm_valid_id | <ret> | 0 | 1 | 4 | false, true | src/sa/mermaid_test.mbt:197:1-213:2 |
-| mm_valid_id | first | 1 | 1 | 3 | true | src/sa/mermaid_test.mbt:201:3 |
+| collect | last_dirs | 0 | 0 | 8 | 0 | src/sa/main.mbt:1340:3 |
+| collect | seen_dirs | 0 | 64 | 520 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/main.mbt:1338:3 |
+| mm_count_quotes | n | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:224:3 |
+| mm_id_start | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:192:1-194:2 |
+| mm_valid_id | <ret> | 0 | 1 | 4 | false, true | src/sa/mermaid_test.mbt:204:1-220:2 |
+| mm_valid_id | first | 1 | 1 | 3 | true | src/sa/mermaid_test.mbt:208:3 |
 | version_parts | cur | 0 | 0 | 12 | 0 | src/sa/version.mbt:77:3 |
-| aggregate | withheld | 0 | 0 | 4 | 0 | src/sa/main.mbt:429:3 |
+| aggregate | withheld | 0 | 0 | 4 | 0 | src/sa/main.mbt:455:3 |
 | civil_from_days | mp | 9 | 10 | 4 | 9, 10 | src/sa/provenance.mbt:164:3 |
-| collect | last_files | 0 | 0 | 8 | 0 | src/sa/main.mbt:1278:3 |
-| metrics_lines | n_hi | 0 | 0 | 4 | 0 | src/sa/main.mbt:598:3 |
-| metrics_lines | n_lo | 0 | 0 | 4 | 0 | src/sa/main.mbt:599:3 |
-| metrics_lines | n_un | 0 | 0 | 4 | 0 | src/sa/main.mbt:600:3 |
-| aggregate | n_checked | 0 | 0 | 4 | 0 | src/sa/main.mbt:433:3 |
+| collect | last_files | 0 | 0 | 8 | 0 | src/sa/main.mbt:1339:3 |
+| metrics_lines | n_hi | 0 | 0 | 4 | 0 | src/sa/main.mbt:659:3 |
+| metrics_lines | n_lo | 0 | 0 | 4 | 0 | src/sa/main.mbt:660:3 |
+| metrics_lines | n_un | 0 | 0 | 4 | 0 | src/sa/main.mbt:661:3 |
+| aggregate | n_checked | 0 | 0 | 4 | 0 | src/sa/main.mbt:459:3 |
 | civil_from_days | doe | 135079 | 135082 | 4 | 135079, 135080, 135081, 135082 | src/sa/provenance.mbt:160:3 |
 | civil_from_days | doy | 305 | 308 | 4 | 305, 306, 307, 308 | src/sa/provenance.mbt:163:3 |
 | civil_from_days | era | 4 | 4 | 4 | 4 | src/sa/provenance.mbt:159:3 |
 | civil_from_days | yoe | 369 | 369 | 4 | 369 | src/sa/provenance.mbt:161:3 |
 | count_notices | <ret> | 0 | 3 | 4 | 0, 1, 3, 2 | src/sa/main.mbt:200:5-208:2 |
-| parse_nosec | line_no | 0 | 0 | 8 | 0 | src/sa/profile.mbt:226:3 |
+| parse_nosec | line_no | 0 | 0 | 8 | 0 | src/sa/profile.mbt:287:3 |
 | profile_keeps | <ret> | 0 | 0 | 1 | false | src/sa/profile.mbt:148:5-157:2 |
-| split_coord | seen_at | 0 | 0 | 13 | false | src/sa/main.mbt:1229:3 |
-| suffix_of | after_dot | 0 | 0 | 16 | false | src/sa/main.mbt:1654:3 |
+| split_coord | seen_at | 0 | 0 | 13 | false | src/sa/main.mbt:1290:3 |
+| suffix_of | after_dot | 0 | 0 | 16 | false | src/sa/main.mbt:1735:3 |
 | version_parts | named | 0 | 0 | 12 | false | src/sa/version.mbt:78:3 |
-| aggregate | actionable | 0 | 0 | 4 | 0 | src/sa/main.mbt:426:3 |
-| aggregate | unreliable | 0 | 0 | 4 | 0 | src/sa/main.mbt:428:3 |
-| count_rows0521 | <ret> | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:67:1-75:2 |
-| aggregate | n_unchecked | 0 | 0 | 4 | 0 | src/sa/main.mbt:431:3 |
-| is_module_coord | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1884:5-1929:2 |
-| mm_count_quotes | <ret> | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:216:1-224:2 |
+| aggregate | actionable | 0 | 0 | 4 | 0 | src/sa/main.mbt:452:3 |
+| aggregate | unreliable | 0 | 0 | 4 | 0 | src/sa/main.mbt:454:3 |
+| count_rows0521 | <ret> | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:74:1-82:2 |
+| aggregate | n_unchecked | 0 | 0 | 4 | 0 | src/sa/main.mbt:457:3 |
+| is_module_coord | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1994:5-2039:2 |
+| mm_count_quotes | <ret> | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:223:1-231:2 |
 | ssa_cost_over_files | i | 0 | 3 | 14 | 0, 1, 2, 3 | src/sa/ssa_cost.mbt:106:3 |
-| aggregate | parsed_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:424:3 |
-| aggregate | partial_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:425:3 |
-| mm_state_id | after_close | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:278:3 |
-| tally_partial_reasons | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:687:3-704:4 |
-| aggregate | n_arity_agrees | 0 | 0 | 4 | 0 | src/sa/main.mbt:435:3 |
-| aggregate | n_sig_available | 0 | 0 | 4 | 0 | src/sa/main.mbt:434:3 |
+| aggregate | n_unknown_fn | 0 | 0 | 4 | 0 | src/sa/main.mbt:462:3 |
+| aggregate | n_unresolved | 0 | 0 | 4 | 0 | src/sa/main.mbt:464:3 |
+| aggregate | parsed_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:450:3 |
+| aggregate | n_dotdot_call | 0 | 0 | 4 | 0 | src/sa/main.mbt:466:3 |
+| aggregate | n_method_call | 0 | 0 | 4 | 0 | src/sa/main.mbt:465:3 |
+| aggregate | partial_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:451:3 |
+| mm_state_id | after_close | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:285:3 |
+| tally_partial_reasons | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:748:3-765:4 |
+| aggregate | n_arity_agrees | 0 | 0 | 4 | 0 | src/sa/main.mbt:461:3 |
+| aggregate | n_not_callable | 0 | 0 | 4 | 0 | src/sa/main.mbt:463:3 |
+| is_family_id_shape | <ret> | 0 | 0 | 4 | false | src/sa/profile.mbt:222:1-240:2 |
+| aggregate | n_sig_available | 0 | 0 | 4 | 0 | src/sa/main.mbt:460:3 |
 | emit_file | notices_dropped | 0 | 0 | 4 | 0 | src/sa/mermaid.mbt:240:3 |
 | Nosec | covers_family | 1 | 1 | 1 | true |  |
-| parse_moon_mod_imports | in_import | 0 | 0 | 4 | false | src/sa/main.mbt:1824:3 |
-| collect_iface_symtabs | skipped_dot | 0 | 0 | 4 | 0 | src/sa/main.mbt:1976:3 |
+| parse_moon_mod_imports | in_import | 0 | 0 | 4 | false | src/sa/main.mbt:1926:3 |
+| collect_iface_symtabs | skipped_dot | 0 | 0 | 4 | 0 | src/sa/main.mbt:2086:3 |
 
 ### 6.3 Abstract may-ranges (L2)
 
@@ -2087,6 +2096,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | pta_sweep | fi | [-1000000, 1000000] | 1 |
 | reaches | from | [-1000000, 1000000] | 1 |
 | reaches | head | [0, 1000001] | 7 |
+| rep0613 | line | [-1000000, 1000000] | 1 |
 | scale_pow2 | e | [-1000000, 1000000] | 1 |
 | scale_pow2 | i | [0, 1000001] | 6 |
 | scale_pow2 | n | [1200, 1200] | 1 |
@@ -2195,6 +2205,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | mk_defect | line | [-1000000, 1000000] | 1 |
 | mk_notice | line | [-1000000, 1000000] | 1 |
 | mk_v0521 | calls | [-1000000, 1000000] | 1 |
+| mk_v0611 | calls | [-1000000, 1000000] | 1 |
+| mk_v0616 | calls | [-1000000, 1000000] | 1 |
 | narrow_round | i | [0, 1000000] | 7 |
 | narrow_round | n | [-1000000, 1000000] | 1 |
 | narrow_round | v | [0, 1000000] | 6 |
@@ -2312,6 +2324,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | literate | n_parse | [0, 0] | 1 |
 | lower_if | elif_at | [-1000000, 1000000] | 1 |
 | mk_v0521 | checked | [-1000000, 1000000] | 1 |
+| mk_v0611 | checked | [-1000000, 1000000] | 1 |
+| mk_v0616 | checked | [-1000000, 1000000] | 1 |
 | mm_parsed_with | n | [-1000000, 1000000] | 1 |
 | mm_state_id | seen | [0, 1000001] | 6 |
 | moonbit_fences | i | [0, 1000008] | 43 |
@@ -2489,10 +2503,12 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | cs_result_of_list | i | [0, 1000001] | 6 |
 | dl_taint_facts_of | i | [0, 1000001] | 12 |
 | first_node_at | found | [-1, 1000000] | 6 |
+| has_field0616 | value | [-1000000, 1000000] | 1 |
 | ifds_reach_rel | node | [-1000000, 1000000] | 1 |
 | ifds_tabulate | start | [-1000000, 1000000] | 1 |
 | interval_at_least | n | [-1000000, 1000000] | 1 |
 | lower_branch | target | [-1000000, 1000000] | 1 |
+| mk_v0616 | unresolved | [-1000000, 1000000] | 1 |
 | mm_render | max_files | [-1000000, 1000000] | 1 |
 | parse_hex_double | hi | [0, 0] | 1 |
 | parse_hex_double | lo | [0, 0] | 1 |
@@ -2541,6 +2557,9 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | interval_state_bot | n | [-1000000, 1000000] | 1 |
 | is_module_coord | segs | [0, 1000001] | 7 |
 | literate | first_error | [0, 0] | 1 |
+| mk_v0616 | dotdot_call | [-1000000, 1000000] | 1 |
+| mk_v0616 | method_call | [-1000000, 1000000] | 1 |
+| mk_v0616 | sig_unknown | [-1000000, 1000000] | 1 |
 | monotone_violation | n | [-1000000, 1000000] | 1 |
 | monotone_violation | v | [0, 1000000] | 6 |
 | notice_lines | printed | [-1000000, 1000000] | 1 |
@@ -2577,6 +2596,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | is_module_coord | start | [0, 1000001] | 6 |
 | leading_bracket | depth | [-1000001, 1000001] | 11 |
 | metrics_lines | n_files | [-1000000, 1000000] | 1 |
+| mk_v0611 | arity_agrees | [-1000000, 1000000] | 1 |
+| mk_v0616 | not_callable | [-1000000, 1000000] | 1 |
 | mm_verdict | unreliable | [-1000000, 1000000] | 1 |
 | narrow_round | transfer | [-1000000, 1000000] | 1 |
 | position_in_block | idx | [-1000000, 1000000] | 1 |
@@ -2594,6 +2615,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | Interval | is_full | [-1000000, 1000000] | 1 |
 | Lexer | lex_char | [0, 1000001] | 30 |
 | Lexer | lex_number | [10, 10] | 1 |
+| aggregate | n_unknown_fn | [0, 0] | 1 |
+| aggregate | n_unresolved | [0, 0] | 1 |
 | aggregate | parsed_files | [0, 1000001] | 6 |
 | bb_block_succ | block_of | [-1000000, 1000000] | 1 |
 | cfl_search_from | states | [0, 1000001] | 6 |
@@ -2604,6 +2627,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | dominance_frontiers | si | [0, 1000001] | 30 |
 | ifds_supergraph_text | v | [0, 1000001] | 6 |
 | ir_block_succ | block_of | [-1000000, 1000000] | 1 |
+| mk_v0611 | sig_available | [-1000000, 1000000] | 1 |
 | mm_verdict | region_line | [-1000000, 1000000] | 1 |
 | parse_hex_double | total | [0, 6] | 1 |
 | parse_iface | decl_depth | [0, 0] | 1 |
@@ -2620,6 +2644,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | Interval | is_empty | [-1000000, 1000000] | 1 |
 | Lexer | lex_number | [0, 0] | 1 |
 | Parser | harvest_ctors | [-999999, 1000001] | 2 |
+| aggregate | n_dotdot_call | [0, 0] | 1 |
+| aggregate | n_method_call | [0, 0] | 1 |
 | aggregate | partial_files | [0, 1000001] | 6 |
 | cfl_ordinary_from | start | [-1000000, 1000000] | 1 |
 | mermaid_states | per_file | [-1000000, 1000000] | 1 |
@@ -2634,6 +2660,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | Parser | at_lambda_head | [-1000001, 1000001] | 11 |
 | Parser | harvest_ctors | [-1000000, 1000000] | 1 |
 | aggregate | n_arity_agrees | [0, 0] | 1 |
+| aggregate | n_not_callable | [0, 0] | 1 |
 | cfl_pair_counts | excluded | [0, 1000004] | 26 |
 | cfl_pair_counts | ordinary | [0, 1000004] | 26 |
 | collect_declared_names | i | [0, 1000001] | 6 |
@@ -2754,7 +2781,7 @@ Deductive verification is WP-style: each contract becomes verification condition
 
 _No verification condition generated._
 
-Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1697)`, `ok_segment (src/sa/main.mbt:1933)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:78)`, `mm_after_last (src/sa/mermaid_test.mbt:238)`, `path_tail (src/core/core.mbt:59)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2325)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:443)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:502)`
+Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`
 
 ## 9. Method summary
 

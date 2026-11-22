@@ -325,7 +325,9 @@ fn finding_row(f : Finding) -> String {
   "| " +
   f.kind.code() +
   " | " +
-  f.kind.severity() +
+  f.severity() +
+  " | " +
+  f.verdict.code() +
   " | " +
   md_escape(f.fn_name) +
   " | " +
@@ -377,14 +379,14 @@ fn findings_table(
     out.write_string("\n")
   }
   out.write_string(
-    "| Rule | Severity | Function | Location | Message | Method | Confidence |\n",
+    "| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |\n",
   )
-  out.write_string("| --- | --- | --- | --- | --- | --- | --- |\n")
+  out.write_string("| --- | --- | --- | --- | --- | --- | --- | --- |\n")
   let mut shown = 0
   for f in fs {
     if shown >= cap {
       out.write_string(
-        "| ... | ... | ... | ... | (truncated at " +
+        "| ... | ... | ... | ... | ... | (truncated at " +
         cap.to_string() +
         " of " +
         fs.length().to_string() +
@@ -1361,6 +1363,52 @@ fn ffi_call_table(m : FfiModel) -> String {
 }
 
 ///|
+/// THE CLAIMS THAT COULD NOT BE DECIDED.
+///
+/// A claim the analyser could not decide is not an absent claim, and the
+/// report says so in words instead of leaving the reader to infer it from a
+/// row that is not there.  The count is taken over the findings the report
+/// actually RENDERED -- the tables overlap, and a count recomputed from a
+/// second source could drift from the rows a reader can see.
+fn undecided_section(findings : Array[Finding]) -> String {
+  let out = StringBuilder()
+  out.write_string("\n### 5.10 Claims that could not be decided\n\n")
+  let undecided = undecided_findings(findings)
+  if undecided.length() == 0 {
+    out.write_string(
+      "_Every claim the analyser made was decided; nothing was left unverified._\n\n",
+    )
+  } else {
+    out.write_string(
+      undecided.length().to_string() +
+      " claim(s) could not be decided. They are listed here rather than being absent: an absent claim and a claim that was decided and found clean are NOT the same thing, and only the second is good news.\n\n",
+    )
+    out.write_string(
+      "| Family | Severity | Function | Location | What could not be decided |\n| --- | --- | --- | --- | --- |\n",
+    )
+    for f in undecided {
+      out.write_string(
+        "| " +
+        f.kind.code() +
+        " | " +
+        f.severity() +
+        " | " +
+        md_escape(f.fn_name) +
+        " | " +
+        f.file +
+        ":" +
+        f.line.to_string() +
+        " | " +
+        md_escape(f.message) +
+        " |\n",
+      )
+    }
+    out.write_string("\n")
+  }
+  out.to_string()
+}
+
+///|
 /// Render the report.
 ///
 /// `per_function` says that every function was entered as an entry point, so
@@ -1839,6 +1887,10 @@ pub fn render_report(
   out.write_string(ffi_section(ffi, cap, findings_out))
   out.write_string(conc_section(conc, cap, findings_out))
   out.write_string(ipc_section(ipc, cap, findings_out))
+  // The claims that could not be decided.  This is where the verdict becomes
+  // visible to a reader, and it is rendered HERE, after every findings
+  // table, because the tables are what FILL the sink.
+  out.write_string(undecided_section(findings_out))
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",

@@ -11,7 +11,7 @@ const required = [
   // version is part of the file name, so the pin moves with them. These are
   // the versions the committed reports were generated from.
   'riantr_moonbit_doubleML@latest_0.164.64.md',
-  'riantr_moonbit_static_analysis@latest_0.5.0.md',
+  'riantr_moonbit_static_analysis@latest_0.5.3.md',
   'local_module_0.0.0.md',
 ];
 
@@ -132,7 +132,7 @@ const summaryExpectations = [
   // an unreachable statement, so both now report none. The fixture is the
   // dead-code fixture, and it still reports its three.
   ['riantr_moonbit_doubleML@latest_0.164.64_summary.json', 25000, 0.95, 0, 0],
-  ['riantr_moonbit_static_analysis@latest_0.5.0_summary.json', 7000, 0.95, 0, 0],
+  ['riantr_moonbit_static_analysis@latest_0.5.3_summary.json', 7000, 0.95, 0, 0],
   ['local_module_0.0.0_summary.json', 30, 1.0, 3, 3],
 ];
 

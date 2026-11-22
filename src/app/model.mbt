@@ -604,6 +604,37 @@ pub fn FindingKind::severity(self : FindingKind) -> String {
 }
 
 ///|
+/// The VERDICT of a finding: was the claim DECIDED, or could it not be
+/// decided at all?
+///
+/// The L3 has had this third state for a while -- `VCStatus::VCUnknown`,
+/// "insufficient facts for a decision" -- and the abstract layer has its own
+/// (`EUnknown`). What was MISSING is the same state on the FINDING itself.
+/// Without it, a claim the analyser could not decide is simply ABSENT, and
+/// "absent" and "decided absent" are the same thing to a reader: the report
+/// can say "there was nothing here", but not "we could not decide".
+///
+/// The verdict is what makes the difference visible. It is carried in the
+/// findings sidecar, it is a column of the findings table, and the policy in
+/// `policy.mbt` decides what an undecided claim MEANS for its family.
+#derive(Eq)
+pub(all) enum FindingVerdict {
+  VerdictCertain
+  VerdictUnknown
+}
+
+///|
+pub extend FindingVerdict with Eq::{not_equal, equal}
+
+///|
+pub fn FindingVerdict::code(self : FindingVerdict) -> String {
+  match self {
+    VerdictCertain => "certain"
+    VerdictUnknown => "unknown"
+  }
+}
+
+///|
 #derive(Eq)
 pub struct Finding {
   kind : FindingKind
@@ -614,6 +645,7 @@ pub struct Finding {
   mode : String
   confidence : Double
   evidence : String
+  verdict : FindingVerdict
 }
 
 ///|
@@ -630,7 +662,49 @@ pub fn Finding::new(
   confidence : Double,
   evidence : String,
 ) -> Finding {
-  { kind, file, line, fn_name, message, mode, confidence, evidence, }
+  {
+    kind,
+    file,
+    line,
+    fn_name,
+    message,
+    mode,
+    confidence,
+    evidence,
+    verdict: VerdictCertain,
+  }
+}
+
+///|
+/// A finding that records a claim the analyser COULD NOT DECIDE.
+///
+/// The only difference from `Finding::new` is the verdict, and the verdict is
+/// the whole point: a claim that was NOT decided must not look like a claim
+/// that was decided and found clean.  The severity of an undecided claim
+/// comes from the POLICY in `policy.mbt`, not from the family alone -- an
+/// undecided safety claim is an error, because the module's safety is then
+/// not established.
+pub fn Finding::undecided(
+  kind : FindingKind,
+  file : String,
+  line : Int32,
+  fn_name : String,
+  message : String,
+  mode : String,
+  confidence : Double,
+  evidence : String,
+) -> Finding {
+  {
+    kind,
+    file,
+    line,
+    fn_name,
+    message,
+    mode,
+    confidence,
+    evidence,
+    verdict: VerdictUnknown,
+  }
 }
 
 ///|

@@ -349,6 +349,43 @@ fn add_finding(
 }
 
 ///|
+/// A finding that records a claim the analyser COULD NOT DECIDE.
+///
+/// The de-duplication key carries the VERDICT as well: a decided finding and
+/// an undecided one are different claims about the same site, and the second
+/// must not be dropped as a duplicate of the first.
+fn add_undecided_finding(
+  ctx : AbsContext,
+  kind : FindingKind,
+  line : Int32,
+  message : String,
+  confidence : Double,
+  evidence : String,
+) -> Unit {
+  for f in ctx.findings {
+    if f.kind == kind &&
+      f.file == ctx.file &&
+      f.line == line &&
+      f.message == message &&
+      f.verdict == VerdictUnknown {
+      return
+    }
+  }
+  ctx.findings.push(
+    Finding::undecided(
+      kind,
+      ctx.file,
+      line,
+      ctx.fn_name,
+      message,
+      "L2-abstract",
+      confidence,
+      evidence,
+    ),
+  )
+}
+
+///|
 fn record_range(
   ctx : AbsContext,
   name : String,
@@ -1375,11 +1412,15 @@ fn abs_block(
   let mut cur = st
   for s in stmts {
     if ctx.steps > ctx.max_steps {
-      add_finding(
+      // The budget ran out, so the rest of this function was NOT analysed.
+      // That is a claim the analyser could NOT DECIDE -- not a defect in the
+      // module -- and it is reported as such: before the verdict existed, a
+      // truncated analysis and a clean one looked the same from here.
+      add_undecided_finding(
         ctx,
         FBudget,
         s.span.start_line,
-        "abstract interpretation step budget exhausted",
+        "the abstract interpretation budget was exhausted: the rest of this function was not analysed, so no claim about it was decided",
         0.5,
         "L2 budget",
       )
