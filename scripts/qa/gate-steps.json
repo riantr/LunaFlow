@@ -26,6 +26,8 @@
   "node scripts/qa/plus_size.mjs --no-build --falsify",
   "node scripts/qa/gherkin.mjs",
   "node scripts/qa/e2e.mjs",
+  "node scripts/qa/counterexamples.mjs",
+  "node scripts/qa/counterexamples_falsify.mjs",
   "node scripts/qa/fuzz.mjs",
   "node scripts/qa/path_traversal.mjs",
   "node scripts/qa/deep_nesting_probe.mjs",

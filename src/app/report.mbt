@@ -1645,6 +1645,30 @@ fn counterexample_section(res : MinimizeResult?) -> String {
         }
         out.write_string("\n")
       }
+      if r.without_findings.length() > 0 {
+        out.write_string(
+          "The findings below are claims an execution produced and that **no** input in the analyser's candidate set reproduced. A count is not a list: a reader who wants to know what was left out needs to see what it was.\n\n",
+        )
+        out.write_string(
+          "| Finding | Location | Function | Message |\n| --- | --- | --- | --- |\n",
+        )
+        for f in r.without_findings {
+          out.write_string(
+            "| `" +
+            f.kind.code() +
+            "` | " +
+            f.file +
+            ":" +
+            f.line.to_string() +
+            " | `" +
+            f.fn_name +
+            "` | " +
+            md_escape(f.message) +
+            " |\n",
+          )
+        }
+        out.write_string("\n")
+      }
       out.write_string(
         "The minimisation covered **" +
         r.minimised.to_string() +

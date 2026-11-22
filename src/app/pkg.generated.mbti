@@ -857,6 +857,7 @@ pub(all) struct MinimizeResult {
   not_input : Int32
   minimised : Int32
   without : Int32
+  without_findings : Array[Finding]
   skipped : Int32
   tried : Int32
   truncated : Bool

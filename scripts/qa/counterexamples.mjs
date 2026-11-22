@@ -41,7 +41,7 @@
 // Dependency-free, like the rest of the harness.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { requireCli } from './cli_bin.mjs';
 import {
@@ -51,6 +51,7 @@ import {
   parseCounterexampleSidecar,
   parseFindingsSidecar,
   parseProseCounts,
+  parseWithoutRows,
   renderInput,
   siteKey,
 } from './counterexample_report.mjs';
@@ -74,10 +75,10 @@ const ARTIFACTS = artifactsIndex >= 0 ? resolve(process.argv[artifactsIndex + 1]
 
 /// The invariants of ONE set of artefacts.  The label names the set, so a
 /// failure says which run disagreed.
-function checkArtefacts(dir, label) {
-  const reportPath = join(dir, `${STEM}.md`);
-  const sidecarPath = join(dir, `${STEM}_counterexamples.jsonl`);
-  const findingsPath = join(dir, `${STEM}_findings.jsonl`);
+function checkArtefacts(dir, label, stem = STEM) {
+  const reportPath = join(dir, `${stem}.md`);
+  const sidecarPath = join(dir, `${stem}_counterexamples.jsonl`);
+  const findingsPath = join(dir, `${stem}_findings.jsonl`);
 
   check(`${label}: the report exists`, existsSync(reportPath), reportPath);
   check(`${label}: the counterexample sidecar exists`, existsSync(sidecarPath), sidecarPath);
@@ -185,6 +186,22 @@ function checkArtefacts(dir, label) {
       prose.minimised + prose.without + prose.skipped === prose.requested,
       `${prose.minimised} + ${prose.without} + ${prose.skipped} vs ${prose.requested}`,
     );
+    // The findings no input reproduced are LISTED, not only counted, and the
+    // list has to be the count.
+    const withoutRows = parseWithoutRows(parsed.section);
+    check(
+      `${label}: the findings without a counterexample are listed`,
+      withoutRows.length === prose.without,
+      `${withoutRows.length} listed vs ${prose.without} counted`,
+    );
+    // And they are the dynamic sites the counterexamples do NOT cover.
+    const covered = new Set(sidecar.map((cx) => [cx.rule, cx.file, cx.line, cx.fn].join('|')));
+    const uncovered = [...dynamicSites(findings)].filter((k) => !covered.has(k));
+    check(
+      `${label}: the findings without a counterexample are the ones the counterexamples do not cover`,
+      uncovered.length === prose.without,
+      `${uncovered.length} uncovered vs ${prose.without} counted`,
+    );
   }
 
   // A finding with no counterexample and a truncated run are two different
@@ -283,6 +300,32 @@ runCli('run 3', ['analyze', '--dir', FIXTURE, '--out', run3, '--counterexamples'
   const a = readFileSync(join(run1, `${STEM}_counterexamples.jsonl`), 'utf8');
   const b = readFileSync(join(run3, `${STEM}_counterexamples.jsonl`), 'utf8');
   check('two runs give byte-identical counterexample sidecars', a === b, `${a.length} B vs ${b.length} B`);
+}
+
+// The SELF-SCAN: the analyser over this module's own source.  The fixture is
+// a controlled case, and it has no finding that no input reproduces -- so the
+// checks about those findings would be vacuous there.  This module has one:
+// a claim about the analyser's own step budget, which no input reproduces
+// because it is not a claim about an input.
+//
+// Every comparison below is between two numbers of the SAME run -- the
+// report against its own sidecars -- so a toolchain that finds a different
+// set of findings moves both sides together.
+const selfOut = join(outRoot, 'selfscan');
+runCli('the self-scan', ['analyze', '--dir', '.', '--out', selfOut, '--funnel', '--counterexamples']);
+{
+  const stem = readdirSync(selfOut).find((f) => f.endsWith('_summary.json'))?.replace(/_summary\.json$/, '');
+  check('the self-scan wrote its artefacts', Boolean(stem), String(stem));
+  if (stem) {
+    const res = checkArtefacts(selfOut, 'the self-scan', stem);
+    if (res) {
+      check(
+        'the self-scan has a finding that no input reproduces, so the checks about them are not vacuous',
+        res.prose !== null && res.prose.without > 0,
+        `${res.prose?.without ?? 0} without`,
+      );
+    }
+  }
 }
 
 if (first && first.sidecar.length > 0) {

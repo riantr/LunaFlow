@@ -98,6 +98,22 @@ One analyzer · three evidence strengths · one Markdown report.
   understood, what was entered, what was found — and every line in it carries
   its own coverage.
 
+* A finding you can feed back in
+
+  Every other table says **what** was found. `--counterexamples` says **what to
+  feed the code** so that it happens again: for each finding an execution
+  produced, the smallest input that reproduces it on its own — report §5.12.
+  The input is minimal over the analyser's own candidate set, in the order the
+  analyser lists those candidates in, so *"smallest"* is a statement about an
+  order and not about the world, and the report says so in the same breath.
+  The reproduction is checked against the finding's **site** — its family, its
+  place, its function — and not against its evidence, because the evidence
+  carries the observed value and the observed value is exactly what the
+  smaller input changes. The L2 families are may-claims over the whole input
+  set and the CFG families are claims about the program's shape: neither has
+  an input to minimise, and the report counts them apart instead of
+  pretending otherwise.
+
 * An evolved value analysis, and the memory-safety classes it reaches
 
   The value analysis asks what a value's **range** is; the evolved value
@@ -219,6 +235,7 @@ The module is a library plus an executable, so "what you get" is a set of
 | `LunaFlow analyze --metrics` | the ADEQUACY block: read, understood, entered, found | four `METRICS` lines |
 | `LunaFlow analyze --per-function` | every function entered as an entry point, the `--max-functions` cap lifted | the same report, more of the module |
 | `LunaFlow analyze --stability` | re-sample the analysis and report which findings depend on the sample | report §5.6 |
+| `LunaFlow analyze --counterexamples` | re-run each finding an execution produced on its own input, and shrink that input to the smallest one that still reproduces it | report §5.12 |
 | `LunaFlow analyze --level 2` + the EVA | the memory-safety and undefined-behaviour classes | report §5.3 |
 | `LunaFlow --explain <code>` | one family's contract — property, assumption, exclusions | three clauses, no scan |
 | `LunaFlow --explain-all` | the roster of every family and the property it asserts | one block, no scan |
@@ -2932,6 +2949,8 @@ moonx riantr/moonbit_static_analysis@latest <target> [flags]
 | `--metrics` | print the adequacy block: how much was checked, not what was found. It changes no finding count above it. |
 | `--per-function` | enter the analysis at each **function** rather than at the module. |
 | `--stability` | re-run the analysis at several sample sizes and report which findings depend on the sample. |
+| `--counterexamples` | re-run each finding an execution produced on its own input, and shrink that input to the smallest one that still reproduces it — report §5.12. It re-runs the analyser, so it is opt-in. |
+| `--counterexample-limit <n>` | how many findings the counterexample minimisation may cover (default `20`). The findings it leaves out are counted in the report. |
 | `--quiet` | print less. |
 
 The **self-check** is the target slot pointed at this module itself, and it is
@@ -3031,9 +3050,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 79 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 79 warnings, 0 errors |
 | `moon check --target js` | exit 0, 90 warnings, 0 errors |
-| `moon test src/app --target native` | **317 passed, 0 failed** |
-| `moon test src/app --target wasm` | **317 passed, 0 failed** |
-| `moon test src/app --target js` | **317 passed, 0 failed** |
+| `moon test src/app --target native` | **325 passed, 0 failed** |
+| `moon test src/app --target wasm` | **325 passed, 0 failed** |
+| `moon test src/app --target js` | **325 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -3063,6 +3082,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/dimension_matrix.mjs` | **every check agrees** — the rule × dimension matrix counts the findings the tables show: every row adds up to its own total, every column to its own, and every cell is the count of the findings of that family that that method found — over the three committed artefacts and over a live run |
+| `node scripts/qa/counterexamples.mjs` | **every check agrees** — the counterexamples say what the report says: the table and the `_counterexamples.jsonl` sidecar agree row by row, every counterexample names a finding the report SHOWS, every argument IS the candidate its index points at, and the prose counts are the counts the sidecars imply — over the fixture and over a live self-scan of this tree |
+| `node scripts/qa/counterexamples_falsify.mjs` | **every check agrees** — the counterexample check goes red when an argument is not its candidate, when a counterexample names a finding the report does not show, when a row disagrees with the sidecar and when a prose count is unsupported (on **copies** of the artefacts; the tracked files are never touched), and it stays green on a rewording it must not notice |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
 | `node scripts/qa/verify_published.mjs 0.1.33` | **4 passed, 0 failed** |
@@ -3158,6 +3179,72 @@ passes every one of them. The falsifier mutates the wiring, asserts that the
 **unit tests stayed green** and that the **report-level check went red**, and
 that is the proof that the two kinds of check are not the same check twice.
 
+**AND THE REPORT NOW SAYS WHAT TO FEED IT — 5.12, the counterexamples.** Every
+other table answers *"what was found"*; this one answers *"what makes it
+happen again"*. For each finding an **execution** produced, it re-runs that
+finding on its own input and reports the smallest input that reproduces it.
+On the fixture: `lookup(values = [], index = 0)` reproduces the out-of-bounds
+read, and `copy_prefix(buffer = [], len = 1)` reproduces the tainted index.
+
+The word **smallest** is bounded, and the section says so in the same breath:
+the input is minimal over the **analyser's own candidate set**, in the order
+the analyser lists those candidates in — the candidate product, with the last
+parameter varying fastest. It is not a globally minimal program, and it is not
+a minimal source. The reproduction is checked against the finding's **site**
+(its family, its place, its function) and not against its message or its
+evidence, because the evidence carries the observed value and the observed
+value is exactly what the smaller input changes.
+
+**WHAT HAS NO COUNTEREXAMPLE IS COUNTED APART, AND THE COUNT IS NOT A
+SUBSTITUTE FOR THE LIST.** The L2 families are may-claims over the whole input
+set and the CFG families are claims about the program's shape: neither has an
+input to minimise, and §5.12 says how many findings were in that class —
+**67** on this tree. The findings an execution produced and **no** input
+reproduced are **listed**, with their message, and on this tree there is
+**one** — and it is the most honest answer the feature can give:
+`BUDGET-EXCEEDED` at `src/app/ffi.mbt:391` is a claim about the analyser's
+own step budget, and no input reproduces a budget.
+
+MEASURED on this tree: **9** findings an execution produced, **8** of them
+with a counterexample, **1** without, and **22** inputs tried in total. The
+minimisation is opt-in (`--counterexamples`), because it re-runs the analyser,
+and it is bounded — a limit on the findings and a budget on the inputs tried —
+and the report says when a bound stopped it.
+
+**The MINIMALITY is pinned by a unit test, and the pin has teeth.** The test
+module guards its index, so the **first** input of the product does not reach
+the read, and the test asserts that every input **before** the counterexample's
+fails to reproduce the finding. A minimiser that returned the first input it
+found would pass a test that only checked "something came back", and fail this
+one. `scripts/qa/minimize_falsify.mjs` is the proof that the pin can fail: a
+**manual, local** tool, because it mutates the real source, and it is
+deliberately not a gate step — the arrangement `matrix_falsify.mjs` already
+uses. It breaks the minimiser **three** ways (the walk stops at the first
+input; the walk takes the last reproducing input; the counterexample
+under-reports the inputs it tried) and asserts that the test **about the
+minimality** goes red. It also MEASURES the division of labour: the
+report-level check is **blind** to the second and third of those, because a
+non-minimal counterexample produces artefacts that are internally consistent —
+so the minimality is pinned by the unit test and by nothing else, and the
+falsifier says so with a measurement instead of an assertion.
+
+**And the artefacts are checked against the REPORT, not only against
+itself.** `scripts/qa/counterexamples.mjs` is a **gate step**: it reads the
+report and the `_counterexamples.jsonl` sidecar and checks that the table and
+the sidecar agree row by row, that every counterexample names a finding the
+report **shows**, that every argument **is** the candidate its index points at,
+and that the counts in the section's prose are the counts the sidecars imply.
+It runs over the **fixture** and over a **live self-scan** of this tree — the
+self-scan is there because the fixture has no finding that no input
+reproduces, and a check that never sees one is a check that never fires.
+`scripts/qa/counterexamples_falsify.mjs` is its proof: it mutates **copies**
+of the artefacts (an argument that is not its candidate, a counterexample that
+names a finding the report does not show, a row that disagrees with the
+sidecar, a prose count the sidecar does not support) and asserts that the
+check goes red on each — plus a **control**, a rewording the check must NOT
+notice, so a checker that failed on every possible edit cannot pass for a
+checker that works.
+
 **What an undecided claim MEANS is a policy, and the policy is fail-closed.**
 An undecided claim about a **safety** property is an **error**: the module's
 safety is then not established, and *"we could not decide"* is not *"it is
@@ -3231,19 +3318,26 @@ traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 10.0 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 11.8 s |
 | `riantr/moonbit_static_analysis@latest` → 0.5.3 | 262 | 17,797 | 11,564 | 188 | 0 (no specs) | 0 | 7 | 1.6 s |
-| `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 6 ms |
-| `LunaFlow` itself (`--dir .`) | 62 | 7,223 | 10,249 | 47 | 2 / 1 / 3 | 0 | 8 | 747 ms |
+| `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
+| `LunaFlow` itself (`--dir .`) | 64 | 7,501 | 10,251 | 47 | 2 / 1 / 3 | 0 | 8 | 750 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **747 ms** to **780 ms**, while every
+runs over the tree this commit names read **750 ms** to **821 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
-committed artefacts: the committed doubleML artefact read **10.0 s**, and the
+committed artefacts: the committed doubleML artefact read **11.8 s**, and the
+count it carries is the artefact's own. **The doubleML wall clock moved with
+the machine, not with the analyser:** the same corpus read **10.0 s** when
+0.1.33 was published and **11.7 s – 12.9 s** over four runs on this machine
+today, while every count in the row is unchanged and the artefact's **trace
+and findings sidecar are byte-identical**. The measured window ends before
+the report is rendered (`src/command/command.mbt`: the clock is read before
+`render_report` is called), so a new REPORT SECTION is not inside it.
 **272,316** L2 steps are the deterministic measure behind it. Every Time cell in
 the table above is the `elapsed_ms` of the artefact it names, so the cell and the
 file always agree; what they do **not** promise is comparability across releases,
@@ -3456,7 +3550,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **62 files, 7,223 statements, 10,249 events, 47 L2
+On this tree the row reads **64 files, 7,501 statements, 10,251 events, 47 L2
 findings, 0 dead and 8 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
@@ -3484,6 +3578,24 @@ the `_summary.json`, and no trace or sidecar), because §5.11 is a rendering of
 findings that already existed and creates none. An addition that produced new
 CLAIMS would be a different thing from an addition that crosses the claims already
 there, and the trace is where that difference shows.
+
+The row moved once more for **§5.12, the counterexamples**, and the reason is
+the same one again: the minimiser is new source in `src/app/minimize.mbt`, and
+the analyser analyses its own source. MEASURED: **+278 statements**
+(7,223 → 7,501) and the **L2 count did NOT move** — it stayed at **47** —
+because the one claim the new source produced was **fixed rather than
+registered**. The minimiser's `value_arr_eq` indexed two arrays whose lengths
+the layer cannot relate, so it reported an `INDEX-OOB` on itself
+(`src/app/minimize.mbt:128`); the guard `if i >= b.length() { return false }`
+was added, and the claim is gone. That is the rule this repository already
+states for itself: a claim about this source that is not answered by a guard
+is fixed, and only a claim the analyser cannot reach is registered in
+`src/app/selfscan_guards_wbtest.mbt`.
+
+The **events** moved by **+2** (10,249 → 10,251) and the **files** by **+2**
+(62 → 64): the minimiser and its whitebox test are two new files in
+`src/app/`. The **L1 events** are the trace's own record of the interpreter's
+work, and the new file adds statements for it to walk.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

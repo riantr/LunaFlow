@@ -28,7 +28,7 @@
 | Interpreted steps | 156 |
 | Observed functions | 12 |
 | Entry selection | the first 12 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 6 ms |
+| Wall time (analyzer) | 5 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -539,6 +539,11 @@ _Every claim the analyser made was decided; nothing was left unverified._
 | **Total** | **9** | **8** | **6** | **5** | **1** | **29** |
 
 7 families over 5 method(s); 3 of them were found by MORE THAN ONE method and so rest on more than one kind of evidence: TAINT-INDEX, TAINT-ALLOC, INFINITE-LOOP.
+
+
+### 5.12 Counterexamples: the smallest input that reproduces each finding
+
+_The counterexample minimisation was not run._ Pass `--counterexamples` to re-run each finding an execution produced on its own input, and to shrink that input to the smallest one that still reproduces it.
 
 
 ## 6. Value ranges

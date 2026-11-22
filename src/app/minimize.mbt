@@ -69,6 +69,9 @@ pub(all) struct MinimizeResult {
   minimised : Int32
   /// The findings no single input reproduced.
   without : Int32
+  /// The findings no single input reproduced, so the report can NAME them
+  /// instead of only counting them.
+  without_findings : Array[Finding]
   /// The findings that were not attempted, because the limit was reached.
   skipped : Int32
   /// The inputs the minimisation tried, in total.
@@ -122,6 +125,12 @@ fn value_arr_eq(a : Array[Value], b : Array[Value]) -> Bool {
   }
   let mut i = 0
   while i < a.length() {
+    // The two lengths are equal, so this never fires -- and the analyser
+    // cannot relate two arrays' lengths, so the guard is what makes the
+    // read of `b` decidable instead of a MAY-claim.
+    if i >= b.length() {
+      return false
+    }
     if !value_eq(a[i], b[i]) {
       return false
     }
@@ -336,6 +345,7 @@ pub fn minimize_counterexamples(
   }
   let counterexamples : Array[Counterexample] = []
   let mut without = 0
+  let without_findings : Array[Finding] = []
   let mut skipped = 0
   let mut i = 0
   while i < wanted.length() {
@@ -347,7 +357,10 @@ pub fn minimize_counterexamples(
     i = i + 1
     match mz.minimize_for(t) {
       Some(cx) => counterexamples.push(cx)
-      None => without = without + 1
+      None => {
+        without = without + 1
+        without_findings.push(t)
+      }
     }
   }
   {
@@ -356,6 +369,7 @@ pub fn minimize_counterexamples(
     not_input,
     minimised: counterexamples.length(),
     without,
+    without_findings,
     skipped,
     tried: mz.runs,
     truncated: mz.runs >= mz.budget,

@@ -1299,6 +1299,112 @@ mutation that removes the sentence can show the difference.
 
 Cost: one pass over the findings per cell computation, no new analysis.
 
+### 5.21 The counterexample minimisation: the smallest input that reproduces a finding
+
+Every other findings table in the report answers **what was found**. §5.12
+answers a different question: **what makes it happen again**. For each finding
+an **execution** produced, it re-runs that finding on its own input and
+reports the smallest input that reproduces it.
+
+**The claim, and its boundary.** "Smallest" is a statement about an **order**,
+and the order is the analyser's own:
+
+- the candidates of a parameter are the values `value.mbt` synthesizes for
+  that parameter's type, in the order that file lists them (`Int`:
+  `-1, 0, 1, 2, 5`; `String`: `""`, `"abc"`, `"../../etc/passwd"`, a long
+  zero string; `Array[T]`: empty, one element, three, two-reversed);
+- the candidates of the parameters form a **product**, and the analyser walks
+  that product with the **last parameter varying fastest** (`synthesize`);
+- the counterexample is the **first** input in that walk that reproduces the
+  finding, so every input before it was tried and did not reproduce it.
+
+That is what the word means here, and the report says so in the same breath:
+*the smallest over the analyser's own candidate set*. It is **not** a globally
+minimal program, and it is **not** a minimal source — those are different
+problems with different answers, and claiming them would be claiming
+something this does not do.
+
+**Why the walk is the analyser's own.** The order cannot drift from the order
+the analyser itself uses, because it IS that order: the minimisation calls
+`synthesize`, the same function the interpreter calls. The walk here is
+**longer** than the analyser's — the analyser samples a bounded number of
+trials, and a finding raised in a **callee** can need an input past that
+bound. Finding it is the part of this that is worth the re-runs.
+
+**Why the reproduction is checked against the SITE.** A finding's identity
+across runs is its family, its file, its line and its function — `same_site`,
+the same comparison the funnel already uses to decide that two findings are
+the same finding. It is **not** the message and **not** the evidence: the
+evidence carries the observed value (`values[0] of length 0`), and the
+observed value is exactly what the smaller input changes. Matching on the
+evidence would mean that no counterexample ever matched the finding it came
+from.
+
+**The entry is the finding's own function.** The finding is raised there, so
+entering that function with a tainted argument is what raises it again. The
+interpreter gains one optional argument for this — `run_function(inputs=…)`
+runs ONE input instead of the synthesized trials — and that is the whole
+seam. No new analysis engine, no second interpreter.
+
+**What has no counterexample, and why that is stated.** Two classes of
+finding have no input to minimise:
+
+- the **L2 families** are may-claims over the whole input set. A may-claim
+  says *every* input in the abstraction may do this; there is no single input
+  that reproduces it, because the claim is not about a single input.
+- the **CFG families** are claims about the program's shape (dead code, an
+  unreachable node, a non-terminating loop) — a claim about the program, not
+  about an input.
+
+They are **counted apart** in the section, and the count is published: on this
+tree, **67** findings were in that class.
+
+The findings an execution produced and that **no** input reproduced are
+**listed**, with their message. A count is not a list, and on this tree that
+list has exactly one entry — `BUDGET-EXCEEDED` at `src/app/ffi.mbt:391` —
+which is the most honest answer the feature can give: the claim is about the
+analyser's own **step budget**, and no input reproduces a budget.
+
+**Why it is opt-in.** The minimisation re-runs the analyser, once per input
+tried. It is therefore a flag (`--counterexamples`) and not part of the
+published artefact recipe, and it is bounded twice: a limit on the findings
+covered (`--counterexample-limit`, default 20) and a budget on the inputs
+tried. The section states which bound stopped it.
+
+**How the minimality is pinned.** Eight whitebox tests
+(`src/app/minimize_wbtest.mbt`) assert the reproduction, the chosen
+candidate's index, the rendering, the bounds, and — the one the feature
+exists for — that **every input before the counterexample's fails to
+reproduce the finding**. The test module **guards** its index, so the first
+input of the product does not reach the read and the minimiser has to move
+to the second candidate: the refutation is not vacuous, because there is
+something to refute.
+
+**And the division of labour is measured, not assumed.**
+`scripts/qa/counterexamples.mjs` is a gate step, and it checks the ARTEFACTS:
+the table and the `_counterexamples.jsonl` sidecar agree row by row, every
+counterexample names a finding the report **shows**, every argument **is** the
+candidate its index points at, and the prose counts are the counts the
+sidecars imply. It runs over the fixture **and** over a live self-scan —
+the self-scan is there because the fixture has no finding that no input
+reproduces, and a check that never sees one is a check that never fires.
+
+That check **cannot** see the minimality: a non-minimal counterexample
+produces artefacts that are internally consistent. `scripts/qa/minimize_falsify.mjs`
+is what says so with a measurement — it **mutates the source** (so it is a
+manual, local tool and deliberately not a gate step), breaks the minimiser
+three ways, and asserts that the unit test about the minimality goes red
+**while the report-level check stays green** on the case that is purely about
+the order. MEASURED: the F2 case — the walk takes the last reproducing input
+instead of the first — leaves the report-level check **green**. The minimality
+is pinned by the unit test and by nothing else, and that is now a measured
+fact about this harness rather than an assumption about it.
+
+Cost: one re-run of the entry function per input tried. On this tree the
+minimisation tried **22** inputs for **9** findings, and the whole self-scan
+with `--counterexamples` read **738 ms** against **750 ms** without it — the
+same run, the same machine, and the difference is inside the noise.
+
 ---
 
 ## 6. Visualization
@@ -1317,7 +1423,10 @@ Cost: one pass over the findings per cell computation, no new analysis.
 The report also carries the evolved value analysis (5.3), the global region
 (5.4), the allocation classes (5.5), the layout-stability self-check (5.6), the
 foreign address space (5.7), the concurrency model (5.8), the IPC and
-buffer model (5.9) and the classes the C boundary makes real (5.15).
+buffer model (5.9) and the classes the C boundary makes real (5.15). The
+counterexamples (5.21) and the rule × dimension matrix (5.20) are sections
+inside §5, and the matrix is rendered from the same findings the tables
+fill.
 
 ### 6.2 Mermaid conventions
 
@@ -1361,6 +1470,7 @@ LunaFlow [analyze] [<target>]
   [--max-slice <n>] [--list-functions] [--quiet]
   [--exclude <name>]... [--families <codes>] [--exclude-families <codes>]
   [--explain <code>] [--explain-all] [--metrics] [--per-function]
+  [--counterexamples] [--counterexample-limit <n>]
 ```
 
 The **target slot** follows the peer analyzer's rule, so the two tools take the
@@ -1416,7 +1526,10 @@ Outputs, all deterministic except `elapsed_ms`:
 
 - `<author>_<module>_<version>.md` — the report;
 - `..._trace.jsonl` — one JSON object per event (`k`, `fn`, `file`, `line`, `stmt`, `name`, `value`, `tainted`, `trial`, `detail`);
-- `..._summary.json` — machine-readable counts for CI gates.
+- `..._summary.json` — machine-readable counts for CI gates;
+- `..._findings.jsonl` — one JSON object per finding the report rendered;
+- `..._counterexamples.jsonl` — one JSON object per counterexample, written
+  **only** when `--counterexamples` is given (§5.21).
 
 `--list-functions` prints `FUNCTION<TAB>FILE<TAB>STATEMENTS` so a slice criterion can be chosen without guessing.
 

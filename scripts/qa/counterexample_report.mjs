@@ -117,6 +117,33 @@ export function parseProseCounts(section) {
   };
 }
 
+/// The findings that no input reproduced, as the section lists them.  The
+/// section has no such table when there are none, and an absent table means
+/// an empty list -- not a missing check.
+export function parseWithoutRows(section) {
+  const at = section.indexOf('| Finding | Location | Function | Message |');
+  if (at < 0) return [];
+  const rest = section.slice(at);
+  const rows = [];
+  for (const line of rest.split(/\r?\n/)) {
+    if (!line.startsWith('|')) {
+      if (rows.length > 0) break;
+      continue;
+    }
+    const cells = line.split('|').slice(1, -1).map((s) => s.trim());
+    if (cells.length !== 4) continue;
+    if (cells[0] === 'Finding') continue;
+    if (cells[0].startsWith('---')) continue;
+    rows.push({
+      rule: unquote(cells[0]),
+      location: cells[1],
+      fn: unquote(cells[2]),
+      message: cells[3],
+    });
+  }
+  return rows;
+}
+
 function unquote(s) {
   const t = s.trim();
   if (t.startsWith('`') && t.endsWith('`') && t.length >= 2) {
