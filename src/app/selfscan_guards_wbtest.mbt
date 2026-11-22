@@ -2,10 +2,19 @@
 /// THE SELF-SCAN'S CLAIMS ABOUT THIS SOURCE, AND THE GUARDS THAT ANSWER
 /// THEM.
 ///
-/// MEASURED (2026-11-22): the analyser over its own source reports 26
-/// findings in `src/` and `src/command/` -- and every one of them is a
-/// MAY-claim about an index or a divisor, answered by a guard that is IN the
-/// source.  None of them is a defect.
+/// MEASURED (2026-11-23), at level 3: the analyser over its own source
+/// reports 29 findings in `src/` and `src/command/` -- and every one of them
+/// is a MAY-claim about an index or a divisor, answered by a guard that is IN
+/// the source, or (for `srcs_label`) by a MEASURED property of the standard
+/// library.  None of them is a defect.
+///
+/// THE REGISTER IS CHECKED, NOT ONLY WRITTEN.  It had drifted: it was
+/// measured against 26 claims, and the tree made 29 -- three of them in a
+/// function that was added afterwards, and nobody had answered them.
+/// `scripts/qa/selfscan_register.mjs` runs the analyser over this source
+/// and compares what it says NOW with what the table below says: every
+/// claim must be here, with the count that was measured, and every claim
+/// here must still be made.
 ///
 /// The list below is the REGISTER: what the analyser claims, and what makes
 /// the claim false.  A claim that is registered is a claim that has been
@@ -24,7 +33,9 @@
 ///                                          2 x INDEX-OOB     `0..<len`
 ///   command.mbt   arg_value               INDEX-OOB         `i >= 0 &&`
 ///                                          TAINT-INDEX       `i + 1 < len`
-///   abs.mbt       srcs_label              TAINT-INDEX       `len - 1`
+///   abs.mbt       srcs_label              TAINT-INDEX       `split` yields
+///                                                           at least one
+///                                                           part
 ///   abs.mbt       branch_returns          TAINT-INDEX-RANGE `len == 0`
 ///   cfg.mbt       last_node               TAINT-INDEX-RANGE `len == 0`
 ///   cfg.mbt       cfg_findings            TAINT-INDEX       `i < nodes.len`
@@ -36,8 +47,20 @@
 ///                                                            in a construct
 ///                                                            the parser does
 ///                                                            not model
+///   report.mbt    rule_dimension_matrix  3 x INDEX-OOB     `a < len` and
+///                                                           `b < len`
 ///   ffi.mbt       ffi_signature           BUDGET-EXCEEDED   the interpreter's
 ///                                                            step budget
+///
+/// THE `srcs_label` CLAIM, MEASURED.  Its answer is not a guard in the
+/// source: it is `String::split`'s contract.  MEASURED on the toolchain
+/// this tree is written against: `"".split(":")` has length 1 -- `split`
+/// yields at least one part for every input -- so `parts[parts.length() - 1]`
+/// is `parts[0]`, and it reads inside the array.  The claim is a MAY-claim
+/// the analyser cannot discharge, because the interpreter does not model
+/// `split` and so does not know the array's length.  It is REGISTERED, not
+/// fixed: there is nothing to reach.  The counterexample the minimiser
+/// found for it (`srcs = [""]`) reproduces the CLAIM, not a defect.
 ///
 /// Two of them were NOT answered when this register was written, and both
 /// were FIXED rather than registered:
@@ -139,9 +162,14 @@ test "the self-scan: synthesizing inputs does not read past the end" {
 ///|
 test "the self-scan: a source label names the parameter" {
   // The guard is `parts[parts.length() - 1]`, and `split` always yields at
-  // least one part.
+  // least one part.  MEASURED on this toolchain: `"".split(":")` has
+  // length 1, so the index is 0 and the read is inside the array.
   inspect(srcs_label(["param:len"]), content="parameter `len`")
   inspect(srcs_label(["param:a", "param:b"]), content="parameters `a` and `b`")
+  // The EMPTY source, which is the input the minimiser's counterexample
+  // names: `split` still yields one part, so the label is read, not
+  // skipped and not read past the end.
+  inspect(srcs_label([""]), content="parameter ``")
 }
 
 ///|
