@@ -281,7 +281,16 @@ pub fn ScanStats::parse_rate(self : ScanStats) -> Double {
 }
 
 ///|
-struct WalkState {
+/// The walker's state, and it belongs to the walker: a backend with no
+/// filesystem has no walker, and a type nothing uses is a type the compiler
+/// reports. MEASURED: `moon check --target js` reported `Unused type
+/// 'WalkState'` when the walker was cfg'd out of that target alone.
+///
+/// It is `priv` because it is not part of any published signature, and the
+/// compiler says so: `consider marking it as 'priv'`.
+///
+#cfg(any(target="native", target="wasm"))
+priv struct WalkState {
   files : Array[String]
   mut truncated : Bool
 }
@@ -401,25 +410,36 @@ pub async fn load_module(
 ///|
 #cfg(not(any(target="native", target="wasm")))
 pub async fn fetch_module(coord : Coord, cwd : String) -> FetchResult {
-  {
+  // The parameters are here so the signature is the SAME on every backend. This
+  // one has no filesystem and no process, so it has nothing to use them for,
+  // and the compiler said so: `Unused variable 'coord'`, `Unused variable
+  // 'cwd'`. MEASURED: `moon check --target js` reported both.
+  let _ = coord
+  let _ = cwd
+  let result : FetchResult = {
     root: "",
     version: "",
     ok: false,
     note: "this backend has no filesystem or process access",
   }
+  result
 }
 
 ///|
-#cfg(not(any(target="native", target="wasm")))
-async fn walk_dir(
-  dir : String,
-  rel : String,
-  st : WalkState,
-  limit : Int32,
-  depth : Int32,
-) -> Unit {
-
-}
+/// There is NO stub for `walk_dir` on a backend without a filesystem, and
+/// there must not be one.
+///
+/// There used to be, and it took FIVE parameters while the live one above
+/// takes SIX. Nothing called it on any backend -- the compiler said so
+/// (`Unused function 'walk_dir'`) -- and an analyser that does not evaluate
+/// `#cfg` sees both definitions and reads the two calls above as "too many
+/// arguments to 'walk_dir'". MEASURED: `moonx
+/// riantr/moonbit_static_analysis@latest .` reported 2 ArgTypeMismatch
+/// findings on this file for exactly that reason.
+///
+/// The stub is not missed: on a backend with no filesystem, `load_module`
+/// below returns an empty module and never walks a directory.
+///
 
 ///|
 #cfg(not(any(target="native", target="wasm")))
@@ -430,6 +450,11 @@ pub async fn load_module(
   file_limit : Int32,
   excludes~ : Array[String] = [],
 ) -> (ModuleAst, ScanStats) {
+  // `file_limit` and `excludes` are here for the same reason as above: the
+  // signature is the same on every backend. MEASURED: `moon check --target js`
+  // reported both as unused values.
+  let _ = file_limit
+  let _ = excludes
   let ast : ModuleAst = {
     coord,
     version,

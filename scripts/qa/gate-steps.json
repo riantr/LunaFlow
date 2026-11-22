@@ -36,6 +36,8 @@
   "node scripts/qa/gate_verdicts.mjs",
   "node scripts/qa/finding_verdicts.mjs",
   "node scripts/qa/metamorphic.mjs",
+  "node scripts/qa/cfg_signatures.mjs",
+  "node scripts/qa/cfg_signatures_falsify.mjs",
   "python .github/scripts/check_readme_sync.py",
   "typos"
 ]

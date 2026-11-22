@@ -997,20 +997,35 @@ cross-check that mattered — two independent tools, one conclusion. The paramet
 its argument are gone, and the results are unchanged: the self-scan is 31 rows before
 and after, and the three committed artefacts regenerate byte-identically.
 
-**What the peer's other 13 findings were, and why 10 of them are its limit rather
-than a defect here.** The peer does not model `#cfg`. A module that defines a name
-twice — once for the native/wasm backends and once as a stub for the others — has two
-definitions of that name, and the peer binds the name to **one** of them. The
-consequences are systematic, and they are not defects in the analysed module:
+**The `#cfg` findings, and the correction the 2026-11-22 round forced.** The peer
+does not model `#cfg`. A module that defines a name twice — once for the
+native/wasm backends and once as a stub for the others — has two definitions of
+that name, and the peer binds the name to **one** of them. That much is true, and
+the first reading of it was:
 
-| what the peer reports | why it is wrong here |
+| what the peer reported | the first reading |
 |---|---|
 | `ArgTypeMismatch` — "expected 5, got 6" | the native/wasm definition has **6** parameters and the js stub has **5**; the peer bound the name to the stub |
 | `UnusedParam` on the stub's parameters | the stub's body is **empty**, and the parameter exists in the *other* definition |
 
-The claim was established by a probe, not by inference: a 25-line file with two `#cfg`
-definitions of one name reproduces *"too many arguments to 'gated': expected 1, got 2"*
-exactly.
+**That reading was wrong, and the QA round of 2026-11-22 proved it by measurement.**
+The stub for `walk_dir` took **five** parameters while the live one took **six**,
+and the compiler had been reporting the stub as `Unused function 'walk_dir'` on
+every backend it was compiled for. A definition that nothing calls, whose signature
+disagrees with the definition it stands in for, is **dead code with a wrong shape**
+— which is a defect in this module, not a limit of the peer. The peer was right
+about the shape and only imprecise about the cause.
+
+The distinction that survives: the peer cannot tell a **dead** definition from a
+live one, because it does not evaluate `#cfg`. So an `ArgTypeMismatch` from it is
+not automatically a defect — it is a **question about the shape of a name**, and the
+answer has to be measured. On this tree the answer was "the two shapes disagree and
+one of them is dead", and the fix was to delete the dead one. **MEASURED after the
+fix**: the peer reports **0 actionable findings in this project's own source.**
+
+`WalkState`, the walker's state type, went the same way: cfg'd to match the walker
+that owns it, because `moon check --target js` reported `Unused type 'WalkState'`
+once the walker was confined to the other two targets.
 
 **The other three were the fixtures' own defects.** `fixtures/eva_demo/lib.mbt` holds
 deliberate defects — `100 / 0` at line 44 and `a[-1]` at line 65 — and the peer finds
@@ -1035,9 +1050,19 @@ by reading it, and every claim about the peer's own behaviour was checked by a
 
 **And the direction that matters is reciprocal.** The peer over its own module
 (0.4.50, 257 files) reports **0 actionable** findings; LunaFlow over the same module
-reports **20 rows**. Neither tool invents a defect on the other's code.
+reports **20 rows**.
 
-Cost: one peer run per release, plus a probe file per disputed claim.
+**The cross-check is now a step, not a paragraph.** `scripts/qa/peer_scan.mjs` runs
+the peer over this tree and fails when it reports an actionable finding in the
+source that ships. The fixture corpus is excluded and the exclusion is **printed**,
+because "no actionable finding" has to mean the code that is published. It needs the
+registry, so it exits **2** — "could not decide" — when it cannot reach it. A newer
+peer that finds something new turns the step red on purpose: that is the event it
+exists to surface, and it is how the `walk_dir` stub would have been caught two
+releases earlier.
+
+Cost: one peer run per release (now one per gate run), plus a probe file per
+disputed claim.
 
 ### 5.17 The verdict of a finding: a claim that could not be decided
 
@@ -1113,6 +1138,61 @@ analysed **twice** must give the same findings **in the same order** — a
 hash-order artefact would show up there and nowhere else.
 
 Cost: one script, four analyser runs.
+
+### 5.19 A signature must not depend on the target
+
+A `#cfg` guard selects a definition per target, and that is exactly what it is
+for. The invariant this section is about is one level down: **within a
+compilation unit, every definition of one name must take the same number of
+parameters.** When it does not, the target that compiles the smaller shape is
+the target whose call sites do not match — and the definition that nothing
+calls is dead code carrying a signature nobody can satisfy.
+
+**The measurement that found it.** `src/app/scan.mbt` held two definitions of
+`walk_dir`:
+
+```moonbit
+#cfg(any(target="native", target="wasm"))
+async fn walk_dir(dir, rel, st, limit, depth, excludes) -> Unit   // SIX
+
+#cfg(not(any(target="native", target="wasm")))
+async fn walk_dir(dir, rel, st, limit, depth) -> Unit             // FIVE
+```
+
+The two guards are mutually exclusive, so no build ever saw both, and
+`moon check --target js` reported the five-parameter one as **`Unused function
+'walk_dir'`** — the compiler had been saying so on every backend it compiled.
+The stub is gone; on a backend with no filesystem, `load_module` returns an
+empty module and never walks anything.
+
+**Why a checker is needed when the compiler already says it.** The compiler
+reports dead code, and dead code is a *warning* on this project. A dead
+definition that is **also** shaped differently is a worse thing: it is a
+signature that lies to every reader and to every analyser that does not
+evaluate `#cfg`. `scripts/qa/cfg_signatures.mjs` holds the invariant directly —
+it reads the source, computes the arity of every definition, groups by
+compilation unit, and fails when one name disagrees with itself.
+
+The reader it needs is not the naive one: a `fn` inside a comment, a string or a
+**block string** is not a definition, and the test files carry whole MoonBit
+modules as `#|` fixtures. MoonBit's block string has **no terminator** — `#|`
+opens it, each following line whose first non-blank characters are `#|` is
+another chunk, and the first line that is not one ends it. That rule is
+implemented here as it is in this module's own lexer (`src/app/lexer.mbt`,
+`lex_block_string`), measured by value against the toolchain. A naive reader
+reported **six** phantom mismatches on this tree; the correct one reports
+**zero**, and the six names it does see defined twice
+(`fetch_module`, `load_module`, `write_text`, `read_text`, `cli_args`,
+`ensure_dir`) all take the same shape.
+
+`cfg_signatures_falsify.mjs` breaks the invariant **on a copy of the tree**
+under `_build/` — the real `src/` is never written — and asserts three things:
+the copy is green before the mutation, the mutated copy is red, and the red
+report **names the function and shows both shapes**. That last one is the
+difference between a detector and a tripwire: a check that goes red for the
+wrong reason is not checking the right thing.
+
+Cost: one source scan, no build, no network.
 
 ---
 

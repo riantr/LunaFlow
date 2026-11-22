@@ -208,11 +208,18 @@ fn span_from(start : Tok, stop : Tok, file : String) -> Span {
 fn render_tokens(toks : Array[Tok], from : Int32, to : Int32) -> String {
   let out = StringBuilder()
   let mut started = false
-  let mut j = from
+  // The range starts at ZERO, not at `from` itself. `from` is a token index,
+  // and the callers all pass one -- but the guard was only an UPPER bound, so
+  // a negative `from` read before the first token, and `toks[j - 1]` read one
+  // before that. MEASURED: the self-scan reported `index may be out of bounds
+  // on some inputs` here, with the evidence `index [-1000000,999999]`, and
+  // this is the half of the guard that was missing.
+  let start = if from < 0 { 0 } else { from }
+  let mut j = start
   while j < to && j < toks.length() {
     let t = toks[j]
     if t.kind != TNewline {
-      let prev = if j > from { Some(toks[j - 1]) } else { None }
+      let prev = if j > start { Some(toks[j - 1]) } else { None }
       let kw_before = match prev {
         Some(p) =>
           p.text == "in" ||

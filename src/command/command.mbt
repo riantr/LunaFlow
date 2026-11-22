@@ -171,7 +171,12 @@ fn usage() -> String {
 
 ///|
 fn arg_value(args : Array[String], i : Int32) -> String {
-  if i + 1 < args.length() {
+  // The index is bounded at BOTH ends. The upper bound was there; the lower
+  // one was not, and it came from the callers -- every one of which passes an
+  // index into `args`, so a negative one would read before the first
+  // argument. MEASURED: the self-scan reported `index may be out of bounds on
+  // some inputs` here, with the evidence `index [-999999,1000001]`.
+  if i >= 0 && i + 1 < args.length() {
     args[i + 1]
   } else {
     ""

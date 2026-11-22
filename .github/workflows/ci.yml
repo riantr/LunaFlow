@@ -362,3 +362,30 @@ jobs:
       # ONE shape of the input; this one measures the analyser.
       - name: Check that the findings do not depend on the source's spelling
         run: node scripts/qa/metamorphic.mjs
+
+      # A SIGNATURE MUST NOT DEPEND ON THE TARGET.  MEASURED: the peer
+      # analyzer reported 2 ArgTypeMismatch findings on `src/app/scan.mbt`
+      # because the file held two definitions of `walk_dir` -- one with six
+      # parameters and one with five -- and an analyzer that does not evaluate
+      # `#cfg` reads the two calls as too many arguments.  The MoonBit
+      # compiler agreed the second definition was dead.  This check holds the
+      # invariant on its own, without the peer and without a build.
+      - name: Check that a signature does not depend on the target
+        run: node scripts/qa/cfg_signatures.mjs
+
+      # ... and this one proves the check above can go RED: it breaks the
+      # invariant on a COPY of the tree and asserts that the check notices,
+      # and that it notices the right thing.
+      - name: Check that the signature check can fail
+        run: node scripts/qa/cfg_signatures_falsify.mjs
+
+      # THE PEER'S VERDICT ON THIS SOURCE.  The cross-check, made
+      # RE-RUNNABLE: the peer analyzer reads this module, and it must report
+      # no actionable finding in the source that ships.  The fixture corpus
+      # is deliberately vulnerable -- it is what the analyser is tested
+      # against -- so it is excluded, and the exclusion is printed.
+      #
+      # This step needs the registry.  If it cannot reach it, the check
+      # exits 2 -- "could not decide" -- rather than passing quietly.
+      - name: Check the peer's verdict on this source
+        run: node scripts/qa/peer_scan.mjs

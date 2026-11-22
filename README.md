@@ -918,8 +918,8 @@ compiler names. The migration was driven by **the compiler's own site list**, no
 a blanket replace — only 17 of the 37 `.to_string()` calls were deprecated, because
 the other 20 are on a `String` and only a `StringView` receiver is — and it had to be
 a **loop**: the compiler flags a deprecated *impl* at one site, so fixing that site
-moves the warning to the next one. `moon check` goes from **167 to 80 warnings** on
-native and wasm (105 on js), and **`deprecated` is 0** — on this toolchain *and* on
+moves the warning to the next one. `moon check` goes from **167 to 79 warnings** on
+native and wasm (90 on js), and **`deprecated` is 0** — on this toolchain *and* on
 the newest one (`moon 0.1.20261117`), where the whole gate was re-run side by side.
 
 **One published-interface change**, declared here: `ReportInput` — a `pub(all)`
@@ -2951,12 +2951,12 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 80 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 80 warnings, 0 errors |
-| `moon check --target js` | exit 0, 105 warnings, 0 errors |
-| `moon test src/app --target native` | **296 passed, 0 failed** |
-| `moon test src/app --target wasm` | **296 passed, 0 failed** |
-| `moon test src/app --target js` | **296 passed, 0 failed** |
+| `moon check --target native` | exit 0, 79 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 79 warnings, 0 errors |
+| `moon check --target js` | exit 0, 90 warnings, 0 errors |
+| `moon test src/app --target native` | **309 passed, 0 failed** |
+| `moon test src/app --target wasm` | **309 passed, 0 failed** |
+| `moon test src/app --target js` | **309 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -2972,6 +2972,9 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/gate_verdicts.mjs` | **every check agrees** — a FAIL, an UNKNOWN and a PASS are three different things, the shipped checks exit 2 when they cannot decide, and the runner resolves its own default list on the platform it runs on |
 | `node scripts/qa/finding_verdicts.mjs` | **every check agrees** — a claim the analyser could not decide is reported as UNDECIDED, with the reason, and the policy decides what an undecided claim means |
 | `node scripts/qa/metamorphic.mjs` | **every check agrees** — the findings do not depend on the source's spelling: the same program with other identifiers, with its functions in another order, or with `a + b` written as `b + a`, makes the same claims |
+| `node scripts/qa/cfg_signatures.mjs` | **every check agrees** — a signature does not depend on the target: every definition of one name in a compilation unit takes the same number of parameters |
+| `node scripts/qa/cfg_signatures_falsify.mjs` | **every check agrees** — the signature check goes red when the invariant is broken, and it names the function that broke it (on a **copy** of the tree; the source is not touched) |
+| `node scripts/qa/peer_scan.mjs` | **every check agrees** — the peer analyzer reports **no actionable finding in this project's own source**; the fixture corpus is deliberately vulnerable, so it is excluded, and the exclusion is printed |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -3061,14 +3064,18 @@ artefact would show up there and nowhere else.
 **The gate is run against the NEWEST toolchain too**, because the CI runner installs
 that one — the 0.1.23 release failed on the runner for exactly this reason. On
 `moon 0.1.20261119` (738607b, 2026-11-19; core 0.10.22+124d61d05), installed into a
-scratch home next to the verified one: `moon check` gives **82 / 82 / 107 warnings,
-0 errors** on native / wasm / js, `moon test src/app` gives **296 passed, 0 failed**
+scratch home next to the verified one: `moon check` gave **82 / 82 / 107 warnings,
+0 errors** on native / wasm / js, `moon test src/app` gave **296 passed, 0 failed**
 on each of the three, `moon build src/cli --target native`, `moon build src/cli
---target js`, `moon build . --target wasm` and `moon build . --target js` are exit
-0, and `moon fmt --check` is exit 0. **`deprecated` is 0 on both toolchains** —
+--target js`, `moon build . --target wasm` and `moon build . --target js` were exit
+0, and `moon fmt --check` was exit 0. **Those are the counts of the tree of that
+day** — a snapshot of one run on two toolchains, like the Phase-3 table in
+`docs/qa/` — and the live ones are in the gate table above. **`deprecated` is 0 on
+both toolchains** —
 which is the point of migrating the 87 deprecated APIs: the fix holds on the
 toolchain the runner will actually take. The warning counts are **not** identical
-any more — **82 / 82 / 107** against the verified toolchain's **80 / 80 / 105** —
+any more — **82 / 82 / 107** against the verified toolchain's **80 / 80 / 105**,
+on that day's tree —
 and the difference is **exactly two warnings per target, all of them the same
 code**: `[0029] unused_package`, *"Unused package 'moonbitlang/core/async'"* (and
 on js, of `…/async/fs` and `…/async/process`), at `moon.pkg:32` and
@@ -3091,12 +3098,12 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 9.6 s |
 | `riantr/moonbit_static_analysis@latest` → 0.5.3 | 262 | 17,797 | 11,564 | 188 | 0 (no specs) | 0 | 7 | 2.6 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 61 | 6,983 | 10,249 | 46 | 2 / 1 / 3 | 0 | 8 | 715 ms |
+| `LunaFlow` itself (`--dir .`) | 62 | 7,045 | 10,249 | 44 | 2 / 1 / 3 | 0 | 8 | 732 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **715 ms** to **747 ms**, while every
+runs over the tree this commit names read **732 ms** to **856 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
@@ -3306,15 +3313,18 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **61 files, 6,983 statements, 10,249 events, 46 L2
+On this tree the row reads **62 files, 7,045 statements, 10,249 events, 44 L2
 findings, 0 dead and 8 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
 reason — the layer's blanket taint rule was replaced, and the five findings it
 had invented on this tree (four in `src/app/interp.mbt`, one in the fixture) are
-not in the 46 — and for a fourth: the value domain now relates two arrays'
-lengths, so the eight false positives in `family_count_table` are not in the 46
-either.
+not in the 44 — and for a fourth: the value domain now relates two arrays'
+lengths, so the eight false positives in `family_count_table` are not in the 44
+either. And it moved for a fifth reason, the one the **QA round of 2026-11-22**
+brought: two of the claims the analyzer made about this tree were claims it
+could not decide, and the guards that answer them were **incomplete**. They are
+complete now, and the two claims are gone — see [the QA round](#the-qa-round-of-2026-11-22).
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.
@@ -3396,6 +3406,75 @@ workload** has been run — the two analyzers were pointed at different modules,
 so the numbers are not comparable. The comparison baseline in
 `docs/design.md` §8 covers Frama-C / TrustInSoft Analyzer, Joern, CodeQL, SVF
 and Soot as a **design** comparison, not as a measured head-to-head.
+
+### The QA round of 2026-11-22
+
+This tree was put through **two** of the published analyzers — the two the
+README documents as a self-check — and the answers were taken as work to do,
+not as a report to file.
+
+```sh
+moonx riantr/LunaFlow@latest . --out _build/qa/qa_lf_tree --funnel
+moonx riantr/moonbit_static_analysis@latest . --exclude _build
+```
+
+**The first one — this analyzer, published, over this tree.** The published
+`0.1.32` read **61 files, 6,983 statements, 10,249 events, 46 L2 findings** and
+reported **75 findings** in all; the local build of the same tree reported
+**the same 75, row for row**, and the only difference between the two sidecars
+is the `verdict` key the local build adds: **74 `certain` and 1 `unknown`**. The
+`unknown` one is the interpreter's step budget in `src/app/ffi.mbt` — the claim
+the analyser could not decide, now reported as one. Two published artefacts that
+agree on every row is worth more than either of them alone.
+
+**The second one — the peer, over this tree.** The peer reported **13 actionable
+findings**, and the triage is the interesting part:
+
+- **Three** are in `fixtures/eva_demo/lib.mbt`. That corpus is **deliberately
+  vulnerable** — it is what this analyzer is tested against — so a finding there
+  is the tool working.
+- **Ten** are in `src/app/scan.mbt`, and **every one of them was real**. The file
+  held **two definitions of `walk_dir`**: one with six parameters, for the
+  backends with a filesystem, and one with **five**, for the backends without
+  one. The MoonBit compiler confirmed the second definition independently —
+  `Unused function 'walk_dir'` — and it was never called on any backend. An
+  analyser that does not evaluate `#cfg` sees both definitions and reads the two
+  live calls as *"too many arguments to 'walk_dir': expected 5, got 6"*.
+
+The dead definition is **gone**, and the peer now reports **no actionable finding
+in this project's own source** — three, all in the fixture corpus.
+
+**What the round changed.**
+
+| what | before | after |
+|---|---|---|
+| `walk_dir` definitions in `src/app/scan.mbt` | 2, with different arities | 1 |
+| the peer's actionable findings in `src/` | 10 | **0** |
+| `moon check` warnings, native / wasm / js | 80 / 80 / 105 | **79 / 79 / 90** |
+| the analyser's claims about this tree | 28 | **26** |
+| the tests | 296 | **309** |
+
+Two of the claims the analyzer made about this tree were claims it could not
+decide, and the guards that answer them were **incomplete**: `render_tokens`
+bounded its token range only from **above**, and `arg_value` bounded its
+argument index only from **above**. Both are total now — and the claims are
+gone with them: the L2 count moved **46 → 44**. The other **26** claims are
+answered by guards that were already there, and they are **registered** in
+`src/app/selfscan_guards_wbtest.mbt`, one test per site.
+
+**Two checks make the round re-runnable**, because a QA result that lives only
+in a chat is not a QA result:
+
+- `node scripts/qa/cfg_signatures.mjs` — **a signature must not depend on the
+  target**. Within a compilation unit, every definition of one name must take
+  the same number of parameters. That is the invariant the peer could not
+  check, and it is the defect class the dead `walk_dir` belonged to.
+  `cfg_signatures_falsify.mjs` breaks the invariant on a **copy** of the tree
+  and asserts that the check goes red, and that it names the right function.
+- `node scripts/qa/peer_scan.mjs` — **the peer's verdict on this source**. The
+  cross-check above, as a step that has to stay green. It needs the registry,
+  so it exits **2** — "could not decide" — when it cannot reach it, rather
+  than passing quietly.
 
 ### The cross-check against another analyzer's module
 
@@ -3661,9 +3740,12 @@ condition is unknown rather than guessed.
   library.
 - `src/command` — the CLI implementation, shared by `src/cli` and the root
   package that `moonx` resolves.
-- `scripts/qa/` — twenty-seven dependency-free harnesses and tools; fourteen of them
-  drive the built binary as a real process against the fixture, the two
-  registry modules and a hostile-input corpus.
+- `scripts/qa/` — thirty-five `.mjs` harnesses and tools (plus the `cli_bin.mjs`
+  helper the drivers share and the `gate.ps1` + `gate-steps.json` runner). Most
+  are dependency-free; fifteen of them drive the built binary as a real process
+  against the fixture, the two registry modules and a hostile-input corpus, two
+  more drive the **published** module through `moonx`, and the rest read
+  committed artefacts or run the compiler.
 - `docs/design.md` — the design record for the implementation in `src/app`.
 
 Outside this repository: **none that the registry knows about.** The registry

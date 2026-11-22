@@ -1217,8 +1217,6 @@ pub fn Value::len_of(Self) -> Int32?
 pub fn Value::numeric(Self) -> Double?
 pub fn Value::repr(Self) -> String
 
-type WalkState
-
 // Type aliases
 
 // Traits
