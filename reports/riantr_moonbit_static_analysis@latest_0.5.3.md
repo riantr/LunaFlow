@@ -28,7 +28,7 @@
 | Interpreted steps | 2412 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 2602 ms |
+| Wall time (analyzer) | 1644 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -1478,6 +1478,24 @@ _No findings._
 ### 5.10 Claims that could not be decided
 
 _Every claim the analyser made was decided; nothing was left unverified._
+
+
+### 5.11 Which dimension found which rule
+
+| Family | L2-EVA | L2-abstract | dynamic+symbolic | Total |
+| --- | ---: | ---: | ---: | ---: |
+| INDEX-OOB | 92 | · | · | 92 |
+| TAINT-INDEX | · | 76 | 3 | 79 |
+| TAINT-ALLOC | · | 10 | · | 10 |
+| TAINT-INDEX-RANGE | · | · | 4 | 4 |
+| RANGE-VIOLATION | · | 3 | · | 3 |
+| UNREACHABLE | · | 2 | · | 2 |
+| INFINITE-LOOP | · | 2 | · | 2 |
+| INTEGER-OVERFLOW | 2 | · | · | 2 |
+| DIVISION-BY-ZERO | 1 | · | · | 1 |
+| **Total** | **95** | **93** | **7** | **195** |
+
+9 families over 3 method(s); 1 of them were found by MORE THAN ONE method and so rest on more than one kind of evidence: TAINT-INDEX.
 
 
 ## 6. Value ranges

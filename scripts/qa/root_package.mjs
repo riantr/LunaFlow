@@ -49,6 +49,46 @@ function moon(args, opts = {}) {
   });
 }
 
+// -------------------------------------------------------- the findings rows
+//
+// A check that counts "how many findings of this family are reported" has
+// to count the FINDINGS, not the MENTIONS of the family.  A report names
+// the families in prose, the family-count table counts them, and the
+// dimension matrix (§5.11) crosses them -- so a count over the whole text
+// counts every mention, and a report that grows a section changes what is
+// being counted without changing what is found.  That is not hypothetical:
+// the matrix made six of these checks read 2 instead of 1.
+//
+// The findings are the ROWS of the findings table, and the table is found
+// by its HEADER: a section added to the report cannot change which rows
+// are the findings.
+const FINDINGS_HEADER =
+  '| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |';
+
+const findingRows = (text) => {
+  const rows = [];
+  let inTable = false;
+  for (const line of text.split(/\r?\n/)) {
+    if (line === FINDINGS_HEADER) {
+      inTable = true;
+      continue;
+    }
+    if (!inTable) continue;
+    if (!line.startsWith('|')) {
+      inTable = false;
+      continue;
+    }
+    if (/^\|\s*---/.test(line)) continue;        // the rule under the header
+    if (/^\|\s*\.\.\.\s*\|/.test(line)) continue; // the truncation marker
+    rows.push(line);
+  }
+  return rows;
+};
+
+// The findings of ONE family, counted from the rows.
+const familyFindings = (text, code) =>
+  findingRows(text).filter((r) => r.startsWith(`| ${code} |`));
+
 // ------------------------------------------------------- the root manifest
 
 const rootPkgPath = join(ROOT, 'moon.pkg');
@@ -626,7 +666,7 @@ if (existsSync(join(ROOT, 'fixtures', 'memory_demo', 'lib.mbt'))) {
   );
   check(
     'a global collection that only grows is reported',
-    (memText.match(/\| UNBOUNDED-GROWTH \|/g) || []).length === 1,
+    familyFindings(memText, 'UNBOUNDED-GROWTH').length === 1,
   );
   check(
     'the global collection that is trimmed is not reported',
@@ -708,7 +748,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   // because either of them may be the wrong one.
   check(
     'one C symbol with two signatures is reported at both declarations',
-    (ffiText.match(/FFI-SIGNATURE-CONFLICT/g) || []).length === 2,
+    familyFindings(ffiText, 'FFI-SIGNATURE-CONFLICT').length === 2,
   );
   check(
     'an #owned argument used after the call is reported',
@@ -732,7 +772,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   check(
     'the FFI findings are NOT filed as the classic abstract findings',
-    !ffiText.includes('| L2-abstract |'),
+    !findingRows(ffiText).some((r) => r.includes('| L2-abstract |')),
   );
   // The RELEASE families. The C side cannot be seen, so a release is
   // recognised by the SYMBOL's NAME -- and the fixture says so.
@@ -742,15 +782,15 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   // the prose.
   check(
     'the same buffer released twice is reported as a double free',
-    (ffiText.match(/\| FFI-DOUBLE-FREE \|/g) || []).length === 1,
+    familyFindings(ffiText, 'FFI-DOUBLE-FREE').length === 1,
   );
   check(
     'a buffer the C side released, used afterwards, is reported',
-    (ffiText.match(/\| FFI-USE-AFTER-FREE \|/g) || []).length === 1,
+    familyFindings(ffiText, 'FFI-USE-AFTER-FREE').length === 1,
   );
   check(
     'a length that is not the object\'s length is reported',
-    (ffiText.match(/\| FFI-LENGTH-MISMATCH \|/g) || []).length === 1,
+    familyFindings(ffiText, 'FFI-LENGTH-MISMATCH').length === 1,
   );
   check(
     'the length finding is on the call with the wrong length, not on the right one',
@@ -761,7 +801,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   // the safe half is the half that must NOT be reported.
   check(
     'an allocation the module never releases is reported',
-    (ffiText.match(/\| FFI-ALLOCATION-NOT-RELEASED \|/g) || []).length === 1,
+    familyFindings(ffiText, 'FFI-ALLOCATION-NOT-RELEASED').length === 1,
   );
   check(
     'the allocation that is released is not reported as a leak',
@@ -777,7 +817,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   check(
     'a format slot handed a string from outside is reported',
-    (ffiText.match(/\| FFI-FORMAT-STRING \|/g) || []).length === 1,
+    familyFindings(ffiText, 'FFI-FORMAT-STRING').length === 1,
   );
   check(
     'the format slot filled with the module\'s own text is not reported',
@@ -785,7 +825,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ffi_demo', 'lib.mbt'))) {
   );
   check(
     'an address past the end of the region is reported',
-    (ffiText.match(/\| FFI-ADDRESS-OOB \|/g) || []).length === 1,
+    familyFindings(ffiText, 'FFI-ADDRESS-OOB').length === 1,
   );
   check(
     'the address inside the region is not reported',
@@ -868,7 +908,7 @@ if (existsSync(join(ROOT, 'fixtures', 'conc_demo', 'lib.mbt'))) {
   );
   check(
     'the lost update is reported ONCE -- the mutex-protected counter is not',
-    (concText.match(/CONC-RACE-LOST-UPDATE/g) || []).length === 1,
+    familyFindings(concText, 'CONC-RACE-LOST-UPDATE').length === 1,
   );
   check(
     'the ABBA deadlock is reported',
@@ -884,7 +924,7 @@ if (existsSync(join(ROOT, 'fixtures', 'conc_demo', 'lib.mbt'))) {
   );
   check(
     'the concurrency findings are NOT filed as the classic abstract findings',
-    !concText.includes('| L2-abstract |'),
+    !findingRows(concText).some((r) => r.includes('| L2-abstract |')),
   );
   // The model does NOT claim a thread-level data race: it says what it
   // models, and it says what it does not.
@@ -953,19 +993,19 @@ if (existsSync(join(ROOT, 'fixtures', 'ipc_demo', 'lib.mbt'))) {
   // the same defect is as wrong as one that does not fire at all.
   check(
     'a read whose count is discarded is reported ONCE',
-    (ipcText.match(/IPC-PARTIAL-READ/g) || []).length === 1,
+    familyFindings(ipcText, 'IPC-PARTIAL-READ').length === 1,
   );
   check(
     'a loop that cannot see the end of the stream is reported ONCE',
-    (ipcText.match(/IPC-READ-EOF/g) || []).length === 1,
+    familyFindings(ipcText, 'IPC-READ-EOF').length === 1,
   );
   check(
     'a peeked view used after the reader ran again is reported ONCE',
-    (ipcText.match(/IPC-VIEW-STALE/g) || []).length === 1,
+    familyFindings(ipcText, 'IPC-VIEW-STALE').length === 1,
   );
   check(
     'a buffer a task writes and the parent uses is reported ONCE',
-    (ipcText.match(/IPC-BUFFER-SHARED/g) || []).length === 1,
+    familyFindings(ipcText, 'IPC-BUFFER-SHARED').length === 1,
   );
   check(
     'the IPC findings are filed under their own method',
@@ -973,7 +1013,7 @@ if (existsSync(join(ROOT, 'fixtures', 'ipc_demo', 'lib.mbt'))) {
   );
   check(
     'the IPC findings are NOT filed as the classic abstract findings',
-    !ipcText.includes('| L2-abstract |'),
+    !findingRows(ipcText).some((r) => r.includes('| L2-abstract |')),
   );
   // The model states what it measured, and it states what it does not model.
   check(

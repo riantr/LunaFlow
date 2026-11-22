@@ -28,7 +28,7 @@
 | Interpreted steps | 47835 |
 | Observed functions | 150 |
 | Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 13352 ms |
+| Wall time (analyzer) | 10044 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -1650,6 +1650,24 @@ _No findings._
 | BUDGET-EXCEEDED | warning | DoubleMLAPOS::causal_contrast | apo.mbt:2250 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 | BUDGET-EXCEEDED | warning | DoubleMLDID::fit | did.mbt:611 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 | BUDGET-EXCEEDED | warning | GBLearner::fit_weighted | gbl.mbt:188 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+
+
+### 5.11 Which dimension found which rule
+
+| Family | L2-abstract | L2-EVA | dynamic+symbolic | dynamic | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| RANGE-VIOLATION | 1404 | · | · | · | 1404 |
+| TAINT-ALLOC | 869 | · | 76 | · | 945 |
+| INDEX-OOB | · | 709 | · | · | 709 |
+| TAINT-INDEX | 209 | · | 113 | · | 322 |
+| INTEGER-OVERFLOW | · | 90 | · | · | 90 |
+| UNSUPPORTED | 21 | · | · | · | 21 |
+| BUDGET-EXCEEDED | · | · | · | 14 | 14 |
+| DIVISION-BY-ZERO | · | 14 | · | · | 14 |
+| TAINT-INDEX-RANGE | · | · | 6 | · | 6 |
+| **Total** | **2503** | **813** | **195** | **14** | **3525** |
+
+9 families over 4 method(s); 2 of them were found by MORE THAN ONE method and so rest on more than one kind of evidence: TAINT-ALLOC, TAINT-INDEX.
 
 
 ## 6. Value ranges

@@ -145,3 +145,165 @@ test "the truncated findings table's marker row has the header's shape" {
     content="true",
   )
 }
+
+///|
+/// WHICH DIMENSION FOUND WHICH RULE: the matrix has to be readable, has to
+/// add up, and has to say the thing it exists to say.
+///
+/// The matrix is the only table in the report that answers "who found it"
+/// rather than "what was found", and it is only worth a section if three
+/// things hold:
+///   - the ROW totals are the family counts, and the COLUMN totals are the
+///     method counts, so the table checks itself;
+///   - a cell with no findings reads `·`, so a lens that did not fire is
+///     visible rather than blank;
+///   - and it NAMES the families two lenses corroborate, because that is the
+///     fact a reader deciding what to act on needs.
+fn m_at(kind : FindingKind, mode : String, line : Int32) -> Finding {
+  Finding::new(kind, "t.mbt", line, "f", "a message", mode, 0.5, "evidence")
+}
+
+///|
+/// The rows of a findings table that belong to one family.
+///
+/// The count is over the ROWS, not over the text: a report names the
+/// families in prose, counts them in the family-count table and crosses
+/// them in the matrix, so a count over the text counts the mentions too.
+fn m_rows_of(text : String, family : String) -> Int32 {
+  let mut n = 0
+  for line in text.split("\n").to_array() {
+    if line.has_prefix("| " + family + " |") {
+      n = n + 1
+    }
+  }
+  n
+}
+
+///|
+test "the dimension matrix: the rows and columns are the counts it claims" {
+  let fs = [
+    m_at(FIndexOob, "L2-EVA", 1),
+    m_at(FIndexOob, "L2-EVA", 2),
+    m_at(FIndexOob, "L2-abstract", 3),
+    m_at(FTaintIndex, "L2-abstract", 4),
+  ]
+  let md = rule_dimension_matrix(fs)
+  // The counter is ONLY the counter: the rules are the FindingKind codes
+  // themselves, and they are rendered as the code.
+  inspect(md.contains(FIndexOob.code()), content="true")
+  // INDEX-OOB: 2 from L2-EVA and 1 from L2-abstract, total 3.
+  inspect(
+    md.contains("| L2-EVA | L2-abstract | Total |") ||
+    md.contains("| L2-abstract | L2-EVA | Total |"),
+    content="true",
+  )
+  inspect(md.contains("| INDEX-OOB | 2 | 1 | 3 |"), content="true")
+  // TAINT-INDEX: 0 from L2-EVA, 1 from L2-abstract, total 1.
+  inspect(md.contains("| TAINT-INDEX | · | 1 | 1 |"), content="true")
+}
+
+///|
+test "the dimension matrix: a lens that did not fire reads as a dot" {
+  let fs = [m_at(FIndexOob, "L2-EVA", 1)]
+  let md = rule_dimension_matrix(fs)
+  // One family, one method, one finding: no dot anywhere.
+  inspect(md.contains("·"), content="false")
+  inspect(md.contains("| INDEX-OOB | 1 | 1 |"), content="true")
+}
+
+///|
+test "the dimension matrix: the totals add up to the finding count" {
+  let fs = [
+    m_at(FIndexOob, "L2-EVA", 1),
+    m_at(FTaintIndex, "dynamic+symbolic", 2),
+    m_at(FTaintIndex, "L2-abstract", 3),
+    m_at(FRangeViolation, "dynamic", 4),
+  ]
+  let md = rule_dimension_matrix(fs)
+  // The grand total is the number of findings, whatever the shape.
+  inspect(
+    md.contains("| **Total** | **1** | **1** | **1** | **1** | **4** |") ||
+    md.contains("| **Total** | **1** | **1** | **1** | **1** | **4** |") ||
+    md.contains("**4** |"),
+    content="true",
+  )
+}
+
+///|
+test "the dimension matrix: it names the families two lenses corroborate" {
+  let fs = [
+    m_at(FTaintIndex, "dynamic+symbolic", 1),
+    m_at(FTaintIndex, "L2-abstract", 2),
+    m_at(FIndexOob, "L2-EVA", 3),
+  ]
+  let md = rule_dimension_matrix(fs)
+  // TAINT-INDEX is the one family found by more than one method, and the
+  // sentence has to say so BY NAME -- a count alone would not tell a reader
+  // which claim has two kinds of evidence behind it.
+  //
+  // The assertion is the SENTENCE, with the family name inside it, and not
+  // merely "the name appears somewhere": TAINT-INDEX also appears as a ROW
+  // LABEL, so a check for the bare name passes even when the sentence's list
+  // is empty. MEASURED: the first version of this test did exactly that, and
+  // `scripts/qa/matrix_falsify.mjs` case F3 caught it.
+  inspect(
+    md.contains("more than one kind of evidence: TAINT-INDEX."),
+    content="true",
+  )
+  inspect(md.contains("1 of them were found by"), content="true")
+}
+
+///|
+test "the dimension matrix: a single-lens report says so in words" {
+  let fs = [m_at(FIndexOob, "L2-EVA", 1), m_at(FRangeViolation, "L2-EVA", 2)]
+  let md = rule_dimension_matrix(fs)
+  // Nothing is corroborated, and the report must not leave that to be
+  // inferred from an empty column: it states it.
+  inspect(md.contains("exactly ONE method"), content="true")
+  inspect(md.contains("MORE THAN ONE method"), content="false")
+}
+
+///|
+test "the dimension matrix: no findings, no matrix" {
+  let empty : Array[Finding] = []
+  let md = rule_dimension_matrix(empty)
+  inspect(md.contains("### 5.11"), content="true")
+  inspect(md.contains("nothing to cross"), content="true")
+  // And no table: a header with no rows would read as "zero findings", which
+  // is a different claim from "there was nothing to analyse".
+  inspect(md.contains("| Family |"), content="false")
+}
+
+///|
+test "the dimension matrix: the same findings in another order give the same table" {
+  let a = [m_at(FIndexOob, "L2-EVA", 1), m_at(FTaintIndex, "L2-abstract", 2)]
+  let b = [m_at(FTaintIndex, "L2-abstract", 2), m_at(FIndexOob, "L2-EVA", 1)]
+  // The table is sorted by total then by name, so the order the findings
+  // arrived in cannot reach it.
+  inspect(rule_dimension_matrix(a), content=rule_dimension_matrix(b))
+}
+
+///|
+test "the dimension matrix: it counts the findings the tables show" {
+  let fs = [
+    m_at(FIndexOob, "L2-EVA", 1),
+    m_at(FIndexOob, "L2-EVA", 2),
+    m_at(FTaintIndex, "L2-abstract", 3),
+    m_at(FTaintIndex, "dynamic+symbolic", 4),
+  ]
+  // The table and the matrix are rendered from the SAME findings, so a
+  // matrix that crossed something else would still add up -- and would still
+  // look like a matrix.  What says that it did not is that its counts are
+  // the counts of the rows a reader can see.
+  let sink : Array[Finding] = []
+  let table = findings_table(fs, 300, sink)
+  let md = rule_dimension_matrix(fs)
+  inspect(sink.length(), content="4")
+  // INDEX-OOB: two findings, and both of them from L2-EVA.
+  inspect(m_rows_of(table, FIndexOob.code()), content="2")
+  inspect(md.contains("| INDEX-OOB | 2 | · | · | 2 |"), content="true")
+  // TAINT-INDEX: one from each of the two lenses, so it is corroborated.
+  inspect(m_rows_of(table, FTaintIndex.code()), content="2")
+  inspect(md.contains("| TAINT-INDEX | · | 1 | 1 | 2 |"), content="true")
+  inspect(md.contains("1 of them were found by"), content="true")
+}

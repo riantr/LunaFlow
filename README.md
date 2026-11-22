@@ -3031,9 +3031,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 79 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 79 warnings, 0 errors |
 | `moon check --target js` | exit 0, 90 warnings, 0 errors |
-| `moon test src/app --target native` | **309 passed, 0 failed** |
-| `moon test src/app --target wasm` | **309 passed, 0 failed** |
-| `moon test src/app --target js` | **309 passed, 0 failed** |
+| `moon test src/app --target native` | **317 passed, 0 failed** |
+| `moon test src/app --target wasm` | **317 passed, 0 failed** |
+| `moon test src/app --target js` | **317 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -3060,6 +3060,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/vendor_isolation.mjs` | **13 passed, 0 failed** |
 | `node scripts/qa/cli_resolver.mjs` | **3 passed, 0 failed** |
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
+| `node scripts/qa/dimension_matrix.mjs` | **every check agrees** — the rule × dimension matrix counts the findings the tables show: every row adds up to its own total, every column to its own, and every cell is the count of the findings of that family that that method found — over the three committed artefacts and over a live run |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
 | `node scripts/qa/verify_published.mjs 0.1.33` | **4 passed, 0 failed** |
@@ -3098,6 +3099,62 @@ vanished and the report could not say *why*. A finding now carries a **verdict**
 sidecar carries it per finding, and the report has a section — **5.10 Claims
 that could not be decided** — that lists them with the reason instead of
 leaving the reader to infer them from a row that is not there.
+
+**And the report now says WHO found what, not only what was found — 5.11, the
+rule × dimension matrix.** Every other table answers "what was found"; this one
+crosses the families against the analysis method that produced them, so a reader
+can tell a claim resting on **one** kind of evidence from a claim resting on
+**two** without reading the Method column of every row. It carries row totals
+(the family counts) and column totals (the method counts), so it adds up in
+public; a cell with no findings reads `·`, so a lens that did not fire is visible
+rather than blank; and it **names** the families more than one method found,
+because that is the fact a reader deciding what to act on actually needs.
+
+MEASURED on this tree: 30 families over 8 methods, and **exactly one** of them —
+`TAINT-INDEX` — is corroborated by two lenses (`dynamic+symbolic` and
+`L2-abstract`). The other 29 rest on a single kind of evidence. That is a fact
+about coverage that no per-family count can express, and it is the difference
+between a report that lists findings and a report that tells you how much to
+trust each one.
+
+**The matrix is pinned by eight tests, and those tests are pinned by a
+falsifier.** The tests run in `moon test src/app` on all three targets, so a
+regression that drops the totals, the `·`, or the corroboration sentence fails
+the gate. One of them pins the thing the section is *for*: the matrix and the
+findings table are rendered from the **same** findings, and the test asserts
+that the matrix's counts are the counts of the rows a reader can see — because
+a matrix wired to the wrong set of findings would still add up, and would still
+look like a matrix.
+
+**And the matrix is checked against the REPORT, not only against itself.**
+`scripts/qa/dimension_matrix.mjs` is a **gate step**: it reads the report, and
+it checks that every row adds up to its own total, every column to its own,
+every cell is the count of the findings of that family that that method found,
+and the grand total is the number of findings the tables were given — including
+the rows a truncated table left out, which the report states. It runs over the
+three **committed artefacts** (the published reports, where a wrong matrix is
+wrong in public) and over a **live run** of the analyser, which is what proves
+the wiring on the tree as it stands now. MEASURED: **56 of 56 checks pass**, and
+the live self-scan's matrix agrees with its own tables cell for cell — 30
+families over 8 methods, 76 findings, no truncation.
+
+`scripts/qa/matrix_falsify.mjs` is the proof that these checks can fail: **a
+manual, local tool**, because it mutates the real source, and it is deliberately
+not a gate step — the same arrangement `plus_size_falsify.mjs` and
+`size_taint_falsify.mjs` use, for the same reason. It breaks the matrix **five**
+ways, one at a time, and asserts that the check **about that defect** goes red.
+MEASURED: **13 of 13 checks pass**, and it found a real defect in its first run —
+the test that was supposed to pin the corroboration sentence asserted only that
+the family name appeared *somewhere* in the output, and `TAINT-INDEX` also
+appears as a row label, so it passed with the sentence's list emptied. The test
+asserts the sentence now, and the falsifier's F3 case is what caught it.
+
+The last two falsification cases are the ones the **unit tests cannot catch**,
+and that is why the gate step exists: the tests call `rule_dimension_matrix`
+directly, so a matrix wired to the wrong sink — or not rendered at all — still
+passes every one of them. The falsifier mutates the wiring, asserts that the
+**unit tests stayed green** and that the **report-level check went red**, and
+that is the proof that the two kinds of check are not the same check twice.
 
 **What an undecided claim MEANS is a policy, and the policy is fail-closed.**
 An undecided claim about a **safety** property is an **error**: the module's
@@ -3172,20 +3229,27 @@ traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 9.6 s |
-| `riantr/moonbit_static_analysis@latest` → 0.5.3 | 262 | 17,797 | 11,564 | 188 | 0 (no specs) | 0 | 7 | 2.6 s |
-| `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 62 | 7,045 | 10,249 | 44 | 2 / 1 / 3 | 0 | 8 | 732 ms |
+| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 10.0 s |
+| `riantr/moonbit_static_analysis@latest` → 0.5.3 | 262 | 17,797 | 11,564 | 188 | 0 (no specs) | 0 | 7 | 1.6 s |
+| `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 6 ms |
+| `LunaFlow` itself (`--dir .`) | 62 | 7,223 | 10,249 | 47 | 2 / 1 / 3 | 0 | 8 | 747 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **732 ms** to **856 ms**, while every
+runs over the tree this commit names read **747 ms** to **780 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
-committed artefacts: the committed doubleML artefact read **9.6 s**, and the
-**272,316** L2 steps are the deterministic measure behind it.
+committed artefacts: the committed doubleML artefact read **10.0 s**, and the
+**272,316** L2 steps are the deterministic measure behind it. Every Time cell in
+the table above is the `elapsed_ms` of the artefact it names, so the cell and the
+file always agree; what they do **not** promise is comparability across releases,
+because the machine and its load are not part of the artefact. MEASURED, on the
+same idle machine minutes apart: the doubleML artefact read 13.4 s on one run and
+10.0 s on the next with **identical** counts, and the static-analysis one read
+5.4 s, then 2.6 s, then 1.6 s — a 3.4× spread with nothing in the report
+changed. The time is a machine measurement; the counts are the claim.
 
 **The table above is CHECKED, not remembered.** Every count in it is a
 measurement, and a measurement goes stale the moment the tree moves — which it
@@ -3390,18 +3454,34 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **62 files, 7,045 statements, 10,249 events, 44 L2
+On this tree the row reads **62 files, 7,223 statements, 10,249 events, 47 L2
 findings, 0 dead and 8 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
 reason — the layer's blanket taint rule was replaced, and the five findings it
 had invented on this tree (four in `src/app/interp.mbt`, one in the fixture) are
-not in the 44 — and for a fourth: the value domain now relates two arrays'
-lengths, so the eight false positives in `family_count_table` are not in the 44
+not in the 47 — and for a fourth: the value domain now relates two arrays'
+lengths, so the eight false positives in `family_count_table` are not in the 47
 either. And it moved for a fifth reason, the one the **QA round of 2026-11-22**
 brought: two of the claims the analyzer made about this tree were claims it
 could not decide, and the guards that answer them were **incomplete**. They are
 complete now, and the two claims are gone — see [the QA round](#the-qa-round-of-2026-11-22).
+
+The row moved once more after that round, and the reason is the same one again:
+**§5.11, the rule × dimension matrix, is new source in `src/app/report.mbt`**, and
+the analyzer analyses its own source. MEASURED: the matrix added **163 statements**
+(7,045 → 7,208) and **3 L2 findings** (44 → 47), and all three are `INDEX-OOB` on
+`rule_dimension_matrix` itself — `src/app/report.mbt:1502`, `:1525` and `:1553`,
+one per loop that indexes a parallel array under a bound the layer cannot prove.
+The check that ties the matrix to the findings it crosses added **15 more
+statements** (7,208 → 7,223) and **no findings**: it is a test, and a test that
+asserts what the report already says cannot make a new claim. Nothing else
+moved: the traces and the findings sidecars of the three committed
+artefacts are **byte-identical** to the ones they replace (git shows the `.md` and
+the `_summary.json`, and no trace or sidecar), because §5.11 is a rendering of
+findings that already existed and creates none. An addition that produced new
+CLAIMS would be a different thing from an addition that crosses the claims already
+there, and the trace is where that difference shows.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.

@@ -10,6 +10,7 @@
   "moon build src/cli --target native",
   "moon build . --target wasm",
   "node scripts/qa/root_package.mjs",
+  "node scripts/qa/dimension_matrix.mjs",
   "node scripts/qa/host_requirements.mjs",
   "node scripts/qa/cli_resolver.mjs",
   "node scripts/verify.mjs",

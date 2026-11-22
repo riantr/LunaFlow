@@ -1363,6 +1363,230 @@ fn ffi_call_table(m : FfiModel) -> String {
 }
 
 ///|
+/// WHICH DIMENSION FOUND WHICH RULE: the findings crossed by family and by
+/// analysis method.
+///
+/// Every other table in this report answers "what was found". This one answers
+/// **who found it**, and that is a different question. A family reported by one
+/// lens rests on one kind of evidence; a family reported by two lenses has two
+/// independent reasons to be believed, and a reader deciding what to act on
+/// should be able to see which is which without reading the Method column of
+/// every row.
+///
+/// It also makes a coverage fact visible that no per-family count can show: a
+/// lens that reports **nothing** is a lens whose evidence did not fire, and it
+/// matters whether that is because the module has nothing to say or because the
+/// lens was not entered at all.
+///
+/// The rows are sorted by total count, then by family code, and the columns by
+/// total count, then by method name -- the same rule `family_count_table` uses,
+/// so the table is identical on every run and does not depend on the order the
+/// findings arrived in.
+///
+/// The row totals ARE the family counts and the column totals ARE the method
+/// counts, so the table checks itself: a cell with no findings reads `·`, and
+/// adding a row must reproduce the total on its right.
+fn rule_dimension_matrix(fs : Array[Finding]) -> String {
+  let out = StringBuilder()
+  out.write_string("\n### 5.11 Which dimension found which rule\n\n")
+  if fs.length() == 0 {
+    out.write_string("_No findings, so there is nothing to cross._\n\n")
+    return out.to_string()
+  }
+  // The distinct families and methods, each with its own total.
+  let families : Array[String] = []
+  let family_totals : Array[Int32] = []
+  let methods : Array[String] = []
+  let method_totals : Array[Int32] = []
+  for f in fs {
+    let code = f.kind.code()
+    let mut at = -1
+    let mut i = 0
+    while i < families.length() {
+      if families[i] == code {
+        at = i
+        break
+      }
+      i = i + 1
+    }
+    if at < 0 {
+      families.push(code)
+      family_totals.push(1)
+    } else {
+      family_totals[at] = family_totals[at] + 1
+    }
+    let mut mat = -1
+    let mut j = 0
+    while j < methods.length() {
+      if methods[j] == f.mode {
+        mat = j
+        break
+      }
+      j = j + 1
+    }
+    if mat < 0 {
+      methods.push(f.mode)
+      method_totals.push(1)
+    } else {
+      method_totals[mat] = method_totals[mat] + 1
+    }
+  }
+  // Insertion sort, biggest first, ties in name order: the report must not
+  // depend on the order the findings arrived in.
+  let mut i = 1
+  while i < families.length() {
+    let mut j = i
+    while j > 0 &&
+          (
+            family_totals[j] > family_totals[j - 1] ||
+            (
+              family_totals[j] == family_totals[j - 1] &&
+              families[j] < families[j - 1]
+            )
+          ) {
+      let tc = families[j]
+      families[j] = families[j - 1]
+      families[j - 1] = tc
+      let tn = family_totals[j]
+      family_totals[j] = family_totals[j - 1]
+      family_totals[j - 1] = tn
+      j = j - 1
+    }
+    i = i + 1
+  }
+  let mut m = 1
+  while m < methods.length() {
+    let mut j = m
+    while j > 0 &&
+          (
+            method_totals[j] > method_totals[j - 1] ||
+            (
+              method_totals[j] == method_totals[j - 1] &&
+              methods[j] < methods[j - 1]
+            )
+          ) {
+      let tc = methods[j]
+      methods[j] = methods[j - 1]
+      methods[j - 1] = tc
+      let tn = method_totals[j]
+      method_totals[j] = method_totals[j - 1]
+      method_totals[j - 1] = tn
+      j = j - 1
+    }
+    m = m + 1
+  }
+  // The cells.
+  let matrix : Array[Array[Int32]] = []
+  let mut r = 0
+  while r < families.length() {
+    let row : Array[Int32] = []
+    let mut c = 0
+    while c < methods.length() {
+      row.push(0)
+      c = c + 1
+    }
+    matrix.push(row)
+    r = r + 1
+  }
+  for f in fs {
+    let code = f.kind.code()
+    let mut fi = 0
+    while fi < families.length() {
+      if families[fi] == code {
+        break
+      }
+      fi = fi + 1
+    }
+    let mut mi = 0
+    while mi < methods.length() {
+      if methods[mi] == f.mode {
+        break
+      }
+      mi = mi + 1
+    }
+    if fi < families.length() && mi < methods.length() {
+      matrix[fi][mi] = matrix[fi][mi] + 1
+    }
+  }
+  // The header: one column per method, then the family's own total.
+  out.write_string("| Family |")
+  let mut h = 0
+  while h < methods.length() {
+    out.write_string(" " + methods[h] + " |")
+    h = h + 1
+  }
+  out.write_string(" Total |\n| --- |")
+  let mut u = 0
+  while u < methods.length() {
+    out.write_string(" ---: |")
+    u = u + 1
+  }
+  out.write_string(" ---: |\n")
+  // The rows.
+  let mut a = 0
+  while a < families.length() {
+    out.write_string("| " + families[a] + " |")
+    let mut b = 0
+    while b < methods.length() {
+      let n = matrix[a][b]
+      out.write_string(" " + (if n == 0 { "·" } else { n.to_string() }) + " |")
+      b = b + 1
+    }
+    out.write_string(" " + family_totals[a].to_string() + " |\n")
+    a = a + 1
+  }
+  // The footer: the method totals, which the rows above must add up to.
+  out.write_string("| **Total** |")
+  let mut t = 0
+  while t < methods.length() {
+    out.write_string(" **" + method_totals[t].to_string() + "** |")
+    t = t + 1
+  }
+  let mut grand = 0
+  let mut g = 0
+  while g < family_totals.length() {
+    grand = grand + family_totals[g]
+    g = g + 1
+  }
+  out.write_string(" **" + grand.to_string() + "** |\n")
+  // What the matrix is FOR, said in words rather than left to the reader.
+  let corroborated : Array[String] = []
+  let mut p = 0
+  while p < families.length() {
+    let mut seen = 0
+    let mut q = 0
+    while q < methods.length() {
+      if matrix[p][q] > 0 {
+        seen = seen + 1
+      }
+      q = q + 1
+    }
+    if seen > 1 {
+      corroborated.push(families[p])
+    }
+    p = p + 1
+  }
+  out.write_string("\n")
+  if corroborated.length() == 0 {
+    out.write_string(
+      "Every family here was found by exactly ONE method, so no claim in this report is corroborated by two independent lenses. That is not a defect in the module and not a defect in the report: it says which kind of evidence would have to change for a second opinion to exist, and it is the honest way to read a single-lens finding.\n\n",
+    )
+  } else {
+    out.write_string(
+      families.length().to_string() +
+      " families over " +
+      methods.length().to_string() +
+      " method(s); " +
+      corroborated.length().to_string() +
+      " of them were found by MORE THAN ONE method and so rest on more than one kind of evidence: " +
+      corroborated.join(", ") +
+      ".\n\n",
+    )
+  }
+  out.to_string()
+}
+
+///|
 /// THE CLAIMS THAT COULD NOT BE DECIDED.
 ///
 /// A claim the analyser could not decide is not an absent claim, and the
@@ -1891,6 +2115,11 @@ pub fn render_report(
   // visible to a reader, and it is rendered HERE, after every findings
   // table, because the tables are what FILL the sink.
   out.write_string(undecided_section(findings_out))
+  // WHICH DIMENSION FOUND WHICH RULE.  Every other findings table says WHAT
+  // was found; this one says WHO found it, so a reader can tell a claim with
+  // one kind of evidence behind it from one with two -- and it reads the same
+  // `findings_out`, so the counts cannot drift from the rows above.
+  out.write_string(rule_dimension_matrix(findings_out))
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",

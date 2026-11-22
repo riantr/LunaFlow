@@ -1194,6 +1194,111 @@ wrong reason is not checking the right thing.
 
 Cost: one source scan, no build, no network.
 
+### 5.20 The rule × dimension matrix: who found what
+
+Every other findings table in the report answers **what was found**. §5.11
+answers a different question: **who found it**. It crosses the finding families
+(the RULES) against the analysis method that produced each finding (the
+DIMENSIONS), and gives a count per cell.
+
+**Why it is worth a section.** A claim rests on the evidence of the lens that
+made it. A family reported by one lens has one kind of evidence behind it; a
+family reported by two lenses has two independent reasons to be believed, and a
+reader deciding what to act on should be able to see which is which without
+reading the Method column of every row. No per-family count can express that:
+`TAINT-INDEX 11` says nothing about whether those eleven came from one lens or
+three.
+
+It also makes a COVERAGE fact visible. A lens that reports nothing is a lens
+whose evidence did not fire, and that is a different thing from a module with
+nothing to say. A matrix with an empty column says so at a glance.
+
+**The shape, and why it is the shape it is.**
+
+| thing | rule |
+|---|---|
+| rows | the families, sorted by total count then by name |
+| columns | the methods (`Finding.mode`), sorted by total count then by name |
+| a cell | the number of findings of that family from that method; **`·`** when zero |
+| the last column | the family total — the same number `family_count_table` gives |
+| the last row | the method totals, with the grand total in the corner |
+
+The totals are the point: the table **checks itself**, and a reader can add a row
+up in public. The sort is the one `family_count_table` already uses, so the table
+is identical on every run and does not depend on the order the findings arrived
+in.
+
+`·` rather than `0` is deliberate. A zero and a dot are the same number and
+different facts: the dot says *this lens considered the module and made no such
+claim*, which is the useful reading when the column is sparse.
+
+**What it found on this tree.** 30 families over 8 methods; **exactly one**,
+`TAINT-INDEX`, is corroborated by two lenses (`dynamic+symbolic` and
+`L2-abstract`). The other 29 rest on one kind of evidence. That is a coverage
+statement about this module and about the analyser, and it was not visible
+anywhere in the report before.
+
+**The matrix creates no finding, and that is measured.** Adding §5.11 to the
+renderer leaves the three committed artefacts' **traces and findings sidecars
+byte-identical** — `git status` shows only the `.md` and the `_summary.json`
+changed, and the `_summary.json` diff is `elapsed_ms` alone. An addition that
+produced new CLAIMS would show up in the sidecar; an addition that CROSSES the
+claims already there cannot. That is the difference, and the artefact is where
+it is checked.
+
+**How it is pinned.** Eight whitebox tests (`src/app/report_wbtest.mbt`, the
+prefix `the dimension matrix: `) assert the row/column counts, the dot, the
+totals, the corroboration sentence by NAME, the empty-input case, determinism
+under reordering, and — the one the section exists for — that the matrix's
+counts are the counts of the rows of the findings table rendered from the
+**same** findings. They run inside `moon test src/app` on all three targets,
+so they are gate steps.
+
+**And the matrix is checked against the REPORT, not only against itself.**
+`scripts/qa/dimension_matrix.mjs` is a gate step too, and it is the only check
+that can see the **wiring**: the tests call `rule_dimension_matrix` directly,
+so a matrix wired to the wrong set of findings still passes every one of them.
+The gate step reads the report — the three committed artefacts and a live run —
+and checks that every row adds up to its own total, every column to its own,
+every CELL is the count of the findings of that family that that method found,
+and the grand total is the number of findings the tables were given, including
+the rows a truncated table left out (which the report states in the count table
+above the truncated one). MEASURED: **56 of 56 checks pass**.
+
+The shape of that check is worth stating, because it is a **row-shape**
+argument and not a text search: the findings tables are found by their HEADER,
+the family-count table that precedes a truncated table is found by ITS header,
+and a matrix cell is found by its position in the row. A checker that counted a
+family code in the whole report would count the matrix's own row as well — and
+MEASURED, that is exactly what happened: §5.11 made six of `root_package.mjs`'s
+family counts read **2** instead of **1**, because those counts were over the
+text, and the report grew a table of the same names. They count ROWS now, and
+the three "not filed as the classic abstract findings" checks look at the rows
+too, because the matrix's own column header carries a method name.
+
+`scripts/qa/matrix_falsify.mjs` is the proof that these checks can fail. It
+MUTATES THE SOURCE, so it is a **manual, local tool** and deliberately not a
+gate step — the arrangement `plus_size_falsify.mjs` and `size_taint_falsify.mjs`
+already use. It breaks the matrix **five** ways (a row loses its total, the dot
+becomes `0`, the corroboration list is emptied, the section is wired to
+another set of findings, the section is not rendered at all), restores the
+source byte for byte between cases, and asserts that the check **about that
+defect** is the one that goes red. The last two cases are the ones the unit
+tests provably cannot catch, and the falsifier asserts that they leave the unit
+tests **green** while the report-level check goes red — the proof that the two
+kinds of check are not the same check twice. MEASURED: **13 of 13 checks
+pass**.
+
+It earned its keep on the first run. The corroboration test originally asserted
+that `TAINT-INDEX` appeared **somewhere** in the output — and it also appears as
+a row label, so the test passed with the sentence's list emptied. The falsifier's
+F3 case is what found that, and the test now asserts the sentence itself:
+`more than one kind of evidence: TAINT-INDEX.`. A test that cannot tell "the
+sentence says it" from "the name is on the page" is decoration, and only a
+mutation that removes the sentence can show the difference.
+
+Cost: one pass over the findings per cell computation, no new analysis.
+
 ---
 
 ## 6. Visualization

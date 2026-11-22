@@ -191,6 +191,22 @@ jobs:
       - name: Check the root package
         run: node scripts/qa/root_package.mjs
 
+      # THE DIMENSION MATRIX, CHECKED AGAINST WHAT IT CROSSES.  Section 5.11
+      # of the report crosses the finding FAMILIES with the METHOD that
+      # found each one, and it reads the same sink the findings tables fill.
+      # That is a claim, so it is measured: every row adds up to its own
+      # total, every column to its own, and every CELL is the count of the
+      # findings of that family that that method found.
+      #
+      # It runs over the COMMITTED ARTEFACTS -- the published reports, where a
+      # wrong matrix is wrong in public -- and over a LIVE run of the
+      # analyser, which is what proves the wiring on the tree as it stands
+      # now.  The comparison is between two halves of the SAME report, so it
+      # does not depend on the toolchain: a newer toolchain that finds more
+      # findings moves both sides together.
+      - name: Check the dimension matrix against the findings it crosses
+        run: node scripts/qa/dimension_matrix.mjs
+
       # The published wasm is not self-contained: it imports host symbols, and
       # the HOST has to provide every one of them when the module is
       # instantiated. The floor is a property of the TOOLCHAIN now, so it is
