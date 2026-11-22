@@ -1355,6 +1355,18 @@ fn tail_value(p : Interp, body : Array[Stmt]) -> Val? {
 }
 
 ///|
+/// `inputs` is the INPUT SET to run, and it is optional: with no `inputs` the
+/// function is run on the synthesized trials, exactly as before. With one, the
+/// function is run on THAT input and on no other.
+///
+/// This is the seam the counterexample minimiser needs: a single input has to
+/// be executable on its own, and the trial list cannot say which trial
+/// produced a finding -- the finding carries no trial number, because the
+/// finding's IDENTITY is its family, its place and its function, and the
+/// evidence (which carries the observed value) changes with the input.
+///
+/// The published signature of this function is unchanged for a caller that
+/// does not use it: the argument is optional.
 pub fn run_function(
   fn_name : Func,
   funcs : Map[String, Func],
@@ -1362,13 +1374,18 @@ pub fn run_function(
   trial : Int32,
   global_values~ : Map[String, Val] = Map([]),
   ffi~ : Map[String, FfiDecl] = Map([]),
+  inputs~ : Array[InputSet] = [],
 ) -> RunResult {
   let p = Interp::new(funcs, opts, trial, ffi)
   p.func_name = fn_name.name
   p.file = fn_name.file
   p.global_values = global_values
   let env : Map[String, Val] = Map([])
-  let trials = synthesize(fn_name, opts.trials)
+  let trials = if inputs.length() > 0 {
+    inputs
+  } else {
+    synthesize(fn_name, opts.trials)
+  }
   let mut i = 0
   let mut run = 0
   while i < trials.length() {

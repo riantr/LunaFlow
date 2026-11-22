@@ -82,6 +82,11 @@ struct Opts {
   mut per_function : Bool
   /// Re-sample the analysis and report which findings depend on the sample.
   mut stability : Bool
+  /// Re-run each finding an execution produced on its own input, and shrink
+  /// that input to the smallest one that still reproduces it.
+  mut counterexamples : Bool
+  /// How many findings the counterexample minimisation may cover.
+  mut counterexample_limit : Int32
 }
 
 ///|
@@ -113,6 +118,8 @@ fn Opts::default() -> Opts {
     metrics: false,
     per_function: false,
     stability: false,
+    counterexamples: false,
+    counterexample_limit: 20,
   }
 }
 
@@ -165,6 +172,12 @@ fn usage() -> String {
     #|                      understood, what was entered, what was found
     #|  --per-function      enter EVERY function as an entry point, with the
     #|                      --max-functions cap lifted
+    #|  --counterexamples   re-run each finding an execution produced on its own
+    #|                      input, and shrink that input to the smallest one
+    #|                      that still reproduces it (report 5.12)
+    #|  --counterexample-limit <n>
+    #|                      how many findings the minimisation may cover
+    #|                      (default 20)
     #|  --quiet             only print the report path
   )
 }
@@ -387,6 +400,15 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
     } else if a == "--stability" {
       o.stability = true
       i = i + 1
+    } else if a == "--counterexamples" {
+      o.counterexamples = true
+      i = i + 1
+    } else if a == "--counterexample-limit" {
+      o.counterexample_limit = @app.parse_int(
+        arg_value(args, i),
+        o.counterexample_limit,
+      )
+      i = i + 2
     } else if a.has_prefix("--") {
       i = i + 1
     } else {
@@ -487,6 +509,140 @@ fn unique_findings(fs : Array[@app.Finding]) -> Array[@app.Finding] {
     out.push(f)
   }
   out
+}
+
+///|
+/// The COUNTEREXAMPLE RUN BUDGET: how many executions the minimisation may
+/// spend before it stops and says so.  The minimisation re-runs a function
+/// once per candidate it tries, so the cost is a function of the module, and
+/// a bound that is not stated would be a bound the reader cannot see.
+const COUNTEREXAMPLE_RUN_BUDGET = 4000
+
+///|
+/// The report, rendered from the analysis.
+///
+/// The arguments are the same for every render of one run, so they are
+/// gathered here rather than written twice: the report is rendered twice
+/// when the counterexample minimisation is on -- once to learn which
+/// findings the report shows, and once with the counterexamples in it.
+fn render_report(
+  input : @app.ReportInput,
+  per_function : Bool,
+  globals : Array[@app.GlobalRow],
+  allocs : Array[@app.AllocSite],
+  growth : Array[@app.Finding],
+  stability : @app.StabilityResult?,
+  issues : Array[@app.ParseIssue],
+  ffi : @app.FfiModel,
+  conc : @app.ConcModel,
+  ipc : @app.IpcModel,
+  findings_out : Array[@app.Finding],
+  counterexamples : @app.MinimizeResult?,
+) -> String {
+  @app.render_report(
+    input,
+    per_function~,
+    globals~,
+    allocs~,
+    growth~,
+    stability~,
+    issues~,
+    ffi=Some(ffi),
+    conc=Some(conc),
+    ipc=Some(ipc),
+    findings_out~,
+    counterexamples~,
+  )
+}
+
+///|
+/// Every counterexample, one JSON object per line.
+///
+/// This is the machine-readable half of the report's §5.12: the report says
+/// what a reader needs to see, and this says what a program needs to read.
+/// The `indices` are the positions the values took in the analyser's own
+/// candidate lists, so a reader can check the value against the candidate
+/// it came from without parsing a rendered value.
+fn counterexamples_jsonl(res : @app.MinimizeResult) -> String {
+  let out = StringBuilder()
+  for cx in res.counterexamples {
+    out.write_string("{\"rule\":\"")
+    out.write_string(cx.kind.code())
+    out.write_string("\",\"file\":\"")
+    out.write_string(@app.json_escape(cx.file))
+    out.write_string("\",\"line\":")
+    out.write_string(cx.line.to_string())
+    out.write_string(",\"fn\":\"")
+    out.write_string(@app.json_escape(cx.fn_name))
+    out.write_string("\",\"entry\":\"")
+    out.write_string(@app.json_escape(cx.entry))
+    out.write_string("\",\"params\":[")
+    let mut i = 0
+    while i < cx.params.length() {
+      if i > 0 {
+        out.write_string(",")
+      }
+      out.write_string("\"")
+      out.write_string(@app.json_escape(cx.params[i]))
+      out.write_string("\"")
+      i = i + 1
+    }
+    out.write_string("],\"types\":[")
+    let mut t = 0
+    while t < cx.types.length() {
+      if t > 0 {
+        out.write_string(",")
+      }
+      out.write_string("\"")
+      out.write_string(@app.json_escape(cx.types[t]))
+      out.write_string("\"")
+      t = t + 1
+    }
+    out.write_string("],\"candidates\":[")
+    let mut c = 0
+    while c < cx.candidates.length() {
+      if c > 0 {
+        out.write_string(",")
+      }
+      out.write_string("[")
+      let mut d = 0
+      while d < cx.candidates[c].length() {
+        if d > 0 {
+          out.write_string(",")
+        }
+        out.write_string("\"")
+        out.write_string(@app.json_escape(cx.candidates[c][d]))
+        out.write_string("\"")
+        d = d + 1
+      }
+      out.write_string("]")
+      c = c + 1
+    }
+    out.write_string("],\"args\":[")
+    let mut j = 0
+    while j < cx.args.length() {
+      if j > 0 {
+        out.write_string(",")
+      }
+      out.write_string("\"")
+      out.write_string(@app.json_escape(cx.args[j]))
+      out.write_string("\"")
+      j = j + 1
+    }
+    out.write_string("],\"indices\":[")
+    let mut k = 0
+    while k < cx.indices.length() {
+      if k > 0 {
+        out.write_string(",")
+      }
+      out.write_string(cx.indices[k].to_string())
+      k = k + 1
+    }
+    out.write_string("],\"tried\":")
+    out.write_string(cx.tried.to_string())
+    out.write_string("}\n")
+  }
+  out.to_string()
 }
 
 ///|
@@ -1002,23 +1158,62 @@ async fn analyze(opts : Opts) -> Unit {
   let trace_path = @app.path_join(opts.out, stem + "_trace.jsonl")
   let summary_path = @app.path_join(opts.out, stem + "_summary.json")
   let findings_path = @app.path_join(opts.out, stem + "_findings.jsonl")
+  let counterexamples_path = @app.path_join(
+    opts.out,
+    stem + "_counterexamples.jsonl",
+  )
   // The report's findings tables are BOUNDED, so the report alone no longer
   // holds every finding. The sidecar does, and the report is what decides
   // what a finding is -- the sink is filled by the report itself, so the
   // sidecar cannot drift from the tables it complements.
+  //
+  // THE COUNTEREXAMPLES.  The minimisation's targets are the findings the
+  // REPORT shows -- a counterexample is only useful for a claim the reader
+  // can see -- so the report is rendered once to learn them, and once more
+  // with the counterexamples in it.  The second render is the one that is
+  // written; the first is how the minimisation learns its targets.  The
+  // render is string building, and the minimisation is what costs.
+  let shown : Array[@app.Finding] = []
+  let mut minimize_result : @app.MinimizeResult? = None
+  if opts.counterexamples {
+    let _ = render_report(
+      input,
+      opts.per_function,
+      global_rows,
+      allocs,
+      growth,
+      stability,
+      parse_issues,
+      ffi_model,
+      conc_model,
+      ipc_model,
+      shown,
+      None,
+    )
+    minimize_result = Some(
+      @app.minimize_counterexamples(
+        ast,
+        run_opts,
+        shown,
+        opts.counterexample_limit,
+        COUNTEREXAMPLE_RUN_BUDGET,
+      ),
+    )
+  }
   let rendered : Array[@app.Finding] = []
-  let md = @app.render_report(
+  let md = render_report(
     input,
-    per_function=opts.per_function,
-    globals=global_rows,
-    allocs~,
-    growth~,
-    stability~,
-    issues=parse_issues,
-    ffi=Some(ffi_model),
-    conc=Some(conc_model),
-    ipc=Some(ipc_model),
-    findings_out=rendered,
+    opts.per_function,
+    global_rows,
+    allocs,
+    growth,
+    stability,
+    parse_issues,
+    ffi_model,
+    conc_model,
+    ipc_model,
+    rendered,
+    minimize_result,
   )
   let _ = write_text(report_path, md) catch { _ => false }
   let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {
@@ -1032,6 +1227,14 @@ async fn analyze(opts : Opts) -> Unit {
     _ => false
   }
   let _ = write_text(findings_path, findings_jsonl(uniq)) catch { _ => false }
+  match minimize_result {
+    Some(res) => {
+      let _ = write_text(counterexamples_path, counterexamples_jsonl(res)) catch {
+        _ => false
+      }
+    }
+    None => ()
+  }
   if opts.metrics {
     for line in metrics_lines(input, ast) {
       println(line)

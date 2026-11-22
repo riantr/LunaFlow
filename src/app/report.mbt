@@ -1587,6 +1587,90 @@ fn rule_dimension_matrix(fs : Array[Finding]) -> String {
 }
 
 ///|
+/// THE COUNTEREXAMPLES: the smallest input that reproduces each finding.
+///
+/// This is the section that turns a finding into something a reader can RUN.
+/// Every other table says WHAT was found; this one says WHAT TO FEED IT.
+///
+/// The minimality claim is narrow, and the section states the boundary
+/// rather than letting the word "minimal" stand alone: the input is the
+/// smallest over the ANALYSER'S OWN CANDIDATE SET, in the order the analyser
+/// lists those candidates in. It is not a globally minimal program, and it is
+/// not a minimal source either.
+///
+/// The reproduction is checked against the finding's SITE -- its family, its
+/// place and the function it was raised in -- and not against its message or
+/// its evidence, because the evidence carries the observed value and the
+/// observed value is exactly what the smaller input changes.
+fn counterexample_section(res : MinimizeResult?) -> String {
+  let out = StringBuilder()
+  out.write_string(
+    "\n### 5.12 Counterexamples: the smallest input that reproduces each finding\n\n",
+  )
+  match res {
+    None => {
+      out.write_string(
+        "_The counterexample minimisation was not run._ Pass `--counterexamples` to re-run each finding an execution produced on its own input, and to shrink that input to the smallest one that still reproduces it.\n\n",
+      )
+      return out.to_string()
+    }
+    Some(r) => {
+      out.write_string(
+        "Each row is a finding an execution produced, and the smallest input that reproduces it ON ITS OWN -- the smallest over the analyser's own candidate set, in the order the analyser lists those candidates in. This is not a globally minimal program and not a minimal source: it is the smallest input in the analyser's own order that still reproduces the finding. The entry is the function that was entered to reproduce it, and the reproduction is checked against the finding's family, its place and its function -- not against its evidence, because the evidence carries the observed value and the observed value is what the smaller input changes.\n\n",
+      )
+      if r.counterexamples.length() == 0 {
+        out.write_string(
+          "_No finding in this report was produced by an execution, so there was nothing to minimise._\n\n",
+        )
+      } else {
+        out.write_string(
+          "| Finding | Location | Entry | Minimal input | Tried |\n| --- | --- | --- | --- | ---: |\n",
+        )
+        for cx in r.counterexamples {
+          out.write_string(
+            "| `" +
+            cx.kind.code() +
+            "` | " +
+            cx.file +
+            ":" +
+            cx.line.to_string() +
+            " | `" +
+            cx.entry +
+            "` | " +
+            cx.input_text() +
+            " | " +
+            cx.tried.to_string() +
+            " |\n",
+          )
+        }
+        out.write_string("\n")
+      }
+      out.write_string(
+        "The minimisation covered **" +
+        r.minimised.to_string() +
+        "** of the **" +
+        r.requested.to_string() +
+        "** findings an execution produced. **" +
+        r.without.to_string() +
+        "** had no single input in the analyser's candidate set that reproduced them. **" +
+        r.not_input.to_string() +
+        "** findings in this report are not claims about an input -- the CFG families are claims about the program's shape and the L2 families are may-claims over the whole input set -- and they have no counterexample to minimise. **" +
+        r.skipped.to_string() +
+        "** findings were left out by the limit. The minimisation tried **" +
+        r.tried.to_string() +
+        "** inputs in total.\n\n",
+      )
+      if r.truncated {
+        out.write_string(
+          "_The minimisation stopped at its run budget, so a finding with no counterexample above may have one beyond it._\n\n",
+        )
+      }
+    }
+  }
+  out.to_string()
+}
+
+///|
 /// THE CLAIMS THAT COULD NOT BE DECIDED.
 ///
 /// A claim the analyser could not decide is not an absent claim, and the
@@ -1657,6 +1741,7 @@ pub fn render_report(
   conc~ : ConcModel? = None,
   ipc~ : IpcModel? = None,
   findings_out~ : Array[Finding] = [],
+  counterexamples~ : MinimizeResult? = None,
 ) -> String {
   let out = StringBuilder()
   let md = "docs/design.md"
@@ -2120,6 +2205,11 @@ pub fn render_report(
   // one kind of evidence behind it from one with two -- and it reads the same
   // `findings_out`, so the counts cannot drift from the rows above.
   out.write_string(rule_dimension_matrix(findings_out))
+  // THE COUNTEREXAMPLES: what to feed each finding so that it happens
+  // again.  It is rendered HERE, next to the matrix, because both read the
+  // same finding set -- and the counterexamples are about the findings the
+  // reader can already see.
+  out.write_string(counterexample_section(counterexamples))
   out.write_string("\n## 6. Value ranges\n\n")
   out.write_string(
     "Ranges are the union of concrete samples across synthesized input trials. They are *observed* intervals, not abstract-interpretation fixpoints: a missing input can hide a wider interval.\n\n",

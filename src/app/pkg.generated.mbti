@@ -168,6 +168,8 @@ pub fn mermaid_id(String, Int32) -> String
 
 pub fn mermaid_label(String) -> String
 
+pub fn minimize_counterexamples(ModuleAst, RunOptions, Array[Finding], Int32, Int32) -> MinimizeResult
+
 pub fn node_text(Map[String, String], DepNode) -> String
 
 pub fn normalize_ws(String) -> String
@@ -204,11 +206,11 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], growth? : Array[Finding], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?, findings_out? : Array[Finding]) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], growth? : Array[Finding], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?, findings_out? : Array[Finding], counterexamples? : MinimizeResult?) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
-pub fn run_function(Func, Map[String, Func], RunOptions, Int32, global_values? : Map[String, Val], ffi? : Map[String, FfiDecl]) -> RunResult
+pub fn run_function(Func, Map[String, Func], RunOptions, Int32, global_values? : Map[String, Val], ffi? : Map[String, FfiDecl], inputs? : Array[InputSet]) -> RunResult
 
 pub fn run_function_by_name(ModuleAst, String, RunOptions) -> RunResult
 
@@ -464,6 +466,21 @@ pub struct Coord {
   version : String
 }
 pub fn Coord::to_string(Self) -> String
+
+pub(all) struct Counterexample {
+  entry : String
+  kind : FindingKind
+  file : String
+  line : Int32
+  fn_name : String
+  params : Array[String]
+  types : Array[String]
+  candidates : Array[Array[String]]
+  args : Array[String]
+  indices : Array[Int32]
+  tried : Int32
+}
+pub fn Counterexample::input_text(Self) -> String
 
 pub struct Coverage {
   hits : Map[String, Map[Int32, Int32]]
@@ -833,6 +850,19 @@ pub struct Manifest {
   mut target : String
 }
 pub fn Manifest::empty() -> Self
+
+pub(all) struct MinimizeResult {
+  counterexamples : Array[Counterexample]
+  requested : Int32
+  not_input : Int32
+  minimised : Int32
+  without : Int32
+  skipped : Int32
+  tried : Int32
+  truncated : Bool
+}
+
+type Minimizer
 
 pub(all) struct ModuleAst {
   coord : String
