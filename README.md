@@ -241,7 +241,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.32
+moon add riantr/LunaFlow@0.1.33
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -249,7 +249,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.32",
+  "riantr/LunaFlow@0.1.33",
 }
 ```
 
@@ -300,7 +300,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.32](https://mooncakes.io/docs/riantr/LunaFlow@0.1.32).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.33](https://mooncakes.io/docs/riantr/LunaFlow@0.1.33).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -590,6 +590,73 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.33
+
+**A finding now carries a VERDICT, two guards that were one-sided are total, and a dead definition the peer was right about is gone. The published interface changes additively, with one removal — both are declared at the end of this section.**
+
+**THE VERDICT: a claim the analyser could not decide is now reported as one.** Before this, a finding was a CLAIM or it was nothing, and a claim the analyser could not decide simply did not exist — so a report that never mentions it reads exactly like a report about a module with no claims to make. A claim can end in **three** ways, and now two of them are states a finding can be in: decided (`VerdictCertain`), and not decided (`VerdictUnknown`) — the third, *absent*, is the one that used to be indistinguishable from *clean*. `Finding` carries `verdict : FindingVerdict`:
+
+| verdict | meaning |
+|---|---|
+| `VerdictCertain` | the analyser decided the claim |
+| `VerdictUnknown` | the analyser **could not** decide it, and says so — with the reason |
+
+`Finding::new` has the same eight arguments and produces `VerdictCertain`, so a consumer that BUILDS findings through it is unaffected. `Finding::undecided` is the producer for the other state. The **policy** is fail-closed and it is one table: an undecided claim about **safety** is an **error** — safety was not established — any other undecided claim a **warning**, never *informational*. `undecided_severity` is that table, `Finding::severity` reads it, and `undecided_findings` / `count_undecided` are the accessors the report uses.
+
+The producer is the analyser's **own step budget**: a function whose loop runs past the interpreter's 2,000 steps was never finished, so nothing about the rest of it was decided. That fires on the corpora (8 in doubleML, 1 in the static-analysis module) and it is reachable from the command line.
+
+The **report** gained a `Verdict` column in every findings table and a section, *"Claims that could not be decided"*, that counts them and gives the reason. The `_findings.jsonl` sidecar gained `"verdict"`, and it carries the policy's severity rather than the family's, so the table and the sidecar cannot disagree.
+
+**TWO GUARDS WERE ONE-SIDED, AND THE SELF-SCAN SAID SO.** Running the analyser over its own source put **28** MAY-claims in `src/`. Twenty-six were answered by a guard already in the source; **two were not**, and they were fixed rather than registered:
+
+- `render_tokens` bounded its token range only from **above**, so a negative start read before the first token. The range is clamped at zero now.
+- `arg_value` bounded its argument index only from **above**, so a negative index read before the first argument. The guard is `i >= 0 &&` now.
+
+MEASURED: `render_tokens`' two claims are **gone** from the self-scan. `arg_value`'s claim **survives** — the analyser still cannot prove the array's length — but its evidence moved from `index [-999999,1000001]` to `index [1,1000001]`, which is the analyser **seeing** the new lower bound. The self-scan's L2 count moved **46 → 44**.
+
+The other 26 are **registered** in `src/app/selfscan_guards_wbtest.mbt`, and that file states its own limit rather than papering over it: a test exists for every guard the package can reach honestly (13 tests), and the ones it cannot reach are named with the file that pins them instead.
+
+**A DEAD DEFINITION WHOSE SIGNATURE LIED, AND THE PEER WAS RIGHT ABOUT IT.** `src/app/scan.mbt` held **two** definitions of `walk_dir`:
+
+```moonbit
+#cfg(any(target="native", target="wasm"))
+async fn walk_dir(dir, rel, st, limit, depth, excludes) -> Unit   // SIX
+
+#cfg(not(any(target="native", target="wasm")))
+async fn walk_dir(dir, rel, st, limit, depth) -> Unit             // FIVE
+```
+
+The guards are mutually exclusive, so no build ever saw both — and `moon check --target js` had been reporting the five-parameter one as **`Unused function 'walk_dir'`** on every backend it compiled. A definition nothing calls, whose shape disagrees with the definition it stands in for, is dead code that lies to every reader and to every analyser that does not evaluate `#cfg`. It is **deleted**; on a backend with no filesystem, `load_module` returns an empty module and never walks anything.
+
+**`WalkState` left the published interface**, and that is the one removal in this release. It is the walker's own state type: it was never part of any signature a consumer could name, and once the walker was confined to the targets that have a filesystem, the type had to follow it. The compiler had been saying so — *"Unused type 'WalkState'"* on js, *"consider marking it as `priv`"* on native — and it is `priv` now.
+
+**THE THREE QA HARNSESSES THAT MAKE THE ABOVE STAY TRUE.** None of them is decoration; each fails on a regression:
+
+- `scripts/qa/cfg_signatures.mjs` — **a signature must not depend on the target.** Within a compilation unit, every definition of one name must take the same number of parameters. That is the invariant the peer could not check, and it is the defect class the dead `walk_dir` belonged to. Its falsifier, `cfg_signatures_falsify.mjs`, breaks the invariant **on a copy** of the tree and asserts the check goes red **and names the right function**.
+- `scripts/qa/peer_scan.mjs` — the peer's verdict on this source, as a step that has to stay green. It excludes the deliberately-vulnerable fixture corpus and **prints the exclusion**, and it exits **2** — "could not decide" — rather than passing quietly when the registry is unreachable.
+- `scripts/qa/finding_verdicts.mjs` — the verdict mechanism itself, exercised against a module whose loop is past the interpreter's budget.
+
+**MEASURED, before and after, on this tree:**
+
+| what | before | after |
+|---|---:|---:|
+| `moon check` warnings, native / wasm / js | 80 / 80 / 105 | **79 / 79 / 90** |
+| `moon test src/app`, each of the three targets | 296 | **309** |
+| the peer's actionable findings in `src/` | 10 | **0** |
+| the analyser's claims about its own source | 28 | **26** |
+| the self-scan's L2 findings | 46 | **44** |
+
+**What the artefacts did, stated precisely, because it is easy to say this wrongly.** The QA-round commit that fixed the guards **did not touch `reports/` at all** — measured: `git diff --stat e7f2e9c..HEAD -- reports/` is empty. The committed artefacts were regenerated by the commit that preceded it, and **the two traces that carry the corpora's evidence are byte-identical to 0.1.32's**: `git diff --stat v0.1.32..HEAD` over `riantr_moonbit_doubleML@latest_0.164.64_trace.jsonl` and `local_module_0.0.0_trace.jsonl` is empty. What DID move there is the third artefact, and it moved because the **corpus** moved, not because the analyser did: `riantr/moonbit_static_analysis` went **0.5.0 → 0.5.3** between the registry's answer and this tree, so its committed set is the 0.5.3 one (254 → 262 files, 17,450 → 17,797 statements, 198 → 195 findings), and the two `.md` reports carry the new `Verdict` column. That is recorded in full under **Reproduction status (2026-11-22)**, in the Verification section.
+
+**THE PUBLISHED INTERFACE CHANGES.** Declared here, field by field:
+
+- **`Finding` gained a member**: `verdict : FindingVerdict`. `Finding` is a plain `pub struct`, so its members are not callable from a consumer, but a consumer that constructs one by **struct literal** must add the field — and `Finding::new` does not need to change.
+- **`FindingVerdict`** is new, a `pub(all)` enum with `VerdictCertain` and `VerdictUnknown`, plus `FindingVerdict::code`, `::equal` and `::not_equal`.
+- **New functions**: `Finding::undecided`, `Finding::severity`, `undecided_severity`, `undecided_findings`, `count_undecided`.
+- **Removed**: the type `WalkState`. It was not in any callable signature, and no declaration that remains names it.
+
+`scripts/qa/release_interface.mjs` enforces exactly that list against `.mbti` at `v0.1.32` and the notes above.
 
 ### What changed in 0.1.32
 
@@ -2985,7 +3052,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/root_package.mjs` | **122 passed, 0 failed** |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.32` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.33` | **4 passed, 0 failed** |
 `moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate has THREE verdicts, not two.** A check can end in three ways, and
