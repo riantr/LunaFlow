@@ -258,7 +258,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.33
+moon add riantr/LunaFlow@0.1.34
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -266,7 +266,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.33",
+  "riantr/LunaFlow@0.1.34",
 }
 ```
 
@@ -317,7 +317,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.33](https://mooncakes.io/docs/riantr/LunaFlow@0.1.33).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.34](https://mooncakes.io/docs/riantr/LunaFlow@0.1.34).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -607,6 +607,52 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.34
+
+**A FINDING NOW COMES WITH THE INPUT THAT REPRODUCES IT, AND THE REGISTER OF THE ANALYSER'S CLAIMS ABOUT ITS OWN SOURCE IS NOW CHECKED INSTEAD OF ONLY WRITTEN. The published interface grows — additively, and every declaration is declared at the end of this section.**
+
+**THE COUNTEREXAMPLE: THE SMALLEST INPUT THAT REPRODUCES A FINDING.** Section 5.12 of a report now says, for every finding an execution produced, the smallest input that reproduces it **on its own**, and a `_counterexamples.jsonl` sidecar carries the same table in machine form.
+
+"Smallest" has a boundary, and the boundary is stated rather than implied. The input is minimal over **the analyser's own candidate set** — the values `value.mbt` synthesizes for a parameter's type, in the order that file lists them — and over the analyser's own **product walk**, with the last parameter varying fastest. The counterexample is the **first** input in that walk that reproduces the finding, so **every input before it was tried and did not reproduce**. It is not a globally minimal program and not a minimal source, and the report says so in those words.
+
+The reproduction is matched on the finding's **SITE** — its family, its file, its line and its function — and never on its message or its evidence, because the evidence carries the observed value and the observed value is exactly what the smaller input changes. The **entry** is the function the finding sits in, entered on its own, so no call graph is needed.
+
+**WHAT IS NOT A CLAIM ABOUT AN INPUT IS COUNTED APART, AND WHAT IS LEFT OUT IS NAMED.** The CFG families are claims about the program's shape and the L2 families are may-claims over the whole input set: neither has an input to minimise, and both are counted in their own number — **67** on this tree. A finding an execution produced that **no** input reproduced is **listed**, with its message, because a count is not a list.
+
+**IT IS OPT-IN AND BOUNDED.** `--counterexamples` turns the section on, `--counterexample-limit <n>` bounds how many findings are minimised (default **20**), and a shared budget of **4,000** inputs bounds the work. A bound that stopped the minimisation is reported, not hidden.
+
+MEASURED on this tree: **8** counterexamples for the **9** findings an execution produced, **22** inputs tried in total, **1** finding with no counterexample — `BUDGET-EXCEEDED` at `src/app/ffi.mbt:391`, a claim about the analyser's own step budget and so not a claim about an input — **0** left out by the limit. Over the fixture corpus: **9** counterexamples for **9** findings, **12** inputs tried, e.g. `lookup(values = [], index = 0)` and `copy_prefix(buffer = [], len = 1)`.
+
+**THE REGISTER DRIFTED, AND IT IS NOW CHECKED.** `src/app/selfscan_guards_wbtest.mbt` holds the register: every claim the analyser makes about its **own** source, and the guard that answers it. It was measured on 2026-11-22 against **26** claims. The tree makes **29** — three of them `INDEX-OOB` in `rule_dimension_matrix`, a function that section 5.11 added afterwards, and **nobody had answered them**. That is exactly what the register itself calls *"a claim nobody has answered, and that is the kind that hides a real defect"*.
+
+`scripts/qa/selfscan_register.mjs` re-measures the register on every run. Every claim the analyser makes about this source must be **in** the register with the count that was measured; every claim in the register must **still** be made; the headline count must be the count that was measured; the register's own rows must add up to that headline; every family it names must be a family the analyser **has**, read from `src/app/model.mbt` rather than from a list the checker carries; and every site it names must still be in the source. The comparison does not depend on the toolchain: the claims come from this module's **own** parser (`src/app/parser.mbt`) reading this module's **own** source, so a newer MoonBit does not move them. A difference means the **tree** changed, which is exactly when the register has to be written again.
+
+`scripts/qa/selfscan_register_falsify.mjs` proves the check can fail. It breaks the register **on a copy** — a dropped claim, a count that was not measured, a stale headline, a claim that is not made, a family that does not exist — and asserts that the check goes red **and names the right reason**, plus a control it must not notice.
+
+**THE `srcs_label` CLAIM, MEASURED RATHER THAN ASSUMED.** The counterexample for `srcs_label` (`srcs = [""]`) says the analyser reproduces its own claim there. The claim is a **MAY**-claim the analyser cannot discharge, because the interpreter does not model `String::split` and so does not know the array's length — and the answer is `split`'s contract, not a guard in the source. MEASURED on this toolchain: `"".split(":")` has **length 1**; `split` yields at least one part for every input, so `parts[parts.length() - 1]` is `parts[0]` and reads **inside** the array. The claim is **registered, not fixed**: there is nothing to reach. The register now states the measurement, and a test pins the empty source.
+
+**MEASURED, before and after.** "Before" is what `v0.1.33` published; "after" is this tree.
+
+| what | before | after |
+|---|---:|---:|
+| the analyser's claims about its own source | 26 registered | **29 registered, 29 measured** |
+| claims with no registered answer | **3** | **0** |
+| the self-scan's L2 findings | 44 | **47** |
+| `moon check` warnings, native / wasm / js | 79 / 79 / 90 | **80 / 80 / 91** |
+| `moon test src/app`, each of the three targets | 309 | **325** |
+| the peer's actionable findings in `src/` | 0 | **0** |
+| the gate | 41 steps | **48 steps** |
+
+The **+1 warning** is `missing_priv` on `struct Minimizer` in the new file: the toolchain's standing suggestion for an internal type, the same one it makes for `struct Interp` and six others in this package, whose opaque types the published `.mbti` lists on purpose. The **L2 count moved 44 → 47** because section 5.11's matrix is new source in `src/app/report.mbt` and the analyser analyses its own source — and the three claims it added are the three the register had missed. Every one of them is guarded by the loop bounds in the source.
+
+**THE PUBLISHED INTERFACE GROWS, ADDITIVELY.** Declared here, field by field:
+
+- **New function**: `minimize_counterexamples(ModuleAst, RunOptions, Array[Finding], Int32, Int32) -> MinimizeResult`.
+- **New types**: `Counterexample` and `MinimizeResult`, both `pub(all)` structs, plus the method `Counterexample::input_text`.
+- **New optional parameters**: `render_report(..., counterexamples? : MinimizeResult?)` and `run_function(..., inputs? : Array[InputSet])`. Both have defaults, so **every existing call still compiles**.
+
+No declaration **changed shape**, so no consumer's build can break: `scripts/qa/release_interface.mjs` compares the `.mbti` at `v0.1.33` with the one this release publishes and finds **0** breaks a consumer can see. A consumer that constructs a `Counterexample` or a `MinimizeResult` by struct literal has to add the fields; a consumer that only reads them is unaffected.
 
 ### What changed in 0.1.33
 
@@ -3047,9 +3093,9 @@ The gate, and the result it produced for this version:
 | Command | Result |
 |---|---|
 | `moon fmt --check` | exit 0 |
-| `moon check --target native` | exit 0, 79 warnings, 0 errors |
-| `moon check --target wasm` | exit 0, 79 warnings, 0 errors |
-| `moon check --target js` | exit 0, 90 warnings, 0 errors |
+| `moon check --target native` | exit 0, 80 warnings, 0 errors |
+| `moon check --target wasm` | exit 0, 80 warnings, 0 errors |
+| `moon check --target js` | exit 0, 91 warnings, 0 errors |
 | `moon test src/app --target native` | **325 passed, 0 failed** |
 | `moon test src/app --target wasm` | **325 passed, 0 failed** |
 | `moon test src/app --target js` | **325 passed, 0 failed** |
@@ -3321,12 +3367,12 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 11.8 s |
 | `riantr/moonbit_static_analysis@latest` → 0.5.3 | 262 | 17,797 | 11,564 | 188 | 0 (no specs) | 0 | 7 | 1.6 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 64 | 7,501 | 10,251 | 47 | 2 / 1 / 3 | 0 | 8 | 750 ms |
+| `LunaFlow` itself (`--dir .`) | 64 | 7,502 | 10,251 | 47 | 2 / 1 / 3 | 0 | 8 | 759 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **750 ms** to **821 ms**, while every
+runs over the tree this commit names read **759 ms** to **829 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
@@ -3550,7 +3596,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **64 files, 7,501 statements, 10,251 events, 47 L2
+On this tree the row reads **64 files, 7,502 statements, 10,251 events, 47 L2
 findings, 0 dead and 8 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
@@ -3596,6 +3642,18 @@ The **events** moved by **+2** (10,249 → 10,251) and the **files** by **+2**
 (62 → 64): the minimiser and its whitebox test are two new files in
 `src/app/`. The **L1 events** are the trace's own record of the interpreter's
 work, and the new file adds statements for it to walk.
+
+The row moved once more for **the register check**, and the reason is the same one
+again: the analyser analyses its own source, and the register's new content is
+a doc comment and one pinned assertion. MEASURED: **+1 statement**
+(7,501 → 7,502), the **events** did NOT move (10,251), the **files** did NOT
+move (64), and the **L2 count did NOT move** — it stayed at **47**. What moved
+is the number of claims the analyser makes about this tree that the register
+answers: it went from **26 registered** to **29 registered and 29 measured**.
+The three that were missing came with the matrix in section 5.11, and the
+register was not written again after it — which is the failure this release
+fixes, and the reason the register is now re-measured on every run instead of
+only written once.
 
 `scripts/verify.mjs` validates the committed artefacts by pinned file name;
 `scripts/qa/e2e.mjs` validates fresh runs against the same thresholds.
@@ -3677,6 +3735,58 @@ workload** has been run — the two analyzers were pointed at different modules,
 so the numbers are not comparable. The comparison baseline in
 `docs/design.md` §8 covers Frama-C / TrustInSoft Analyzer, Joern, CodeQL, SVF
 and Soot as a **design** comparison, not as a measured head-to-head.
+
+### The QA round of 2026-11-23
+
+The same three views as the round before, over the tree as it stands now: the
+**peer** analyser, the **published** LunaFlow, and the **local** build. The
+published and the local build are the same program at two versions, so the
+difference between their reports is exactly what the unpublished work changed.
+
+```sh
+moonx riantr/LunaFlow@latest . --out _build/qa/peer_round/published --funnel
+moonx riantr/moonbit_static_analysis@latest . --exclude _build
+moon run src/cli --target native -- analyze --dir . --out _build/qa/peer_round/local --funnel
+```
+
+**THE PUBLISHED 0.1.33 AND THE LOCAL BUILD AGREE ON EVERY NUMBER.** Over this
+tree, both report **64 files, 1,176 functions, 7,502 statements, 377 unsupported
+statements, 10,251 events, 3,040 steps, 0 dead, 0 unreachable, 0 infinite, 8
+taint sinks, 60 range variables, level 3, 47 L2 findings, 2 / 1 / 3 VCs and 76
+findings**. The unpublished work changed no claim: the counterexample minimiser
+is a new *pass* over findings that already existed, and it adds a section and a
+sidecar rather than a finding.
+
+**THE PEER STILL FINDS NOTHING IN THIS PROJECT'S OWN SOURCE.** It reports **3
+actionable findings**, and all three are in `fixtures/eva_demo/lib.mbt` — the
+corpus that is deliberately vulnerable, because it is what this analyser is
+tested against. `scripts/qa/peer_scan.mjs` states the exclusion and prints it,
+and it exits **2** rather than passing quietly when the registry cannot be
+reached.
+
+**AND THE ROUND FOUND SOMETHING THE PEER COULD NOT: A REGISTER THAT HAD
+DRIFTED.** The register of the analyser's claims about its own source said
+**26** claims. The analyser makes **29**. The three that nobody had answered
+were all `INDEX-OOB` in `rule_dimension_matrix` — the function section 5.11
+added, in a release whose own notes recorded that it added three L2 findings.
+The register was not wrong about the code; it was **stale**, which is the same
+failure with a different name: a claim nobody has answered is a claim nobody
+has looked at.
+
+The three are **guarded** — the loops bound the indexes by the lengths they
+index — so nothing is reachable, and the right answer is to **register** them,
+not to change the code. They are registered, and the register is now
+**re-measured on every run** by `scripts/qa/selfscan_register.mjs` and proved
+able to fail by `scripts/qa/selfscan_register_falsify.mjs`.
+
+**WHAT THE ROUND CHANGED.**
+
+| what | before | after |
+|---|---|---|
+| the analyser's claims about its own source | 26 registered | **29 registered, 29 measured** |
+| claims with no registered answer | **3** | **0** |
+| the peer's actionable findings in `src/` | 0 | **0** |
+| the gate | 46 steps | **48 steps** |
 
 ### The QA round of 2026-11-22
 
