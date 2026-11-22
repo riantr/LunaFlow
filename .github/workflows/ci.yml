@@ -258,6 +258,27 @@ jobs:
       - name: Check that the README's drift detector can fail
         run: node scripts/qa/readme_table.mjs --no-selfscan --falsify
 
+      # THE DRIFT DETECTOR MUST COMPARE COUNTS EXACTLY.  The README's
+      # published numbers are kept true by `readme_table.mjs`, which compares
+      # every published count with the count that was MEASURED.  The only way
+      # such a comparison may pass is for the two to BE the same -- an
+      # ORDERING comparison ("at most the measured count") is satisfied by a
+      # README that under-states the tree, so it passes VACUOUSLY.
+      #
+      # The check reads the detector's source with comments and string
+      # literals stripped, so a comparison that is only *mentioned* in prose
+      # is not a comparison, and it allows the one ordering comparison the
+      # detector legitimately has: the sentinel "was the index found?".
+      - name: Check that the drift detector compares counts exactly
+        run: node scripts/qa/exact_counts.mjs
+
+      # ... and this one proves the check above can go RED, and that it does
+      # not fire on a comparison that is only mentioned.  It breaks the
+      # detector ON A COPY under `_build/`, so the tracked source is never
+      # written.
+      - name: Check that the exact-counts check can fail
+        run: node scripts/qa/exact_counts_falsify.mjs
+
       # THE PUBLISHED INTERFACE, CHECKED AGAINST THE RELEASE NOTES. A release
       # that changes the published `.mbti` can break a consumer's build, and
       # the release notes are the only place a consumer reads that. This

@@ -16,6 +16,8 @@
   "node scripts/verify.mjs",
   "node scripts/qa/readme_table.mjs",
   "node scripts/qa/readme_table.mjs --no-selfscan --falsify",
+  "node scripts/qa/exact_counts.mjs",
+  "node scripts/qa/exact_counts_falsify.mjs",
   "node scripts/qa/release_interface.mjs",
   "node scripts/qa/loop_acceptance.mjs",
   "node scripts/qa/size_taint.mjs",
