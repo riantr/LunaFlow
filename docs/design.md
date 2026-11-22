@@ -1389,6 +1389,12 @@ sidecars imply. It runs over the fixture **and** over a live self-scan —
 the self-scan is there because the fixture has no finding that no input
 reproduces, and a check that never sees one is a check that never fires.
 
+Whether there **is** such a finding is a fact about the tree and the
+toolchain, not an invariant, so the self-scan's count is **reported** rather
+than asserted — and the mechanism is exercised on every tree by the
+falsifier's F6 case, which claims a without-count the without-list does not
+support and requires the check to go red.
+
 That check **cannot** see the minimality: a non-minimal counterexample
 produces artefacts that are internally consistent. `scripts/qa/minimize_falsify.mjs`
 is what says so with a measurement — it **mutates the source** (so it is a

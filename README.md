@@ -3240,10 +3240,10 @@ reproduces, and a check that never sees one is a check that never fires.
 `scripts/qa/counterexamples_falsify.mjs` is its proof: it mutates **copies**
 of the artefacts (an argument that is not its candidate, a counterexample that
 names a finding the report does not show, a row that disagrees with the
-sidecar, a prose count the sidecar does not support) and asserts that the
-check goes red on each — plus a **control**, a rewording the check must NOT
-notice, so a checker that failed on every possible edit cannot pass for a
-checker that works.
+sidecar, a prose count the sidecar does not support, a without-count the
+without-list does not support) and asserts that the check goes red on each —
+plus a **control**, a rewording the check must NOT notice, so a checker that
+failed on every possible edit cannot pass for a checker that works.
 
 **What an undecided claim MEANS is a policy, and the policy is fail-closed.**
 An undecided claim about a **safety** property is an **error**: the module's

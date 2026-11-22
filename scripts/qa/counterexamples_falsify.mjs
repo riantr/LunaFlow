@@ -19,6 +19,8 @@
 //       numbers drift
 //   F5  a counterexample whose rule does not match the report's row -- the
 //       table and the sidecar name different families
+//   F6  a without-count the without-list does not support -- the section
+//       claims a finding had no counterexample and lists none
 //
 // It also runs a CONTROL: a change the checker must NOT notice (a rewording
 // of the paragraph that states what "minimal" means).  Without the control,
@@ -201,6 +203,25 @@ function mustStayGreen(name, dir) {
       /every table row agrees with its sidecar row/.test(out) ||
       /every counterexample names a finding the report shows/.test(out),
     detail: () => 'the row-agreement or the naming check',
+  });
+}
+
+// --- F6: a without-count the without-list does not support ---------------
+{
+  const dir = copyArtefacts('f6');
+  const p = join(dir, `${STEM}.md`);
+  const md = readFileSync(p, 'utf8');
+  // The prose says one finding had no single input that reproduced it, and
+  // the list below still has none.  The count and the list have to agree.
+  const written = md.replace(
+    /\*\*(\d+)\*\* had no single input in the analyser's candidate set that reproduced them\./,
+    (m, n) => `**${Number(n) + 1}** had no single input in the analyser's candidate set that reproduced them.`,
+  );
+  check('F6: the without-count was changed', written !== md);
+  writeFileSync(p, written, 'utf8');
+  mustGoRed('F6 without-count the list does not support', dir, {
+    test: (out) => /the findings without a counterexample are listed/.test(out),
+    detail: () => 'the without-list check',
   });
 }
 

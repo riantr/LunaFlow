@@ -346,6 +346,21 @@ jobs:
       - name: End-to-end runs and determinism
         run: node scripts/qa/e2e.mjs
 
+      # THE COUNTEREXAMPLES, checked against the report that states them.
+      # Every comparison is between two numbers of the SAME run -- the report
+      # against its own sidecars -- so a toolchain that finds a different set
+      # of findings moves both sides together.  The live self-scan is part of
+      # it because the fixture has no finding that no input reproduces, and a
+      # check that never sees one is a check that never fires.
+      - name: Check the counterexamples against the report
+        run: node scripts/qa/counterexamples.mjs
+
+      # The proof that the check above can fail: it mutates COPIES of the
+      # artefacts -- never a tracked file -- and asserts the check goes red on
+      # each mutation, plus a control it must NOT notice.
+      - name: Check that the counterexample check can fail
+        run: node scripts/qa/counterexamples_falsify.mjs
+
       - name: Robustness corpus
         run: node scripts/qa/fuzz.mjs
 

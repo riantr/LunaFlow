@@ -319,10 +319,14 @@ runCli('the self-scan', ['analyze', '--dir', '.', '--out', selfOut, '--funnel', 
   if (stem) {
     const res = checkArtefacts(selfOut, 'the self-scan', stem);
     if (res) {
-      check(
-        'the self-scan has a finding that no input reproduces, so the checks about them are not vacuous',
-        res.prose !== null && res.prose.without > 0,
-        `${res.prose?.without ?? 0} without`,
+      // Whether there IS a finding that no input reproduces is a fact about
+      // THIS tree and this toolchain, not an invariant: a newer toolchain
+      // may parse the module differently and not exhaust any budget.  So
+      // this is REPORTED, not asserted -- the check that the without-list
+      // agrees with the without-count is asserted either way, and the
+      // falsifier exercises that mechanism on every tree.
+      console.log(
+        `INFO  the self-scan: ${res.prose?.without ?? 0} finding(s) with no counterexample, ${res.prose?.notInput ?? 0} that are not claims about an input`,
       );
     }
   }
