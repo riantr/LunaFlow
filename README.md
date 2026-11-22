@@ -658,6 +658,16 @@ The guards are mutually exclusive, so no build ever saw both — and `moon check
 
 `scripts/qa/release_interface.mjs` enforces exactly that list against `.mbti` at `v0.1.32` and the notes above.
 
+**THE PUBLISHED BYTES, MEASURED FROM THE REGISTRY'S OWN COPY — not from this tree.** A local build says what this source produces; it does not say what a reader downloads. So the record below is the cached package the registry served, `~/.moon/registry/cache/riantr/LunaFlow/0.1.33.zip`:
+
+| what | measurement |
+|---|---|
+| the published package | **2,337,805 bytes** |
+| SHA-256 | `ea383ea1acc554d7ba12b2a599cdc9ba3e34e537d64ee7c33a4c74444be27d19` |
+| a clean consumer resolving it | `scripts/qa/verify_published.mjs 0.1.33` → **4 of 4 PASS**, `moon add` pins `riantr/LunaFlow@0.1.33`, the consumer builds and runs, and the published library API answers |
+
+That is the release verified through the artefact a reader actually gets. It cannot be checked from the tree, which is why it is a separate row.
+
 ### What changed in 0.1.32
 
 **The SIZE of a `+`-built array is computed, not inherited from the elements'. The published interface is UNCHANGED, and that is measured rather than claimed.**
