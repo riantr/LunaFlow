@@ -396,6 +396,30 @@ jobs:
       - name: Check that the coverage check can fail
         run: node scripts/qa/l1_coverage_falsify.mjs
 
+      # THE PACKAGE THE REGISTRY CAN READ.  `moon publish` uploads an archive,
+      # and the registry refuses an archive it cannot parse: the 0.1.35 upload
+      # came back with "400 Bad Request, detail: Invalid ZIP archive" because
+      # the package carried 162,703,756 bytes of unpacked content and an
+      # 80,863,997-byte entry, where the largest archive the registry had
+      # served (0.1.34) carried 46,274,868 bytes and a 39,479,846-byte entry.
+      # The message names no limit, so the limit is kept here instead: this
+      # check measures the package this tree would publish and fails BEFORE a
+      # release, not at the registry after one.
+      #
+      # The file set is git's own answer to "which files are not ignored", and
+      # the packer was MEASURED to agree with it.  The raw traces stay in the
+      # repository and stay out of the archive, and the check says so in both
+      # directions.
+      - name: Check the package the registry can read
+        run: node scripts/qa/package_envelope.mjs
+
+      # ... and this one proves the check above can go RED: it feeds the check
+      # a mutated MODEL -- the file set, written out under `_build/`, never a
+      # tracked file -- and asserts the check notices, and that it notices the
+      # right thing.
+      - name: Check that the package envelope check can fail
+        run: node scripts/qa/package_envelope_falsify.mjs
+
       - name: Robustness corpus
         run: node scripts/qa/fuzz.mjs
 

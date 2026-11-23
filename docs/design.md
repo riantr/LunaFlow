@@ -1603,7 +1603,19 @@ its function, so whole function bodies were truncated. Neither module has an
 unreachable statement, and the analyzer now says so. The event count rose
 because the analyzer understands more of the module and explores more paths.
 
-Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 37.6 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-total-steps` or stream events to disk.
+**THE PACKAGE IS NOT THE ARTEFACTS.** The recipe above commits the artefacts, and the
+published package is a different thing: `moon publish` packs the working tree minus
+the files the ignore rules match, so the raw traces — the largest files in the
+repository — are **not** in the archive. That is not a preference: the registry
+**refused** the 0.1.35 upload with `400 Bad Request, detail: Invalid ZIP archive`
+when the package carried **162,703,756** bytes unpacked and an **80,863,997**-byte
+entry, where the largest archive it had served (**0.1.34**) carried **46,274,868**
+bytes and a **39,479,846**-byte entry. The limit is a check now:
+`scripts/qa/package_envelope.mjs` measures the package the tree would publish and
+keeps it inside the envelope the registry has already accepted, and
+`docs/qa/PUBLISH_ENVELOPE.json` records where the measurement put the boundary.
+
+Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The **77.1 MB** JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-total-steps` or stream events to disk.
 
 Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `scripts/qa/metrics.mjs`):
 
@@ -1776,6 +1788,10 @@ These are verdicts on what fits **here**, not on the peer: the repair loop, the 
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
 | D8 | 332 unit/integration tests | `src/app/*_test.mbt` |
+
+The raw traces of D5 are committed to the repository and are **not** part of the
+published package (§7.2): the registry refuses an archive it cannot read, and they
+are what made it unreadable.
 
 ### 10.2 Acceptance criteria (quantified, reproducible)
 

@@ -630,6 +630,10 @@ At the **file** level the default read **8 of 64** files here, **20 of 220** on 
 
 **THE COST, MEASURED.** The committed artefacts: doubleML **16.1 s** (was 11.8 s) and a **77.1 MB** trace (was 37.6 MB); the static-analysis module **8.4 s** (was 1.6 s) and a **73.1 MB** trace (was 1.7 MB). The A12 trace ceiling moves with them, **64 MB → 128 MB**, as it has moved before. The self-scan over this tree reads **1,068 ms** (was 743 ms) and enters **850** functions where it entered 150.
 
+**THE PACKAGE THE REGISTRY COULD NOT READ, AND WHY IT COULD NOT.** The first upload of this release was **refused**: `400 Bad Request, detail: Invalid ZIP archive` — and the message names no limit, so the cause had to be measured rather than guessed. `moon publish` packs the working tree minus the files the ignore rules match, and the package carried the **raw traces**: **162,703,756** bytes unpacked and an **80,863,997**-byte entry. The largest archive the registry had served — **0.1.34**, read from the registry's own copy — carried **46,274,868** bytes and a **39,479,846**-byte entry. The compressed size was never the constraint: the registry serves a **14,725,180**-byte package (`moonbitstack/mooncrypt@0.5.2`), larger than the one it refused.
+
+**THE TRACES STAY IN THE REPOSITORY; THE PACKAGE DOES NOT CARRY THEM.** One `.gitignore` line keeps the raw traces out of the archive while they stay committed, and the artefacts a reader uses — the report, the sidecar, the summary — stay in it. The package this release publishes is **172 files**, and its largest entry is **993,480** bytes. `scripts/qa/package_envelope.mjs` keeps the package inside the envelope the registry has already accepted, so a release that would be refused fails **here** instead.
+
 **TWO REAL DEFECTS CAME OUT OF THE LIFTING, AND BOTH ARE FIXED.** `contract_above` walked up the source lines with no upper bound, while the loop below it had one — and `start_line` is a parameter of a **published** function, so a caller could read past the end of the file. `P::peek` had no lower bound where `P::peek_at` had one. Both are fixed in the source rather than registered: a claim about this source that a guard can answer is **fixed**.
 
 **THE REGISTER WAS REWRITTEN, because the analyser now makes more claims about itself.** The lifted scan raised the claims from **29** to **60**, in **35** sites, and the register — which is generated from the measurement and refuses to emit a table whose counts disagree with it — was rewritten to match. The register's matcher was **tightened** in the same pass: a row without a trailing `...` now answers exactly one function, so a row for `P::peek` can no longer answer for `P::peek_at`.
@@ -648,7 +652,7 @@ the check that caught it, and two new tests pin it.
 
 **AND THE COUNTEREXAMPLE LIMIT WAS RAISED, because it was silently dropping findings.** With the limit at **20**, **27 of the 50** dynamic findings were left out of the minimisation; at **64**, **0** are left out — **44** reproduced and **6** that no input reproduced, and the report **lists those six**. The rule is restated: every claim an execution produced is **reproduced or listed as one no input reproduced**, and the minimisation must leave **0** findings out by its limit.
 
-**THE NEW CHECKS.** `scripts/qa/l1_coverage.mjs` measures the coverage rule: the default scan is truncated by no bound at all, it entered **exactly the module's analysable universe** — the number the abstract layer's own scope line names — the step budget stops it when it is made small, the count cap stops it when it is made small, the budget the run used is the one the source declares, and the report's coverage rows agree with the metrics that state them. `scripts/qa/l1_coverage_falsify.mjs` proves it can go red, on **copies**. The gate is **50 steps** and the tests are **332**.
+**THE NEW CHECKS.** `scripts/qa/l1_coverage.mjs` measures the coverage rule: the default scan is truncated by no bound at all, it entered **exactly the module's analysable universe** — the number the abstract layer's own scope line names — the step budget stops it when it is made small, the count cap stops it when it is made small, the budget the run used is the one the source declares, and the report's coverage rows agree with the metrics that state them. `scripts/qa/l1_coverage_falsify.mjs` proves it can go red, on **copies**. `scripts/qa/package_envelope.mjs` measures the package the registry has to be able to read — the file set is **git's own** answer to "which files are not ignored", and the packer was **measured** to agree with it — and `scripts/qa/package_envelope_falsify.mjs` proves that can go red too, on **copies**. The gate is **52 steps** and the tests are **332**.
 
 **THE FLAGS.** `--max-functions` still bounds the dynamic layer's entry points, but its default is now **0** — no cap — and it is for a caller who wants a count of its own. `--max-total-steps <n>` is the new one: the module-wide step budget, default **100000**, `0` meaning no budget. `--per-function` lifts both.
 
@@ -3915,7 +3919,7 @@ ledger and of the peer's own captured report.
 | the peer's files it fully understood | not published | **71 of 74**, the other 3 pinned in `docs/qa/PEER_PARSE_GAPS.json` |
 | the peer check's own checks | 1 | **6** |
 | the published-artefact check's checks | 11 | **14** |
-| the gate | 46 steps | **50 steps** |
+| the gate | 46 steps | **52 steps** |
 
 #### The third round: the default scan's bound
 
@@ -3965,6 +3969,37 @@ the function under analysis had written into the array it was given, so the
 value was no longer the value the walk had chosen. The minimiser now reads
 the candidate index of every input **before** it runs anything, and records the
 candidate at that index. Two new tests pin it.
+
+#### The fourth round: the package the registry can read
+
+The release was ready — the gate green, the commit made — and the registry
+**refused the upload**: `400 Bad Request, detail: Invalid ZIP archive`, twice,
+with the same message. The archive was a **valid** zip locally and the
+registry's own fetch path worked, so the cause had to be measured rather than
+guessed.
+
+**THE SIZE, MEASURED IN EVERY DIRECTION.** `moon publish` packs the working
+tree minus the files the ignore rules match, and the package carried the raw
+traces: **162,703,756** bytes unpacked and an **80,863,997**-byte entry. The
+largest archive the registry had served — **0.1.34**, read from the registry's
+own copy — carried **46,274,868** bytes unpacked and a **39,479,846**-byte
+entry. And the **compressed** size was never the constraint: the registry
+serves a **14,725,180**-byte package (`moonbitstack/mooncrypt@0.5.2`), larger
+than the one it refused.
+
+**THE TRACES STAY IN THE REPOSITORY; THE PACKAGE DOES NOT CARRY THEM.** One
+`.gitignore` line keeps the raw traces out of the archive while they stay
+committed, and the artefacts a reader uses — the report, the sidecar, the
+summary — stay in it. The package this release publishes is **172 files**, and
+its largest entry is **993,480** bytes.
+
+**AND THE LIMIT IS A CHECK NOW, not a story.** `scripts/qa/package_envelope.mjs`
+measures the package the tree would publish — with **git's own** ignore rules,
+not a re-implementation of them — and keeps it inside the envelope the registry
+has already accepted; it also says, in both directions, whether the traces are
+packed (they must not be) and tracked (they must be).
+`scripts/qa/package_envelope_falsify.mjs` proves that every one of those checks
+can go red, on **copies**.
 
 ### The QA round of 2026-11-22
 

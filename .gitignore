@@ -30,3 +30,19 @@ __pycache__/
 /cobertura.xml
 /coveralls.json
 /_coverage/
+
+# THE RAW TRACES ARE EVIDENCE, NOT PACKAGE.
+#
+# `moon publish` packs the working tree minus the files the ignore rules
+# match, and the registry refuses an archive it cannot read: the 0.1.35
+# upload was rejected with "400 Bad Request, detail: Invalid ZIP archive"
+# because the package carried 162,703,756 bytes of unpacked content and an
+# 80,863,997-byte entry, where the largest archive the registry had
+# accepted (0.1.34, read from the registry's own copy) carried 46,274,868
+# bytes and a 39,479,846-byte entry. The report, the sidecar and the
+# summary -- the artefacts a reader uses -- are small, and they stay.
+#
+# The traces stay in the repository, and they stay tracked: a trace that a
+# new corpus produces is committed with `git add -f`, and the package
+# envelope check fails if one of them is neither committed nor packed.
+/reports/*_trace.jsonl
