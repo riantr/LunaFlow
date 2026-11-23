@@ -662,6 +662,19 @@ the check that caught it, and two new tests pin it.
 - `run_module(ast, opts, per_function?, max_total_steps?)` — the new optional parameter, defaulting to `DEFAULT_MAX_TOTAL_STEPS`.
 - `RunResult` gained three fields — `max_total_steps`, `stopped_by_budget`, `stopped_by_count`. It is a plain `pub struct` with private fields, so this is **not** a breaking change.
 
+**THE PUBLISHED BYTES, MEASURED FROM THE REGISTRY'S OWN COPY — not from this tree.** A local build says what this source produces; it does not say what a reader downloads. So the record below is the cached package the registry served, `~/.moon/registry/cache/riantr/LunaFlow/0.1.35.zip`:
+
+| what | measurement |
+|---|---|
+| the published package | **2,043,877 bytes** |
+| SHA-256 | `0269cc5859feb58c411434a7c064dc44ad7a8138875a72973eb253eddb844df0` |
+| what is in it | **172** files, **5,187,128** bytes unpacked, largest entry `LunaFlow_Logo.png` at **993,480** bytes, and **no raw trace** — the traces stay in the repository |
+| a clean consumer resolving it | `scripts/qa/verify_published.mjs 0.1.35` → **4 of 4 PASS**, `moon add` pins `riantr/LunaFlow@0.1.35`, the consumer builds and runs, and the published library API answers |
+| the published artefact over the fixture corpus | `scripts/qa/published_items.mjs 0.1.35` → **14 of 14 PASS**, and the published report matches the local build's on the same corpus — **29 findings** each. The published artefact also carries the **counterexample section**: its table and its sidecar agree, and the sidecar is **byte-identical** to the local build's — **2,204 bytes**, **9** rows |
+| the check that would catch a published artefact that does not | `scripts/qa/published_items_falsify.mjs 0.1.35` → **6 of 6 PASS**, on **copies** of the local artefacts |
+
+That is the release verified through the artefact a reader actually gets. It cannot be checked from the tree, which is why it is a separate row.
+
 ### What changed in 0.1.34
 
 **A FINDING NOW COMES WITH THE INPUT THAT REPRODUCES IT, AND THE REGISTER OF THE ANALYSER'S CLAIMS ABOUT ITS OWN SOURCE IS NOW CHECKED INSTEAD OF ONLY WRITTEN. The published interface grows — additively, and every declaration is declared at the end of this section.**
@@ -3191,8 +3204,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/selfscan_register_falsify.mjs` | **every check agrees** — the register check goes red on a dropped claim, a count that was not measured, a stale headline, a claim that is not made and a family that does not exist, and it stays green on a rewording it must not notice (on a **copy** of the register; the tracked source is never touched) |
 | `node scripts/qa/l1_coverage.mjs` | **every check agrees** — the default scan's coverage rule, measured: the default scan is truncated by no bound at all, the step budget stops it when it is made small, the count cap stops it when it is made small, the budget the run used is the one the source declares, and the report's coverage rows agree with the metrics that state them |
 | `node scripts/qa/l1_coverage_falsify.mjs` | **every check agrees** — the coverage check goes red when the metrics and the report disagree about how many functions were entered, when a truncation the report does not state is in the metrics, and when the report states the old count cap; and it stays green on a change that says nothing about the coverage (on **copies** of the artefacts; the tracked files are never touched) |
-| `node scripts/qa/published_items.mjs 0.1.34` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
-| `node scripts/qa/published_items_falsify.mjs 0.1.34` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
+| `node scripts/qa/published_items.mjs 0.1.35` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
+| `node scripts/qa/published_items_falsify.mjs 0.1.35` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -3206,7 +3219,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/counterexamples_falsify.mjs` | **every check agrees** — the counterexample check goes red when an argument is not its candidate, when a counterexample names a finding the report does not show, when a row disagrees with the sidecar and when a prose count is unsupported (on **copies** of the artefacts; the tracked files are never touched), and it stays green on a rewording it must not notice |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.34` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.35` | **4 passed, 0 failed** |
 `moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate has THREE verdicts, not two.** A check can end in three ways, and
