@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// THE THREE ITEMS, CHECKED IN THE PUBLISHED ARTEFACT.
+// THE ITEMS, CHECKED IN THE PUBLISHED ARTEFACT.
 //
 // Every other check in this repository measures the LOCAL build. The registry
 // serves a different artefact -- the wasm one, built by CI -- and that is the
@@ -11,7 +11,10 @@
 //   2. D1: the allocation-size rule fires (it was dead code once, and it
 //      fired on no input);
 //   3. D2: the same finding in two files is two findings (the key had no file
-//      in it, and the second was dropped).
+//      in it, and the second was dropped);
+//   4. the counterexample section (§5.12) is there, its table and its
+//      sidecar agree, and they are the SAME counterexamples the local build
+//      computes -- the feature is what the release notes say it is.
 //
 // And it compares the published report with the LOCAL build's report on the
 // same corpus: if the published artefact behaves differently, the release
@@ -58,6 +61,7 @@ function published(dir, out) {
       '--out',
       out,
       '--funnel',
+      '--counterexamples',
       '--max-findings',
       CAP,
     ],
@@ -79,7 +83,10 @@ function published(dir, out) {
     const k = o.family ?? o.rule ?? 'unknown';
     mix.set(k, (mix.get(k) ?? 0) + 1);
   }
-  return { lines, findings, mix };
+  // The counterexample sidecar, if the published artefact wrote one.
+  const cxFile = readdirSync(out).find((f) => f.endsWith('_counterexamples.jsonl'));
+  const cx = cxFile ? readFileSync(join(out, cxFile), 'utf8') : null;
+  return { lines, findings, mix, cx };
 }
 
 ///|
@@ -181,6 +188,83 @@ if (!d2) {
   );
 }
 
+// --- 4. the counterexamples, in the PUBLISHED artefact ----------------------
+//
+// The section shipped in 0.1.34, and the checks that came with it all
+// measured the LOCAL build.  The registry serves a different artefact --
+// the wasm one, built by CI -- and that is the one a reader runs.  So the
+// published artefact has to carry the section too.
+//
+// The table and the sidecar are compared by `scripts/qa/counterexamples.mjs
+// --artefacts`: the SAME comparison the local artefacts go through, and
+// the one `counterexamples_falsify.mjs` has already proved able to fail.
+// This check reuses it rather than re-implementing it.
+check(
+  'the published artefact carries the counterexample section',
+  art.cx !== null,
+  art.cx === null ? 'no _counterexamples.jsonl was written' : `${art.cx.split(/\r?\n/).filter((l) => l.trim()).length} row(s)`,
+);
+if (art.cx !== null) {
+  const cmp = spawnSync(
+    process.execPath,
+    [join(root, 'scripts', 'qa', 'counterexamples.mjs'), '--artefacts', join(SCRATCH, 'out')],
+    { cwd: root, encoding: 'utf8', timeout: 600000, maxBuffer: 32 * 1024 * 1024 },
+  );
+  check(
+    'the published counterexamples agree with the published report',
+    cmp.status === 0,
+    cmp.status === 0
+      ? 'the table, the sidecar and the counts all agree'
+      : `the counterexample check exited ${cmp.status}` +
+        ((cmp.stdout ?? '').split(/\r?\n/).filter((l) => l.startsWith('FAIL')).join(' | ')),
+  );
+
+  // And the SAME counterexamples the local build computes: a published tool
+  // that found a different minimal input would be a different analyser
+  // wearing the same version number.
+  // The local side can be pointed at a COPY, so a falsifier can break it
+  // without touching a tracked file.
+  const localArg = process.argv.indexOf('--local-artefacts');
+  const localGiven = localArg >= 0 && process.argv[localArg + 1];
+  const localOut = localGiven ? process.argv[localArg + 1] : join(SCRATCH, 'local');
+  if (!localGiven) {
+    rmSync(localOut, { recursive: true, force: true });
+    mkdirSync(localOut, { recursive: true });
+  }
+  const local = localGiven
+    ? { status: 0 }
+    : spawnSync(
+        'moon',
+        [
+          'run',
+          'src/cli',
+          '--target',
+          'native',
+          '--',
+          'analyze',
+          '--dir',
+          CORPUS,
+          '--out',
+          localOut,
+          '--funnel',
+          '--counterexamples',
+        ],
+        { cwd: root, encoding: 'utf8', timeout: 1800000, maxBuffer: 64 * 1024 * 1024, shell: true },
+      );
+  const localCxFile =
+    local.status === 0
+      ? readdirSync(localOut).find((f) => f.endsWith('_counterexamples.jsonl'))
+      : null;
+  const localCx = localCxFile ? readFileSync(join(localOut, localCxFile), 'utf8') : null;
+  check(
+    'the published counterexamples are byte-identical to the local build\'s',
+    localCx !== null && localCx === art.cx,
+    localCx === null
+      ? `the local run produced none (exit ${local.status})`
+      : `${localCx.length} B vs ${art.cx.length} B`,
+  );
+}
+
 // --- the published report matches the local build ----------------------------
 const localDir = join(root, '_build', 'qa', 'loop_acceptance', 'fixture');
 let same = false;
@@ -210,7 +294,7 @@ check(
 console.log('');
 console.log(
   failures === 0
-    ? `PUBLISHED ${VERSION}: all ${checks} checks pass -- the registry serves the three items.`
+    ? `PUBLISHED ${VERSION}: all ${checks} checks pass -- the registry serves the items.`
     : `PUBLISHED ${VERSION}: ${failures} of ${checks} checks FAILED.`,
 );
 process.exit(failures === 0 ? 0 : 1);
