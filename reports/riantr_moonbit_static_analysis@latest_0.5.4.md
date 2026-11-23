@@ -1,4 +1,4 @@
-# LunaFlow analysis report — riantr/moonbit_static_analysis@0.5.3
+# LunaFlow analysis report — riantr/moonbit_static_analysis@0.5.4
 
 > Trace-driven (dynamic-first) control-flow, data-flow, value-range and slicing analysis for a mooncakes.io module.
 
@@ -7,9 +7,9 @@
 | Item | Value |
 | --- | --- |
 | Requested coordinate | `riantr/moonbit_static_analysis@latest` |
-| Resolved version | `0.5.3` |
-| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.5.3` for ingestion, execution and reporting |
-| Source root | `./.repos/riantr/moonbit_static_analysis/0.5.3` |
+| Resolved version | `0.5.4` |
+| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.5.4` for ingestion, execution and reporting |
+| Source root | `./.repos/riantr/moonbit_static_analysis/0.5.4` |
 | Declared target | `wasm` |
 | Direct dependencies | (none) |
 
@@ -17,18 +17,18 @@
 
 | Metric | Value |
 | --- | --- |
-| Source files parsed | 262 |
-| Functions extracted | 3236 |
-| Statements understood | 17797 |
-| Statements unsupported | 760 |
-| Frontend coverage | 95.9% |
+| Source files parsed | 263 |
+| Functions extracted | 3244 |
+| Statements understood | 17843 |
+| Statements unsupported | 766 |
+| Frontend coverage | 95.8% |
 | Parse issues | 0 |
-| CFG functions | 600 of 1436 — the first 600 in file order; 836 functions had no CFG and can carry no CFG finding |
-| Trace events | 11564 |
-| Interpreted steps | 2412 |
-| Observed functions | 150 |
-| Entry selection | the first 150 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 1603 ms |
+| CFG functions | 600 of 1437 — the first 600 in file order; 837 functions had no CFG and can carry no CFG finding |
+| Trace events | 464097 |
+| Interpreted steps | 100958 |
+| Observed functions | 711 |
+| Entry selection | every function, until the module's step budget (100000 steps) was spent: 711 functions were entered |
+| Wall time (analyzer) | 8401 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -50,8 +50,8 @@ flowchart LR
   classDef l1 fill:#dcedc8,stroke:#33691e
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
-  L1["L1 concrete: 9 findings"]:::l1
-  L2["L2 abstract: 188 findings, 186 new"]:::l2
+  L1["L1 concrete: 247 findings"]:::l1
+  L2["L2 abstract: 188 findings, 148 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -59,15 +59,15 @@ flowchart LR
 
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
-| L1 concrete | 9 findings | — | 150 functions | observed facts |
-| L2 abstract | 188 findings | 186 | 1436 functions, 200236 steps | exhaustive over the input abstraction |
-| L3 contracts | 0 VCs | 0 failed, 0 unknown | 69 critical functions | specs required |
+| L1 concrete | 247 findings | — | 711 functions | observed facts |
+| L2 abstract | 188 findings | 148 | 1437 functions, 200263 steps | exhaustive over the input abstraction |
+| L3 contracts | 0 VCs | 0 failed, 0 unknown | 126 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
 
-Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `mermaid_states`, `resolve_label`, `lower_if`, `Cfg::source_order`, `pred_of`, `build_else`, `cfl_ordinary_from`, `cfl_chain`, `dominators`, `dominance_frontiers`, `reverse_postorder`, `compute_idom`, `intersect`, `pta_step`, `pta_sweep_heap`, `new_ssa`, `prepare`, `assign_versions`, `subscript`, `reaches`, `icfg_of`, `ifds_reach_rel`, `cprop_after`, `ir_blocks`, `ir_block_succ`, `join_of_nodes`, `ifds_tabulate`, `interval_state_join`, `interval_state_same`, `solve_widening`, `narrow_round`, `reaching_use_defs`, `solve_round_robin`, `solve_propagation`, `states_after`, `solve_edges`, `solve_worklist`, `cp_store_node`, `cp_call_node`, `powerset_of`, `pta_demand_run`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `as_array`, `enter_guard`, `closer_ahead`, `lit_step`, `parse_hex_double`, `collect_using`, `starts_variant`, `declared_name_after_kw`, `file_request`, `merge_group`, `taint_findings`, `taint_message`, `ident_from`
+Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `path_tail`, `pred_of`, `bb_is_leader`, `bb_entry`, `bb_exits`, `Bb::dump`, `lower_stmts`, `lower_if`, `Cfg::node_after`, `build_seq`, `build_else`, `Cfg::dump`, `cfl_call_site_at`, `cfl_return_site_at`, `cfl_program_entry`, `cfl_ordinary_from`, `cfl_node_of_key`, `reverse_postorder`, `dominators`, `compute_idom`, `dominance_frontiers`, `pta_site_names`, `pta_step`, `pta_sweep_heap`, `ir_blocks`, `ssa_check`, `new_ssa`, `collect_defs`, `place_phis`, `prepare`, `assign_versions`, `index_of_name`, `rename`, `rename_block`, `phi_version`, `index_of`, `unwind`, `finish`, `subscript`, `raises_with_payload`, `reaches`, `icfg_of`, `ifds_reach_rel`, `ifds_explode`, `ifds_supergraph_text`, `ifds_supergraph_returns`, `live_in`, `solve_round_robin`, `join_of_nodes`, `live_out`, `solve_propagation`, `avail_transfer`, `avail_in`, `solve_edges`, `cprop_after`, `taint_analyze`, `ir_block_of`, `ir_exits`, `bb_node_line`, `bb_block_lines`, `bb_edges`, `dnum_digits`, `join_all`, `cs_result_of_list`, `cfl_labels_text`, `ifds_tabulate`, `ifds_tabulate_text`, `interval_state_join`, `pta_fs_step`, `first_node_at`, `reaching_kill`, `reaching_in`, `reaching_use_defs`, `ssa_lines`, `solve_worklist`, `declared_types`, `cg_collect_lets`, `build_call_graph`, `cp_store_node`, `cp_call_node`, `cp_return_site`, `cp_count_label`, `powerset_of`, `defs_and_uses`, `pta_inter_run`, `dm_param_source`, `dm_recompute`, `pta_demand_run`, `mermaid_states`, `resolve_label`, `Cfg::source_order`, `cfl_chain`, `intersect`, `ir_block_succ`, `interval_state_same`, `solve_widening`, `narrow_round`, `states_after`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `as_array`, `enter_guard`, `closer_ahead`, `lit_step`, `parse_hex_double`, `collect_using`, `starts_variant`, `declared_name_after_kw`, `file_request`, `merge_group`, `taint_findings`, `taint_message`, `ident_from`
 
-Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`
+Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `path_tail (src/core/core.mbt:59)`, `bb_is_leader (src/flow/bb.mbt:280)`, `bb_entry (src/flow/bb.mbt:378)`, `bb_exits (src/flow/bb.mbt:415)`, `Bb::dump (src/flow/bb.mbt:455)`, `lower_stmts (src/flow/ir.mbt:175)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `Cfg::node_after (src/flow/cfg.mbt:203)`, `pred_of (src/flow/cfg.mbt:268)`, `build_seq (src/flow/cfg.mbt:299)`, `build_else (src/flow/cfg.mbt:481)`, `Cfg::dump (src/flow/cfg.mbt:508)`, `cfl_call_site_at (src/flow/cfl.mbt:145)`, `cfl_return_site_at (src/flow/cfl.mbt:164)`, `cfl_program_entry (src/flow/cfl.mbt:254)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_node_of_key (src/flow/cfl.mbt:490)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_site_names (src/flow/pta.mbt:362)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `ssa_check (src/flow/ssa.mbt:250)`, `new_ssa (src/flow/ssa.mbt:362)`, `collect_defs (src/flow/ssa.mbt:409)`, `place_phis (src/flow/ssa.mbt:446)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `rename (src/flow/ssa.mbt:678)`, `rename_block (src/flow/ssa.mbt:704)`, `phi_version (src/flow/ssa.mbt:873)`, `unwind (src/flow/ssa.mbt:911)`, `index_of_name (src/flow/ssa.mbt:924)`, `index_of (src/flow/ssa.mbt:937)`, `finish (src/flow/ssa.mbt:950)`, `subscript (src/flow/ssa.mbt:1184)`, `raises_with_payload (src/flow/icfg.mbt:204)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `ifds_explode (src/flow/ifds.mbt:286)`, `ifds_supergraph_text (src/flow/ifds.mbt:357)`, `ifds_supergraph_returns (src/flow/ifds.mbt:443)`, `live_in (src/flow/live.mbt:373)`, `live_out (src/flow/live.mbt:403)`, `avail_transfer (src/flow/avail.mbt:369)`, `avail_in (src/flow/avail.mbt:453)`, `cprop_after (src/flow/cprop.mbt:399)`, `taint_analyze (src/flow/taint.mbt:237)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_of (src/flow/ir_cfg.mbt:192)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `ir_exits (src/flow/ir_cfg.mbt:307)`, `bb_node_line (src/flow/bb_test.mbt:127)`, `bb_block_lines (src/flow/bb_test.mbt:133)`, `bb_edges (src/flow/bb_test.mbt:164)`, `dnum_digits (src/flow/datalog.mbt:592)`, `join_all (src/flow/lattice.mbt:89)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `cs_result_of_list (src/flow/pta_ctx.mbt:429)`, `cfl_labels_text (src/flow/cfl_test.mbt:77)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `ifds_tabulate_text (src/flow/ifds_tab.mbt:124)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `pta_fs_step (src/flow/pta_flow.mbt:202)`, `first_node_at (src/flow/pta_test.mbt:205)`, `reaching_kill (src/flow/reaching.mbt:134)`, `reaching_in (src/flow/reaching.mbt:229)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `ssa_lines (src/flow/ssa_test.mbt:63)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `declared_types (src/flow/callgraph.mbt:502)`, `cg_collect_lets (src/flow/callgraph.mbt:515)`, `build_call_graph (src/flow/callgraph.mbt:725)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `cp_return_site (src/flow/icfg_test.mbt:136)`, `cp_count_label (src/flow/icfg_test.mbt:153)`, `powerset_of (src/flow/laws_test.mbt:76)`, `defs_and_uses (src/flow/laws_test.mbt:298)`, `pta_inter_run (src/flow/pta_inter.mbt:478)`, `dm_param_source (src/flow/pta_demand.mbt:269)`, `dm_recompute (src/flow/pta_demand.mbt:303)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`
 
 ## 4. Control-flow analysis
 
@@ -275,6 +275,8 @@ flowchart TD
   n82 --> n1
 ```
 
+Observed path (trial 0, first 24 events): `call@820` -> `def@820` -> `call@821` -> `def@821` -> `call@822` -> `def@822` -> `def@824` -> `call@825` -> `def@825` -> `call@865` -> `def@865` -> `def@871` -> `def@872` -> `cond@873` -> `def@874` -> `def@875` -> `loop@873` -> `cond@873` -> `def@927` -> `call@928` -> `def@928` -> `def@929` -> `def@930` -> `def@931`
+
 #### `pta_ctx_run_heap` (src/flow/pta_ctx.mbt)
 
 _Diagram omitted: 99 nodes exceeds the readability cap (90). Findings for this function are listed below._
@@ -430,6 +432,8 @@ flowchart TD
   n61 --> n62
   n62 --> n1
 ```
+
+Observed path (trial 0, first 19 events): `call@365` -> `def@365` -> `call@366` -> `def@366` -> `def@367` -> `def@368` -> `def@369` -> `def@370` -> `def@371` -> `call@383` -> `call@390` -> `call@393` -> `def@393` -> `call@394` -> `def@394` -> `call@395` -> `def@395` -> `cond@398` -> `def@364`
 
 #### `emit_file` (src/sa/mermaid.mbt)
 
@@ -1002,9 +1006,50 @@ flowchart TD
   n60 --> n1
 ```
 
+Observed path (trial 0, first 24 events): `def@363` -> `def@364` -> `def@365` -> `def@366` -> `def@367` -> `cond@368` -> `def@382` -> `def@383` -> `cond@384` -> `def@390` -> `cond@391` -> `call@416` -> `def@416` -> `def@417` -> `def@418` -> `def@419` -> `cond@420` -> `def@362` -> `def@363` -> `def@364` -> `def@365` -> `def@366` -> `def@367` -> `cond@368`
+
 ### 4.2 CFG findings
 
-_No findings._
+| Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| BUDGET-EXCEEDED | warning | unknown | path_tail | src/core/core.mbt:70 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | pred_of | src/flow/cfg.mbt:286 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | bb_exits | src/flow/bb.mbt:435 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | Bb::dump | src/flow/bb.mbt:483 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | pred_of | src/flow/cfg.mbt:286 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | Cfg::dump | src/flow/cfg.mbt:528 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | cfl_ordinary_from | src/flow/cfl.mbt:300 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | cfl_ordinary_from | src/flow/cfl.mbt:300 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | dominance_frontiers | src/flow/dom.mbt:165 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | pta_step | src/flow/pta.mbt:517 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | ir_blocks | src/flow/ir_cfg.mbt:184 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | ir_blocks | src/flow/ir_cfg.mbt:182 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | ssa_check | src/flow/ssa.mbt:314 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | collect_defs | src/flow/ssa.mbt:415 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | place_phis | src/flow/ssa.mbt:464 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | prepare | src/flow/ssa.mbt:516 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | assign_versions | src/flow/ssa.mbt:634 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | rename | src/flow/ssa.mbt:687 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | index_of | src/flow/ssa.mbt:945 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | finish | src/flow/ssa.mbt:959 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | pred_of | src/flow/cfg.mbt:286 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | ifds_supergraph_returns | src/flow/ifds.mbt:456 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | join_of_nodes | src/flow/lattice.mbt:113 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | join_of_nodes | src/flow/lattice.mbt:113 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | solve_propagation | src/flow/worklist.mbt:110 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | solve_round_robin | src/flow/worklist.mbt:47 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | join_of_nodes | src/flow/lattice.mbt:113 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | solve_round_robin | src/flow/worklist.mbt:47 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | solve_edges | src/flow/worklist.mbt:210 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | ir_blocks | src/flow/ir_cfg.mbt:182 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | bb_edges | src/flow/bb_test.mbt:173 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | cfl_labels_text | src/flow/cfl_test.mbt:83 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | solve_propagation | src/flow/worklist.mbt:109 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | join_of_nodes | src/flow/lattice.mbt:115 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | join_of_nodes | src/flow/lattice.mbt:113 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | pred_of | src/flow/cfg.mbt:285 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | pred_of | src/flow/cfg.mbt:285 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | pred_of | src/flow/cfg.mbt:285 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
 
 ### 4.3 Static vs dynamic attribution
 
@@ -1083,12 +1128,193 @@ flowchart LR
 | TAINT-INDEX-RANGE | warning | certain | ssa_cost_over_files | src/sa/ssa_cost.mbt:112 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
 | TAINT-INDEX-RANGE | warning | certain | mm_parsed_with | src/sa/mermaid_test.mbt:93 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
 | TAINT-INDEX | error | certain | mm_after_last | src/sa/mermaid_test.mbt:247 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | path_tail | src/core/core.mbt:65 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | path_tail | src/core/core.mbt:69 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | bb_is_leader | src/flow/bb.mbt:281 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | bb_entry | src/flow/bb.mbt:380 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | bb_entry | src/flow/bb.mbt:381 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | bb_exits | src/flow/bb.mbt:421 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | bb_exits | src/flow/bb.mbt:422 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | bb_exits | src/flow/bb.mbt:424 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | bb_exits | src/flow/bb.mbt:425 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Bb::dump | src/flow/bb.mbt:465 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Bb::dump | src/flow/bb.mbt:472 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Bb::dump | src/flow/bb.mbt:475 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lower_stmts | src/flow/ir.mbt:182 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lower_if | src/flow/ir.mbt:304 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | lower_if | src/flow/ir.mbt:305 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Cfg::node_after | src/flow/cfg.mbt:204 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Cfg::node_after | src/flow/cfg.mbt:205 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Cfg::node_after | src/flow/cfg.mbt:206 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Cfg::node_after | src/flow/cfg.mbt:207 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | build_seq | src/flow/cfg.mbt:303 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | pred_of | src/flow/cfg.mbt:283 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | pred_of | src/flow/cfg.mbt:284 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | pred_of | src/flow/cfg.mbt:285 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | build_else | src/flow/cfg.mbt:494 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Cfg::dump | src/flow/cfg.mbt:517 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Cfg::dump | src/flow/cfg.mbt:520 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_call_site_at | src/flow/cfl.mbt:148 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_return_site_at | src/flow/cfl.mbt:167 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_return_site_at | src/flow/cfl.mbt:168 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_return_site_at | src/flow/cfl.mbt:169 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_return_site_at | src/flow/cfl.mbt:170 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_program_entry | src/flow/cfl.mbt:258 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_program_entry | src/flow/cfl.mbt:264 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | cfl_ordinary_from | src/flow/cfl.mbt:288 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | cfl_ordinary_from | src/flow/cfl.mbt:290 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_ordinary_from | src/flow/cfl.mbt:295 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_ordinary_from | src/flow/cfl.mbt:296 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | cfl_node_of_key | src/flow/cfl.mbt:494 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-ALLOC | error | certain | reverse_postorder | src/flow/dom.mbt:190 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | reverse_postorder | src/flow/dom.mbt:192 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | reverse_postorder | src/flow/dom.mbt:196 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | reverse_postorder | src/flow/dom.mbt:197 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reverse_postorder | src/flow/dom.mbt:198 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reverse_postorder | src/flow/dom.mbt:200 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reverse_postorder | src/flow/dom.mbt:201 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | dominators | src/flow/dom.mbt:97 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | compute_idom | src/flow/dom.mbt:235 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominators | src/flow/dom.mbt:116 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominators | src/flow/dom.mbt:117 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:149 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:151 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:152 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:154 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:155 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:156 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:161 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:162 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:163 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dominance_frontiers | src/flow/dom.mbt:165 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | pta_site_names | src/flow/pta.mbt:369 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | pta_site_names | src/flow/pta.mbt:372 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | pta_step | src/flow/pta.mbt:515 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | pta_sweep_heap | src/flow/pta.mbt:615 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ssa_check | src/flow/ssa.mbt:296 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | new_ssa | src/flow/ssa.mbt:369 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | collect_defs | src/flow/ssa.mbt:413 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | collect_defs | src/flow/ssa.mbt:414 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | place_phis | src/flow/ssa.mbt:449 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | place_phis | src/flow/ssa.mbt:458 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | prepare | src/flow/ssa.mbt:507 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | prepare | src/flow/ssa.mbt:508 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | prepare | src/flow/ssa.mbt:511 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | assign_versions | src/flow/ssa.mbt:589 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | index_of_name | src/flow/ssa.mbt:927 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename | src/flow/ssa.mbt:683 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename | src/flow/ssa.mbt:685 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename | src/flow/ssa.mbt:686 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:710 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:711 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | phi_version | src/flow/ssa.mbt:874 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | phi_version | src/flow/ssa.mbt:878 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:714 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:719 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:720 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:721 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:727 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:728 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:730 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:731 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | rename_block | src/flow/ssa.mbt:732 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | index_of | src/flow/ssa.mbt:940 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | unwind | src/flow/ssa.mbt:913 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | finish | src/flow/ssa.mbt:955 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | finish | src/flow/ssa.mbt:956 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | subscript | src/flow/ssa.mbt:1197 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | raises_with_payload | src/flow/icfg.mbt:207 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-ALLOC | error | certain | reaches | src/flow/icfg.mbt:251 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | reaches | src/flow/icfg.mbt:256 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | reaches | src/flow/icfg.mbt:262 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reaches | src/flow/icfg.mbt:263 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reaches | src/flow/icfg.mbt:264 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | icfg_of | src/flow/icfg.mbt:300 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | ifds_reach_rel | src/flow/ifds.mbt:261 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ifds_reach_rel | src/flow/ifds.mbt:268 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ifds_explode | src/flow/ifds.mbt:297 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ifds_supergraph_text | src/flow/ifds.mbt:363 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ifds_supergraph_returns | src/flow/ifds.mbt:448 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | live_in | src/flow/live.mbt:379 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | live_in | src/flow/live.mbt:380 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_round_robin | src/flow/worklist.mbt:54 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | join_of_nodes | src/flow/lattice.mbt:112 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | solve_round_robin | src/flow/worklist.mbt:55 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | live_out | src/flow/live.mbt:411 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | solve_propagation | src/flow/worklist.mbt:91 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:102 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | solve_propagation | src/flow/worklist.mbt:104 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:106 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:107 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:108 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:109 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_propagation | src/flow/worklist.mbt:111 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | avail_transfer | src/flow/avail.mbt:403 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | avail_in | src/flow/avail.mbt:468 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | solve_edges | src/flow/worklist.mbt:191 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:202 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | solve_edges | src/flow/worklist.mbt:204 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:206 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:207 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:208 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:209 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | solve_edges | src/flow/worklist.mbt:211 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cprop_after | src/flow/cprop.mbt:401 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | taint_analyze | src/flow/taint.mbt:243 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | ir_blocks | src/flow/ir_cfg.mbt:173 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | ir_blocks | src/flow/ir_cfg.mbt:176 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | ir_block_of | src/flow/ir_cfg.mbt:197 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | ir_block_of | src/flow/ir_cfg.mbt:198 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | ir_exits | src/flow/ir_cfg.mbt:313 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | ir_exits | src/flow/ir_cfg.mbt:314 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ir_exits | src/flow/ir_cfg.mbt:323 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | bb_node_line | src/flow/bb_test.mbt:128 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | bb_block_lines | src/flow/bb_test.mbt:136 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | bb_edges | src/flow/bb_test.mbt:169 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dnum_digits | src/flow/datalog.mbt:596 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | join_all | src/flow/lattice.mbt:93 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | cs_result_of_list | src/flow/pta_ctx.mbt:432 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cfl_labels_text | src/flow/cfl_test.mbt:83 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | ifds_tabulate | src/flow/ifds_tab.mbt:80 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | ifds_tabulate | src/flow/ifds_tab.mbt:86 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | ifds_tabulate | src/flow/ifds_tab.mbt:87 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | ifds_tabulate_text | src/flow/ifds_tab.mbt:128 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | pta_fs_step | src/flow/pta_flow.mbt:209 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | first_node_at | src/flow/pta_test.mbt:209 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reaching_kill | src/flow/reaching.mbt:141 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reaching_kill | src/flow/reaching.mbt:155 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reaching_in | src/flow/reaching.mbt:234 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | reaching_use_defs | src/flow/reaching.mbt:262 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | ssa_lines | src/flow/ssa_test.mbt:70 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-ALLOC | error | certain | solve_worklist | src/flow/worklist.mbt:275 | tainted value controls an allocation size | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | declared_types | src/flow/callgraph.mbt:506 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cg_collect_lets | src/flow/callgraph.mbt:518 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | build_call_graph | src/flow/callgraph.mbt:747 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | build_call_graph | src/flow/callgraph.mbt:733 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX-RANGE | warning | certain | build_call_graph | src/flow/callgraph.mbt:734 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | cp_store_node | src/flow/icfg_test.mbt:104 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cp_store_node | src/flow/icfg_test.mbt:116 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cp_call_node | src/flow/icfg_test.mbt:126 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cp_call_node | src/flow/icfg_test.mbt:127 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cp_call_node | src/flow/icfg_test.mbt:131 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cp_return_site | src/flow/icfg_test.mbt:139 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | cp_count_label | src/flow/icfg_test.mbt:156 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | powerset_of | src/flow/laws_test.mbt:86 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | defs_and_uses | src/flow/laws_test.mbt:305 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | defs_and_uses | src/flow/laws_test.mbt:306 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | pta_inter_run | src/flow/pta_inter.mbt:486 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | dm_param_source | src/flow/pta_demand.mbt:277 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dm_param_source | src/flow/pta_demand.mbt:278 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dm_recompute | src/flow/pta_demand.mbt:304 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dm_recompute | src/flow/pta_demand.mbt:306 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | dm_recompute | src/flow/pta_demand.mbt:310 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | pta_demand_run | src/flow/pta_demand.mbt:402 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
 
 ### 5.2 L2 abstract findings (may-analysis)
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Three rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. A tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose. And an allocation size that is PROVABLY CONSTANT is not claimed as one that untrusted input chose: no tainted value controls a size that is the same on every input.
 
-**Scope.** The abstract layer analysed 1436 of 1436 — every function the abstract layer can analyse, in 200236 steps.
+**Scope.** The abstract layer analysed 1437 of 1437 — every function the abstract layer can analyse, in 200263 steps.
 
 | Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1477,25 +1703,57 @@ _No findings._
 
 ### 5.10 Claims that could not be decided
 
-_Every claim the analyser made was decided; nothing was left unverified._
+28 claim(s) could not be decided. They are listed here rather than being absent: an absent claim and a claim that was decided and found clean are NOT the same thing, and only the second is good news.
+
+| Family | Severity | Function | Location | What could not be decided |
+| --- | --- | --- | --- | --- |
+| BUDGET-EXCEEDED | warning | path_tail | src/core/core.mbt:70 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | pred_of | src/flow/cfg.mbt:286 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | bb_exits | src/flow/bb.mbt:435 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | Bb::dump | src/flow/bb.mbt:483 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | Cfg::dump | src/flow/cfg.mbt:528 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | cfl_ordinary_from | src/flow/cfl.mbt:300 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | dominance_frontiers | src/flow/dom.mbt:165 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | pta_step | src/flow/pta.mbt:517 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | ir_blocks | src/flow/ir_cfg.mbt:184 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | ir_blocks | src/flow/ir_cfg.mbt:182 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | ssa_check | src/flow/ssa.mbt:314 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | collect_defs | src/flow/ssa.mbt:415 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | place_phis | src/flow/ssa.mbt:464 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | prepare | src/flow/ssa.mbt:516 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | assign_versions | src/flow/ssa.mbt:634 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | rename | src/flow/ssa.mbt:687 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | index_of | src/flow/ssa.mbt:945 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | finish | src/flow/ssa.mbt:959 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | ifds_supergraph_returns | src/flow/ifds.mbt:456 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | join_of_nodes | src/flow/lattice.mbt:113 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | solve_propagation | src/flow/worklist.mbt:110 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | solve_round_robin | src/flow/worklist.mbt:47 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | solve_edges | src/flow/worklist.mbt:210 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | bb_edges | src/flow/bb_test.mbt:173 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | cfl_labels_text | src/flow/cfl_test.mbt:83 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | solve_propagation | src/flow/worklist.mbt:109 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | join_of_nodes | src/flow/lattice.mbt:115 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | pred_of | src/flow/cfg.mbt:285 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 
 
 ### 5.11 Which dimension found which rule
 
-| Family | L2-EVA | L2-abstract | dynamic+symbolic | Total |
-| --- | ---: | ---: | ---: | ---: |
-| INDEX-OOB | 92 | · | · | 92 |
-| TAINT-INDEX | · | 76 | 3 | 79 |
-| TAINT-ALLOC | · | 10 | · | 10 |
-| TAINT-INDEX-RANGE | · | · | 4 | 4 |
-| RANGE-VIOLATION | · | 3 | · | 3 |
-| UNREACHABLE | · | 2 | · | 2 |
-| INFINITE-LOOP | · | 2 | · | 2 |
-| INTEGER-OVERFLOW | 2 | · | · | 2 |
-| DIVISION-BY-ZERO | 1 | · | · | 1 |
-| **Total** | **95** | **93** | **7** | **195** |
+| Family | dynamic+symbolic | L2-EVA | L2-abstract | dynamic | Total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| TAINT-INDEX | 145 | · | 76 | · | 221 |
+| INDEX-OOB | · | 92 | · | · | 92 |
+| BUDGET-EXCEEDED | · | · | · | 38 | 38 |
+| TAINT-INDEX-RANGE | 34 | · | · | · | 34 |
+| TAINT-ALLOC | 9 | · | 10 | · | 19 |
+| RANGE-VIOLATION | · | · | 3 | · | 3 |
+| UNREACHABLE | · | · | 2 | · | 2 |
+| INFINITE-LOOP | · | · | 2 | · | 2 |
+| INTEGER-OVERFLOW | · | 2 | · | · | 2 |
+| DIVISION-BY-ZERO | · | 1 | · | · | 1 |
+| **Total** | **188** | **95** | **93** | **38** | **414** |
 
-9 families over 3 method(s); 1 of them were found by MORE THAN ONE method and so rest on more than one kind of evidence: TAINT-INDEX.
+10 families over 4 method(s); 2 of them were found by MORE THAN ONE method and so rest on more than one kind of evidence: TAINT-INDEX, TAINT-ALLOC.
 
 
 ### 5.12 Counterexamples: the smallest input that reproduces each finding
@@ -1513,356 +1771,723 @@ Every definition event is keyed by function, source line and variable, so a valu
 
 | Function | Line | Variable | Observed values |
 | --- | --- | --- | --- |
+| graph | 24 | _ | ? |
 | scan | 827 | s | "", "x" |
+| bb_of | 188 | v | 0 |
+| bb_of | 190 | n | ? |
+| bb_of | 208 | v | 1, 2, 3, 4, 5, 6 |
 | bump | 1715 | n | ? |
+| show | 108 | ks | () |
+| cfg_of | 244 | b | ? |
+| cp_show | 28 | n | "", "x" |
+| finish | 952 | b | 0 |
+| finish | 954 | k | 0 |
+| finish | 957 | k | 1, 2, 3, 4, 5, 6 |
+| finish | 959 | b | 1, 2, 3, 4, 5, 6 |
+| rename | 681 | b | 0 |
+| rename | 684 | k | 0 |
+| rename | 687 | k | 1, 2, 3, 4, 5, 6 |
+| rename | 690 | b | 1, 2, 3, 4, 5, 6 |
 | slug | 324 | buf | ? |
 | slug | 343 | out | "?" |
+| unwind | 913 | n | ? |
+| bb_of | 187 | cur | [] |
+| bb_of | 195 | cur | [?] |
+| cs_push | 265 | i | ? |
+| cs_push | 267 | i | 0 |
+| cs_push | 271 | i | 1, 2, 3, 4, 5, 6 |
+| d_idb | 380 | out | ? |
 | dir_of | 1781 | i | -1, 2, 15, 63 |
 | dir_of | 1787 | i | 1, 0, -1, 14, 13, 12 |
+| dkeys | 370 | out | [] |
+| dm_pts | 174 | ck | () |
+| icfg_of | 298 | f | 0 |
+| icfg_of | 300 | g | () |
+| icfg_of | 333 | i | 0 |
 | is_dir | 1310 | d | ? |
+| join_all | 91 | i | 0 |
+| join_all | 94 | i | 1, 2, 3 |
+| live_in | 377 | v | 0 |
+| live_in | 381 | v | 1, 2, 3, 4, 5, 6 |
+| new_ssa | 363 | n | ? |
+| new_ssa | 370 | i | 0 |
+| new_ssa | 378 | i | 1, 2, 3, 4, 5, 6 |
 | note | 370 | line | ?, "stand behind them -- a form it does n...", "resolve. ... |
+| pred_of | 275 | i | 0 |
+| pred_of | 278 | i | 1, 2, 3, 4, 5, 6 |
+| pred_of | 280 | v | 0 |
+| pred_of | 282 | k | 0 |
+| pred_of | 284 | s | ? |
+| pred_of | 286 | k | 1, 2, 3, 4, 5, 6 |
+| pred_of | 288 | v | 1, 2, 3, 4, 5, 6 |
+| prepare | 503 | b | 0 |
+| prepare | 506 | k | 0 |
+| prepare | 508 | p | ? |
+| prepare | 514 | k | 1, 2, 3, 4, 5, 6 |
+| prepare | 517 | b | 1, 2, 3, 4, 5, 6 |
+| reaches | 256 | v | -1, ? |
+| reaches | 261 | k | 0 |
+| reaches | 263 | s | ? |
+| reaches | 268 | k | 1, 2, 3, 4, 5, 6 |
 | scan | 833 | root | "" |
+| ssa_of | 199 | bb | () |
 | wanted | 1386 | n | () |
 | wanted | 1387 | s | () |
+| Bb::dump | 461 | b | 0 |
+| Bb::dump | 464 | k | 0 |
+| Bb::dump | 470 | k | 1, 2, 3, 4, 5, 6 |
+| Bb::dump | 474 | j | 0 |
+| Bb::dump | 480 | j | 1, 2, 3, 4, 5, 6 |
+| Bb::dump | 484 | b | 1, 2, 3 |
+| Ir::dump | 709 | i | 0 |
+| Ir::dump | 712 | i | 1, 2, 3, 4, 5, 6 |
+| add_flow | 444 | g | 0, 1 |
 | analyze | 1504 | n | () |
 | analyze | 1505 | k | () |
+| avail_in | 463 | v | 0 |
+| avail_in | 470 | v | 1, 2, 3, 4, 5, 6 |
+| bb_edges | 166 | b | 0 |
+| bb_edges | 168 | k | 0 |
+| bb_edges | 174 | k | 1, 2, 3, 4, 5, 6 |
+| bb_edges | 176 | b | 1, 2, 3, 4, 5, 6 |
+| bb_entry | 379 | k | 0 |
+| bb_entry | 386 | k | 1, 2, 3, 4, 5, 6 |
+| bb_exits | 417 | b | 0 |
+| bb_exits | 420 | i | 0 |
+| bb_exits | 422 | n | ? |
+| bb_exits | 423 | k | 0 |
+| bb_exits | 430 | k | 1, 2, 3, 4, 5, 6 |
+| bb_exits | 439 | i | 1, 2, 3, 4, 5, 6 |
+| bb_of | 213 | succ | () |
+| bb_of | 214 | pred | () |
 | ctx_line | 728 | t | ? |
+| d_deps | 398 | out | ? |
+| dm_one | 146 | out | ? |
+| drel_add | 144 | k | () |
+| graph | 23 | spans | [] |
+| index_of | 938 | i | 0 |
+| ir_exits | 309 | b | 0 |
+| ir_exits | 312 | k | 0 |
+| ir_exits | 317 | k | 1, 2, 3, 4, 5, 6 |
+| ir_exits | 330 | b | 1, 2, 3 |
 | is_hiding | 81 | h | 0, 1 |
 | kind_of | 1397 | s | () |
 | kind_of | 1398 | n | () |
+| live_out | 409 | v | 0 |
+| live_out | 412 | v | 1, 2, 3, 4, 5, 6 |
+| path_tail | 61 | i | 0 |
+| path_tail | 63 | n | 0, 3, 16, 64 |
+| path_tail | 66 | j | 2, 3, 4, 5, 6, 7 |
+| path_tail | 70 | j | 3, 4, 5, 6, 7, 8 |
+| path_tail | 74 | i | 1, 2, 3, 4, 5, 6 |
+| prepare | 505 | rp | [] |
+| pta_run | 649 | fi | 0 |
+| pta_run | 651 | pt | () |
 | reify | 1982 | buf | ? |
 | row0616 | 60 | out | "" |
 | scan | 823 | taint | ? |
 | show_plan | 64 | c | ? |
+| ssa_lines | 65 | i | 0 |
+| ssa_lines | 71 | i | 1, 2, 3, 4, 5, 6 |
+| Cfg::dump | 514 | v | 0 |
+| Cfg::dump | 519 | k | 0 |
+| Cfg::dump | 525 | k | 1, 2, 3, 4, 5, 6 |
+| Cfg::dump | 529 | v | 1, 2, 3, 4, 5, 6 |
 | aggregate | 467 | v | 0, 1, -1 |
 | aggregate | 468 | n | ? |
+| b_ceil | 416 | best | ? |
+| bb_entry | 381 | to | ? |
+| bb_exits | 425 | to | ? |
+| bb_of | 184 | order | () |
+| build_seq | 301 | i | -1, 0, 2, 1, ? |
+| build_seq | 304 | i | -1, 1, 0, ? |
+| cfg_of | 245 | exit | ? |
+| cfg_of | 249 | pred | () |
+| cfl_chain | 538 | i | -1 |
+| cg_fns_of | 483 | i | 0 |
+| cg_fns_of | 489 | i | 1, 2, 3 |
+| cs_push | 264 | out | [] |
+| d_reach | 439 | out | ? |
 | dir_of | 1780 | cut | -1 |
+| dnum_cmp | 565 | sa | "" |
+| dnum_cmp | 566 | sb | "", "abc", "../../etc/passwd", "0000000000000000000000000... |
+| dnum_cmp | 570 | sa | ? |
+| dnum_cmp | 573 | sb | ? |
+| dnum_cmp | 575 | ta | "0" |
+| dnum_cmp | 576 | tb | "0" |
+| dominators | 95 | n | ? |
+| dominators | 98 | i | 0 |
+| eval_add | 283 | lo | ? |
+| eval_add | 284 | hi | ? |
+| eval_mul | 314 | p1 | ? |
+| eval_mul | 315 | p2 | ? |
+| eval_mul | 316 | p3 | ? |
+| eval_mul | 317 | p4 | ? |
+| eval_sub | 294 | lo | ? |
+| eval_sub | 295 | hi | ? |
+| ifds_graph | 43 | i | 0 |
+| ifds_graph | 46 | i | 1, 2, 3, 4, 5 |
+| intersect | 286 | x | -1 |
+| intersect | 287 | y | -1 |
+| ir_bb | 60 | blocks | () |
+| ir_blocks | 179 | i | ?, 0, 1, -1 |
+| ir_blocks | 182 | i | ?, 1, 2, 3, 4, 5 |
+| join_all | 90 | acc | ? |
+| join_all | 93 | acc | ? |
+| live_in | 374 | lat | () |
+| new_ssa | 365 | ops | [] |
+| new_ssa | 367 | out | [] |
+| pta_add | 149 | cur | () |
+| pta_one | 132 | out | ? |
+| pta_run | 648 | out | [] |
+| ssa_check | 253 | i | 0 |
+| ssa_check | 263 | i | 1, 2, 3, 4, 5, 6 |
+| ssa_check | 267 | d | 0 |
+| ssa_check | 289 | d | 1, 2, 3, 4, 5, 6 |
+| ssa_check | 294 | u | 0 |
+| ssa_check | 297 | k | 0 |
+| ssa_check | 312 | k | 1, 2, 3, 4, 5, 6 |
+| ssa_check | 314 | u | 1, 2, 3, 4, 5, 6 |
 | version_gt | 53 | i | 0 |
 | version_gt | 55 | x | ? |
 | version_gt | 56 | y | ? |
+| Bb::dump | 456 | out | "bb: \{self.blocks.length()} blocks" |
+| Bb::dump | 458 | out | ""bb: \{self.blocks.length()} blocks""..." |
+| Bb::dump | 460 | out | """bb: \{self.blocks.length()} blocks"..." |
+| Bb::dump | 463 | out | """"bb: \{self.blocks.length()} blocks...", """""""""""""... |
+| Bb::dump | 467 | out | """"""bb: \{self.blocks.length()} bloc...", """"""""bb: \... |
+| Bb::dump | 469 | out | """""bb: \{self.blocks.length()} block...", """""""bb: \{... |
+| Bb::dump | 473 | out | """"""""""""""""""""""""""""""""""""""..." |
+| Bb::dump | 477 | out | """"""""""""""""""""""""""""""""""""""..." |
+| Bb::dump | 479 | out | """"""""""""""""""""""""""""""""""""""..." |
+| Bb::dump | 483 | out | """"""""""""""""""""""""""""""""""""""..." |
+| Ir::dump | 708 | out | "" |
+| Ir::dump | 711 | out | """"\{i}: \{self.insts[i].text()} "", """""\{i}: \{self.i... |
 | analyze | 1503 | src | () |
+| avail_in | 461 | lat | () |
+| avail_in | 462 | out | [] |
+| b_floor | 400 | best | ? |
 | base_of | 1752 | out | "" |
+| bb_edges | 165 | out | "" |
+| bb_edges | 171 | out | """", "", """""", """B\{b + 1}->B\{bb.succ[b][k]...", """... |
+| bb_edges | 173 | out | """"", """B\{b + 1}->B\{bb.succ[b][k] ...", """"""", """B... |
+| bb_exits | 416 | out | [] |
+| bb_leaders | 150 | b | 0 |
+| bb_leaders | 156 | b | 1, 2, 3, 4, 5, 6 |
+| bb_of | 185 | blocks | [] |
+| build_else | 495 | n | ? |
+| cfg_of | 247 | entry | ? |
 | collect | 1342 | dir | ? |
+| cp_show | 27 | parts | [] |
+| cprop_set | 84 | out | ? |
+| d_strata | 930 | lvl | 0 |
+| dbind_args | 704 | i | 0 |
+| dm_write | 371 | out | ? |
+| dnum_cmp | 577 | mag | -1 |
+| dominators | 101 | i | 1, 2, 3, 4, 5, 6 |
+| dominators | 108 | c | 0 |
+| dominators | 111 | c | 1, 2, 3, 4, 5, 6 |
+| dominators | 113 | b | 0 |
+| dominators | 119 | b | 1, 2, 3, 4, 5, 6 |
 | family_ids | 118 | n | 1 |
+| finish | 951 | insts | [] |
+| icfg_of | 285 | cfgs | [] |
+| icfg_of | 288 | base | [] |
+| icfg_of | 291 | succ | [] |
+| ir_bb | 59 | leaders | () |
+| ir_blocks | 171 | li | 0 |
+| ir_blocks | 185 | li | 1, 2, 3, 4, 5, 6 |
+| ir_exits | 308 | out | [] |
+| ir_leaders | 117 | i | 0 |
+| ir_leaders | 127 | i | 1, 2, 3, 4, 5, 6 |
+| ir_leaders | 130 | k | 0 |
+| ir_leaders | 149 | k | 1, 2, 3, 4, 5, 6 |
+| live_in | 375 | defs | [] |
+| live_in | 376 | uses | [] |
+| live_out | 407 | lat | () |
+| live_out | 408 | out | [] |
+| path_tail | 60 | out | "" |
+| path_tail | 67 | buf | ? |
+| path_tail | 72 | out | "?" |
+| pfg_solve | 366 | pt | ? |
+| pfg_solve | 367 | wl | [] |
+| place_phis | 449 | n | ? |
+| place_phis | 454 | x | ? |
+| place_phis | 456 | d | 0 |
+| place_phis | 458 | y | ? |
+| place_phis | 467 | d | 1, 2, 3, 4, 5, 6 |
+| powerset_of | 78 | k | 0, 1, 3, 2 |
+| powerset_of | 82 | m | ? |
+| powerset_of | 83 | i | 0 |
+| powerset_of | 88 | i | 1, 2, 3 |
+| pred_of | 274 | pred | [] |
+| reaches | 251 | seen | [] |
+| reaches | 253 | seen | [] |
+| reaches | 254 | head | 0 |
+| reaches | 257 | head | 1, 2 |
+| reaches | 265 | seen | [] |
 | sanitize | 461 | buf | ? |
+| ssa_lines | 64 | out | "" |
+| ssa_lines | 68 | out | """"?"";"", """"""?"";""?"";"", """"""""?"";""?"";""?"";"... |
+| ssa_lines | 70 | out | """?", """""?"";""?", """""""?"";""?"";""?", """""""""?""... |
+| subscript | 1195 | v | 1, 2 |
+| subscript | 1198 | v | 0 |
+| subscript | 1201 | i | 0 |
+| subscript | 1204 | i | -1 |
 | version_gt | 51 | pa | () |
 | version_gt | 52 | pb | () |
 | <global> | 155 | flow | "let k = 3 if k {   print("yes") } fn ..." |
 | <global> | 94 | clean | "fn fact(n: int) -> int {   if n <= 1 ..." |
+| Cfg::dump | 509 | out | "cfg: \{self.kinds.length()} nodes, en..." |
+| Cfg::dump | 511 | out | ""cfg: \{self.kinds.length()} nodes, e..." |
+| Cfg::dump | 513 | out | """cfg: \{self.kinds.length()} nodes, ..." |
+| Cfg::dump | 516 | out | """"cfg: \{self.kinds.length()} nodes,...", """""""""""""... |
+| Cfg::dump | 518 | out | """""cfg: \{self.kinds.length()} nodes...", """""""""""""... |
+| Cfg::dump | 522 | out | """""""cfg: \{self.kinds.length()} nod...", """""""""cfg:... |
+| Cfg::dump | 524 | out | """"""cfg: \{self.kinds.length()} node...", """"""""cfg: ... |
+| Cfg::dump | 528 | out | """"""""""""""""""""""""""""""""""""""..." |
 | apply_nosec | 403 | n | 0, 1, -1 |
+| build_seq | 300 | cur | ?, -1, 0, 1, 2 |
+| build_seq | 303 | cur | () |
+| cfl_chain | 520 | rev | [] |
+| cfl_chain | 521 | cur | "", "abc", "../../etc/passwd", "0000000000000000000000000... |
+| cfl_chain | 537 | out | [] |
+| cg_fns_of | 482 | out | [] |
+| cprop_after | 400 | t | () |
+| cprop_text | 179 | ks | [] |
+| cs_push | 262 | items | () |
+| cs_sites_of | 500 | v | 0 |
+| cs_sites_of | 512 | v | 1, 2, 3, 4, 5, 6 |
+| d_strata | 820 | deps | () |
+| d_strata | 928 | used | ? |
+| dcmp_holds | 642 | lv | () |
+| dcmp_holds | 643 | rv | () |
 | dir_of | 1779 | chars | [], ["a", "b", "c"], [".", ".", "/", ".", ".", "/", "e", ... |
+| dnum_digits | 594 | i | 0 |
+| dominators | 96 | rpo | () |
 | family_ids | 120 | id | ""MSA-"()" |
-| mm_check | 307 | errs | [] |
-| stamp_utc | 138 | sec | ? |
-| by_rank | 437 | sorted | [], [0], [0, 1, -1], [1, 0] |
-| collect | 1337 | stack | [""] |
-| emit_file | 216 | head | ? |
-| emit_file | 227 | head | ? |
-| emit_file | 338 | head | ? |
-| emit_file | 343 | body | [?, """diagram caps a file at \{limit}. Pe...", "Re-run w... |
-| emit_mmd | 1195 | prov | () |
-| emit_mmd | 1196 | text | () |
-| emit_mmd | 1199 | path | ? |
-| family_ids | 117 | out | [] |
-| first_line | 481 | out | ? |
-| mm_check | 309 | edges | [] |
-| mm_check | 311 | lines | () |
-| mm_label | 260 | parts | ? |
-| pick_files | 110 | idx | [] |
-| show_plan | 65 | shown | ? |
-| slug | 325 | last_dash | false |
-| stamp_utc | 137 | days | ? |
-| <global> | 142 | typing | "fn shout(s: str) -> int {   return le..." |
-| aggregate | 456 | total | 0 |
-| aggregate | 469 | total | ? |
-| apply_nosec | 404 | hit | false |
-| apply_profile | 172 | r | 0, 1, -1 |
-| count_notices | 201 | n | 0 |
-| count_notices | 202 | r | 0, 1, -1 |
-| count_notices | 204 | n | 1, 2, 3 |
-| count_rows0521 | 75 | n | 0 |
-| emit_file | 238 | limit | () |
-| emit_file | 325 | parts | "" |
-| explain_family | 36 | s | "\{f.id()}  \{f.name()} " |
-| explain_family | 37 | s | ""\{f.id()}  \{f.name()} ""   property..." |
-| explain_family | 38 | s | """\{f.id()}  \{f.name()} ""   propert..." |
-| explain_family | 39 | s | """"\{f.id()}  \{f.name()} ""   proper..." |
-| explain_family | 40 | s | """"""\{f.id()}  \{f.name()} ""   prop..." |
-| explain_roster | 56 | s | "families: id, name, and the property ..." |
-| explain_roster | 60 | s | ""families: id, name, and the property..." |
-| explain_roster | 62 | s | """"families: id, name, and the proper..." |
-| first_line | 482 | done | false |
-| lens_list | 426 | names | [] |
-| mm_parsed_with | 92 | i | 0, 1, 2 |
-| parse_nosec | 286 | out | [] |
-| print_ssa_cost | 80 | _ | () |
-| row_for0611 | 142 | out | "" |
-| suffix_of | 1734 | tail | "" |
-| <global> | 573 | lit_max | 2147483647 |
-| apply_nosec | 384 | kept | [] |
-| collect | 1346 | entries | ? |
-| count_by_shape | 265 | r | 0, 1, -1 |
-| count_by_shape | 266 | c | ? |
-| ctx_line | 726 | per_sig | "n/a (no signature was executed)" |
-| ctx_line | 729 | per_sig | "\{t / 100}.\{t % 100 / 10}\{t % 10} e..." |
-| emit_file | 239 | counts | ? |
-| line_with0521 | 62 | out | "" |
-| metrics_lines | 656 | hi | ? |
-| metrics_lines | 657 | lo | ? |
-| metrics_lines | 658 | un | ? |
-| mm_check | 310 | in_note | false |
-| mm_state_id | 284 | seen | 0 |
-| mm_state_id | 286 | tail | ? |
-| mm_state_id | 297 | rest | () |
-| notice_lines | 237 | out | [] |
-| profile_keeps | 149 | id | ? |
-| render_reports | 258 | r | 0, 1, -1 |
-| split_coord | 1288 | mod | "" |
-| split_coord | 1289 | ver | "" |
-| split_coord | 1303 | ver | "" |
-| split_tokens | 348 | out | [] |
-| stamp_utc | 136 | day_ms | ? |
-| version_parts | 77 | cur | 0 |
-| <global> | 32 | max_files | 20000 |
-| <global> | 67 | iface_bad | "// Generated using `moon info`, DON'T..." |
-| <global> | 80 | proof_bad | "///\| predicate is_hot(s : Severity) {..." |
-| aggregate | 453 | notices | 0 |
-| aggregate | 458 | n_calls | 0 |
-| aggregate | 472 | n_calls | ? |
-| aggregate | 484 | notices | ? |
-| apply_nosec | 385 | stale | [] |
-| civil_from_days | 158 | z | ?, 719467, 719468, 719469, 719470 |
-| civil_from_days | 162 | y | ?, 1969 |
-| civil_from_days | 165 | d | ?, 31, 1, 2, 3 |
-| emit_file | 184 | defects | ? |
-| emit_file | 321 | dropped | ? |
-| line_with0611 | 105 | out | "" |
-| measure_file | 122 | text | ? |
-| mermaid_states | 51 | out | ? |
-| metrics_lines | 584 | out | [] |
-| metrics_lines | 585 | pct | ? |
-| mm_check | 308 | declared | [] |
-| mm_count_quotes | 224 | n | 0 |
-| mm_valid_id | 208 | first | true |
-| <global> | 106 | undefined | "fn g() -> int {   return missing + 1 ..." |
-| <global> | 116 | structure | "fn f(x: int, y: int) -> int {   z = x..." |
-| aggregate | 455 | withheld | 0 |
-| aggregate | 494 | withheld | ? |
-| apply_profile | 171 | kept | [] |
-| civil_from_days | 164 | mp | ?, 9, 10 |
-| civil_from_days | 166 | mo | ? |
-| civil_from_days | 167 | yy | ? |
-| collect | 1338 | seen_dirs | 0 |
-| collect | 1340 | last_dirs | 0 |
-| collect | 1371 | seen_dirs | 1, 2, 3, 4, 5, 6 |
-| count_by_shape | 272 | out | [] |
-| measure_function | 148 | c | ? |
-| metrics_lines | 659 | n_hi | 0 |
-| metrics_lines | 660 | n_lo | 0 |
-| metrics_lines | 661 | n_un | 0 |
-| mm_parsed_with | 86 | fams | [(?, "local variable 'x' assigned but may n..."), (?, "ar... |
-| mm_parsed_with | 91 | reps | [] |
-| newest_version | 31 | best | "" |
-| newest_version | 32 | name | "", "x" |
-| newest_version | 34 | best | "", "x" |
-| path_segments | 308 | segs | [] |
-| print_ssa_cost | 81 | cost | () |
-| render_reports | 257 | buf | ? |
-| run_exit_code | 1843 | res | ? |
-| validate_profile | 81 | id | "", "x" |
-| version_parts | 76 | parts | [] |
-| version_parts | 78 | named | false |
-| <global> | 128 | deadbranch | "fn h(x: int) -> int {   if 1 > 2 {   ..." |
-| <global> | 13 | literate_md | "# Demo document  A display-only block..." |
-| <global> | 194 | FOLD_LIMIT | 46340 |
-| <global> | 37 | SAMPLE_FLOW | "let k = 3 if k {   print("yes") } fn ..." |
-| <global> | 54 | script_mbtx | "import {   "moonbitlang/core/list" @l..." |
-| aggregate | 459 | n_checked | 0 |
-| aggregate | 473 | n_checked | ? |
-| civil_from_days | 159 | era | ?, 4 |
-| civil_from_days | 160 | doe | ?, 135079, 135080, 135081, 135082 |
-| civil_from_days | 161 | yoe | ?, 369 |
-| civil_from_days | 163 | doy | ?, 305, 306, 307, 308 |
-| collect | 1339 | last_files | 0 |
-| measure_function | 147 | ir | ? |
-| metrics_lines | 612 | other | ? |
-| metrics_lines | 617 | share | ? |
-| metrics_lines | 647 | agree | ? |
-| mm_after_last | 246 | parts | ? |
-| moonbit_version | 449 | res | ? |
-| parse_nosec | 287 | line_no | 0 |
-| primary_lens | 411 | sorted | () |
-| print_ssa_cost | 79 | files | [] |
-| <global> | 22 | SAMPLE_CLEAN | "fn fact(n: int) -> int {   if n <= 1 ..." |
-| aggregate | 452 | actionable | 0 |
-| aggregate | 454 | unreliable | 0 |
-| aggregate | 470 | unreliable | ? |
-| aggregate | 485 | actionable | ? |
-| mermaid_states | 50 | target | ? |
-| mermaid_states | 74 | picked | [] |
-| moonbit_version | 444 | args | ["version"] |
-| moonbit_version | 452 | text | ? |
-| split_coord | 1290 | seen_at | false |
-| suffix_of | 1735 | after_dot | false |
-| <global> | 28 | SAMPLE_TYPING | "fn shout(s: str) -> int {   return le..." |
-| aggregate | 457 | n_unchecked | 0 |
-| aggregate | 471 | n_unchecked | ? |
-| count_by_shape | 264 | counts | ? |
-| emit_file | 192 | parsed_note | ? |
-| filtered_reports | 1441 | all | [] |
-| is_module_coord | 1999 | base | ? |
-| locate | 1214 | _destructured | () |
-| method_segments | 2212 | segs | [] |
-| ssa_cost_over_files | 106 | i | 0 |
-| ssa_cost_over_files | 114 | i | 1, 2, 3 |
-| <global> | 35 | progress_every | 500 |
-| aggregate | 450 | parsed_files | 0 |
-| aggregate | 462 | n_unknown_fn | 0 |
-| aggregate | 464 | n_unresolved | 0 |
-| aggregate | 476 | n_unknown_fn | ? |
-| aggregate | 478 | n_unresolved | ? |
-| aggregate | 487 | parsed_files | 1, 2, 3 |
-| split_findings | 119 | printed | [] |
-| validate_profile | 69 | roster | () |
-| aggregate | 451 | partial_files | 0 |
-| aggregate | 465 | n_method_call | 0 |
-| aggregate | 466 | n_dotdot_call | 0 |
-| aggregate | 479 | n_method_call | ? |
-| aggregate | 480 | n_dotdot_call | ? |
-| aggregate | 489 | partial_files | 1, 2, 3 |
-| metrics_lines | 629 | split_sum | ? |
-| mm_state_id | 285 | after_close | false |
-| scan_artifact_name | 226 | stem | ? |
-| ssa_cost_over_files | 90 | cost | ? |
-| stamp_utc | 139 | _destructured | () |
-| tally_partial_reasons | 748 | v | 0, 1, -1 |
-| tally_partial_reasons | 750 | r | ? |
-| tally_partial_reasons | 751 | c | ? |
-| validate_profile | 92 | overlap | [] |
-| <global> | 25 | SAMPLE_UNDEFINED | "fn g() -> int {   return missing + 1 ..." |
-| <global> | 34 | SAMPLE_STRUCTURE | "fn f(x: int, y: int) -> int {   z = x..." |
-| aggregate | 461 | n_arity_agrees | 0 |
-| aggregate | 463 | n_not_callable | 0 |
-| aggregate | 475 | n_arity_agrees | ? |
-| aggregate | 477 | n_not_callable | ? |
-| filtered_reports | 1436 | nosecs | [] |
-| filtered_reports | 1438 | nosecs | () |
-| first_quoted_after | 110 | parts | ? |
-| parse_moon_version | 468 | parts | ? |
-| provenance_for | 381 | from_tree | () |
-| tally_partial_reasons | 756 | ex | ? |
-| validate_profile | 68 | warnings | [] |
-| <global> | 31 | SAMPLE_DEADBRANCH | "fn h(x: int) -> int {   if 1 > 2 {   ..." |
-| aggregate | 460 | n_sig_available | 0 |
-| aggregate | 474 | n_sig_available | ? |
-| collect_iface_symtabs | 2087 | ri | ? |
-| emit_file | 240 | notices_dropped | 0 |
-| split_findings | 120 | aggregated | [] |
-| collect_iface_symtabs | 2077 | tab | ? |
-| collect_iface_symtabs | 2085 | own | ? |
-| collect_iface_symtabs | 2092 | dir | ? |
-| collect_private_symtabs | 2152 | f | "", "x" |
-| filtered_reports | 1435 | filtered | () |
-| collect_iface_symtabs | 2087 | root | ? |
-| mm_parsed_with | 93 | _destructured | (?, "local variable 'x' assigned but may n..."), (?, "arg... |
-| parse_moon_mod_imports | 1925 | out | [] |
-| provenance_for | 382 | tree_version | ? |
-| collect_iface_symtabs | 2090 | stack | [?] |
-| collect_private_symtabs | 2151 | out | ? |
-| fetch_moon_mod_imports | 1850 | text | () |
-| target_version | 412 | _destructured | () |
-| tally_partial_reasons | 746 | reasons | ? |
-| collect_iface_symtabs | 2096 | entries | ? |
-| tally_partial_reasons | 747 | examples | ? |
-| filtered_reports | 1440 | _destructured | ([], []) |
-| fetch_moon_mod_imports | 1849 | mod_path | """"/moon.mod"", ""abc""/moon.mod"", ""../../etc/passwd""... |
-| collect_iface_symtabs | 2089 | user_named | ? |
-| parse_moon_mod_imports | 1926 | in_import | false |
-| collect_iface_symtabs | 2086 | skipped_dot | 0 |
-| <global> | 53 | default_findings_shown_per_file | 40 |
+| icfg_of | 289 | kinds | [] |
+| icfg_of | 290 | spans | [] |
+| icfg_of | 293 | fn_of | [] |
+| ir_block_of | 194 | b | 0 |
+| ir_block_of | 196 | k | 0 |
+| ... | ... | ... | (truncated at 300 rows) |
 
 ### 6.2 Function-level range union (L1)
 
 | Function | Variable | Min | Max | Samples | Observed values | First site |
 | --- | --- | --- | --- | --- | --- | --- |
+| bb_of | v | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb.mbt:188:3 |
 | dir_of | i | -1 | 63 | 87 | -1, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8 | src/sa/main.mbt:1781:3 |
+| finish | b | 0 | 15 | 16 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:952:3 |
+| finish | k | 0 | 64 | 991 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:954:5 |
+| rename | b | 0 | 10 | 11 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 | src/flow/ssa.mbt:681:3 |
+| rename | k | 0 | 64 | 662 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:684:7 |
+| cs_push | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_ctx.mbt:267:5 |
+| icfg_of | f | 0 | 0 | 4 | 0 | src/flow/icfg.mbt:298:3 |
+| icfg_of | i | 0 | 0 | 1 | 0 | src/flow/icfg.mbt:333:3 |
+| live_in | v | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/live.mbt:377:3 |
+| new_ssa | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:370:3 |
+| pred_of | i | 0 | 64 | 985 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfg.mbt:275:3 |
+| pred_of | k | 0 | 64 | 8650 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfg.mbt:282:5 |
+| pred_of | v | 0 | 9 | 145 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 | src/flow/cfg.mbt:280:3 |
+| prepare | b | 0 | 7 | 8 | 0, 1, 2, 3, 4, 5, 6, 7 | src/flow/ssa.mbt:503:3 |
+| prepare | k | 0 | 64 | 498 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:506:5 |
+| reaches | k | 0 | 64 | 195 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg.mbt:261:5 |
+| reaches | v | -1 | -1 | 4 | -1 | src/flow/icfg.mbt:256:5 |
+| Bb | dump | 0 | 3 | 4 | 0, 1, 2, 3 |  |
+| Bb | dump | 0 | 64 | 240 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
+| Bb | dump | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
+| Ir | dump | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
+| add_flow | g | 0 | 1 | 3 | 0, 1 | src/flow/taint.mbt:444:3-448:4 |
+| avail_in | v | 0 | 12 | 52 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/avail.mbt:463:3 |
+| bb_edges | b | 0 | 7 | 8 | 0, 1, 2, 3, 4, 5, 6, 7 | src/flow/bb_test.mbt:166:3 |
+| bb_edges | k | 0 | 64 | 501 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb_test.mbt:168:5 |
+| bb_entry | k | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb.mbt:379:3 |
+| bb_exits | b | 0 | 0 | 4 | 0 | src/flow/bb.mbt:417:3 |
+| bb_exits | i | 0 | 10 | 33 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 | src/flow/bb.mbt:420:5 |
+| bb_exits | k | 0 | 64 | 1974 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb.mbt:423:7 |
 | dir_of | cut | -1 | -1 | 4 | -1 | src/sa/main.mbt:1780:3 |
+| fits | <ret> | 1 | 1 | 4 | true | src/flow/cprop.mbt:197:1-199:2 |
+| index_of | i | 0 | 0 | 340 | 0 | src/flow/ssa.mbt:938:3 |
+| ir_exits | b | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/ir_cfg.mbt:309:3 |
+| ir_exits | k | 0 | 64 | 390 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_cfg.mbt:312:5 |
+| join_all | i | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/lattice.mbt:91:3 |
+| live_out | v | 0 | 14 | 60 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/live.mbt:409:3 |
+| pta_run | fi | 0 | 0 | 4 | 0 | src/flow/pta.mbt:649:3 |
+| Cfg | dump | 0 | 64 | 495 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
+| Cfg | dump | 0 | 7 | 8 | 0, 1, 2, 3, 4, 5, 6, 7 |  |
 | aggregate | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:467:3-497:4 |
+| build_seq | i | -1 | 2 | 14 | -1, 0, 2, 1 | src/flow/cfg.mbt:301:3 |
+| cfl_chain | i | -1 | -1 | 4 | -1 | src/flow/cfl.mbt:538:3 |
+| cg_fns_of | i | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/callgraph.mbt:483:3 |
+| intersect | x | -1 | -1 | 4 | -1 | src/flow/dom.mbt:286:3 |
+| intersect | y | -1 | -1 | 4 | -1 | src/flow/dom.mbt:287:3 |
+| ir_blocks | i | -1 | 64 | 199 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_cfg.mbt:179:5 |
 | is_hiding | h | 0 | 1 | 3 | 0, 1 | src/sa/main.mbt:81:3-85:4 |
+| path_tail | i | 0 | 17 | 38 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/core/core.mbt:61:3 |
+| path_tail | j | 2 | 64 | 1085 | 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 | src/core/core.mbt:66:7 |
+| path_tail | n | 0 | 64 | 4 | 0, 3, 16, 64 | src/core/core.mbt:63:3 |
+| ssa_check | d | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:267:3 |
+| ssa_check | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:253:3 |
+| ssa_check | k | 0 | 64 | 835 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:297:5 |
+| ssa_check | u | 0 | 12 | 13 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:294:3 |
+| ssa_lines | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa_test.mbt:65:3 |
+| subscript | i | -1 | 0 | 4 | 0, -1 | src/flow/ssa.mbt:1201:3 |
+| subscript | v | 0 | 2 | 4 | 1, 0, 2 | src/flow/ssa.mbt:1195:3 |
+| bb_leaders | b | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb_test.mbt:150:3 |
+| d_strata | lvl | 0 | 0 | 3 | 0 | src/flow/datalog.mbt:930:3 |
+| dbind_args | i | 0 | 0 | 4 | 0 | src/flow/datalog.mbt:704:3 |
+| dnum_cmp | mag | -1 | -1 | 4 | -1 | src/flow/datalog.mbt:577:3 |
+| dominators | b | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/dom.mbt:113:3 |
+| dominators | c | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/dom.mbt:108:3 |
+| dominators | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/dom.mbt:98:3 |
 | family_ids | n | 1 | 1 | 5 | 1 | src/sa/profile.mbt:118:3 |
+| ifds_graph | i | 0 | 5 | 10 | 0, 1, 2, 3, 4, 5 | src/flow/ifds_test.mbt:43:3 |
+| ir_blocks | li | 0 | 9 | 40 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 | src/flow/ir_cfg.mbt:171:3 |
+| ir_leaders | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_cfg.mbt:117:3 |
+| ir_leaders | k | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_cfg.mbt:130:3 |
 | is_dir | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1309:7-1313:2 |
+| place_phis | d | 0 | 64 | 311 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:456:7 |
+| reaches | head | 0 | 2 | 11 | 0, 1, 2 | src/flow/icfg.mbt:254:3 |
 | version_gt | i | 0 | 0 | 4 | 0 | src/sa/version.mbt:53:3 |
 | wanted | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1385:1-1393:2 |
+| SsaIr | dump | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
 | apply_nosec | n | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:403:3-413:4 |
+| build_seq | cur | -1 | 2 | 8 | -1, 0, 1, 2 | src/flow/cfg.mbt:300:3 |
 | collect | <ret> | 1 | 1 | 4 | true | src/sa/main.mbt:1332:11-1382:2 |
+| cs_sites_of | v | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_ctx.mbt:500:3 |
+| dnum_digits | i | 0 | 0 | 12 | 0 | src/flow/datalog.mbt:594:3 |
+| ir_block_of | b | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/ir_cfg.mbt:194:3 |
+| ir_block_of | k | 0 | 64 | 390 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_cfg.mbt:196:5 |
+| lower_stmts | i | 0 | 64 | 294 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir.mbt:180:3 |
+| place_phis | vi | 0 | 0 | 1 | 0 | src/flow/ssa.mbt:447:3 |
+| powerset_of | i | 0 | 3 | 49 | 0, 1, 2, 3 | src/flow/laws_test.mbt:83:5 |
+| powerset_of | k | 0 | 3 | 4 | 0, 1, 3, 2 | src/flow/laws_test.mbt:78:3 |
+| pta_add | <ret> | 0 | 0 | 4 | false | src/flow/pta.mbt:148:1-155:2 |
+| reaches | <ret> | 1 | 1 | 4 | true | src/flow/icfg.mbt:250:1-272:2 |
+| reaching_in | v | 0 | 14 | 60 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/reaching.mbt:232:3 |
+| solve_edges | i | 0 | 3 | 8 | 0, 1, 2, 3 | src/flow/worklist.mbt:200:5 |
+| solve_edges | j | 0 | 64 | 69 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/worklist.mbt:186:3 |
+| solve_edges | k | 0 | 64 | 217 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/worklist.mbt:205:9 |
+| solve_edges | v | 0 | 64 | 69 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/worklist.mbt:192:3 |
+| bb_entry | <ret> | -1 | -1 | 4 | -1 | src/flow/bb.mbt:378:1-389:2 |
+| collect_defs | b | 0 | 10 | 11 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 | src/flow/ssa.mbt:410:3 |
+| collect_defs | k | 0 | 64 | 666 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:412:5 |
+| cp_call_node | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg_test.mbt:124:3 |
+| dm_recompute | v | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_demand.mbt:308:3 |
+| dnum_cmp | <ret> | 1 | 1 | 4 | 1 | src/flow/datalog.mbt:564:1-588:2 |
+| dnum_mag_cmp | i | 0 | 0 | 5 | 0 | src/flow/datalog.mbt:618:3 |
+| drel_add | <ret> | 0 | 0 | 4 | false | src/flow/datalog.mbt:143:5-151:2 |
+| icfg_of | caller | 0 | 0 | 1 | 0 | src/flow/icfg.mbt:345:3 |
+| ifds_explode | v | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds.mbt:294:3 |
+| index_of | <ret> | -1 | -1 | 4 | -1 | src/flow/ssa.mbt:937:1-946:2 |
+| ir_blocks | stop | -1 | 1 | 3 | 1, -1, 0 | src/flow/ir_cfg.mbt:176:7 |
+| ir_entry | <ret> | -1 | -1 | 4 | -1 | src/flow/ir_cfg.mbt:287:1-295:2 |
+| ir_size_text | b | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_test.mbt:93:3 |
+| narrow_round | i | 0 | 0 | 4 | 0 | src/flow/interval.mbt:683:3 |
+| narrow_round | v | 0 | 0 | 4 | 0 | src/flow/interval.mbt:688:3 |
+| pfg_solve | head | 0 | 0 | 4 | 0 | src/flow/pfg.mbt:369:3 |
+| phi_version | pi | 0 | 0 | 260 | 0 | src/flow/ssa.mbt:874:3 |
+| pta_join | <ret> | 0 | 0 | 4 | false | src/flow/pta.mbt:165:5-175:2 |
+| pta_step | <ret> | 0 | 0 | 4 | false | src/flow/pta.mbt:506:1-574:2 |
+| reaching_gen | v | 0 | 64 | 130 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/reaching.mbt:103:3 |
+| rename_block | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:718:3 |
+| rename_block | k | 0 | 64 | 600 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:709:3 |
+| sign_leq | <ret> | 1 | 1 | 1 | true | src/flow/sign.mbt:144:5-155:2 |
 | slug | last_dash | 0 | 0 | 20 | false | src/sa/provenance.mbt:325:3 |
+| source_sites | k | 0 | 0 | 1 | 0 | src/flow/taint.mbt:311:3 |
+| states_after | i | 0 | 0 | 4 | 0 | src/flow/worklist.mbt:138:3 |
 | aggregate | total | 0 | 0 | 4 | 0 | src/sa/main.mbt:456:3 |
 | apply_nosec | hit | 0 | 0 | 6 | false | src/sa/profile.mbt:404:5 |
 | apply_profile | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/profile.mbt:172:3-176:4 |
+| bb_block_succ | b | 0 | 64 | 69 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb.mbt:363:3 |
+| bb_block_succ | i | 0 | 64 | 69 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb.mbt:318:3 |
+| bb_block_succ | v | 0 | 64 | 325 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb.mbt:323:3 |
+| bb_exits | leaves | 0 | 0 | 3 | false | src/flow/bb.mbt:419:5 |
+| build_seq | <ret> | -1 | 2 | 4 | -1, 0, 1, 2 | src/flow/cfg.mbt:299:1-307:2 |
+| cfl_chain | steps | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:522:3 |
+| cfl_path_word | e | -1 | 1 | 6 | 0, 1, -1 | src/flow/cfl.mbt:215:3-217:4 |
+| cfl_state_key | s | -1 | 1 | 6 | 0, 1, -1 | src/flow/cfl.mbt:482:3-484:4 |
 | count_notices | n | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:201:3 |
 | count_notices | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:202:3-206:4 |
+| cp_store_node | v | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg_test.mbt:102:3 |
+| d_strata | guard2 | 0 | 0 | 3 | 0 | src/flow/datalog.mbt:931:3 |
+| d_strata | passes | 0 | 1 | 6 | 0, 1 | src/flow/datalog.mbt:872:3 |
+| d_strata | placed | 0 | 0 | 3 | 0 | src/flow/datalog.mbt:929:3 |
+| defs_and_uses | v | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/laws_test.mbt:303:3 |
 | first_line | done | 0 | 0 | 5 | false | src/sa/provenance.mbt:482:3 |
+| first_node_at | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_test.mbt:206:3 |
+| icfg_of | skipped | 0 | 0 | 4 | 0 | src/flow/icfg.mbt:296:3 |
+| ifds_tabulate | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds_tab.mbt:72:3 |
+| index_of_name | i | 0 | 0 | 334 | 0 | src/flow/ssa.mbt:925:3 |
+| intersect | <ret> | -1 | -1 | 4 | -1 | src/flow/dom.mbt:280:1-297:2 |
+| ir_block_succ | b | 0 | 0 | 4 | 0 | src/flow/ir_cfg.mbt:235:3 |
+| ir_block_succ | i | 0 | 0 | 4 | 0 | src/flow/ir_cfg.mbt:230:3 |
+| ir_block_succ | s | 0 | 0 | 4 | 0 | src/flow/ir_cfg.mbt:272:3 |
+| ir_blocks | start | -1 | 1 | 6 | 0, 1, -1 | src/flow/ir_cfg.mbt:173:5 |
+| ir_exits | leaves | 0 | 1 | 396 | false, true | src/flow/ir_cfg.mbt:311:5 |
 | is_hiding | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:80:5-87:2 |
+| join_of_nodes | i | 0 | 64 | 11521 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/lattice.mbt:110:3 |
+| pta_after | <ret> | 1 | 1 | 4 | true | src/flow/pta.mbt:308:1-332:2 |
+| pta_inter_run | i | 0 | 0 | 5 | 0 | src/flow/pta_inter.mbt:484:3 |
+| pta_run | changed | 1 | 1 | 3 | true | src/flow/pta.mbt:652:5 |
+| reaching_kill | i | 0 | 64 | 130 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/reaching.mbt:152:3 |
+| reaching_kill | v | 0 | 64 | 130 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/reaching.mbt:139:3 |
+| rename_block | si | 0 | 1 | 8 | 0, 1 | src/flow/ssa.mbt:726:3 |
+| snapshot_vst | fr | -1 | 1 | 6 | 0, 1, -1 | src/core/core.mbt:1088:3-1090:4 |
+| solve_edges | any | 0 | 1 | 223 | true, false | src/flow/worklist.mbt:197:3 |
+| subset_of | <ret> | 1 | 1 | 4 | true | src/flow/laws_test.mbt:58:1-65:2 |
+| taint_analyze | g | -1 | 1 | 6 | 0, 1, -1 | src/flow/taint.mbt:243:5 |
+| avail_transfer | i | 0 | 64 | 195 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/avail.mbt:395:3 |
+| avail_universe | v | 0 | 64 | 455 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/avail.mbt:304:3 |
+| bb_block_lines | k | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/bb_test.mbt:135:3 |
+| blocks_of_defs | i | 0 | 64 | 325 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:489:3 |
+| cg_derive_list | j | -1 | 2 | 5 | -1, 0, 1, 2 | src/flow/callgraph.mbt:283:3 |
+| cg_impl_header | j | -1 | 2 | 4 | -1, 0, 1, 2 | src/flow/callgraph.mbt:227:3 |
 | count_by_shape | r | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:265:3-271:4 |
 | count_rows0521 | n | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:75:3 |
+| cp_count_label | k | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg_test.mbt:154:3 |
+| cp_count_label | n | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg_test.mbt:155:3 |
+| cp_return_site | k | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg_test.mbt:137:3 |
+| d_strata | changed | 0 | 1 | 6 | true, false | src/flow/datalog.mbt:871:3 |
+| declared_types | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/callgraph.mbt:504:3 |
+| drule_safe | <ret> | 1 | 1 | 1 | true | src/flow/datalog.mbt:334:5-343:2 |
+| ir_leader_text | b | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_test.mbt:78:3 |
 | mm_check | in_note | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:310:3 |
 | mm_id_char | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:197:1-199:2 |
 | mm_parsed_with | i | 0 | 2 | 6 | 0, 1, 2 | src/sa/mermaid_test.mbt:92:3-95:4 |
 | mm_state_id | seen | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:284:3 |
+| name_set_eq | same | 1 | 1 | 4 | true | src/flow/live.mbt:103:3 |
+| names_of_exprs | x | -1 | 1 | 6 | 0, 1, -1 | src/flow/live.mbt:220:3-222:4 |
+| names_of_stmts | s | -1 | 1 | 6 | 0, 1, -1 | src/flow/live.mbt:227:3-229:4 |
 | ok_segment | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:2043:1-2054:2 |
+| powerset_of | mask | 0 | 8 | 19 | 0, 1, 2, 3, 4, 5, 6, 7, 8 | src/flow/laws_test.mbt:80:3 |
+| pta_demand_run | i | 0 | 0 | 6 | 0 | src/flow/pta_demand.mbt:400:3 |
+| pta_map_eq | <ret> | 0 | 0 | 1 | false | src/flow/pta_flow.mbt:169:1-180:2 |
+| pta_site_names | a | 1 | 1 | 24 | 1 | src/flow/pta.mbt:390:3 |
+| pta_site_names | g | -1 | 1 | 18 | 0, 1, -1 | src/flow/pta.mbt:369:5 |
+| pta_site_names | i | 0 | 0 | 24 | 0 | src/flow/pta.mbt:383:3 |
+| pta_site_names | k | 0 | 0 | 24 | 0 | src/flow/pta.mbt:418:3 |
+| pta_site_names | r | 0 | 0 | 24 | 0 | src/flow/pta.mbt:419:3 |
+| pta_site_names | v | 0 | 64 | 1365 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta.mbt:370:5 |
+| pta_step | changed | 0 | 0 | 1023 | false | src/flow/pta.mbt:516:3 |
+| pta_sweep_heap | v | 0 | 64 | 1034 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta.mbt:614:3 |
 | render_reports | r | -1 | 1 | 6 | 0, 1, -1 | src/report/report.mbt:258:3-260:4 |
+| solve_widening | i | 0 | 0 | 4 | 0 | src/flow/interval.mbt:621:3 |
+| solve_widening | p | 0 | 0 | 2 | 0 | src/flow/interval.mbt:634:5 |
+| solve_widening | v | 0 | 0 | 2 | 0 | src/flow/interval.mbt:640:5 |
+| solve_worklist | i | 0 | 0 | 4 | 0 | src/flow/worklist.mbt:270:3 |
+| solve_worklist | v | 0 | 0 | 4 | 0 | src/flow/worklist.mbt:279:5 |
+| ssa_check | unique | 1 | 1 | 1 | true | src/flow/ssa.mbt:266:3 |
+| taint_analyze | fi | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/taint.mbt:241:3 |
 | aggregate | n_calls | 0 | 0 | 4 | 0 | src/sa/main.mbt:458:3 |
 | aggregate | notices | 0 | 0 | 4 | 0 | src/sa/main.mbt:453:3 |
+| assign_versions | a | 0 | 6 | 7 | 0, 1, 2, 3, 4, 5, 6 | src/flow/ssa.mbt:626:5 |
+| assign_versions | c | 0 | 64 | 405 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:629:7 |
+| assign_versions | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:596:5 |
+| assign_versions | k | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:617:5 |
+| assign_versions | v | 64 | 64 | 6 | 64 | src/flow/ssa.mbt:642:7 |
+| cfl_labels_text | k | 0 | 64 | 976 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfl_test.mbt:82:5 |
+| cfl_labels_text | v | 0 | 15 | 16 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfl_test.mbt:79:3 |
+| cfl_node_of_key | i | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:491:3 |
+| cfl_node_of_key | n | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:492:3 |
+| cfl_pair_counts | u | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:457:3 |
+| cfl_search_from | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfl.mbt:321:3 |
+| cfl_word_text | sym | -1 | 1 | 6 | 0, 1, -1 | src/flow/cfl.mbt:132:3-134:4 |
+| cg_collect_lets | i | 0 | 64 | 69 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/callgraph.mbt:516:3 |
+| cg_derive_list | go | 1 | 1 | 4 | true | src/flow/callgraph.mbt:290:3 |
+| chain_violation | v | 0 | 2 | 7 | 0, 1, 2 | src/flow/laws_test.mbt:254:3 |
 | civil_from_days | d | 1 | 31 | 4 | 31, 1, 2, 3 | src/sa/provenance.mbt:165:3 |
 | civil_from_days | y | 1969 | 1969 | 4 | 1969 | src/sa/provenance.mbt:162:3 |
 | civil_from_days | z | 719467 | 719470 | 4 | 719467, 719468, 719469, 719470 | src/sa/provenance.mbt:158:3 |
 | collect | last_dirs | 0 | 0 | 8 | 0 | src/sa/main.mbt:1340:3 |
 | collect | seen_dirs | 0 | 64 | 520 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/sa/main.mbt:1338:3 |
+| d_has_match | <ret> | 0 | 0 | 4 | false | src/flow/datalog.mbt:723:1-747:2 |
+| dm_param_source | i | 0 | 64 | 520 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_demand.mbt:276:3 |
+| ir_leaders | leader | 0 | 1 | 508 | true, false | src/flow/ir_cfg.mbt:132:5 |
 | mm_count_quotes | n | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:224:3 |
 | mm_id_start | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:192:1-194:2 |
 | mm_valid_id | <ret> | 0 | 1 | 4 | false, true | src/sa/mermaid_test.mbt:204:1-220:2 |
 | mm_valid_id | first | 1 | 1 | 3 | true | src/sa/mermaid_test.mbt:208:3 |
+| name_set_eq | <ret> | 1 | 1 | 4 | true | src/flow/live.mbt:102:5-115:2 |
+| pfg_expr_stores | n | 0 | 0 | 5 | 0 | src/flow/pfg.mbt:305:3 |
+| pfg_solve | skipped | 0 | 0 | 4 | 0 | src/flow/pfg.mbt:371:3 |
+| powerset_of | total | 1 | 8 | 4 | 1, 2, 8, 4 | src/flow/laws_test.mbt:79:3 |
+| pta_site_names | fi | 0 | 3 | 45 | 0, 1, 2, 3 | src/flow/pta.mbt:367:3 |
+| rename_block | slot | 0 | 0 | 332 | 0 | src/flow/ssa.mbt:732:7 |
 | version_parts | cur | 0 | 0 | 12 | 0 | src/sa/version.mbt:77:3 |
+| Interval | le | 1 | 1 | 4 | true |  |
 | aggregate | withheld | 0 | 0 | 4 | 0 | src/sa/main.mbt:455:3 |
+| assign_versions | pi | 0 | 0 | 70 | 0 | src/flow/ssa.mbt:620:7 |
+| assign_versions | vi | 0 | 0 | 1 | 0 | src/flow/ssa.mbt:587:3 |
+| bb_is_leader | <ret> | 1 | 1 | 4 | true | src/flow/bb.mbt:280:1-296:2 |
+| build_call_graph | i | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/callgraph.mbt:731:3 |
+| cfl_call_site_at | i | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:146:3 |
 | civil_from_days | mp | 9 | 10 | 4 | 9, 10 | src/sa/provenance.mbt:164:3 |
 | collect | last_files | 0 | 0 | 8 | 0 | src/sa/main.mbt:1339:3 |
+| dnum_mag_cmp | <ret> | -1 | 0 | 4 | 0, -1 | src/flow/datalog.mbt:611:1-631:2 |
+| icfg_of | unresolved | 0 | 0 | 1 | 0 | src/flow/icfg.mbt:344:3 |
+| ifds_definitions | g | -1 | 1 | 6 | 0, 1, -1 | src/flow/ifds.mbt:215:3-221:4 |
+| ifds_tabulate | head | 0 | 1 | 6 | 0, 1 | src/flow/ifds_tab.mbt:83:3 |
+| ifds_tabulate | node | 0 | 2 | 3 | 0, 1, 2 | src/flow/ifds_tab.mbt:86:5 |
 | metrics_lines | n_hi | 0 | 0 | 4 | 0 | src/sa/main.mbt:659:3 |
 | metrics_lines | n_lo | 0 | 0 | 4 | 0 | src/sa/main.mbt:660:3 |
 | metrics_lines | n_un | 0 | 0 | 4 | 0 | src/sa/main.mbt:661:3 |
+| pfg_add_edge | <ret> | 1 | 1 | 4 | true | src/flow/pfg.mbt:102:5-121:2 |
+| pi_object_types | fi | 0 | 0 | 4 | 0 | src/flow/pta_inter.mbt:146:3 |
+| pta_ctx_run_heap | i | 0 | 0 | 16 | 0 | src/flow/pta_ctx.mbt:599:3 |
+| pta_inter_run | head | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_inter.mbt:524:3 |
+| sign_state_eq | same | 1 | 1 | 1 | true | src/flow/sign.mbt:363:3 |
+| solve_worklist | any | 0 | 1 | 8 | true, false | src/flow/worklist.mbt:276:3 |
+| source_after | <ret> | 0 | 0 | 4 | false | src/flow/cfg.mbt:139:5-144:2 |
+| ssa_check | dangling | 0 | 0 | 1 | 0 | src/flow/ssa.mbt:293:3 |
+| ssa_check | resolved | 1 | 1 | 1 | true | src/flow/ssa.mbt:292:3 |
+| Cfg | source_order | 1 | 64 | 64 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 |  |
+| Cfg | source_order | -1 | 62 | 126 | 0, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 |  |
+| Cfg | source_order | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
 | aggregate | n_checked | 0 | 0 | 4 | 0 | src/sa/main.mbt:459:3 |
+| avail_transfer | scan | 0 | 64 | 195 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/avail.mbt:375:3 |
+| cfl_ordinary_from | e | 0 | 64 | 6323 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfl.mbt:294:5 |
+| cfl_ordinary_from | i | 0 | 64 | 520 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfl.mbt:280:3 |
+| cfl_ordinary_from | k | 0 | 14 | 107 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfl.mbt:286:3 |
+| cfl_ordinary_from | v | -1 | 2 | 8 | -1, 0, 1, 2 | src/flow/cfl.mbt:288:5 |
+| cfl_program_entry | f | 0 | 0 | 1 | 0 | src/flow/cfl.mbt:261:3 |
+| cfl_program_entry | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cfl.mbt:256:3 |
 | civil_from_days | doe | 135079 | 135082 | 4 | 135079, 135080, 135081, 135082 | src/sa/provenance.mbt:160:3 |
 | civil_from_days | doy | 305 | 308 | 4 | 305, 306, 307, 308 | src/sa/provenance.mbt:163:3 |
 | civil_from_days | era | 4 | 4 | 4 | 4 | src/sa/provenance.mbt:159:3 |
 | civil_from_days | yoe | 369 | 369 | 4 | 369 | src/sa/provenance.mbt:161:3 |
 | count_notices | <ret> | 0 | 3 | 4 | 0, 1, 3, 2 | src/sa/main.mbt:200:5-208:2 |
+| cp_store_node | <ret> | 61 | 63 | 3 | 63, 62, 61 | src/flow/icfg_test.mbt:95:1-117:2 |
+| cs_result_of_list | i | 0 | 64 | 69 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_ctx.mbt:430:3 |
+| first_node_at | <ret> | 0 | 0 | 4 | 0 | src/flow/pta_test.mbt:205:1-215:2 |
+| first_node_at | found | -1 | 0 | 8 | -1, 0 | src/flow/pta_test.mbt:207:3 |
+| index_of_name | <ret> | -1 | -1 | 4 | -1 | src/flow/ssa.mbt:924:1-933:2 |
 | parse_nosec | line_no | 0 | 0 | 8 | 0 | src/sa/profile.mbt:287:3 |
 | profile_keeps | <ret> | 0 | 0 | 1 | false | src/sa/profile.mbt:148:5-157:2 |
+| pta_demand_run | head | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_demand.mbt:457:3 |
+| reaching_use_defs | v | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/reaching.mbt:259:3 |
+| reverse_postorder | k | -1 | 63 | 130 | 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52 | src/flow/dom.mbt:213:3 |
+| sign_state_eq | <ret> | 1 | 1 | 1 | true | src/flow/sign.mbt:362:5-383:2 |
+| solve_propagation | i | 0 | 3 | 23 | 0, 1, 2, 3 | src/flow/worklist.mbt:100:5 |
+| solve_propagation | j | 0 | 64 | 329 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/worklist.mbt:86:3 |
+| solve_propagation | k | 0 | 64 | 1034 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/worklist.mbt:105:9 |
+| solve_propagation | v | 0 | 64 | 329 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/worklist.mbt:92:3 |
+| solve_round_robin | i | 0 | 64 | 257 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/worklist.mbt:44:3 |
+| solve_round_robin | v | 0 | 7 | 15 | 0, 1, 2, 3, 4, 5, 6, 7 | src/flow/worklist.mbt:52:5 |
 | split_coord | seen_at | 0 | 0 | 13 | false | src/sa/main.mbt:1290:3 |
 | suffix_of | after_dot | 0 | 0 | 16 | false | src/sa/main.mbt:1735:3 |
 | version_parts | named | 0 | 0 | 12 | false | src/sa/version.mbt:78:3 |
+| Interval | join | -1 | 2 | 4 | -1, 0, 1, 2 |  |
+| Interval | same | 1 | 1 | 4 | true |  |
 | aggregate | actionable | 0 | 0 | 4 | 0 | src/sa/main.mbt:452:3 |
 | aggregate | unreliable | 0 | 0 | 4 | 0 | src/sa/main.mbt:454:3 |
+| assign_versions | rank | 0 | 64 | 406 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:628:7 |
+| base_type_name | state | 0 | 0 | 4 | 0 | src/flow/callgraph.mbt:620:3 |
+| cfl_return_site_at | i | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:165:3 |
 | count_rows0521 | <ret> | 0 | 0 | 4 | 0 | src/sa/sa_0521_test.mbt:74:1-82:2 |
+| cp_count_label | <ret> | 64 | 64 | 4 | 64 | src/flow/icfg_test.mbt:153:1-169:2 |
+| cp_return_site | <ret> | -1 | -1 | 4 | -1 | src/flow/icfg_test.mbt:136:1-147:2 |
+| cp_return_site | found | -1 | -1 | 4 | -1 | src/flow/icfg_test.mbt:138:3 |
+| ifds_tabulate_text | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds_tab.mbt:126:3 |
+| interval_state_bot | i | 0 | 2 | 7 | 0, 1, 2 | src/flow/interval.mbt:526:3 |
+| monotone_violation | v | 0 | 2 | 7 | 0, 1, 2 | src/flow/laws_test.mbt:211:3 |
+| pfg_solve | propagated | 0 | 0 | 4 | 0 | src/flow/pfg.mbt:370:3 |
+| pta_sweep_heap | <ret> | 1 | 1 | 4 | true | src/flow/pta.mbt:605:5-622:2 |
+| solve_widening | iters | 0 | 1 | 6 | 0, 1 | src/flow/interval.mbt:626:3 |
+| widen_interval | <ret> | -1 | -1 | 4 | -1 | src/flow/interval.mbt:480:5-512:2 |
+| Cfg | node_after | 1 | 1 | 4 | true |  |
+| Cfg | source_order | 1 | 63 | 63 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 |  |
+| Interval | holds | 0 | 0 | 4 | false |  |
 | aggregate | n_unchecked | 0 | 0 | 4 | 0 | src/sa/main.mbt:457:3 |
+| assign_versions | total | 64 | 64 | 1 | 64 | src/flow/ssa.mbt:625:5 |
+| build_call_graph | head | 0 | 1 | 8 | 0, 1 | src/flow/callgraph.mbt:745:3 |
+| cfl_node_of_key | <ret> | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:490:1-502:2 |
+| cfl_search_from | found | 0 | 0 | 4 | false | src/flow/cfl.mbt:331:3 |
+| collect_trait_table | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/callgraph.mbt:358:3 |
+| cprop_edge_transfer | _ | -1 | 2 | 8 | -1, 0, 1, 2 | src/flow/cprop.mbt:330:3 |
+| dominance_frontiers | b | 0 | 0 | 1 | 0 | src/flow/dom.mbt:147:3 |
+| dominance_frontiers | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/dom.mbt:142:3 |
+| ifds_tabulate | visited | 0 | 0 | 3 | 0 | src/flow/ifds_tab.mbt:84:3 |
+| interval_state_join | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/interval.mbt:544:3 |
+| interval_state_same | i | 0 | 0 | 1 | 0 | src/flow/interval.mbt:558:3 |
 | is_module_coord | <ret> | 0 | 0 | 4 | false | src/sa/main.mbt:1994:5-2039:2 |
 | mm_count_quotes | <ret> | 0 | 0 | 4 | 0 | src/sa/mermaid_test.mbt:223:1-231:2 |
+| pfg_expr_stores | <ret> | 0 | 0 | 1 | 0 | src/flow/pfg.mbt:304:1-325:2 |
+| pta_ctx_run_heap | head | 0 | 0 | 8 | 0 | src/flow/pta_ctx.mbt:639:3 |
+| pta_inter_run | no_body | 0 | 0 | 1 | 0 | src/flow/pta_inter.mbt:519:3 |
+| pta_inter_run | skipped | 0 | 0 | 1 | 0 | src/flow/pta_inter.mbt:518:3 |
+| raises_with_payload | i | 0 | 0 | 4 | 0 | src/flow/icfg.mbt:205:3 |
+| solve_propagation | any | 0 | 1 | 1033 | true, false | src/flow/worklist.mbt:97:3 |
 | ssa_cost_over_files | i | 0 | 3 | 14 | 0, 1, 2, 3 | src/sa/ssa_cost.mbt:106:3 |
+| Cfg | source_order | 0 | 0 | 63 | 0 |  |
 | aggregate | n_unknown_fn | 0 | 0 | 4 | 0 | src/sa/main.mbt:462:3 |
 | aggregate | n_unresolved | 0 | 0 | 4 | 0 | src/sa/main.mbt:464:3 |
 | aggregate | parsed_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:450:3 |
+| cfl_call_site_at | <ret> | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:145:1-154:2 |
+| cfl_search_from | states | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:330:3 |
+| dominance_frontiers | pi | 0 | 9 | 10 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 | src/flow/dom.mbt:153:9 |
+| dominance_frontiers | si | 0 | 0 | 1 | 0 | src/flow/dom.mbt:150:7 |
+| ifds_supergraph_text | v | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds.mbt:361:3 |
+| pi_add_reachable | <ret> | 0 | 0 | 4 | 0 | src/flow/pta_inter.mbt:257:1-304:2 |
+| pta_inter_run | analyzed | 0 | 0 | 2 | 0 | src/flow/pta_inter.mbt:521:3 |
+| pta_sweep_heap | changed | 0 | 1 | 1035 | false, true | src/flow/pta.mbt:613:3 |
+| solve_widening | changed | 0 | 0 | 2 | false | src/flow/interval.mbt:639:5 |
+| source_sites | prev_line | -1 | -1 | 1 | -1 | src/flow/taint.mbt:310:3 |
+| taint_spec_sink_text | k | 0 | 0 | 4 | 0 | src/flow/taint.mbt:202:3 |
+| taint_spec_sink_text | n | 0 | 0 | 4 | 0 | src/flow/taint.mbt:217:3 |
+| Interval | is_full | 1 | 1 | 4 | true |  |
 | aggregate | n_dotdot_call | 0 | 0 | 4 | 0 | src/sa/main.mbt:466:3 |
 | aggregate | n_method_call | 0 | 0 | 4 | 0 | src/sa/main.mbt:465:3 |
 | aggregate | partial_files | 0 | 3 | 10 | 0, 1, 2, 3 | src/sa/main.mbt:451:3 |
+| cfl_search_from | bounded | 0 | 0 | 4 | false | src/flow/cfl.mbt:332:3 |
+| cfl_word_realizable | sym | -1 | 1 | 6 | 0, 1, -1 | src/flow/cfl.mbt:98:3-113:4 |
 | mm_state_id | after_close | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:285:3 |
+| soundiness_counts | sound | 0 | 0 | 2 | 0 | src/core/soundiness.mbt:328:3 |
 | tally_partial_reasons | v | -1 | 1 | 6 | 0, 1, -1 | src/sa/main.mbt:748:3-765:4 |
+| Cfg | source_order | 0 | 1 | 126 | false, true |  |
+| Interval | is_empty | 1 | 1 | 4 | true |  |
 | aggregate | n_arity_agrees | 0 | 0 | 4 | 0 | src/sa/main.mbt:461:3 |
 | aggregate | n_not_callable | 0 | 0 | 4 | 0 | src/sa/main.mbt:463:3 |
+| carries_caveat0611 | <ret> | 0 | 0 | 1 | false | src/core/advice_0611_test.mbt:36:1-43:2 |
+| cfl_pair_counts | excluded | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:456:3 |
+| cfl_pair_counts | ordinary | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:454:3 |
+| cfl_return_site_at | <ret> | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:164:1-176:2 |
 | is_family_id_shape | <ret> | 0 | 0 | 4 | false | src/sa/profile.mbt:222:1-240:2 |
+| pta_ctx_run_heap | no_body | 0 | 0 | 8 | 0 | src/flow/pta_ctx.mbt:629:3 |
+| pta_inter_run | propagated | 0 | 0 | 1 | 0 | src/flow/pta_inter.mbt:517:3 |
+| pta_inter_run | unresolved | 0 | 0 | 1 | 0 | src/flow/pta_inter.mbt:520:3 |
+| pta_site_names | prev_line | -1 | -1 | 24 | -1 | src/flow/pta.mbt:417:3 |
+| solve_widening | converged | 0 | 1 | 6 | false, true | src/flow/interval.mbt:627:3 |
+| soundiness_counts | soundy | 0 | 0 | 2 | 0 | src/core/soundiness.mbt:329:3 |
 | aggregate | n_sig_available | 0 | 0 | 4 | 0 | src/sa/main.mbt:460:3 |
+| build_call_graph | resolved | 0 | 0 | 4 | 0 | src/flow/callgraph.mbt:741:3 |
+| cfl_word_realizable | <ret> | 1 | 1 | 4 | true | src/flow/cfl.mbt:96:5-115:2 |
+| collect_trait_table | depth | 0 | 0 | 4 | 0 | src/flow/callgraph.mbt:355:3 |
 | emit_file | notices_dropped | 0 | 0 | 4 | 0 | src/sa/mermaid.mbt:240:3 |
+| ifds_supergraph_returns | s | 0 | 64 | 991 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds.mbt:447:5 |
+| ifds_supergraph_returns | v | 0 | 15 | 16 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds.mbt:445:3 |
+| interval_state_same | <ret> | 0 | 1 | 4 | true, false | src/flow/interval.mbt:554:5-566:2 |
+| raises_with_payload | <ret> | 0 | 1 | 4 | false, true | src/flow/icfg.mbt:204:1-213:2 |
+| solve_round_robin | changed | 0 | 1 | 21 | true, false | src/flow/worklist.mbt:49:3 |
+| soundiness_counts | unsound | 0 | 0 | 2 | 0 | src/core/soundiness.mbt:330:3 |
 | Nosec | covers_family | 1 | 1 | 1 | true |  |
+| TraitTable | is_trait | 0 | 0 | 4 | false |  |
+| cfl_pair_counts | realizable | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:455:3 |
+| ifds_supergraph_text | n_c2r | 0 | 0 | 1 | 0 | src/flow/ifds.mbt:360:3 |
+| taint_spec_sink_text | <ret> | 1 | 1 | 4 | true | src/flow/taint.mbt:199:5-226:2 |
+| IfaceSymTab | has_type | 0 | 0 | 4 | false |  |
+| build_call_graph | unresolved | 0 | 0 | 4 | 0 | src/flow/callgraph.mbt:742:3 |
+| ifds_supergraph_text | n_call | 0 | 0 | 1 | 0 | src/flow/ifds.mbt:359:3 |
+| pta_ctx_run_heap | unresolved | 0 | 0 | 8 | 0 | src/flow/pta_ctx.mbt:628:3 |
+| IfaceSymTab | has_value | 0 | 0 | 4 | false |  |
+| ifds_supergraph_text | n_to_ret | 0 | 0 | 1 | 0 | src/flow/ifds.mbt:358:3 |
+| native_surface_coverage | covered | 0 | 0 | 4 | 0 | src/core/native_surface.mbt:108:3 |
+| native_surface_coverage | missing | 0 | 0 | 4 | 0 | src/core/native_surface.mbt:109:3 |
 | parse_moon_mod_imports | in_import | 0 | 0 | 4 | false | src/sa/main.mbt:1926:3 |
 | collect_iface_symtabs | skipped_dot | 0 | 0 | 4 | 0 | src/sa/main.mbt:2086:3 |
+| native_surface_coverage | modelled_only | 0 | 0 | 4 | 0 | src/core/native_surface.mbt:118:3 |
 
 ### 6.3 Abstract may-ranges (L2)
 
@@ -2804,7 +3429,7 @@ Deductive verification is WP-style: each contract becomes verification condition
 
 _No verification condition generated._
 
-Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `pred_of (src/flow/cfg.mbt:268)`, `build_else (src/flow/cfg.mbt:481)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `new_ssa (src/flow/ssa.mbt:362)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `subscript (src/flow/ssa.mbt:1184)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `cprop_after (src/flow/cprop.mbt:399)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `powerset_of (src/flow/laws_test.mbt:76)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`
+Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `path_tail (src/core/core.mbt:59)`, `bb_is_leader (src/flow/bb.mbt:280)`, `bb_entry (src/flow/bb.mbt:378)`, `bb_exits (src/flow/bb.mbt:415)`, `Bb::dump (src/flow/bb.mbt:455)`, `lower_stmts (src/flow/ir.mbt:175)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `Cfg::node_after (src/flow/cfg.mbt:203)`, `pred_of (src/flow/cfg.mbt:268)`, `build_seq (src/flow/cfg.mbt:299)`, `build_else (src/flow/cfg.mbt:481)`, `Cfg::dump (src/flow/cfg.mbt:508)`, `cfl_call_site_at (src/flow/cfl.mbt:145)`, `cfl_return_site_at (src/flow/cfl.mbt:164)`, `cfl_program_entry (src/flow/cfl.mbt:254)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_node_of_key (src/flow/cfl.mbt:490)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_site_names (src/flow/pta.mbt:362)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `ssa_check (src/flow/ssa.mbt:250)`, `new_ssa (src/flow/ssa.mbt:362)`, `collect_defs (src/flow/ssa.mbt:409)`, `place_phis (src/flow/ssa.mbt:446)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `rename (src/flow/ssa.mbt:678)`, `rename_block (src/flow/ssa.mbt:704)`, `phi_version (src/flow/ssa.mbt:873)`, `unwind (src/flow/ssa.mbt:911)`, `index_of_name (src/flow/ssa.mbt:924)`, `index_of (src/flow/ssa.mbt:937)`, `finish (src/flow/ssa.mbt:950)`, `subscript (src/flow/ssa.mbt:1184)`, `raises_with_payload (src/flow/icfg.mbt:204)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `ifds_explode (src/flow/ifds.mbt:286)`, `ifds_supergraph_text (src/flow/ifds.mbt:357)`, `ifds_supergraph_returns (src/flow/ifds.mbt:443)`, `live_in (src/flow/live.mbt:373)`, `live_out (src/flow/live.mbt:403)`, `avail_transfer (src/flow/avail.mbt:369)`, `avail_in (src/flow/avail.mbt:453)`, `cprop_after (src/flow/cprop.mbt:399)`, `taint_analyze (src/flow/taint.mbt:237)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_of (src/flow/ir_cfg.mbt:192)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `ir_exits (src/flow/ir_cfg.mbt:307)`, `bb_node_line (src/flow/bb_test.mbt:127)`, `bb_block_lines (src/flow/bb_test.mbt:133)`, `bb_edges (src/flow/bb_test.mbt:164)`, `dnum_digits (src/flow/datalog.mbt:592)`, `join_all (src/flow/lattice.mbt:89)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `cs_result_of_list (src/flow/pta_ctx.mbt:429)`, `cfl_labels_text (src/flow/cfl_test.mbt:77)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `ifds_tabulate_text (src/flow/ifds_tab.mbt:124)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `pta_fs_step (src/flow/pta_flow.mbt:202)`, `first_node_at (src/flow/pta_test.mbt:205)`, `reaching_kill (src/flow/reaching.mbt:134)`, `reaching_in (src/flow/reaching.mbt:229)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `ssa_lines (src/flow/ssa_test.mbt:63)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `declared_types (src/flow/callgraph.mbt:502)`, `cg_collect_lets (src/flow/callgraph.mbt:515)`, `build_call_graph (src/flow/callgraph.mbt:725)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `cp_return_site (src/flow/icfg_test.mbt:136)`, `cp_count_label (src/flow/icfg_test.mbt:153)`, `powerset_of (src/flow/laws_test.mbt:76)`, `defs_and_uses (src/flow/laws_test.mbt:298)`, `pta_inter_run (src/flow/pta_inter.mbt:478)`, `dm_param_source (src/flow/pta_demand.mbt:269)`, `dm_recompute (src/flow/pta_demand.mbt:303)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `lit_step (src/lexer/lexer.mbt:582)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`
 
 ## 9. Method summary
 

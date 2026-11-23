@@ -1858,11 +1858,23 @@ pub fn render_report(
   out.write_string(
     "| Entry selection | " +
     (if per_function {
-      "every function (the `--max-functions` cap was lifted)"
-    } else {
+      "every function (the step budget and the `--max-functions` cap were lifted)"
+    } else if input.run.stopped_by_count {
       "the first " +
       input.run.functions_run.to_string() +
       " functions in file order (the `--max-functions` cap applies)"
+    } else if input.run.stopped_by_budget {
+      "every function, until the module's step budget (" +
+      input.run.max_total_steps.to_string() +
+      " steps) was spent: " +
+      input.run.functions_run.to_string() +
+      " functions were entered"
+    } else {
+      "every function was entered (" +
+      input.run.functions_run.to_string() +
+      "); the step budget (" +
+      input.run.max_total_steps.to_string() +
+      " steps) was not reached"
     }) +
     " |\n",
   )

@@ -159,15 +159,32 @@ export function ownSourceClaims(findings) {
     }));
 }
 
+/// Does this registered row answer a claim about this function?
+///
+/// A row whose name ends in DOTS answers a PREFIX of the function's name --
+/// that is how `ffi_check_signature_...` answers
+/// `ffi_check_signature_conflicts`.  A row whose name does NOT end in dots
+/// answers EXACTLY that function.
+///
+/// The exact rule is the stricter one, and it was tightened on purpose: with
+/// a loose prefix rule a row for `P::peek` also answered `P::peek_at`, so a
+/// claim could be answered by a row that was about a DIFFERENT function.  That
+/// is a hole in the checker, not in the register: the two claims are counted
+/// separately, and only one of them is about `P::peek`.
+function answers(r, fn) {
+  const name = r.fn.replace(/\.+$/, '');
+  if (name.length === 0) return false;
+  if (name !== r.fn) return fn.startsWith(name);
+  return fn === name;
+}
+
 /// The registered rows that could answer a claim: the same file, a function
-/// name that is a prefix of the measured one (the register writes
-/// `ffi_check_signature_...` where the name is longer), and the family.
+/// name that answers it, and the family.
 function rowsFor(rows, claim) {
   return rows.filter(
     (r) =>
       r.file === claim.base &&
-      r.fn.replace(/\.+$/, '').length > 0 &&
-      claim.fn.startsWith(r.fn.replace(/\.+$/, '')) &&
+      answers(r, claim.fn) &&
       r.families.has(claim.family),
   );
 }
@@ -227,10 +244,7 @@ export function compareRegister(register, claims, familyCodes) {
   for (const r of register.rows) {
     for (const [family, count] of r.families) {
       const matched = claims.filter(
-        (c) =>
-          c.base === r.file &&
-          c.family === family &&
-          c.fn.startsWith(r.fn.replace(/\.+$/, '')),
+        (c) => c.base === r.file && c.family === family && answers(r, c.fn),
       );
       const got = matched.length;
       if (got !== count) {
@@ -266,6 +280,41 @@ export function compareRegister(register, claims, familyCodes) {
   return problems;
 }
 
+///|
+/// The findings the report says NO input reproduced.
+///
+/// The report lists them -- "a count is not a list: a reader who wants to
+/// know what was left out needs to see what it was" -- so a claim that has
+/// no counterexample is not a claim nobody answered: it is a claim the
+/// report accounted for.  What must not happen is a claim that is in NEITHER
+/// the counterexample table NOR this one.
+export function parseUnreproduced(report) {
+  const marker = "that **no** input in the analyser's candidate set reproduced";
+  const at = report.indexOf(marker);
+  if (at < 0) return null;
+  const rows = [];
+  for (const line of report.slice(at).split(/\r?\n/)) {
+    if (!line.trim().startsWith('|')) continue;
+    const cells = line.split('|').slice(1, -1).map((s) => s.trim());
+    if (cells.length < 3) continue;
+    const rule = /`([A-Z][A-Z-]*)`/.exec(cells[0]);
+    const loc = /([^\s:|]+\.mbt):(\d+)/.exec(cells[1]);
+    const fn = /`([^`]+)`/.exec(cells[2]);
+    if (!rule || !loc || !fn) continue;
+    rows.push({ rule: rule[1], file: loc[1], fn: fn[1] });
+  }
+  return rows;
+}
+
+///|
+/// How many findings the minimisation left out because of its limit.  A
+/// finding left out is a finding nobody looked at, and the number has to be
+/// zero for the register's rule to mean anything.
+export function parseLeftOutByLimit(report) {
+  const m = /\*\*(\d+)\*\* findings were left out by the limit/.exec(report);
+  return m ? Number(m[1]) : null;
+}
+
 // --------------------------------------------------------------- the source
 
 /// Every `.mbt` file under `src/`, by base name.
@@ -289,8 +338,15 @@ function readSidecar(dir, suffix) {
     .map((l) => JSON.parse(l));
 }
 
+/// The report of a run, read from the directory it was written to.
+function readReport(dir) {
+  const file = readdirSync(dir).find((f) => f.endsWith('.md'));
+  return file ? readFileSync(join(dir, file), 'utf8') : null;
+}
+
 let findings = [];
 let counterexamples = [];
+let report = null;
 
 if (ARTIFACTS) {
   const f = readSidecar(ARTIFACTS, '_findings.jsonl');
@@ -301,6 +357,7 @@ if (ARTIFACTS) {
   }
   findings = f;
   counterexamples = c ?? [];
+  report = readReport(ARTIFACTS);
 } else {
   // The binary under test is BUILT HERE, not assumed: a binary left over from
   // an earlier build measures the product as it WAS.
@@ -339,6 +396,7 @@ if (ARTIFACTS) {
   }
   findings = f;
   counterexamples = readSidecar(out, '_counterexamples.jsonl') ?? [];
+  report = readReport(out);
 }
 
 const claims = ownSourceClaims(findings);
@@ -377,26 +435,71 @@ for (const r of register.rows) {
   check(`the register's file ${r.file} is still in the source`, hits.length > 0, `${hits.length} match(es)`);
   if (hits.length === 0) continue;
   const wanted = `fn ${r.fn.replace(/\.+$/, '')}`;
-  const found = hits.some((f) => readFileSync(f, 'utf8').includes(wanted));
+  // The declaration must be THIS function's: `fn P::peek` is also the start of
+  // `fn P::peek_at`, so the name has to be followed by something that is not
+  // part of an identifier.
+  const found = hits.some((f) => {
+    const text = readFileSync(f, 'utf8');
+    let at = text.indexOf(wanted);
+    while (at >= 0) {
+      const next = text[at + wanted.length] ?? ' ';
+      if (!/[A-Za-z0-9_]/.test(next)) return true;
+      at = text.indexOf(wanted, at + 1);
+    }
+    return false;
+  });
   check(`the register's function ${r.fn} is still in ${r.file}`, found, wanted);
 }
 
-// The counterexamples: every claim an execution produced, except the one
-// about the analyser's own step budget, has an input that reproduces it.
+// The counterexamples: every claim an execution produced is ACCOUNTED FOR in
+// the report -- either an input reproduces it, or the report says that no
+// input in the analyser's candidate set did.  A claim in NEITHER is a claim
+// nobody looked at.
+//
+// And the report must leave NOTHING out by the minimisation's limit: a
+// finding left out is a finding nobody looked at, and the limit is the
+// analyser's own, so it is the analyser's to answer.
+const leftOut = report === null ? null : parseLeftOutByLimit(report);
+check(
+  'the report says how many findings the minimisation left out',
+  leftOut !== null,
+  leftOut === null ? 'the report does not say' : String(leftOut),
+);
+check(
+  'the minimisation left no finding out by its limit',
+  leftOut === 0,
+  leftOut === null ? 'UNKNOWN' : String(leftOut),
+);
+
+const unreproduced = report === null ? null : parseUnreproduced(report);
+check(
+  'the report lists the findings no input reproduced',
+  unreproduced !== null,
+  unreproduced === null ? 'the report has no such list' : `${unreproduced.length} row(s)`,
+);
+
 const missingCx = [];
 for (const c of claims) {
   if (!String(c.method).startsWith('dynamic')) continue;
-  if (c.family === 'BUDGET-EXCEEDED') continue;
   const hit = counterexamples.some(
     (cx) =>
       cx.rule === c.family &&
       basename(String(cx.file).replace(/\\/g, '/')) === c.base &&
       cx.fn === c.fn,
   );
-  if (!hit) missingCx.push(`${c.family} at ${c.base}:${c.line} (${c.fn})`);
+  if (hit) continue;
+  const listed =
+    unreproduced !== null &&
+    unreproduced.some(
+      (u) =>
+        u.rule === c.family &&
+        basename(String(u.file).replace(/\\/g, '/')) === c.base &&
+        u.fn === c.fn,
+    );
+  if (!listed) missingCx.push(`${c.family} at ${c.base}:${c.line} (${c.fn})`);
 }
 check(
-  'every claim an execution produced has a counterexample',
+  'every claim an execution produced is reproduced or listed as not reproduced',
   missingCx.length === 0,
   missingCx.length === 0 ? '' : missingCx.join('; '),
 );

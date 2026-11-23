@@ -142,7 +142,7 @@ function summaryFor(key) {
   if (key.includes('doubleML'))
     return 'reports/riantr_moonbit_doubleML@latest_0.164.64_summary.json';
   if (key.includes('static_analysis'))
-    return 'reports/riantr_moonbit_static_analysis@latest_0.5.3_summary.json';
+    return 'reports/riantr_moonbit_static_analysis@latest_0.5.4_summary.json';
   if (key.includes('vuln_demo')) return 'reports/local_module_0.0.0_summary.json';
   return null;
 }

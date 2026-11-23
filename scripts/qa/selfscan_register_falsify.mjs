@@ -80,7 +80,15 @@ mkdirSync(source, { recursive: true });
   }
 }
 
-const FILES = readdirSync(source).filter((f) => f.endsWith('_findings.jsonl') || f.endsWith('_counterexamples.jsonl'));
+// The artefacts are copied WHOLE: the findings sidecar, the counterexamples
+// sidecar AND the report -- the report carries the list of findings no input
+// reproduced, and the rule below reads it.
+const FILES = readdirSync(source).filter(
+  (f) =>
+    f.endsWith('_findings.jsonl') ||
+    f.endsWith('_counterexamples.jsonl') ||
+    f.endsWith('.md'),
+);
 if (FILES.length === 0) {
   console.error('the analyser wrote no sidecars to falsify');
   process.exit(2);
@@ -134,11 +142,14 @@ function mustStayGreen(name, dir, registerFile) {
 }
 
 // F1 -- a claim the analyser makes is not registered.
+//
+// The row that is dropped is a WHOLE row -- one line, with no continuation
+// under it -- so that dropping it does not leave half a row behind.
 {
   const c = copyCase('f1', (t) =>
     t
       .split('\n')
-      .filter((l) => !l.includes('rule_dimension_matrix'))
+      .filter((l) => !l.includes('abs.mbt srcs_label'))
       .join('\n'),
   );
   mustGoRed('F1 an unregistered claim', c.dir, c.registerFile, 'is not registered');
@@ -152,7 +163,7 @@ function mustStayGreen(name, dir, registerFile) {
 
 // F3 -- the headline count is stale.
 {
-  const c = copyCase('f3', (t) => t.replace('reports 29 findings', 'reports 26 findings'));
+  const c = copyCase('f3', (t) => t.replace(/reports \d+ findings/, 'reports 26 findings'));
   mustGoRed('F3 a stale headline', c.dir, c.registerFile, 'headline');
 }
 
@@ -160,8 +171,8 @@ function mustStayGreen(name, dir, registerFile) {
 {
   const c = copyCase('f4', (t) =>
     t.replace(
-      '///   ffi.mbt       ffi_join                TAINT-INDEX-RANGE `len == 0`',
-      '///   ffi.mbt       ffi_join                TAINT-INDEX-RANGE `len == 0`\n///   ffi.mbt       ffi_join                INDEX-OOB         `len == 0`',
+      /^(\/\/\/   abs\.mbt srcs_label .*)$/m,
+      '$1\n///   abs.mbt srcs_label                    INDEX-OOB             `len == 0`',
     ),
   );
   mustGoRed('F4 a claim that is not made', c.dir, c.registerFile, 'does not make');
@@ -171,18 +182,19 @@ function mustStayGreen(name, dir, registerFile) {
 {
   const c = copyCase('f5', (t) =>
     t.replace(
-      '///   ffi.mbt       ffi_join                TAINT-INDEX-RANGE `len == 0`',
-      '///   ffi.mbt       ffi_join                TAINT-INDEX-RANGE `len == 0`\n///   ffi.mbt       ffi_join                NOT-A-FAMILY     `len == 0`',
+      /^(\/\/\/   abs\.mbt srcs_label .*)$/m,
+      '$1\n///   abs.mbt srcs_label                    NOT-A-FAMILY         `len == 0`',
     ),
   );
   mustGoRed('F5 a family the analyser does not have', c.dir, c.registerFile, 'is not a family the analyser has');
 }
 
 // The CONTROL -- a rewording of the guard text says nothing about which
-// claims the analyser makes, so the check must NOT notice it.
+// claims the analyser makes, so the check must NOT notice it.  The rewording
+// is AFTER the guard's backtick, which is where the claims column ends.
 {
   const c = copyCase('control', (t) =>
-    t.replace('`split` yields\n', '`split` yields, MEASURED,\n'),
+    t.replace('`split` yields at least one part', '`split` yields at least one part, MEASURED'),
   );
   mustStayGreen('the control', c.dir, c.registerFile);
 }

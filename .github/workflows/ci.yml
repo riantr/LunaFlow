@@ -382,6 +382,20 @@ jobs:
       - name: Check that the register check can fail
         run: node scripts/qa/selfscan_register_falsify.mjs
 
+      # THE DEFAULT SCAN'S COVERAGE RULE, MEASURED: the default scan enters
+      # every function, and the bound that stops it is a WORK budget rather
+      # than a count of functions.  The check runs the scan three ways -- the
+      # default, with the budget made small, and with the count cap made
+      # small -- and reads which bound stopped each one.
+      - name: Check the default scan's coverage rule
+        run: node scripts/qa/l1_coverage.mjs
+
+      # ... and this one proves the check above can go RED: it breaks COPIES
+      # of the artefacts under `_build/` -- never a tracked file -- and
+      # asserts the check notices, and that it notices the right thing.
+      - name: Check that the coverage check can fail
+        run: node scripts/qa/l1_coverage_falsify.mjs
+
       - name: Robustness corpus
         run: node scripts/qa/fuzz.mjs
 

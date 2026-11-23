@@ -157,7 +157,13 @@ pub fn contract_above(
   let lines = split_lines(text)
   let mut k = start_line - 2
   let mut earliest = start_line - 1
-  while k >= 0 {
+  // The index is bounded at BOTH ends, like the loop below it.  The lower
+  // bound was there; the upper one was not, and `start_line` is a PARAMETER
+  // of a PUBLISHED function, so a caller could name a line past the end of
+  // the text and this loop would read past the end of `lines`.  The
+  // self-scan reported it as `TAINT-INDEX` here, twice: the index is
+  // determined by `start_line`, which is untrusted input.
+  while k >= 0 && k < lines.length() {
     let t = lines[k].trim().to_owned()
     if t.has_prefix("//@") {
       earliest = k

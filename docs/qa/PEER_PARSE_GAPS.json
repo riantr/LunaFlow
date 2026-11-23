@@ -2,7 +2,7 @@
   "what": "The files the PEER analyser does not fully understand, and the construct that stops it.",
   "measured_on": "2026-11-23",
   "peer": "riantr/moonbit_static_analysis@latest",
-  "peer_version": "0.5.3",
+  "peer_version": "0.5.4",
   "why": "The peer's verdict on this source is a published claim: it reports NO actionable finding in the source that ships. That claim is only as good as the peer's COVERAGE of that source, and the peer does not parse every file it reads -- it stops at the first parse error in three of them. So the claim has a boundary, and the boundary is pinned here: a file that joins this list is a file the peer has no verdict on, and one that leaves it is a file the peer now understands.",
   "how_measured": "The peer's own report: the PARTIAL rows name the files it read only up to their first parse error, and the NOTPARSE block names the error kind per file and the number of findings it WITHHELD. The check `scripts/qa/peer_scan.mjs` asserts that the set of partly-read files is exactly this set, and that the peer withheld no finding -- so a finding the peer knew about and could not report cannot hide inside the 'no actionable finding' claim.",
   "constructs": [

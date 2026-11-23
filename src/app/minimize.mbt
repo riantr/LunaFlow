@@ -224,7 +224,32 @@ fn Minimizer::minimize_for(
   // varying fastest -- capped by this finding's share of the budget.
   let before = self.runs
   let trials = synthesize(g, self.per_finding)
-  let mut found : InputSet? = None
+  // The candidate index of every parameter of every input -- read BEFORE
+  // anything runs, and that is the whole point of reading them here.
+  //
+  // The index is what "smaller" means: the candidate list has an order, and
+  // the walk goes through it.  It cannot be recovered from the value once the
+  // walk has run, because the function under analysis may WRITE INTO the
+  // array it was given -- MoonBit's arrays are mutable and aliased, and the
+  // walk hands the SAME candidate to more than one input.  After one run has
+  // written into it, the value is no longer the candidate the walk chose, and
+  // a lookup by value answers -1 for an input the walk made.
+  //
+  // So the indices are read first, while every candidate is still the value
+  // the walk handed over.
+  let indices_of : Array[Array[Int32]] = []
+  for t in trials {
+    let row : Array[Int32] = []
+    let mut p = 0
+    for a in t.args {
+      if p < g.params.length() {
+        row.push(candidate_index(a.v, candidates_for(g.params[p].ty)))
+      }
+      p = p + 1
+    }
+    indices_of.push(row)
+  }
+  let mut found : (InputSet, Array[Int32])? = None
   let mut tried = 0
   let mut i = 0
   while i < trials.length() {
@@ -232,7 +257,7 @@ fn Minimizer::minimize_for(
       break
     }
     if self.reproduces(g, trials[i], target) {
-      found = Some(trials[i])
+      found = Some((trials[i], indices_of[i]))
       tried = self.runs - before
       break
     }
@@ -247,7 +272,7 @@ fn Minimizer::minimize_for(
       let args : Array[String] = []
       let indices : Array[Int32] = []
       let mut p = 0
-      while p < g.params.length() && p < best.args.length() {
+      while p < g.params.length() && p < best.0.args.length() {
         let cands = candidates_for(g.params[p].ty)
         let rendered : Array[String] = []
         for c in cands {
@@ -256,8 +281,22 @@ fn Minimizer::minimize_for(
         params.push(g.params[p].name)
         types.push(g.params[p].ty)
         candidates.push(rendered)
-        args.push(best.args[p].v.repr())
-        indices.push(candidate_index(best.args[p].v, cands))
+        // The INPUT, as the walk chose it: the candidate AT the index the walk
+        // used, and not what the array holds now -- the function under
+        // analysis may have written into it.
+        let walked = best.1[p]
+        let idx = if walked >= 0 && walked < cands.length() {
+          walked
+        } else {
+          candidate_index(best.0.args[p].v, cands)
+        }
+        let chosen = if idx >= 0 && idx < cands.length() {
+          cands[idx].repr()
+        } else {
+          best.0.args[p].v.repr()
+        }
+        args.push(chosen)
+        indices.push(idx)
         p = p + 1
       }
       Some({

@@ -3,7 +3,7 @@
 /// THEM.
 ///
 /// MEASURED (2026-11-23), at level 3: the analyser over its own source
-/// reports 29 findings in `src/` and `src/command/` -- and every one of them
+/// reports 60 findings in `src/` and `src/command/` -- and every one of them
 /// is a MAY-claim about an index or a divisor, answered by a guard that is IN
 /// the source, or (for `srcs_label`) by a MEASURED property of the standard
 /// library.  None of them is a defect.
@@ -16,41 +16,86 @@
 /// claim must be here, with the count that was measured, and every claim
 /// here must still be made.
 ///
+/// WHY THE COUNT DOUBLED, AND WHY THAT IS THE POINT.  The default scan used
+/// to enter only the first 150 functions in file order, and that is not a
+/// sample of the module -- it is its FIRST DIRECTORY.  On this tree the cap
+/// interpreted 8 of 64 files, all of them in `src/app/`, and made 29 claims
+/// about its own source.  The default scan now enters EVERY function,
+/// bounded by the module's step budget rather than by a count, so it
+/// interprets 61 of the 64 files and makes 60 claims.  The claims about
+/// `parser.mbt`, `minimize.mbt`, `contract.mbt`, `analyze.mbt` and
+/// `command.mbt` are claims the analyser had never made, because it had
+/// never looked at that code.
+///
 /// The list below is the REGISTER: what the analyser claims, and what makes
 /// the claim false.  A claim that is registered is a claim that has been
 /// looked at; a claim that is NOT registered is a claim nobody has answered,
 /// and that is the kind that hides a real defect.
 ///
-///   site                                  claims            the guard
+///   site                                  claims                the guard
 ///   ---------------------------------------------------------------------
-///   util.mbt      read_line_at            INDEX-OOB         `line >= 1 &&`
-///                                          TAINT-INDEX       `line <= length`
-///   value.mbt     synthesize              3 x INDEX-OOB     `j < n`, `k >= 0`
-///   interp.mbt    sort_values             4 x INDEX-OOB     `j + 1 < len - i`
-///   conc.mbt      conc_cycle_key          INDEX-OOB         `(min+i) % len`
-///                                          TAINT-INDEX       and `len != 0`
-///   conc.mbt      conc_cycle_walk         DIVISION-BY-ZERO  the loop bound
-///                                          2 x INDEX-OOB     `0..<len`
-///   command.mbt   arg_value               INDEX-OOB         `i >= 0 &&`
-///                                          TAINT-INDEX       `i + 1 < len`
-///   abs.mbt       srcs_label              TAINT-INDEX       `split` yields
-///                                                           at least one
-///                                                           part
-///   abs.mbt       branch_returns          TAINT-INDEX-RANGE `len == 0`
-///   cfg.mbt       last_node               TAINT-INDEX-RANGE `len == 0`
-///   cfg.mbt       cfg_findings            TAINT-INDEX       `i < nodes.len`
-///   ffi.mbt       ffi_check_signature_... TAINT-INDEX-RANGE `len == 0`
-///   ffi.mbt       ffi_join                TAINT-INDEX-RANGE `len == 0`
-///   ffi.mbt       ffi_escaped_names       TAINT-INDEX       the body's own
-///   ipc.mbt       ipc_last_part           TAINT-INDEX-RANGE `i >= 0`
-///   parser.mbt    parse_expr              INFINITE-LOOP     the `break` is
-///                                                            in a construct
-///                                                            the parser does
-///                                                            not model
-///   report.mbt    rule_dimension_matrix  3 x INDEX-OOB     `a < len` and
-///                                                           `b < len`
-///   ffi.mbt       ffi_signature           BUDGET-EXCEEDED   the interpreter's
-///                                                            step budget
+///   util.mbt read_line_at                 TAINT-INDEX-RANGE     `line >= 1 &&`
+///                                         TAINT-INDEX           `line <= length`
+///                                         INDEX-OOB             the same two ends
+///   value.mbt synthesize                  3 x INDEX-OOB         `j < n`, `k >= 0`
+///   interp.mbt sort_values                4 x TAINT-INDEX-RANGE `j + 1 < len - i`
+///                                         4 x INDEX-OOB         the same bound
+///   interp.mbt call_user                  TAINT-INDEX           `i < params.len` and `i < args.len`
+///   interp.mbt tail_value                 TAINT-INDEX-RANGE     `length == 0`
+///   interp.mbt run_function               BUDGET-EXCEEDED       the interpreter's step budget
+///   conc.mbt conc_cycle_key               2 x TAINT-INDEX-RANGE `(min+i) % len`
+///                                         TAINT-INDEX           and `len != 0`
+///                                         INDEX-OOB             the same guard
+///   conc.mbt conc_cycle_walk              DIVISION-BY-ZERO      the loop bound
+///                                         2 x INDEX-OOB         `0..<len`
+///   conc.mbt conc_reach_from              TAINT-INDEX-RANGE     `i < frontier.len`
+///   contract.mbt contract_above           2 x TAINT-INDEX       `k >= 0 && k < lines.len`
+///   command.mbt arg_value                 TAINT-INDEX           `i >= 0 &&`
+///                                         INDEX-OOB             `i + 1 < len`
+///   command.mbt cli_args                  TAINT-INDEX-RANGE     `i < args.len`
+///   command.mbt parse_args                TAINT-INDEX-RANGE     `arg_value`'s own bound
+///   abs.mbt srcs_label                    TAINT-INDEX           `split` yields at least one part
+///   abs.mbt branch_returns                TAINT-INDEX-RANGE     `len == 0`
+///   analyze.mbt slice_graph               TAINT-INDEX           `i < nodes.len`
+///   cfg.mbt last_node                     TAINT-INDEX-RANGE     `len == 0`
+///   cfg.mbt cfg_findings                  TAINT-INDEX           `i < nodes.len`
+///   ffi.mbt ffi_check_signature_conflicts TAINT-INDEX-RANGE     `len == 0`
+///   ffi.mbt ffi_join                      TAINT-INDEX-RANGE     `len == 0`
+///   ffi.mbt ffi_escaped_names             TAINT-INDEX           the body's own
+///   ffi.mbt ffi_signature                 BUDGET-EXCEEDED       the interpreter's step budget
+///   ipc.mbt ipc_last_part                 TAINT-INDEX-RANGE     `i >= 0`
+///   minimize.mbt candidate_index          TAINT-INDEX-RANGE     `i < cands.len`
+///   minimize.mbt Minimizer::minimize_for  INDEX-OOB             `i < trials.len`
+///   minimize.mbt value_arr_eq             TAINT-INDEX-RANGE     `i < a.len` and `i < b.len`
+///   minimize_wbtest.mbt chosen_value      2 x TAINT-INDEX       the analyser's own indices
+///   minimize_wbtest.mbt inputs_before     TAINT-INDEX-RANGE     `i < trials.len`
+///   parser.mbt P::peek                    TAINT-INDEX           `i >= 0 && i < toks.len`
+///   parser.mbt P::peek_at                 TAINT-INDEX           `j >= 0 && j < toks.len`
+///   parser.mbt guard_body_returns         TAINT-INDEX-RANGE     `length == 0`
+///   parser.mbt is_op                      BUDGET-EXCEEDED       the interpreter's step budget
+///   parser.mbt parse_expr                 INFINITE-LOOP         the `break` is in a construct the parser does not model
+///   report.mbt rule_dimension_matrix      3 x INDEX-OOB         `a < len` and `b < len`
+///   report.mbt top_funcs                  BUDGET-EXCEEDED       the interpreter's step budget
+///                                         TAINT-INDEX-RANGE     `j + 1 < len - i` and `k < len`
+///                                         3 x TAINT-INDEX       the same bound
+///
+/// TWO OF THE CLAIMS BELOW POINTED AT SOMETHING THAT WAS FIXED.  The claims
+/// themselves STAY -- the analyser cannot discharge a taint, and it will keep
+/// saying it -- but the defect each one pointed at is gone:
+///
+///   contract.mbt  contract_above  the loop that walks UP from the line
+///                 above            above had no UPPER bound, while the
+///                                   loop below it had one.  `start_line` is
+///                                   a parameter of a PUBLISHED function, so
+///                                   a caller could name a line past the end
+///                                   of the text and the read would go past
+///                                   the end of `lines`.  The bound was
+///                                   added.
+///   parser.mbt    P::peek         the lower bound was an INVARIANT rather
+///                                 than a check -- `self.i` starts at 0 and
+///                                 `bump` only increments it -- and
+///                                 `P::peek_at` stated it.  It is stated
+///                                 now.
 ///
 /// THE `srcs_label` CLAIM, MEASURED.  Its answer is not a guard in the
 /// source: it is `String::split`'s contract.  MEASURED on the toolchain
@@ -62,7 +107,16 @@
 /// fixed: there is nothing to reach.  The counterexample the minimiser
 /// found for it (`srcs = [""]`) reproduces the CLAIM, not a defect.
 ///
-/// Two of them were NOT answered when this register was written, and both
+/// ONE MORE CLAIM CAME WITH THE COUNTEREXAMPLE FIX, and it is REGISTERED like
+/// the others.  The minimisation now reads the candidate index of every input
+/// BEFORE it runs anything -- the function under analysis may WRITE INTO the
+/// array it was given, and then the value is no longer the value the walk
+/// chose -- and that read is `trials[i]`, with the loop's own
+/// `i < trials.length()` as its guard.  The analyser cannot relate the length
+/// of an array it has not measured to the bound that guards it, so the claim
+/// is a MAY-claim; the guard is there, and the read is inside it.
+///
+/// TWO OF THEM WERE NOT answered when this register was written, and both
 /// were FIXED rather than registered:
 ///
 ///   parser.mbt   render_tokens   TAINT-INDEX + INDEX-OOB  the range is now
@@ -70,26 +124,37 @@
 ///   command.mbt  arg_value       (that claim's lower       `i >= 0` is now
 ///                                 bound, which moved)       part of the guard
 ///
-/// WHAT THIS FILE PINS, AND WHAT IT DOES NOT.  A test below exists for every
-/// guard this package can reach WITHOUT a fake: `read_line_at`,
+/// WHAT THIS FILE PINS, AND WHAT IT DOES NOT.  A test below exists for
+/// every guard this package can reach WITHOUT a fake: `read_line_at`,
 /// `render_tokens`, `sort_values`, `conc_cycle_key`, `synthesize`,
 /// `srcs_label`, `branch_returns`, `last_node`, `ipc_last_part`,
 /// `cfg_findings`, `ffi_join`, `ffi_check_signature_conflicts` and
-/// `conc_cycle_walk`.
+/// `conc_cycle_walk` -- and, since the default scan entered every function,
+/// `contract_above`, `P::peek`, `P::peek_at`, `value_arr_eq`,
+/// `candidate_index` and `guard_body_returns` -- and NOT
+/// `minimize_for`, whose claim is the loop's own bound and reaches no test
+/// the package can write honestly.
 ///
 /// WHAT THE TWO FIXES DID TO THESE CLAIMS.  `render_tokens` had TWO claims
 /// (`TAINT-INDEX` + `INDEX-OOB`), and both are GONE from the self-scan.
 /// `arg_value`'s claim SURVIVES -- the analyser still cannot prove the
 /// array's length -- but its evidence moved from
 /// `index [-999999,1000001]` to `index [1,1000001]`, which is the analyser
-/// SEEING the new lower bound.
+/// SEEING the new lower bound.  `contract_above`'s and `P::peek`'s claims
+/// SURVIVE as well, and for the same reason: a taint is not a range, and the
+/// analyser cannot discharge one.  What changed is that the read is now
+/// inside the array by the guard's own terms, and a test below says so.
 ///
 /// WHAT IS NOT PINNED HERE, STATED RATHER THAN PAPERED OVER.
-/// `arg_value` lives in `src/command`, and `src/app` cannot import that
-/// package: this file has NO test for it, and that is a recorded gap.
-/// `parse_expr`'s INFINITE-LOOP is pinned in `peer_findings_test.mbt`, and
-/// `ffi_signature`'s BUDGET-EXCEEDED in `verdict_wbtest.mbt` -- where it is
-/// the UNDECIDED claim the verdict exists for.
+/// `arg_value`, `cli_args` and `parse_args` live in `src/command`, and
+/// `src/app` cannot import that package: this file has NO test for them, and
+/// that is a recorded gap.  `parse_expr`'s INFINITE-LOOP is pinned in
+/// `peer_findings_test.mbt`, and the `BUDGET-EXCEEDED` family -- which
+/// covers `ffi_signature`, `run_function`, `is_op` and `top_funcs` -- in
+/// `verdict_wbtest.mbt`, where it is the UNDECIDED claim the verdict exists
+/// for.  `slice_graph`, `conc_reach_from`, `call_user`, `tail_value` and
+/// `ffi_escaped_names` are not pinned either: their guards are loop bounds
+/// and empty checks that a test would have to fake to reach.
 ///
 /// The limit is stated rather than papered over: a guard is pinned by a test
 /// only where a test can reach it honestly.
@@ -267,4 +332,60 @@ test "the self-scan: a signature conflict is reported against its own list" {
   }
   // One symbol, two different return types: the conflict is found on both.
   inspect(n, content="2")
+}
+
+///|
+test "the self-scan: a contract line past the end of the text reads nothing" {
+  let src =
+    #|//@ requires n < 10;
+    #|fn f(n : Int) -> Int {
+    #|  n
+    #|}
+  // The guard is `k >= 0 && k < lines.length()`.  The UPPER bound was ADDED
+  // in this round: `start_line` is a parameter of a PUBLISHED function, so a
+  // caller could name a line past the end of the text, and the loop that
+  // walks upwards from it had no upper bound -- while the loop below it had
+  // one.  This is the test that says the read stays inside `lines`.
+  let c = contract_above(src, "f.mbt", 99)
+  inspect(c.requires.length(), content="0")
+  // The same text, named at a line that IS in it: the contract is found.
+  let ok = contract_above(src, "f.mbt", 2)
+  inspect(ok.requires.length(), content="1")
+}
+
+///|
+test "the self-scan: peeking past the end of the tokens reads nothing" {
+  let p = P::new("t.mbt", [tok("a")])
+  // The guards are `self.i >= 0 && self.i < self.toks.length()` and
+  // `j >= 0 && j < self.toks.length()`.
+  inspect(p.peek().kind == TChar, content="true")
+  ignore(p.bump())
+  // The token list is exhausted, so the peek reads nothing.
+  inspect(p.peek().kind == TEOF, content="true")
+  // A negative offset is out of bounds at the OTHER end.
+  inspect(p.peek_at(-5).kind == TEOF, content="true")
+}
+
+///|
+test "the self-scan: comparing two arrays reads neither past its end" {
+  // The guard is `i < a.length()` for the first array and the
+  // `i >= b.length()` check for the second: the analyser cannot relate two
+  // arrays' lengths, so the check is what makes the read of `b` decidable.
+  inspect(value_arr_eq([VInt(1)], [VInt(1)]), content="true")
+  inspect(value_arr_eq([VInt(1)], [VInt(1), VInt(2)]), content="false")
+  inspect(value_arr_eq([], []), content="true")
+}
+
+///|
+test "the self-scan: a value that is not a candidate has no index" {
+  // The guard is the loop's own bound, `i < cands.length()`.
+  inspect(candidate_index(VInt(9), [VInt(1)]), content="-1")
+  inspect(candidate_index(VInt(1), [VInt(1)]), content="0")
+}
+
+///|
+test "the self-scan: a body with no statements has no last statement" {
+  // The guard is `body.length() == 0`.
+  let empty : Array[Stmt] = []
+  inspect(guard_body_returns(empty).length(), content="0")
 }

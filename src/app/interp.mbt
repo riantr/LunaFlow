@@ -3,6 +3,9 @@ pub(all) struct RunOptions {
   trials : Int32
   max_steps : Int32
   max_depth : Int32
+  /// The COUNT cap on the functions that are entered. It is OFF by default
+  /// (0): a count of functions is not a bound on WORK, and the bound that IS
+  /// on is the module-wide STEP BUDGET (`DEFAULT_MAX_TOTAL_STEPS`).
   max_functions : Int32
   entry_filter : String
 }
@@ -13,10 +16,41 @@ pub fn RunOptions::default() -> RunOptions {
     trials: 8,
     max_steps: 2000,
     max_depth: 6,
-    max_functions: 120,
+    max_functions: 0,
     entry_filter: "",
   }
 }
+
+///|
+/// The MODULE-WIDE STEP BUDGET of the dynamic layer, in interpreted steps.
+///
+/// This is the default bound of the default scan, and it REPLACED a count of
+/// functions. The count was the wrong shape for a bound: the same 150
+/// functions cost 3,011 steps on this tree and 47,835 on
+/// `riantr/moonbit_doubleML@0.164.64` -- a 16x difference -- so the count
+/// bounded the WORK sixteen times over depending on which functions came
+/// first in file order. And the count was taken in file order, so it took
+/// whole DIRECTORIES and left whole directories uninterpreted: on this tree
+/// the 150-function cap interpreted 8 of 64 files, all of them in `src/app/`.
+///
+/// The budget is the shape the ABSTRACT LAYER already uses (`run_abstract`):
+/// a bound on the work, not on the number of things.
+///
+/// ITS SIZE IS MEASURED, IN BOTH DIRECTIONS:
+///
+///   * it has to COVER a module. This tree's 850 functions cost 24,297
+///     steps, so the default covers every one of them with 4x headroom. A
+///     module of about 3,500 functions costs about 100,000 steps at the same
+///     density -- which is the size of the module that asked for this.
+///   * it has to FIT the artefact budget. The events a step produces are
+///     stable across corpora (4.5 to 5.6 events per step) and an event is
+///     about 158 bytes, so 100,000 steps is about 77 MB of trace at the
+///     documented `--trials 4` recipe, and about 139 MB at the default
+///     `--trials 8`. The trace ceiling (A12) follows the coverage.
+///
+/// The budget is checked BEFORE each function is entered, so the scan
+/// overshoots it by at most one function's own budget (2,000 steps).
+pub const DEFAULT_MAX_TOTAL_STEPS : Int32 = 100000
 
 ///|
 pub(all) enum Signal {
@@ -151,6 +185,12 @@ pub struct RunResult {
   trials : Int32
   functions_run : Int32
   functions_skipped : Array[String]
+  /// The MODULE-WIDE STEP BUDGET that was in force (0 = no budget), and
+  /// WHETHER it is what stopped the scan. A reader who sees a truncated
+  /// scan has to be able to tell a budget from a count from a filter.
+  max_total_steps : Int32
+  stopped_by_budget : Bool
+  stopped_by_count : Bool
 }
 
 ///|
@@ -1459,6 +1499,9 @@ pub fn run_function(
       0
     },
     functions_skipped: skipped,
+    max_total_steps: 0,
+    stopped_by_budget: false,
+    stopped_by_count: false,
   }
 }
 
@@ -1488,6 +1531,9 @@ pub fn run_function_by_name(
         trials: 0,
         functions_run: 0,
         functions_skipped: [name],
+        max_total_steps: 0,
+        stopped_by_budget: false,
+        stopped_by_count: false,
       }
   }
 }
@@ -1495,19 +1541,34 @@ pub fn run_function_by_name(
 ///|
 /// Run the module, entering each function as an entry point.
 ///
-/// `per_function` lifts the `max_functions` cap: every function in the
-/// module is entered instead of the first N in file order. It is an optional
-/// argument, so the published signature of this function is unchanged for a
-/// caller that does not use it.
+/// THE DEFAULT SCAN ENTERS EVERY FUNCTION. The bound that stops it is a
+/// WORK budget -- `max_total_steps`, the module-wide number of interpreted
+/// steps -- and not a count of functions. The count was the wrong shape: it
+/// bounded the work sixteen times over depending on which functions came
+/// first in file order, and because it was taken in file order it took whole
+/// DIRECTORIES and left whole directories uninterpreted.
+///
+/// `max_functions` is still honoured when it is set (it is 0 by default, and
+/// 0 means "no count cap"), so an explicit `--max-functions` keeps working.
+///
+/// `per_function` lifts BOTH bounds: every function in the module is entered,
+/// with no budget at all. It is an optional argument, so the published
+/// signature of this function is unchanged for a caller that does not use it.
+///
+/// `max_total_steps` is an optional argument too, and it defaults to
+/// `DEFAULT_MAX_TOTAL_STEPS`; 0 means "no budget".
 ///
 /// THE COST IS REAL and it was measured: on `riantr/moonbit_doubleML@0.164.64`
-/// (2,520 functions) the capped run takes 4.1 s and the uncapped one 65 s,
-/// with 2,150,934 trace events instead of 218,391. The cap is what keeps a
-/// large module cheap, so it stays the default.
+/// (2,529 functions) the capped run took 11.4 s and 47,835 steps, and the
+/// uncapped one 123.2 s and 465,001 steps, with 2,103,552 trace events
+/// instead of 243,472. The budget is what keeps a large module cheap -- and
+/// unlike the count it bounds the TRACE too, because the events a step
+/// produces are stable across corpora (4.5 to 5.6 events per step).
 pub fn run_module(
   ast : ModuleAst,
   opts : RunOptions,
   per_function~ : Bool = false,
+  max_total_steps~ : Int32 = DEFAULT_MAX_TOTAL_STEPS,
 ) -> RunResult {
   let funcs : Map[String, Func] = Map([])
   for f in ast.all_funcs_including_tests() {
@@ -1521,6 +1582,8 @@ pub fn run_module(
   let mut total_steps = 0
   let skipped : Array[String] = []
   let mut count = 0
+  let mut stopped_by_budget = false
+  let mut stopped_by_count = false
   // The GLOBAL REGION is computed once, before any function runs: the
   // top-level bindings are constants of the module.
   let (global_values, global_events) = eval_globals(funcs, opts, ast)
@@ -1531,8 +1594,19 @@ pub fn run_module(
     if opts.entry_filter != "" && f.name != opts.entry_filter {
       continue
     }
-    if !per_function && count >= opts.max_functions {
+    // The COUNT cap: an explicit bound on how many functions are entered. It
+    // is OFF by default, and what stops the default scan is the budget below.
+    if !per_function && opts.max_functions > 0 && count >= opts.max_functions {
       skipped.push(f.name)
+      stopped_by_count = true
+      continue
+    }
+    // The STEP BUDGET: the module-wide bound on WORK. It is checked before
+    // a function is entered, so the scan overshoots it by at most one
+    // function's own budget.
+    if !per_function && max_total_steps > 0 && total_steps >= max_total_steps {
+      skipped.push(f.name)
+      stopped_by_budget = true
       continue
     }
     if f.body.length() == 0 {
@@ -1565,5 +1639,12 @@ pub fn run_module(
     trials: count,
     functions_run: count,
     functions_skipped: skipped,
+    max_total_steps: if per_function {
+      0
+    } else {
+      max_total_steps
+    },
+    stopped_by_budget,
+    stopped_by_count,
   }
 }

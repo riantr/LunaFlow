@@ -286,3 +286,62 @@ test "the same module gives the same counterexample twice" {
     content="true",
   )
 }
+
+///|
+/// The module that WRITES INTO the array it was given, and then reads it
+/// back.  MoonBit's arrays are mutable and aliased, so the write reaches the
+/// caller's array -- and the caller's array is the analyser's own candidate.
+const MUTATE_SRC = "pub fn write_then_read(dst : Array[Int32], index : Int32) -> Int32 {\n  dst[0] = index\n  dst[index]\n}\n"
+
+///|
+/// A function that writes into the array it was given must not change what
+/// the counterexample says the INPUT was.
+///
+/// This is the case the minimisation used to get wrong, and it was the GATE
+/// that found it: the candidate index came back as -1, because the array the
+/// walk chose had been written into by the time the counterexample was
+/// recorded, so the value no longer matched any candidate.  The counterexample
+/// then carried an argument the analyser never chose.
+test "a function that writes into its array does not change the recorded input" {
+  let ast = mod_of(MUTATE_SRC)
+  let opts = RunOptions::default()
+  let run = run_module(ast, opts)
+  let res = minimize_counterexamples(ast, opts, run.findings, 10, 500)
+  inspect(res.minimised > 0, content="true")
+  for cx in res.counterexamples {
+    let g = match entry_of(ast, cx.entry) {
+      Some(f) => f
+      None => return
+    }
+    // Every parameter's argument IS the candidate its index points at -- the
+    // candidate list is the analyser's own, so this cannot disagree with it.
+    for p in 0..<cx.params.length() {
+      let cands = candidates_for(g.params[p].ty)
+      let idx = cx.indices[p]
+      inspect(idx >= 0, content="true")
+      inspect(idx < cands.length(), content="true")
+      inspect(cx.args[p], content=cands[idx].repr())
+    }
+  }
+}
+
+///|
+/// And the input the counterexample names is the one that REPRODUCES: it is
+/// the candidate at the recorded index, so it is the input the walk used.
+test "the recorded input is the candidate the walk used, and it reproduces" {
+  let ast = mod_of(MUTATE_SRC)
+  let opts = RunOptions::default()
+  let run = run_module(ast, opts)
+  let res = minimize_counterexamples(ast, opts, run.findings, 10, 500)
+  let cx = res.counterexamples[0]
+  let g = match entry_of(ast, cx.entry) {
+    Some(f) => f
+    None => return
+  }
+  let args : Array[Value] = []
+  for p in 0..<cx.params.length() {
+    let cands = candidates_for(g.params[p].ty)
+    args.push(cands[cx.indices[p]])
+  }
+  inspect(reproduces_at(ast, cx.entry, args, cx.kind, cx.line), content="true")
+}

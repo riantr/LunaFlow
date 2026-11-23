@@ -27,8 +27,8 @@
 | Trace events | 604 |
 | Interpreted steps | 156 |
 | Observed functions | 12 |
-| Entry selection | the first 12 functions in file order (the `--max-functions` cap applies) |
-| Wall time (analyzer) | 5 ms |
+| Entry selection | every function was entered (12); the step budget (100000 steps) was not reached |
+| Wall time (analyzer) | 4 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel

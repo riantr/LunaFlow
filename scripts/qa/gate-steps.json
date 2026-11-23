@@ -30,6 +30,8 @@
   "node scripts/qa/counterexamples_falsify.mjs",
   "node scripts/qa/selfscan_register.mjs",
   "node scripts/qa/selfscan_register_falsify.mjs",
+  "node scripts/qa/l1_coverage.mjs",
+  "node scripts/qa/l1_coverage_falsify.mjs",
   "node scripts/qa/fuzz.mjs",
   "node scripts/qa/path_traversal.mjs",
   "node scripts/qa/deep_nesting_probe.mjs",

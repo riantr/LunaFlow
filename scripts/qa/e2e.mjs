@@ -271,7 +271,13 @@ for (const mod of modules) {
   check(`${mod.label} A12: report <= 512 KB`, statSync(join(dir, mdName)).size <= 512 * 1024, `${statSync(join(dir, mdName)).size} B`);
   const trace = readdirSync(dir).find((f) => f.endsWith('_trace.jsonl'));
   const traceBytes = trace ? statSync(join(dir, trace)).size : 0;
-  check(`${mod.label} A12: trace <= 64 MB`, traceBytes <= 64 * 1024 * 1024, `${(traceBytes / 1024 / 1024).toFixed(1)} MB`);
+  // The trace grew again, and for the same reason as before: the default scan
+  // now enters every function the module's STEP BUDGET covers instead of the
+  // first 150 in file order, so the documented recipe's trace went from
+  // 37.6 MB to 77.1 MB on doubleML and from 2.5 MB to 73.1 MB on the
+  // static-analysis module.  The ceiling moves with the coverage, as it has
+  // before.
+  check(`${mod.label} A12: trace <= 128 MB`, traceBytes <= 128 * 1024 * 1024, `${(traceBytes / 1024 / 1024).toFixed(1)} MB`);
   check(`${mod.label} A15: abstract findings >= 1`, summary.abstract_findings >= 1, `${summary.abstract_findings}`);
   check(`${mod.label} A17: funnel diagram present`, /flowchart LR[\s\S]*L1\[/.test(md));
   check(`${mod.label} A9: per-point table non-empty`, /### 6\.1 Per-program-point observations[\s\S]*?\n\| /.test(md));
@@ -306,7 +312,13 @@ if (!skipModules) {
       // module: 350906 events and 59.2 MB became 387638 events and 70.3 MB.
       // The cap moves with it, and the headroom is for a future release of
       // the module.
-      check('doubleML full A12: trace <= 96 MB', traceBytes <= 96 * 1024 * 1024, `${(traceBytes / 1024 / 1024).toFixed(1)} MB`);
+      //
+      // It grew AGAIN, and for a bigger reason: the default scan now enters
+      // every function the module's STEP BUDGET covers, instead of the first
+      // 150 in file order.  Measured on this run: 931003 events and 139.9 MB,
+      // where the count cap gave 387638 events and 70.3 MB.  The ceiling
+      // moves with the coverage, as it has before.
+      check('doubleML full A12: trace <= 192 MB', traceBytes <= 192 * 1024 * 1024, `${(traceBytes / 1024 / 1024).toFixed(1)} MB`);
       check('doubleML full: trace events > 100k', summary.trace_events > 100000, `${summary.trace_events}`);
       // doubleML has no unreachable statements, and the analyzer now says so.
       // The floor it used to carry -- 100 findings -- was the shredding bug:

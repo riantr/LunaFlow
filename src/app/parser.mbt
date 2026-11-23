@@ -86,7 +86,12 @@ fn P::too_deep_expr(self : P) -> Expr {
 
 ///|
 fn P::peek(self : P) -> Tok {
-  if self.i < self.toks.length() {
+  // The index is bounded at BOTH ends, like `peek_at`'s.  The lower bound was
+  // an invariant rather than a check -- `self.i` starts at 0 and `bump` only
+  // increments it -- but `P::peek_at` states it, and the self-scan reported
+  // `TAINT-INDEX` here: the analyser cannot see that `self.i` is never
+  // negative, so the bound is stated rather than assumed.
+  if self.i >= 0 && self.i < self.toks.length() {
     self.toks[self.i]
   } else {
     { kind: TEOF, text: "", line: 0, col: 0, }

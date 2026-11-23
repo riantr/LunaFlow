@@ -2,6 +2,8 @@
 package "riantr/LunaFlow/src/app"
 
 // Values
+pub const DEFAULT_MAX_TOTAL_STEPS : Int32 = 100000
+
 pub fn alloc_tally(Array[AllocSite]) -> Map[String, Int32]
 
 pub fn analyze_allocations(ModuleAst) -> Array[AllocSite]
@@ -214,7 +216,7 @@ pub fn run_function(Func, Map[String, Func], RunOptions, Int32, global_values? :
 
 pub fn run_function_by_name(ModuleAst, String, RunOptions) -> RunResult
 
-pub fn run_module(ModuleAst, RunOptions, per_function? : Bool) -> RunResult
+pub fn run_module(ModuleAst, RunOptions, per_function? : Bool, max_total_steps? : Int32) -> RunResult
 
 pub fn safe_stem(String) -> String
 
@@ -986,6 +988,9 @@ pub struct RunResult {
   trials : Int32
   functions_run : Int32
   functions_skipped : Array[String]
+  max_total_steps : Int32
+  stopped_by_budget : Bool
+  stopped_by_count : Bool
 }
 
 pub struct ScanStats {

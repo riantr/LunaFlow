@@ -139,10 +139,14 @@ target that is a path, analyze a vendored checkout with the same pipeline. The
 only hard limits are:
 
 - files walk limit (`2000`, stated in `load_module`),
-- interpreted-function cap (`--max-functions`) — this caps the **L1 dynamic
-  layer's entry points**, and therefore the trace. It does **not** cap the
-  abstract layer: the L2 analyses the whole module and is bounded by its own
-  step budget instead,
+- the L1 dynamic layer's **step budget** (`--max-total-steps`, default
+  `100000`) — the module-wide bound on the interpreter's WORK. The default scan
+  enters **every** function of the module and stops when the budget is spent;
+  the report's **Entry selection** row says which bound stopped it,
+- an explicit **count** cap (`--max-functions`, default `0` = no cap) — this
+  caps the **L1 dynamic layer's entry points**, and therefore the trace. It does
+  **not** cap the abstract layer: the L2 analyses the whole module and is
+  bounded by its own step budget instead,
 - per-function step budget (`2000`),
 - the abstract layer's total step budget (twenty times its per-function
   budget). The abstract layer's scope is the module, so it needs a bound on
@@ -1368,7 +1372,7 @@ analyser's own **step budget**, and no input reproduces a budget.
 **Why it is opt-in.** The minimisation re-runs the analyser, once per input
 tried. It is therefore a flag (`--counterexamples`) and not part of the
 published artefact recipe, and it is bounded twice: a limit on the findings
-covered (`--counterexample-limit`, default 20) and a budget on the inputs
+covered (`--counterexample-limit`, default 64) and a budget on the inputs
 tried. The section states which bound stopped it.
 
 **How the minimality is pinned.** Eight whitebox tests
@@ -1470,6 +1474,7 @@ Interaction is intentionally file-based: the CLI produces Markdown that GitHub/G
 ```
 LunaFlow [analyze] [<target>]
   [--out <dir>] [--trials <n>] [--max-functions <n>]
+  [--max-total-steps <n>]
   [--level <1|2|3>] [--funnel]
   [--function <fn>] [--slice <crit>] [--forward|--backward]
   [--coverage <cobertura.xml>] [--max-cfg <n>] [--max-taint <n>]
@@ -1504,7 +1509,7 @@ were added in 0.1.9, and each of them follows the peer's semantics:
 | `--explain <code>` | print one family's contract — property, assumption, exclusions — and STOP |
 | `--explain-all` | print the roster of every family and STOP |
 | `--metrics` | print the ADEQUACY block: what was read, understood, entered and found, each with its own coverage |
-| `--per-function` | enter EVERY function as an entry point, with the `--max-functions` cap lifted |
+| `--per-function` | enter EVERY function as an entry point, with the step budget and the `--max-functions` cap lifted |
 
 **A CONTRACT REQUEST IS NOT A SCAN.** `--explain` and `--explain-all` answer
 before the profile is validated and before any file is read, so they need no
@@ -1523,10 +1528,11 @@ sees on the finding's row is one less thing to look up.
 
 `--per-function` has no module-mode counterpart here: LunaFlow's L1 already
 enters functions rather than executing module-level statements, so the
-counterpart of the peer's toggle is the `--max-functions` cap, and the option
-lifts it. The cost is real — measured on `riantr/moonbit_doubleML@0.164.64`
-(2,529 functions), 9.2 s capped against 127.9 s uncapped, 193,906 trace events
-against 2,069,372 — so it stays opt-in.
+counterpart of the peer's toggle is the bound on the dynamic layer, and the
+option lifts it — both the step budget and the `--max-functions` cap. The cost
+is real — measured on `riantr/moonbit_doubleML@0.164.64` (2,529 functions),
+9.2 s capped against 127.9 s uncapped, 193,906 trace events against 2,069,372 —
+so it stays opt-in.
 
 Outputs, all deterministic except `elapsed_ms`:
 
@@ -1543,16 +1549,16 @@ Outputs, all deterministic except `elapsed_ms`:
 
 The **committed artefacts**, regenerated with the release recipe in §7.2 of the
 README — `--funnel --trials 4` and one slice each, with **no** `--max-functions`
-cap:
+cap (the default scan's bound is the **step budget**, not a count):
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.64 | 220 | 30,258 | 243,528 | **3,316** | 0 / 0 / 0 (no specs) | 0 | 195 | **9.6 s** | **384 KB** | 37.6 MB |
-| static_analysis 0.5.0 | 254 | 17,450 | 17,029 | **188** | 0 / 0 / 0 (no specs) | 0 | 9 | **1.7 s** | **149 KB** | 2.5 MB |
-| fixtures/vuln_demo | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms | 35 KB | 79 KB |
+| doubleML 0.164.64 | 220 | 30,258 | 514,531 | **3,316** | 0 / 0 / 0 (no specs) | 0 | 264 | **16.1 s** | **416 KB** | 77.1 MB |
+| static_analysis 0.5.4 | 263 | 17,843 | 464,097 | **188** | 0 / 0 / 0 (no specs) | 0 | 188 | **8.4 s** | **228 KB** | 73.1 MB |
+| fixtures/vuln_demo | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms | 37 KB | 79 KB |
 
 Sizes are in **KB = 1024 bytes**, against a 512 KB limit, so the doubleML report
-(392,781 B) sits at **75 %** of A12. The L2 column moved from 187 / 8 to 1,282 / 184
+(425,653 B) sits at **81 %** of A12. The L2 column moved from 187 / 8 to 1,282 / 184
 because the abstract layer's scope stopped being the interpreter's entry-point cap
 and became the whole module, then to **3,305 / 190** because the five dead
 `::`-spelled rules were repaired (the allocation family could not fire at all)
@@ -1576,11 +1582,19 @@ from 36.8 MB to 37.6 MB, still inside the 64 MB cap. The **other two artefacts'
 event counts did not move at all**: the static-analysis module is still 17,029
 and the fixture still 604.
 
-**The cap is not part of the recipe, and adding it moves the dynamic layer's
+**The count cap is not part of the recipe, and adding it moves the dynamic layer's
 numbers.** With `--max-functions 120` the doubleML run produces **198,182** trace
-events; without it, **243,528**. The committed artefacts are the **no-cap** run, and
-re-running the recipe with the current build reproduces all three of them
-**byte-identically** — traces included; only the reports' wall time differs.
+events; without it, **514,531**. The cap binds the **dynamic** layer's entry
+points, and with them the trace.
+
+**What bounds the recipe now is the STEP BUDGET, not a count of functions.** The
+default scan enters **every** function of the module and stops when the
+module's **100,000**-step budget is spent. Measured on the committed artefacts:
+the doubleML run spends its budget after **275** of the module's **1,411**
+functions (**101,569** steps, **514,531** trace events), the static-analysis one
+after **711** of **1,437** (**100,958** steps, **464,097** events), and the
+fixture's budget is never reached, so **every one of its 12** functions is
+entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it.
 
 The statement counts fell and the dead-code column emptied because the old
 numbers were wrong: the parser shredded every construct it did not model into
@@ -1589,7 +1603,7 @@ its function, so whole function bodies were truncated. Neither module has an
 unreachable statement, and the analyzer now says so. The event count rose
 because the analyzer understands more of the module and explores more paths.
 
-Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 37.6 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-functions` or stream events to disk.
+Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The 37.6 MB JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-total-steps` or stream events to disk.
 
 Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `scripts/qa/metrics.mjs`):
 
@@ -1761,27 +1775,27 @@ These are verdicts on what fits **here**, not on the peer: the repair loop, the 
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 223 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 332 unit/integration tests | `src/app/*_test.mbt` |
 
 ### 10.2 Acceptance criteria (quantified, reproducible)
 
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 286 passed, 0 failed | 286/286 |
-| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.5.0 |
-| A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.82 % |
+| A2 | Tests | `moon test src/app --target native` ≥ 332 passed, 0 failed | 332/332 |
+| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.5.4 |
+| A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.88 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
 | A6 | Dead code | fixture reports exactly 3 `DEAD-CODE` + 1 `UNREACHABLE` | 3 / 1 |
 | A7 | Infinite loop | fixture `spin` yields ≥ 1 `INFINITE-LOOP`; unit test pins it | 1 |
-| A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 8; doubleML 195; static 9 |
+| A8 | Taint | fixture yields ≥ 1 `TAINT-INDEX`; each target yields ≥ 1 sink | fixture 8; doubleML 264; static 188 |
 | A9 | Ranges | per-point table non-empty; ≥ 1 numeric variable per module | non-empty on all reports |
 | A10 | Slicing | doubleML `theta_hat@aggregate_coef_se` ≥ 4 nodes; static `buf@render_reports` ≥ 1 node | 4, 1 |
-| A11 | Runtime | ≤ 60 s per module on a warm cache | 16.0 s, 1.7 s |
-| A12 | Artifact size | report ≤ 512 KB; trace ≤ 64 MB | 384 KB / 37.6 MB; 149 KB / 2.5 MB |
+| A11 | Runtime | ≤ 60 s per module on a warm cache | 16.1 s, 8.4 s |
+| A12 | Artifact size | report ≤ 512 KB; trace ≤ 128 MB | 416 KB / 77.1 MB; 228 KB / 73.1 MB |
 | A13 | Determinism | two runs produce identical `summary.json` except `elapsed_ms` | verified |
 | A14 | Verifier | `node scripts/verify.mjs` exits 0 | 87/87 checks pass |
-| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 3305 / 190 / 14 |
+| A15 | L2 runs | `abstract_findings ≥ 1` on both targets and the fixture | 3316 / 188 / 15 |
 | A16 | L3 on fixture | ≥ 1 `proved` and ≥ 1 `failed` VC | 2 proved, 1 failed, 3 unknown |
 | A17 | Funnel report | every report contains the funnel Mermaid diagram and L1/L2/L3 rows | present in all three |
 | A18 | Cumulative levels | `--level N` runs levels 1..N; `--funnel` runs all three | covered by unit + E2E runs |
@@ -1789,19 +1803,20 @@ These are verdicts on what fits **here**, not on the peer: the repair loop, the 
 A6/A7 are pinned by unit tests rather than by the report, so they remain valid even if the fixture changes; A8–A10 and A15–A17 are checked from the generated reports by `scripts/verify.mjs`.
 
 **Where the "Measured" column comes from.** It records the **committed artefacts** in
-`reports/`, regenerated at 0.1.22 with the release recipe — `--funnel --trials 4` and
+`reports/`, regenerated with the release recipe — `--funnel --trials 4` and
 one slice each, with **no** `--max-functions` cap — when `@latest` resolved to
-**0.164.64** and **0.4.50**. Every cell is that artefact's own counter, so it is
+**0.164.64** and **0.5.4**. Every cell is that artefact's own counter, so it is
 traceable to a file: A4 is `(statements − unsupported) / statements`, A11 is the
 artefact's `elapsed_ms`, A12 is the artefact's size on disk, and A10 is the node
 count of the slice section. `scripts/qa/e2e.mjs` re-measures the same thresholds
 against **fresh** runs.
 
-A12's trace ceiling (64 MB) is the tightest margin: the doubleML trace is **37.6 MB**
-at `--trials 4`, and the default `--trials 8` produces a larger one, so the
-**documented `--trials 4` recipe** is what keeps it inside the threshold. The
-E2E's own runs use the default, and they carry their own, looser ceiling for
-exactly that reason.
+A12's trace ceiling is the tightest margin, and it moves with the coverage: it
+was 64 MB, and the default scan's step budget took the doubleML trace from
+**37.6 MB** to **77.1 MB** — the scan now enters every function the budget
+covers instead of the first 150 in file order. The ceiling moves to **128 MB**
+with it, and the E2E's own doubleML-full run carries its own, looser ceiling
+(**192 MB**) for the same reason.
 
 ---
 

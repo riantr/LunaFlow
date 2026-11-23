@@ -21,6 +21,7 @@ fn stability_check(
   ast : @app.ModuleAst,
   run_opts : @app.RunOptions,
   per_function : Bool,
+  max_total_steps : Int32,
   family_include : Array[String],
   family_exclude : Array[String],
   constant : Array[@app.Finding],
@@ -36,7 +37,7 @@ fn stability_check(
       max_functions: run_opts.max_functions,
       entry_filter: run_opts.entry_filter,
     }
-    let r = @app.run_module(ast, o, per_function~)
+    let r = @app.run_module(ast, o, per_function~, max_total_steps~)
     runs.push(@app.filter_findings(r.findings, family_include, family_exclude))
   }
   sizes.push(run_opts.trials)
@@ -50,7 +51,11 @@ struct Opts {
   mut dir : String
   mut out : String
   mut trials : Int32
+  /// The COUNT cap on entered functions. 0 = no count cap: the default bound
+  /// is the module-wide step budget below.
   mut max_functions : Int32
+  /// The MODULE-WIDE STEP BUDGET of the dynamic layer. 0 = no budget.
+  mut max_total_steps : Int32
   mut slice : String
   mut direction : String
   mut coverage_path : String
@@ -96,7 +101,8 @@ fn Opts::default() -> Opts {
     dir: "",
     out: "reports",
     trials: 8,
-    max_functions: 150,
+    max_functions: 0,
+    max_total_steps: @app.DEFAULT_MAX_TOTAL_STEPS,
     slice: "",
     direction: "backward",
     coverage_path: "",
@@ -119,7 +125,7 @@ fn Opts::default() -> Opts {
     per_function: false,
     stability: false,
     counterexamples: false,
-    counterexample_limit: 20,
+    counterexample_limit: 64,
   }
 }
 
@@ -147,7 +153,11 @@ fn usage() -> String {
     #|  --dir <path>        analyze a local directory (same as a path target)
     #|  --out <dir>         report directory (default: reports)
     #|  --trials <n>        synthesized input trials per function (default: 8)
-    #|  --max-functions <n> cap on interpreted functions (default: 150)
+    #|  --max-functions <n> cap on interpreted functions (default: 0, no cap;
+    #|                      the default scan enters EVERY function)
+    #|  --max-total-steps <n>
+    #|                      the module-wide step budget of the dynamic layer
+    #|                      (default: 150000; 0 = no budget)
     #|  --slice <crit>      slice criterion: <var>@<fn>, <fn>:<line>, or <var>
     #|  --function <fn>     interpret only this function (default: all)
     #|  --level <1|2|3>     proof strength: 1 interpreter, 2 values, 3 contracts (default 1)
@@ -171,13 +181,13 @@ fn usage() -> String {
     #|  --metrics           print the ADEQUACY block: what was read, what was
     #|                      understood, what was entered, what was found
     #|  --per-function      enter EVERY function as an entry point, with the
-    #|                      --max-functions cap lifted
+    #|                      step budget and the --max-functions cap lifted
     #|  --counterexamples   re-run each finding an execution produced on its own
     #|                      input, and shrink that input to the smallest one
     #|                      that still reproduces it (report 5.12)
     #|  --counterexample-limit <n>
     #|                      how many findings the minimisation may cover
-    #|                      (default 20)
+    #|                      (default 64)
     #|  --quiet             only print the report path
   )
 }
@@ -301,6 +311,9 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
       i = i + 2
     } else if a == "--max-functions" {
       o.max_functions = @app.parse_int(arg_value(args, i), o.max_functions)
+      i = i + 2
+    } else if a == "--max-total-steps" {
+      o.max_total_steps = @app.parse_int(arg_value(args, i), o.max_total_steps)
       i = i + 2
     } else if a == "--slice" {
       o.slice = arg_or(args, i, o.slice)
@@ -907,7 +920,12 @@ async fn analyze(opts : Opts) -> Unit {
     max_functions: opts.max_functions,
     entry_filter: opts.function_name,
   }
-  let run = @app.run_module(ast, run_opts, per_function=opts.per_function)
+  let run = @app.run_module(
+    ast,
+    run_opts,
+    per_function=opts.per_function,
+    max_total_steps=opts.max_total_steps,
+  )
   // The GLOBAL REGION and the allocation classes are computed from the AST,
   // so they are a property of the module and not of the run.
   let global_rows = @app.global_rows(
@@ -1051,6 +1069,7 @@ async fn analyze(opts : Opts) -> Unit {
         ast,
         run_opts,
         opts.per_function,
+        opts.max_total_steps,
         opts.family_include,
         opts.family_exclude,
         constant,
@@ -1324,7 +1343,10 @@ fn metrics_lines(
     @app.pct(input.stmts, input.stmts + input.unsupported),
   )
   // FUNCTIONS: how many were extracted, and how many the interpreter
-  // actually entered. The difference is the `--max-functions` cap.
+  // actually entered. The difference is the BOUND that stopped the scan --
+  // and the bound is a WORK budget, not a count, so the line says which one
+  // it was: a reader who sees "entered" below "functions" has to be able to
+  // tell a budget from a count from a filter.
   let entered = input.run.functions_run
   let skipped = input.run.functions_skipped.length()
   out.push(
@@ -1335,7 +1357,19 @@ fn metrics_lines(
     "\tskipped=" +
     skipped.to_string() +
     "\tentered-share=" +
-    @app.pct(entered, input.funcs),
+    @app.pct(entered, input.funcs) +
+    "\tstep-budget=" +
+    input.run.max_total_steps.to_string() +
+    "\tsteps=" +
+    input.run.steps.to_string() +
+    "\tstopped-by=" +
+    (if input.run.stopped_by_budget {
+      "budget"
+    } else if input.run.stopped_by_count {
+      "count"
+    } else {
+      "none"
+    }),
   )
   // FINDINGS: the total, split by severity, over the SAME set the report
   // shows. The reportable set is the CFG findings, the dynamic infinite-loop
