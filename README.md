@@ -654,6 +654,17 @@ The **+1 warning** is `missing_priv` on `struct Minimizer` in the new file: the 
 
 No declaration **changed shape**, so no consumer's build can break: `scripts/qa/release_interface.mjs` compares the `.mbti` at `v0.1.33` with the one this release publishes and finds **0** breaks a consumer can see. A consumer that constructs a `Counterexample` or a `MinimizeResult` by struct literal has to add the fields; a consumer that only reads them is unaffected.
 
+**THE PUBLISHED BYTES, MEASURED FROM THE REGISTRY'S OWN COPY — not from this tree.** A local build says what this source produces; it does not say what a reader downloads. So the record below is the cached package the registry served, `~/.moon/registry/cache/riantr/LunaFlow/0.1.34.zip`:
+
+| what | measurement |
+|---|---|
+| the published package | **2,407,451 bytes** |
+| SHA-256 | `2d7d50354c4794e0a30c26a197232738c0d2c5b022aa0d8ac04719da6d3e884c` |
+| a clean consumer resolving it | `scripts/qa/verify_published.mjs 0.1.34` → **4 of 4 PASS**, `moon add` pins `riantr/LunaFlow@0.1.34`, the consumer builds and runs, and the published library API answers |
+| the published artefact over the fixture corpus | `scripts/qa/published_items.mjs 0.1.34` → **11 of 11 PASS**, and the published report matches the local build's on the same corpus — **29 findings** each |
+
+That is the release verified through the artefact a reader actually gets. It cannot be checked from the tree, which is why it is a separate row.
+
 ### What changed in 0.1.33
 
 **A finding now carries a VERDICT, two guards that were one-sided are total, and a dead definition the peer was right about is gone. The published interface changes additively, with one removal — both are declared at the end of this section.**
