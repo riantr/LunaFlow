@@ -1,0 +1,34 @@
+{
+  "what": "The files the PEER analyser does not fully understand, and the construct that stops it.",
+  "measured_on": "2026-11-23",
+  "peer": "riantr/moonbit_static_analysis@latest",
+  "peer_version": "0.5.3",
+  "why": "The peer's verdict on this source is a published claim: it reports NO actionable finding in the source that ships. That claim is only as good as the peer's COVERAGE of that source, and the peer does not parse every file it reads -- it stops at the first parse error in three of them. So the claim has a boundary, and the boundary is pinned here: a file that joins this list is a file the peer has no verdict on, and one that leaves it is a file the peer now understands.",
+  "how_measured": "The peer's own report: the PARTIAL rows name the files it read only up to their first parse error, and the NOTPARSE block names the error kind per file and the number of findings it WITHHELD. The check `scripts/qa/peer_scan.mjs` asserts that the set of partly-read files is exactly this set, and that the peer withheld no finding -- so a finding the peer knew about and could not report cannot hide inside the 'no actionable finding' claim.",
+  "constructs": [
+    {
+      "construct": "a block string with bare `#|` continuation lines",
+      "peer_error": "expected ')'",
+      "files": ["src/command/command.mbt"],
+      "note": "The file's own doc comment uses a block string with bare continuation lines, and the peer's lexer ends the string at the first one."
+    },
+    {
+      "construct": "a `for` whose pattern is on the next line",
+      "peer_error": "unexpected token `,`",
+      "files": ["src/app/ffi.mbt"],
+      "note": "A multi-line `for` header: the peer reads the pattern list as a comma-separated expression."
+    },
+    {
+      "construct": "a tuple pattern in a `for` header",
+      "peer_error": "expected loop variable",
+      "files": ["src/app/ipc.mbt"],
+      "note": "The peer does not model a tuple destructuring pattern in a `for` header."
+    }
+  ],
+  "the_claim": {
+    "reads": "no actionable finding in this project's own source",
+    "scope": "the files the peer UNDERSTOOD. For the files in this ledger the peer has no verdict, and this ledger is where that is said out loud.",
+    "withheld": 0,
+    "withheld_note": "The peer reports the findings it WITHHELD -- the ones it knew about in a file it could not parse. It is 0 here, so nothing the peer knew is missing from the claim."
+  }
+}

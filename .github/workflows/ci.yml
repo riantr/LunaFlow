@@ -462,3 +462,14 @@ jobs:
       # exits 2 -- "could not decide" -- rather than passing quietly.
       - name: Check the peer's verdict on this source
         run: node scripts/qa/peer_scan.mjs
+
+      # ... and this one proves the check above can go RED.  The peer's
+      # verdict has a COVERAGE, not just a count: the peer does not parse
+      # every file it reads, and for the files it stops at a parse error it
+      # has NO verdict.  The check pins that boundary against
+      # `docs/qa/PEER_PARSE_GAPS.json` -- so the coverage cannot shrink
+      # silently -- and this falsifier breaks COPIES of the ledger and of
+      # the peer's own captured report, and asserts the check goes red and
+      # names the right reason.
+      - name: Check that the peer-scan check can fail
+        run: node scripts/qa/peer_scan_falsify.mjs

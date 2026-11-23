@@ -26,6 +26,16 @@
 //
 //   THE PEER MUST REPORT NO ACTIONABLE FINDING IN THIS PROJECT'S OWN SOURCE.
 //
+// AND THE CLAIM CARRIES ITS COVERAGE.  The peer does not parse every file
+// it reads: it stops at the first parse error in some of them, and for
+// those files it has NO verdict.  So the claim above is true over the files
+// the peer UNDERSTOOD, and the boundary is measured rather than left
+// implicit: the peer must WITHHOLD no finding (the findings it knew about
+// in a file it could not parse), and the set of files it did not fully
+// parse must be exactly the set recorded in
+// `docs/qa/PEER_PARSE_GAPS.json`.  A change in either direction turns this
+// check red on purpose: the published claim has to be written again.
+//
 // The fixture corpus is excluded, and the exclusion is printed, because
 // "no actionable finding" has to mean something: it means the source that
 // ships.  A NOTICE is not a finding: the peer prints a notice per line only
@@ -47,6 +57,8 @@
 //               passing quietly
 
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const falsify = process.argv.includes('--falsify');
 
@@ -59,28 +71,112 @@ const check = (name, ok, detail = '') => {
 };
 
 // ---------------------------------------------------------------------------
+// THE LEDGER: the files the peer does not fully understand.
+//
+// It carries the construct, the peer's OWN error kind and the file, so the
+// comparison below is between the peer's words and a recorded fact.
+// ---------------------------------------------------------------------------
+// The ledger can be pointed at a COPY, so a falsifier can break it without
+// touching the tracked file.
+const ledgerArg = process.argv.indexOf('--ledger');
+const LEDGER_PATH =
+  ledgerArg >= 0 && process.argv[ledgerArg + 1]
+    ? process.argv[ledgerArg + 1]
+    : join(process.cwd(), 'docs', 'qa', 'PEER_PARSE_GAPS.json');
+let ledger = null;
+try {
+  ledger = JSON.parse(readFileSync(LEDGER_PATH, 'utf8'));
+} catch (e) {
+  console.error(`UNKNOWN  the peer-parse-gap ledger could not be read: ${LEDGER_PATH}`);
+  console.error(String(e && e.message ? e.message : e));
+  process.exit(2);
+}
+const ledgerFiles = () => ledger.constructs.flatMap((c) => c.files).sort();
+
+// ---------------------------------------------------------------------------
+// The peer's NOTPARSE block: the error kind per file, and how many findings
+// it WITHHELD -- the findings it knew about in a file it could not parse.
+// ---------------------------------------------------------------------------
+function parseNotParse(text) {
+  const kinds = new Map();
+  let withheld = null;
+  let current = null;
+  for (const line of text.split(/\r?\n/)) {
+    const head = /^NOTPARSE\t(\d+) files?, (\d+) finding\(s\) withheld/.exec(line);
+    if (head) {
+      withheld = Number(head[2]);
+      continue;
+    }
+    const kind = /^\s+\d+x\s+(.+)$/.exec(line);
+    if (kind) {
+      current = kind[1].trim();
+      continue;
+    }
+    const eg = /^\s+e\.g\.\s+(\S+)\s*$/.exec(line);
+    if (eg && current) {
+      const list = kinds.get(current) ?? [];
+      list.push(eg[1]);
+      kinds.set(current, list);
+      current = null;
+    }
+  }
+  return { kinds, withheld };
+}
+
+// ---------------------------------------------------------------------------
+// The peer's SUMMARY, read as the counts it states.
+// ---------------------------------------------------------------------------
+function parseSummaryFields(text) {
+  const m = /^SUMMARY\t(.*)$/m.exec(text);
+  if (!m) return {};
+  const fields = {};
+  for (const f of m[1].split('\t')) {
+    const kv = /^(\w+)=(.*)$/.exec(f);
+    if (kv) fields[kv[1]] = kv[2];
+  }
+  return fields;
+}
+
+// ---------------------------------------------------------------------------
 // The peer, over this tree.
 //
 // The peer resolves `.repos/` relative to the WORKING DIRECTORY, so it has to
 // run from the repository root -- from anywhere else it cannot locate the
 // source for the target.
 // ---------------------------------------------------------------------------
-const run = spawnSync(
-  'moonx',
-  ['riantr/moonbit_static_analysis@latest', '.', '--exclude', '_build'],
-  {
-    cwd: process.cwd(),
-    encoding: 'utf8',
-    timeout: 900000,
-    maxBuffer: 256 * 1024 * 1024,
-  },
-);
+// The peer takes ~10 s to run, and a falsifier that has to run it once per
+// mutation would pay that four times.  `--peer-output <file>` reads a
+// report that was already captured, so the mutations are what cost.
+const peerOutArg = process.argv.indexOf('--peer-output');
+const fromFile = peerOutArg >= 0 && process.argv[peerOutArg + 1];
 
-const out = `${run.stdout ?? ''}${run.stderr ?? ''}`;
+let out = '';
+if (fromFile) {
+  try {
+    out = readFileSync(process.argv[peerOutArg + 1], 'utf8');
+  } catch (e) {
+    console.error(`UNKNOWN  the peer's report could not be read: ${process.argv[peerOutArg + 1]}`);
+    console.error(String(e && e.message ? e.message : e));
+    process.exit(2);
+  }
+} else {
+  const run = spawnSync(
+    'moonx',
+    ['riantr/moonbit_static_analysis@latest', '.', '--exclude', '_build'],
+    {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      timeout: 900000,
+      maxBuffer: 256 * 1024 * 1024,
+    },
+  );
 
-if (run.error) {
-  console.error(`UNKNOWN  the peer could not be started: ${run.error.message}`);
-  process.exit(2);
+  out = `${run.stdout ?? ''}${run.stderr ?? ''}`;
+
+  if (run.error) {
+    console.error(`UNKNOWN  the peer could not be started: ${run.error.message}`);
+    process.exit(2);
+  }
 }
 
 const summary = out.match(/^SUMMARY\t.*$/m);
@@ -146,6 +242,46 @@ for (const h of notParsed) {
   console.log(`  partly read: ${h.file}${why ? '  (' + why + ')' : ''}`);
 }
 console.log(`actionable findings: ${actionable.length} in total, ${own.length} in this project's own source, ${fixtures.length} in the fixture corpus`);
+
+// --- the COVERAGE of the claim ---------------------------------------------
+//
+// The peer's own report says how much of the tree it UNDERSTOOD: the
+// PARTIAL rows name the files it read only up to their first parse error,
+// and the NOTPARSE block says how many findings it WITHHELD.  The claim
+// above holds over the files it understood, and these checks pin that
+// boundary so it cannot change silently.
+const notParse = parseNotParse(out);
+const summaryFields = parseSummaryFields(out);
+const partlyRead = notParsed.map((h) => h.file.replace(/^\.\//, '')).sort();
+const known = ledgerFiles();
+
+console.log(
+  `the peer's coverage: ${headers.length - notParsed.length} of ${headers.length} file(s) fully understood; ` +
+    `the ${notParsed.length} it did not are the known gaps in docs/qa/PEER_PARSE_GAPS.json` +
+    (partlyRead.length > 0 ? ` (${partlyRead.join(', ')})` : ''),
+);
+
+check(
+  'the peer withheld no finding: the claim hides nothing the peer knew',
+  notParse.withheld === 0 && Number(summaryFields.withheld) === 0,
+  `the NOTPARSE block says ${notParse.withheld}, the SUMMARY says ${summaryFields.withheld}`,
+);
+check(
+  'the files the peer did not fully parse are exactly the known gaps',
+  JSON.stringify(partlyRead) === JSON.stringify(known),
+  `the peer: ${partlyRead.join(', ') || '(none)'} | the ledger: ${known.join(', ') || '(none)'}`,
+);
+for (const c of ledger.constructs) {
+  const files = notParse.kinds.get(c.peer_error);
+  // The peer prints its paths with a `./` prefix and the ledger stores them
+  // without one, so both sides are normalised before they are compared.
+  const named = Array.isArray(files) ? files.map((f) => f.replace(/^\.\//, '')) : null;
+  check(
+    `the peer's "${c.peer_error}" gap names ${c.files.join(', ')}`,
+    named !== null && c.files.every((f) => named.includes(f)),
+    named ? named.join(', ') : 'the peer reported no such gap',
+  );
+}
 for (const a of own) {
   console.log(`  ${a.file}:${a.line}:${a.col}\n    ${a.text}`);
 }
