@@ -661,7 +661,8 @@ No declaration **changed shape**, so no consumer's build can break: `scripts/qa/
 | the published package | **2,407,451 bytes** |
 | SHA-256 | `2d7d50354c4794e0a30c26a197232738c0d2c5b022aa0d8ac04719da6d3e884c` |
 | a clean consumer resolving it | `scripts/qa/verify_published.mjs 0.1.34` → **4 of 4 PASS**, `moon add` pins `riantr/LunaFlow@0.1.34`, the consumer builds and runs, and the published library API answers |
-| the published artefact over the fixture corpus | `scripts/qa/published_items.mjs 0.1.34` → **11 of 11 PASS**, and the published report matches the local build's on the same corpus — **29 findings** each |
+| the published artefact over the fixture corpus | `scripts/qa/published_items.mjs 0.1.34` → **14 of 14 PASS**, and the published report matches the local build's on the same corpus — **29 findings** each. The published artefact also carries the **counterexample section**: its table and its sidecar agree, and the sidecar is **byte-identical** to the local build's — **2,204 bytes**, **9** rows |
+| the check that would catch a published artefact that does not | `scripts/qa/published_items_falsify.mjs 0.1.34` → **6 of 6 PASS**, on **copies** of the local artefacts |
 
 That is the release verified through the artefact a reader actually gets. It cannot be checked from the tree, which is why it is a separate row.
 
@@ -3129,7 +3130,12 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/metamorphic.mjs` | **every check agrees** — the findings do not depend on the source's spelling: the same program with other identifiers, with its functions in another order, or with `a + b` written as `b + a`, makes the same claims |
 | `node scripts/qa/cfg_signatures.mjs` | **every check agrees** — a signature does not depend on the target: every definition of one name in a compilation unit takes the same number of parameters |
 | `node scripts/qa/cfg_signatures_falsify.mjs` | **every check agrees** — the signature check goes red when the invariant is broken, and it names the function that broke it (on a **copy** of the tree; the source is not touched) |
-| `node scripts/qa/peer_scan.mjs` | **every check agrees** — the peer analyzer reports **no actionable finding in this project's own source**; the fixture corpus is deliberately vulnerable, so it is excluded, and the exclusion is printed |
+| `node scripts/qa/peer_scan.mjs` | **every check agrees** — the peer analyzer reports **no actionable finding in this project's own source**; the fixture corpus is deliberately vulnerable, so it is excluded, and the exclusion is printed. The verdict has a **coverage** as well as a count: the peer must withhold **no** finding, and the files it did not fully parse must be exactly the ones in `docs/qa/PEER_PARSE_GAPS.json` — **71 of 74** files fully understood |
+| `node scripts/qa/peer_scan_falsify.mjs` | **every check agrees** — the peer-scan check goes red when a gap is not recorded, when a gap that does not exist is recorded, when a construct's error kind is not the peer's own, and when the peer's report says it withheld a finding; and it stays green on a rewording it must not notice (on **copies** of the ledger and of the peer's captured report; the tracked files are never touched) |
+| `node scripts/qa/selfscan_register.mjs` | **every check agrees** — the register of the analyser's claims about its own source against a live self-scan: every claim is registered with the count that was measured, every registered claim is still made, the headline is the measured count, the rows add up to it, every family it names is a family the analyser has, and every site it names is still in the source |
+| `node scripts/qa/selfscan_register_falsify.mjs` | **every check agrees** — the register check goes red on a dropped claim, a count that was not measured, a stale headline, a claim that is not made and a family that does not exist, and it stays green on a rewording it must not notice (on a **copy** of the register; the tracked source is never touched) |
+| `node scripts/qa/published_items.mjs 0.1.34` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
+| `node scripts/qa/published_items_falsify.mjs 0.1.34` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -3143,7 +3149,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/counterexamples_falsify.mjs` | **every check agrees** — the counterexample check goes red when an argument is not its candidate, when a counterexample names a finding the report does not show, when a row disagrees with the sidecar and when a prose count is unsupported (on **copies** of the artefacts; the tracked files are never touched), and it stays green on a rewording it must not notice |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.33` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.34` | **4 passed, 0 failed** |
 `moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate has THREE verdicts, not two.** A check can end in three ways, and
@@ -3378,12 +3384,12 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 243,528 | 3,316 | 0 (no specs) | 0 | 195 | 11.8 s |
 | `riantr/moonbit_static_analysis@latest` → 0.5.3 | 262 | 17,797 | 11,564 | 188 | 0 (no specs) | 0 | 7 | 1.6 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 5 ms |
-| `LunaFlow` itself (`--dir .`) | 64 | 7,502 | 10,251 | 47 | 2 / 1 / 3 | 0 | 8 | 759 ms |
+| `LunaFlow` itself (`--dir .`) | 64 | 7,502 | 10,251 | 47 | 2 / 1 / 3 | 0 | 8 | 743 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **759 ms** to **829 ms**, while every
+runs over the tree this commit names read **743 ms** to **776 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
@@ -3749,7 +3755,12 @@ and Soot as a **design** comparison, not as a measured head-to-head.
 
 ### The QA round of 2026-11-23
 
-The same three views as the round before, over the tree as it stands now: the
+Two rounds, the same day. The second one asked two questions the first one
+could not, because the first one had to be asked before the release.
+
+#### The first round: a register that had drifted
+
+The same three views as the round before, over the tree as it stood then: the
 **peer** analyser, the **published** LunaFlow, and the **local** build. The
 published and the local build are the same program at two versions, so the
 difference between their reports is exactly what the unpublished work changed.
@@ -3760,20 +3771,13 @@ moonx riantr/moonbit_static_analysis@latest . --exclude _build
 moon run src/cli --target native -- analyze --dir . --out _build/qa/peer_round/local --funnel
 ```
 
-**THE PUBLISHED 0.1.33 AND THE LOCAL BUILD AGREE ON EVERY NUMBER.** Over this
-tree, both report **64 files, 1,176 functions, 7,502 statements, 377 unsupported
-statements, 10,251 events, 3,040 steps, 0 dead, 0 unreachable, 0 infinite, 8
-taint sinks, 60 range variables, level 3, 47 L2 findings, 2 / 1 / 3 VCs and 76
-findings**. The unpublished work changed no claim: the counterexample minimiser
-is a new *pass* over findings that already existed, and it adds a section and a
-sidecar rather than a finding.
-
-**THE PEER STILL FINDS NOTHING IN THIS PROJECT'S OWN SOURCE.** It reports **3
-actionable findings**, and all three are in `fixtures/eva_demo/lib.mbt` — the
-corpus that is deliberately vulnerable, because it is what this analyser is
-tested against. `scripts/qa/peer_scan.mjs` states the exclusion and prints it,
-and it exits **2** rather than passing quietly when the registry cannot be
-reached.
+**THE PUBLISHED 0.1.33 AND THE LOCAL BUILD AGREE ON EVERY NUMBER.** Over that
+tree, both reported **64 files, 1,176 functions, 7,502 statements, 377
+unsupported statements, 10,251 events, 3,040 steps, 0 dead, 0 unreachable, 0
+infinite, 8 taint sinks, 60 range variables, level 3, 47 L2 findings, 2 / 1 / 3
+VCs and 76 findings**. The unpublished work changed no claim: the counterexample
+minimiser is a new *pass* over findings that already existed, and it adds a
+section and a sidecar rather than a finding.
 
 **AND THE ROUND FOUND SOMETHING THE PEER COULD NOT: A REGISTER THAT HAD
 DRIFTED.** The register of the analyser's claims about its own source said
@@ -3790,13 +3794,64 @@ not to change the code. They are registered, and the register is now
 **re-measured on every run** by `scripts/qa/selfscan_register.mjs` and proved
 able to fail by `scripts/qa/selfscan_register_falsify.mjs`.
 
-**WHAT THE ROUND CHANGED.**
+#### The second round: the published artefact, and the coverage of the peer's verdict
+
+By the time this round ran, **0.1.34** was published — so the published tool
+and the tree were the same program, and two new questions were worth asking.
+The first is the one this repository's own rule points at: *the registry serves
+a different artefact, and a reader runs that one.* The second is the one the
+peer check's own wording had been leaving open.
+
+**THE PUBLISHED ARTEFACT DID CARRY THE COUNTEREXAMPLES, AND NOTHING HAD CHECKED
+THAT.** §5.12 shipped in 0.1.34, and every check of it measured the **local
+build** — the tree. The registry serves the wasm artefact CI built, and a
+release whose notes name the counterexamples but whose published artefact does
+not carry them would be a release that does not contain the feature it
+advertises. MEASURED: the published CLI writes the `_counterexamples.jsonl`
+sidecar, its §5.12 table agrees with it row by row, and the sidecar is
+**byte-identical** to the local build's — **2,204 bytes** each, **9** rows, over
+the fixture corpus. A published tool that computed a *different* minimal input
+than the tree would be a different analyser wearing the same version number.
+
+So `scripts/qa/published_items.mjs` grew a **fourth item**, and
+`scripts/qa/published_items_falsify.mjs` proves it can go red: it breaks a
+**copy** of the local artefacts — one byte changed in the counterexample
+sidecar, and the sidecar removed altogether — and asserts that the check goes
+red and names the right reason.
+
+**THE PEER'S VERDICT HAS A COVERAGE, AND THE CLAIM WAS QUIETER THAN THE
+MEASUREMENT.** "The peer reports no actionable finding in this project's own
+source" was true, and it was true over **71 of the 74** files the peer read:
+the peer stops at the first parse error in **3** of them, and for those files it
+has **no verdict at all**. The claim was published without saying so.
+
+MEASURED, from the peer's own report: `PARSED 71/74 files understood (95.9 %);
+3 more read only up to their first parse error`, and the three are the ones the
+README already names — `src/command/command.mbt`, `src/app/ffi.mbt`,
+`src/app/ipc.mbt`, each stopped by a construct the peer does not model. The
+peer also reports the findings it **withheld** — the ones it knew about in a
+file it could not parse — and that is **0**, so nothing the peer knew is
+missing from the claim.
+
+`scripts/qa/peer_scan.mjs` now measures that boundary instead of assuming it:
+the peer must withhold **no** finding, the set of partly-read files must be
+**exactly** the set recorded in `docs/qa/PEER_PARSE_GAPS.json`, and each gap
+must be the construct the peer names. A new partly-read file — or a peer that
+now understands one of them — turns the check **red on purpose**, because the
+published claim has to be written again.
+`scripts/qa/peer_scan_falsify.mjs` proves it can fail, on **copies** of the
+ledger and of the peer's own captured report.
+
+**WHAT THE ROUNDS CHANGED.**
 
 | what | before | after |
 |---|---|---|
 | the analyser's claims about its own source | 26 registered | **29 registered, 29 measured** |
 | claims with no registered answer | **3** | **0** |
 | the peer's actionable findings in `src/` | 0 | **0** |
+| the peer's files it fully understood | not published | **71 of 74**, the other 3 pinned in `docs/qa/PEER_PARSE_GAPS.json` |
+| the peer check's own checks | 1 | **6** |
+| the published-artefact check's checks | 11 | **14** |
 | the gate | 46 steps | **48 steps** |
 
 ### The QA round of 2026-11-22
@@ -4121,6 +4176,19 @@ condition is unknown rather than guessed.
   that a container's SIZE taint is not its CONTENTS' taint — in both
   directions — and that the twenty doubleML claims the repair removed stay
   removed (`docs/qa/IFDS_PHASE2_LEDGER.json`).
+* `scripts/qa/counterexamples.mjs` checks the counterexamples against the
+  report that states them, over the fixture and over a live self-scan, and
+  `scripts/qa/counterexamples_falsify.mjs` proves it can go red on copies.
+* `scripts/qa/selfscan_register.mjs` re-measures the register of the
+  analyser's claims about its own source, and
+  `scripts/qa/selfscan_register_falsify.mjs` proves it can go red on a copy.
+* `scripts/qa/peer_scan.mjs` is the peer's verdict on this source, with its
+  **coverage** measured, and `scripts/qa/peer_scan_falsify.mjs` proves that
+  can go red on copies.
+* `scripts/qa/published_items.mjs` and `scripts/qa/verify_published.mjs`
+  check the **published** artefact — the one a reader downloads — rather
+  than the tree, and `scripts/qa/published_items_falsify.mjs` proves the
+  first can go red.
 * `docs/design.md` §10 lists the quantified acceptance table (A1–A18); the
   measured column is updated from real runs, not from intent.
 * Determinism: two runs produce identical `summary.json` except `elapsed_ms`,
