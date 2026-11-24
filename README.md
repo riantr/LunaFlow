@@ -661,6 +661,19 @@ No declaration **changed shape**, so no consumer's build can break: `scripts/qa/
 
 **THE FLAGS.** `--per-package` is the new one: scan package by package, each package with its own step budget, and write one trace file per package. `--max-total-steps <n>` is the budget, default **100000**, and under `--per-package` it is the budget of **each** package rather than of the module. `--max-functions` still bounds the dynamic layer's entry points, module-wide. `--per-function` lifts both.
 
+**THE PUBLISHED BYTES, MEASURED FROM THE REGISTRY'S OWN COPY — not from this tree.** A local build says what this source produces; it does not say what a reader downloads. So the record below is the cached package the registry served, `~/.moon/registry/cache/riantr/LunaFlow/0.1.36.zip`:
+
+| what | measurement |
+|---|---|
+| the published package | **2,073,778 bytes** |
+| SHA-256 | `9ca710c56f28b1890de188c8ba5f0fa7275a9c3701d23a4f13a16b9a4ec20785` |
+| what is in it | **178** files, **5,282,722** bytes unpacked, largest entry `LunaFlow_Logo.png` at **993,480** bytes, and **no raw trace** — the traces stay in the repository |
+| a clean consumer resolving it | `scripts/qa/verify_published.mjs 0.1.36` → **4 of 4 PASS**, `moon add` pins `riantr/LunaFlow@0.1.36`, the consumer builds and runs, and the published library API answers |
+| the published artefact over the fixture corpus | `scripts/qa/published_items.mjs 0.1.36` → **14 of 14 PASS**, and the published report matches the local build's on the same corpus — **29 findings** each. The published artefact also carries the **counterexample section**: its table and its sidecar agree, and the sidecar is **byte-identical** to the local build's — **2,204 bytes**, **9** rows |
+| the check that would catch a published artefact that does not | `scripts/qa/published_items_falsify.mjs 0.1.36` → **6 of 6 PASS**, on **copies** of the local artefacts |
+
+That is the release verified through the artefact a reader actually gets. It cannot be checked from the tree, which is why it is a separate row. And the **package the registry read** is the one the envelope check measured against the **real archive**: **178** files, **5,282,722** bytes unpacked, largest entry **993,480** bytes — inside the envelope the registry has already accepted (**46,274,868** and **39,479,846**).
+
 ### What changed in 0.1.35
 
 **THE DEFAULT SCAN NO LONGER STOPS AT 150 FUNCTIONS. It enters EVERY function of the module, and the bound that stops it is a budget on the WORK — the module's step count — not a count of functions. Two real defects came out of the lifting, and both are fixed. The published interface grows, additively: one constant and one optional parameter.**
@@ -3262,8 +3275,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/package_envelope_falsify.mjs` | **14 passed, 0 failed** — the envelope check goes red on a package that carries more unpacked bytes than the registry has accepted, on one that carries a single file bigger than the registry has accepted, on a missing artefact, and on a trace that is packed or untracked; it goes red on a package with no trace at all, so it cannot pass vacuously; and it stays green on a control (on **copies**; the tracked files are never touched) |
 | `node scripts/qa/per_package.mjs` | **15 passed, 0 failed** — the per-package mode: every package the report names is a directory that holds a `moon.pkg`, the per-package traces hold every event exactly once and every event belongs to its own package, the report's package table adds up to the module, the report states the rule it followed, the two modes agree when no budget was reached, and with the **same one-step budget** the module-wide scan enters **1** function while the per-package scan enters one in **every** package |
 | `node scripts/qa/per_package_falsify.mjs` | **10 passed, 0 failed** — the per-package check goes red when an event lands in the wrong package's trace, when a trace loses an event, when the report's package table does not add up, and when the report states the module-wide rule; and it stays green on a control (on **copies**; the tracked files are never touched) |
-| `node scripts/qa/published_items.mjs 0.1.35` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
-| `node scripts/qa/published_items_falsify.mjs 0.1.35` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
+| `node scripts/qa/published_items.mjs 0.1.36` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
+| `node scripts/qa/published_items_falsify.mjs 0.1.36` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -3277,7 +3290,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/counterexamples_falsify.mjs` | **every check agrees** — the counterexample check goes red when an argument is not its candidate, when a counterexample names a finding the report does not show, when a row disagrees with the sidecar and when a prose count is unsupported (on **copies** of the artefacts; the tracked files are never touched), and it stays green on a rewording it must not notice |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.35` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.36` | **4 passed, 0 failed** |
 `moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
 
 **The gate has THREE verdicts, not two.** A check can end in three ways, and
