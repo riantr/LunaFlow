@@ -344,7 +344,11 @@ Every parameter is a **taint source** at entry (`EvSource`). Each executed state
 | `call` | call site (callee, argument count, taint) |
 | `abort`, `budget`, `unsupported` | abort path, step budget, parser gap |
 
-Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, 150 interpreted functions by default. A budget hit is reported with `BUDGET-EXCEEDED`, not as a proof of non-termination.
+Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, and a module-wide budget of 100,000 interpreted steps by default (`DEFAULT_MAX_TOTAL_STEPS`). The `--max-functions` count cap is **0** by default, which is no cap at all: a count of functions is not a bound on work. A budget hit is reported with `BUDGET-EXCEEDED`, not as a proof of non-termination.
+
+**THE BUDGET CAN BE SPENT PER PACKAGE.** A MoonBit package is the directory that holds its `moon.pkg`, and the work of a module is the work of its packages — so a module-wide budget is spent on the FIRST packages in file order, and the rest of the tree is never interpreted. `--per-package` gives each package its own budget, so a module of N packages has a budget of N times the one; the `--max-functions` count cap stays module-wide, because a reader who asked for "150 functions" did not ask for "150 functions per package". The trace is written one file per package, and the report gains a package table that says what each package cost and whether its own budget was reached.
+
+MEASURED on `riantr/moonbit_static_analysis@0.5.4` (17 packages): the module-wide budget enters **711** of 1,437 functions and stops inside `src/flow`, while the per-package mode enters **1,212** and reaches every other package whole. On `riantr/moonbit_doubleML@0.164.64` the mode does **nothing at all** — that module is FLAT, one `moon.pkg` at its root, so all 220 of its files sit in the root package and there is only one package. §7.2 has the sizes.
 
 **Implicit flows.** When a loop condition is tainted, numeric variables read by that condition are marked tainted (control dependence). This is what lets `while i < len { buffer[i] }` report a tainted index even though `i` is initialized to `0`. It is deliberately conservative; see §5.5 for the precision cost.
 
@@ -1481,6 +1485,7 @@ LunaFlow [analyze] [<target>]
   [--max-slice <n>] [--list-functions] [--quiet]
   [--exclude <name>]... [--families <codes>] [--exclude-families <codes>]
   [--explain <code>] [--explain-all] [--metrics] [--per-function]
+  [--per-package]
   [--counterexamples] [--counterexample-limit <n>]
 ```
 
@@ -1510,6 +1515,7 @@ were added in 0.1.9, and each of them follows the peer's semantics:
 | `--explain-all` | print the roster of every family and STOP |
 | `--metrics` | print the ADEQUACY block: what was read, understood, entered and found, each with its own coverage |
 | `--per-function` | enter EVERY function as an entry point, with the step budget and the `--max-functions` cap lifted |
+| `--per-package` | scan PACKAGE BY PACKAGE, each package with its own step budget, and write one trace per package |
 
 **A CONTRACT REQUEST IS NOT A SCAN.** `--explain` and `--explain-all` answer
 before the profile is validated and before any file is read, so they need no
@@ -1525,6 +1531,8 @@ The families are addressed by the finding's own report code rather than by a
 second identifier layer. The peer's ids are `MSA-NNN`; the stability rule is
 the same either way — a code is never renamed — but a code the reader already
 sees on the finding's row is one less thing to look up.
+
+`--per-package` is the other half of the same rule, and it is a BOUND and not a mode of its own: the module is still scanned as a module, and the only thing that changes is WHICH budget stops it — the package's own instead of the module's. §5.3 has the measurement, and the part of it that decides the question is that the mode does nothing at all for a module that has ONE package.
 
 `--per-function` has no module-mode counterpart here: LunaFlow's L1 already
 enters functions rather than executing module-level statements, so the
@@ -1594,7 +1602,9 @@ the doubleML run spends its budget after **275** of the module's **1,411**
 functions (**101,569** steps, **514,531** trace events), the static-analysis one
 after **711** of **1,437** (**100,958** steps, **464,097** events), and the
 fixture's budget is never reached, so **every one of its 12** functions is
-entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it.
+entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it, and `--per-package` spends it per package.
+
+**THE PER-PACKAGE MODE's SIZES, because the PUBLISH envelope is where its cost shows.** The envelope is the one the registry has already accepted (`docs/qa/PUBLISH_ENVELOPE.json`): **46,274,868** bytes unpacked and a **39,479,846**-byte largest entry. Measured with `--trials 4`: on this tree the split takes the trace from **22,691,389** bytes in one file to the same **22,691,389** bytes in ten, with the largest entry down to **21,923,396**; on the static-analysis module it GROWS, from **76,591,727** bytes in one file to **111,328,416** in seventeen, the largest entry up to **78,902,704**, because the mode interprets more and the evidence is more; on doubleML it does not change a byte, because there is one package — one file, **80,855,304** bytes. The ceiling is a limit on the TOTAL, and a split does not touch the total.
 
 The statement counts fell and the dead-code column emptied because the old
 numbers were wrong: the parser shredded every construct it did not model into
@@ -1787,7 +1797,7 @@ These are verdicts on what fits **here**, not on the peer: the repair loop, the 
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 332 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 337 unit/integration tests | `src/app/*_test.mbt` |
 
 The raw traces of D5 are committed to the repository and are **not** part of the
 published package (§7.2): the registry refuses an archive it cannot read, and they
@@ -1798,7 +1808,7 @@ are what made it unreadable.
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 332 passed, 0 failed | 332/332 |
+| A2 | Tests | `moon test src/app --target native` ≥ 337 passed, 0 failed | 337/337 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.64, 0.5.4 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.88 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |

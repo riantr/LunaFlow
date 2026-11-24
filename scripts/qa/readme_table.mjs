@@ -505,6 +505,117 @@ for (const row of table.rows) {
   break;
 }
 
+// --- the per-package measurement table, against the tracked measurement ---
+//
+// The release publishes what the per-package mode MEASURED: how far it gets
+// past the analysis cap, and what the split does to the publish ceiling's two
+// numbers.  Those numbers are in the artefact the measurement driver writes
+// -- `docs/qa/PER_PACKAGE_MEASUREMENTS.json` -- and the README repeats them
+// in a table.
+//
+// So the table is compared with the ARTEFACT, the same way the committed
+// artefact rows are compared with their summaries: the numbers come from a
+// file, not from this check.  A table that was typed by hand and drifted away
+// from the measurement goes red here.
+//
+// The artefact is READ, never re-measured: the corpora are not fetched on a
+// CI runner, and a check that cannot obtain its dependency must report
+// UNKNOWN rather than a false accusation.
+//
+// The mode is NAMED on both sides: the README says "module-wide" and
+// "--per-package", the artefact says "wide" and "per".  The mapping is
+// written out here rather than guessed, so a mode that appears in one and
+// not the other is caught instead of silently skipped.
+const MEAS_PATH = join(root, 'docs', 'qa', 'PER_PACKAGE_MEASUREMENTS.json');
+const MEAS_MODE = {
+  'module-wide': 'wide',
+  '--per-package': 'per',
+};
+
+///|
+/// The README's measurement table, by its header.
+function measurementTable(text) {
+  const lines = text.split('\n');
+  const h = lines.findIndex((l) => l.startsWith('| corpus | mode | trace files |'));
+  if (h < 0) return null;
+  const rows = [];
+  for (const line of lines.slice(h + 2)) {
+    if (!line.startsWith('|')) break;
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((s) => s.trim());
+    rows.push(cells);
+  }
+  return rows;
+}
+
+///|
+/// A published cell: no emphasis, no thousands separator.
+function plain(cell) {
+  return String(cell ?? '')
+    .replace(/\*\*/g, '')
+    .replace(/\`/g, '')
+    .replace(/,/g, '')
+    .trim();
+}
+
+if (!existsSync(MEAS_PATH)) {
+  check('the per-package measurement artefact is present', false, MEAS_PATH);
+} else {
+  const meas = JSON.parse(readFileSync(MEAS_PATH, 'utf8'));
+  const measRows = measurementTable(md);
+  if (!measRows) {
+    check('the README publishes the per-package measurement table', false);
+  } else {
+    const byKey = new Map();
+    for (const r of meas.results ?? []) byKey.set(`${r.corpus}|${r.mode}`, r);
+
+    for (const cells of measRows) {
+      const corpus = plain(cells[0]);
+      const modeLabel = plain(cells[1]);
+      const mode = MEAS_MODE[modeLabel];
+      const label = `the measurement table's ${corpus} / ${modeLabel} row`;
+
+      if (!mode) {
+        check(`${label}: the mode is one this check knows`, false, modeLabel);
+        continue;
+      }
+      const found = byKey.get(`${corpus}|${mode}`);
+      if (!found) {
+        check(`${label}: the measurement has this row`, false, `${corpus}|${mode} is not in the artefact`);
+        continue;
+      }
+
+      // The three numbers the row publishes: the trace files, their total
+      // size and their largest one.
+      const published = [plain(cells[2]), plain(cells[3]), plain(cells[4])].map((x) => Number(x));
+      const measured = [found.trace_files, found.trace_total_bytes, found.trace_largest_bytes];
+      const names = ['trace files', 'total bytes', 'largest entry'];
+
+      if (falsify) {
+        // The expectations are INVERTED on purpose: each measured number is
+        // nudged by one, so every one of those claims MUST fail.  A claim that
+        // still passes is VACUOUS -- it is not really being compared -- and the
+        // check says so instead of reporting a green row.
+        const nudged = measured.map((w) => w + 1);
+        const stillPasses = published.every((p, i) => p === nudged[i]);
+        check(
+          `${label}: the falsified expectation fails, as it must`,
+          !stillPasses,
+          stillPasses ? 'the claim passed with a wrong expectation: it is vacuous' : '',
+        );
+      } else {
+        const diffs = [];
+        published.forEach((p, i) => {
+          if (p !== measured[i]) diffs.push(`${names[i]}: README ${p} vs the artefact ${measured[i]}`);
+        });
+        check(`${label}: every number matches the measurement artefact`, diffs.length === 0, diffs.join('; '));
+      }
+    }
+  }
+}
+
 console.log('');
 if (falsify) {
   console.log('the falsification mode broke the artefact-total checks, as it must.');

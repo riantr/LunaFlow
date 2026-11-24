@@ -34,6 +34,8 @@
   "node scripts/qa/l1_coverage_falsify.mjs",
   "node scripts/qa/package_envelope.mjs",
   "node scripts/qa/package_envelope_falsify.mjs",
+  "node scripts/qa/per_package.mjs",
+  "node scripts/qa/per_package_falsify.mjs",
   "node scripts/qa/fuzz.mjs",
   "node scripts/qa/path_traversal.mjs",
   "node scripts/qa/deep_nesting_probe.mjs",

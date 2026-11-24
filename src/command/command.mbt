@@ -21,6 +21,7 @@ fn stability_check(
   ast : @app.ModuleAst,
   run_opts : @app.RunOptions,
   per_function : Bool,
+  per_package : Bool,
   max_total_steps : Int32,
   family_include : Array[String],
   family_exclude : Array[String],
@@ -37,7 +38,17 @@ fn stability_check(
       max_functions: run_opts.max_functions,
       entry_filter: run_opts.entry_filter,
     }
-    let r = @app.run_module(ast, o, per_function~, max_total_steps~)
+    // The SAME MODE as the main run.  The check compares the main run with
+    // the re-sampled ones, so a re-sample that scanned a DIFFERENT set of
+    // functions would be comparing two different analyses and calling the
+    // difference "instability".
+    let (r, _packages) = @app.run_module_packages(
+      ast,
+      o,
+      per_function~,
+      max_total_steps~,
+      per_package~,
+    )
     runs.push(@app.filter_findings(r.findings, family_include, family_exclude))
   }
   sizes.push(run_opts.trials)
@@ -85,6 +96,8 @@ struct Opts {
   mut metrics : Bool
   /// Enter EVERY function as an entry point, with no `--max-functions` cap.
   mut per_function : Bool
+  /// Scan PACKAGE BY PACKAGE, each package with its own step budget.
+  mut per_package : Bool
   /// Re-sample the analysis and report which findings depend on the sample.
   mut stability : Bool
   /// Re-run each finding an execution produced on its own input, and shrink
@@ -123,6 +136,7 @@ fn Opts::default() -> Opts {
     explain_all: false,
     metrics: false,
     per_function: false,
+    per_package: false,
     stability: false,
     counterexamples: false,
     counterexample_limit: 64,
@@ -156,8 +170,9 @@ fn usage() -> String {
     #|  --max-functions <n> cap on interpreted functions (default: 0, no cap;
     #|                      the default scan enters EVERY function)
     #|  --max-total-steps <n>
-    #|                      the module-wide step budget of the dynamic layer
-    #|                      (default: 150000; 0 = no budget)
+    #|                      the step budget of the dynamic layer: the module's
+    #|                      own by default, and EACH PACKAGE's own under
+    #|                      --per-package (default: 100000; 0 = no budget)
     #|  --slice <crit>      slice criterion: <var>@<fn>, <fn>:<line>, or <var>
     #|  --function <fn>     interpret only this function (default: all)
     #|  --level <1|2|3>     proof strength: 1 interpreter, 2 values, 3 contracts (default 1)
@@ -182,6 +197,8 @@ fn usage() -> String {
     #|                      understood, what was entered, what was found
     #|  --per-function      enter EVERY function as an entry point, with the
     #|                      step budget and the --max-functions cap lifted
+    #|  --per-package       scan PACKAGE BY PACKAGE, each package with its own
+    #|                      step budget, and write one trace per package
     #|  --counterexamples   re-run each finding an execution produced on its own
     #|                      input, and shrink that input to the smallest one
     #|                      that still reproduces it (report 5.12)
@@ -410,6 +427,9 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
     } else if a == "--per-function" {
       o.per_function = true
       i = i + 1
+    } else if a == "--per-package" {
+      o.per_package = true
+      i = i + 1
     } else if a == "--stability" {
       o.stability = true
       i = i + 1
@@ -496,6 +516,93 @@ fn traces_jsonl(events : Array[@app.TraceEvent]) -> String {
 }
 
 ///|
+/// The name of a package, as a FILE NAME.
+///
+/// The module's ROOT package is "", and a file name cannot end in nothing, so
+/// the root package is called "root".  The rest is the package's path with
+/// the separators flattened, so `src/app` becomes `src_app` -- and
+/// `safe_stem` is what makes the result safe to append under `--out`.
+fn package_stem(name : String) -> String {
+  if name == "" {
+    "root"
+  } else {
+    @app.safe_stem(name)
+  }
+}
+
+///|
+/// The trace, SPLIT BY PACKAGE: one file per package.
+///
+/// THE SPLIT IS THE POINT.  A trace the registry has to read is a file with
+/// a SIZE, and the largest archive the registry has served held one
+/// 39,479,846-byte entry -- so a single trace of 77 MB cannot be published at
+/// all, whatever it compresses to.  Split by package, every entry is one
+/// package's own trace, and the module's evidence becomes a SET of entries
+/// instead of one oversized one.
+///
+/// The events are written in ONE pass into one builder per package, so the
+/// memory is the size of the trace and not the size of the trace PLUS a copy
+/// of it.  MEASURED on the toolchain this tree is written against: a
+/// `StringBuilder` held in an `Array` keeps the writes -- `arr[0].write(..)`
+/// twice reads back as both writes, not as the last one.
+///
+/// THE BUILDERS ARE A MAP, AND THAT IS DELIBERATE.  A package is named, not
+/// indexed, and a builder in an ARRAY would need an index -- and the index
+/// would need the lengths of two arrays the analyser cannot relate.  MEASURED:
+/// the self-scan reported `TAINT-INDEX`, `TAINT-INDEX-RANGE` and `INDEX-OOB`
+/// on the array version, and the map has no index to be out of bounds.  The
+/// write-back through a local binding was measured too: `b.write_string(..)`
+/// on a builder fetched with `get` DOES reach the map.
+///
+/// The events of the module's GLOBAL region belong to the package that
+/// DECLARES them, so nothing is left out of the split.  An event whose file
+/// is not in the module is written to NO file: it is not this module's
+/// event, and putting it in the nearest package would be a lie.
+async fn write_package_traces(
+  ast : @app.ModuleAst,
+  events : Array[@app.TraceEvent],
+  out : String,
+  stem : String,
+) -> Array[String] {
+  let names = @app.module_packages(ast)
+  let map = @app.package_of_files(ast)
+  let builders : Map[String, StringBuilder] = Map([])
+  for n in names {
+    builders[n] = StringBuilder()
+  }
+  for e in events {
+    match map.get(e.file) {
+      Some(p) =>
+        match builders.get(p) {
+          Some(b) => b.write_string(event_json(e))
+          None => ()
+        }
+      None => ()
+    }
+  }
+  let written : Array[String] = []
+  // The names are walked BY VALUE, with no index at all.  MEASURED: the
+  // self-scan reported `TAINT-INDEX` on `names[i]` while the loop was
+  // bounded by `names.length()` -- the analyser could not tell that the
+  // list is not empty, and an index into a list that might be empty is a
+  // read it will not discharge.
+  for n in names {
+    let path = @app.path_join(
+      out,
+      stem + "_" + package_stem(n) + "_trace.jsonl",
+    )
+    match builders.get(n) {
+      Some(b) => {
+        let _ = write_text(path, b.to_string()) catch { _ => false }
+      }
+      None => ()
+    }
+    written.push(path)
+  }
+  written
+}
+
+///|
 /// The findings of the report, each ONCE.
 ///
 /// A finding that appears in two of the report's tables appears ONCE here.
@@ -551,6 +658,7 @@ fn render_report(
   ipc : @app.IpcModel,
   findings_out : Array[@app.Finding],
   counterexamples : @app.MinimizeResult?,
+  packages : Array[@app.PackageRun],
 ) -> String {
   @app.render_report(
     input,
@@ -565,6 +673,7 @@ fn render_report(
     ipc=Some(ipc),
     findings_out~,
     counterexamples~,
+    packages~,
   )
 }
 
@@ -920,11 +1029,16 @@ async fn analyze(opts : Opts) -> Unit {
     max_functions: opts.max_functions,
     entry_filter: opts.function_name,
   }
-  let run = @app.run_module(
+  // The per-package mode scans the module package by package, each package
+  // with its own step budget, and says what each package cost.  The
+  // breakdown is EMPTY in the module-wide mode: there was no per-package
+  // run, so there is no per-package result to report.
+  let (run, packages) = @app.run_module_packages(
     ast,
     run_opts,
     per_function=opts.per_function,
     max_total_steps=opts.max_total_steps,
+    per_package=opts.per_package,
   )
   // The GLOBAL REGION and the allocation classes are computed from the AST,
   // so they are a property of the module and not of the run.
@@ -1069,6 +1183,7 @@ async fn analyze(opts : Opts) -> Unit {
         ast,
         run_opts,
         opts.per_function,
+        opts.per_package,
         opts.max_total_steps,
         opts.family_include,
         opts.family_exclude,
@@ -1208,6 +1323,7 @@ async fn analyze(opts : Opts) -> Unit {
       ipc_model,
       shown,
       None,
+      packages,
     )
     minimize_result = Some(
       @app.minimize_counterexamples(
@@ -1233,10 +1349,22 @@ async fn analyze(opts : Opts) -> Unit {
     ipc_model,
     rendered,
     minimize_result,
+    packages,
   )
   let _ = write_text(report_path, md) catch { _ => false }
-  let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {
-    _ => false
+  // The TRACE.  In the module-wide mode it is ONE file; in the per-package
+  // mode it is ONE FILE PER PACKAGE, and the split is what makes a large
+  // trace publishable: the registry reads files, and a file has a size.
+  let trace_paths : Array[String] = []
+  if opts.per_package {
+    for p in write_package_traces(ast, input.run.events, opts.out, stem) {
+      trace_paths.push(p)
+    }
+  } else {
+    let _ = write_text(trace_path, traces_jsonl(input.run.events)) catch {
+      _ => false
+    }
+    trace_paths.push(trace_path)
   }
   let uniq = unique_findings(rendered)
   let _ = write_text(
@@ -1255,7 +1383,7 @@ async fn analyze(opts : Opts) -> Unit {
     None => ()
   }
   if opts.metrics {
-    for line in metrics_lines(input, ast) {
+    for line in metrics_lines(input, ast, packages) {
       println(line)
     }
   }
@@ -1295,7 +1423,9 @@ async fn analyze(opts : Opts) -> Unit {
   }
   println("elapsed_ms\t" + elapsed.to_string())
   println("REPORT\t" + report_path)
-  println("TRACE\t" + trace_path)
+  for p in trace_paths {
+    println("TRACE\t" + p)
+  }
   println("FINDINGS\t" + findings_path)
   println("SUMMARY\t" + summary_path)
 }
@@ -1309,6 +1439,7 @@ async fn analyze(opts : Opts) -> Unit {
 fn metrics_lines(
   input : @app.ReportInput,
   ast : @app.ModuleAst,
+  packages : Array[@app.PackageRun],
 ) -> Array[String] {
   let out : Array[String] = []
   // READ: how many files were read, and how many of them were understood.
@@ -1371,6 +1502,38 @@ fn metrics_lines(
       "none"
     }),
   )
+  // PACKAGES: the per-package breakdown, and the budget each package had.
+  // The line is only there in the per-package mode, because a number about
+  // packages in a mode that does not scan per package would be a number
+  // about nothing.
+  if packages.length() > 0 {
+    let mut spent = 0
+    let mut pkg_steps = 0
+    let mut pkg_events = 0
+    let mut pkg_findings = 0
+    for p in packages {
+      if p.stopped_by_budget {
+        spent = spent + 1
+      }
+      pkg_steps = pkg_steps + p.steps
+      pkg_events = pkg_events + p.events
+      pkg_findings = pkg_findings + p.findings
+    }
+    out.push(
+      "METRICS\tpackages\tpackages=" +
+      packages.length().to_string() +
+      "\tbudget-spent=" +
+      spent.to_string() +
+      "\tper-package-budget=" +
+      input.run.max_total_steps.to_string() +
+      "\tsteps=" +
+      pkg_steps.to_string() +
+      "\tevents=" +
+      pkg_events.to_string() +
+      "\tfindings=" +
+      pkg_findings.to_string(),
+    )
+  }
   // FINDINGS: the total, split by severity, over the SAME set the report
   // shows. The reportable set is the CFG findings, the dynamic infinite-loop
   // and budget findings, the taint sinks (already deduped by site) and the

@@ -280,6 +280,22 @@ pub struct Func {
 }
 
 ///|
+/// The PACKAGE this file belongs to.
+///
+/// The setter is a declaration of its own because the MUTATION has to exist
+/// on EVERY backend.  The loader is the only thing that knows the tree the
+/// file was read from, and the loader does not run on a backend without a
+/// filesystem -- so a `mut` field that only the loader writes is an error
+/// there.  MEASURED: `moon check --target js` reported `the mutability of
+/// field 'package_path' is never used` when the write sat in the loader.
+///
+/// The same reason `ScanStats::add_file` is a method and not a line in the
+/// caller.
+pub fn SourceFile::set_package_path(self : SourceFile, pkg : String) -> Unit {
+  self.package_path = pkg
+}
+
+///|
 pub struct ParseIssue {
   file : String
   line : Int32
@@ -289,6 +305,10 @@ pub struct ParseIssue {
 ///|
 pub struct SourceFile {
   path : String
+  /// The PACKAGE this file belongs to: the directory that holds the
+  /// `moon.pkg` the file is part of. The module's ROOT package is "", so the
+  /// package of a file is "" when the file sits at the module root.
+  mut package_path : String
   lines : Array[String]
   funcs : Array[Func]
   issues : Array[ParseIssue]
@@ -314,6 +334,7 @@ pub struct SourceFile {
 pub fn SourceFile::new(path : String, text : String) -> SourceFile {
   {
     path,
+    package_path: "",
     lines: split_lines(text),
     funcs: [],
     issues: [],

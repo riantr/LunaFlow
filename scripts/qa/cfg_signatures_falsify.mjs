@@ -20,6 +20,13 @@
 // findings on `src/app/scan.mbt` for exactly that shape, and the MoonBit
 // compiler reported the stub itself as `Unused function 'walk_dir'`.
 //
+// THE ARITY IS MEASURED, NOT CARRIED.  The live `walk_dir` has taken
+// SEVEN parameters since the per-package mode added the package the walker
+// is in, and a falsifier that expected "6" would have failed for the wrong
+// reason: the check would have been right and the expectation stale.  So
+// the stub is built with ONE FEWER parameter than the live one, and the
+// expectation names the two counts that were measured.
+//
 // Usage: node scripts/qa/cfg_signatures_falsify.mjs
 
 import { spawnSync } from 'node:child_process';
@@ -31,19 +38,30 @@ const work = join(root, '_build', 'qa', 'cfg_signatures_falsify');
 const tree = join(work, 'tree');
 const check = join(root, 'scripts', 'qa', 'cfg_signatures.mjs');
 
-const STUB = `
+/// The live `walk_dir`'s parameter count, read from the source.
+function liveArity(text) {
+  const m = /(?:^|\n)[ \t]*(?:async[ \t]+)?fn[ \t]+walk_dir[ \t]*\(([^)]*)\)/.exec(text);
+  if (!m) return null;
+  return m[1]
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0).length;
+}
+
+/// A stub with the given number of parameters.
+function stub(arity) {
+  const params = [];
+  for (let i = 0; i < arity; i += 1) params.push(`  p${i} : Int32,`);
+  return `
 ///|
 #cfg(not(any(target="native", target="wasm")))
 async fn walk_dir(
-  dir : String,
-  rel : String,
-  st : WalkState,
-  limit : Int32,
-  depth : Int32,
+${params.join('\n')}
 ) -> Unit {
 
 }
 `;
+}
 
 let checks = 0;
 let failures = 0;
@@ -75,6 +93,14 @@ if (existsSync(join(root, 'main.mbt'))) {
 const scan = join(tree, 'src', 'app', 'scan.mbt');
 const original = readFileSync(scan, 'utf8');
 
+// The live arity, MEASURED from the tree this falsifier copies.
+const live = liveArity(original);
+if (live === null || live < 2) {
+  console.error(`the live walk_dir's arity could not be read (${live})`);
+  process.exit(2);
+}
+const stubArity = live - 1;
+
 // F1: the copy, untouched, is GREEN.  A detector that is red on a good tree
 // would be a detector nobody trusts.
 const before = run('--root', tree);
@@ -84,9 +110,9 @@ check_(
   before.code === 0 ? 'the copy has the same shape as the tree it came from' : before.out.trim().split('\n').slice(-3).join(' | '),
 );
 
-// F2: the mutation -- a second `walk_dir`, with FIVE parameters beside the
-// live one that takes SIX.
-writeFileSync(scan, original + STUB, 'utf8');
+// F2: the mutation -- a second `walk_dir`, with ONE FEWER parameter than the
+// live one.
+writeFileSync(scan, original + stub(stubArity), 'utf8');
 const after = run('--root', tree);
 check_(
   'the mutated tree is red',
@@ -97,12 +123,14 @@ check_(
 // F3: and it is red for the RIGHT REASON: it names `walk_dir` and shows both
 // shapes.  A detector that goes red for another reason is not a detector.
 const namesWalkDir = /walk_dir/.test(after.out);
-const showsBothShapes = /\b5 parameter\(s\)/.test(after.out) && /\b6 parameter\(s\)/.test(after.out);
+const showsBothShapes =
+  new RegExp(`\\b${live} parameter\\(s\\)`).test(after.out) &&
+  new RegExp(`\\b${stubArity} parameter\\(s\\)`).test(after.out);
 check_(
   'the red check names the function and shows both shapes',
   namesWalkDir && showsBothShapes,
   namesWalkDir && showsBothShapes
-    ? 'walk_dir is reported with 5 and with 6 parameters'
+    ? `walk_dir is reported with ${stubArity} and with ${live} parameters`
     : after.out.trim().split('\n').slice(-4).join(' | '),
 );
 

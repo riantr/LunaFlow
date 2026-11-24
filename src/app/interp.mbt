@@ -1570,6 +1570,53 @@ pub fn run_module(
   per_function~ : Bool = false,
   max_total_steps~ : Int32 = DEFAULT_MAX_TOTAL_STEPS,
 ) -> RunResult {
+  let (result, _packages) = run_module_packages(
+    ast,
+    opts,
+    per_function~,
+    max_total_steps~,
+  )
+  result
+}
+
+///|
+/// Run the module PACKAGE BY PACKAGE, and say what each package cost.
+///
+/// THE MODE, AND WHY IT EXISTS.  The step budget is a bound on the WORK, and
+/// the work of a module is the work of its PACKAGES.  A module-wide budget is
+/// therefore a bound on the FIRST packages in file order: it is spent on the
+/// first directory, and the rest of the tree is never interpreted.  MEASURED
+/// on `riantr/moonbit_static_analysis@0.5.4` (17 packages): the module-wide
+/// budget entered 711 of 1,437 functions and stopped inside `src/flow`,
+/// while this mode entered 1,212 and reached every other package whole.
+///
+/// Per package, each package gets its own budget, so a module of N packages
+/// has a budget of N times the one.  What is left over in one package does
+/// NOT carry over to the next: each package's budget is spent on that
+/// package, and that is the point -- a package's work is its own.
+///
+/// THE COUNT CAP STAYS MODULE-WIDE.  `--max-functions` bounds how many
+/// functions are entered, and it is OFF by default; a per-package count
+/// would multiply it the same way the budget is multiplied, and a reader who
+/// asked for "150 functions" did not ask for "150 functions per package".
+/// So the count is module-wide and the budget is per package.
+///
+/// THE ENTRY ORDINAL IS THE PACKAGE-MAJOR ONE.  The scan enters the
+/// functions package by package, so the n-th entry of this run is not the
+/// n-th function in file order.  The ordinal labels the events; the INPUTS
+/// of a function are synthesized from the function itself and not from the
+/// ordinal, so the FINDINGS of the two modes are the same.
+///
+/// The returned breakdown is EMPTY when `per_package` is false: there was no
+/// per-package run, so there is no per-package result to report.
+///
+pub fn run_module_packages(
+  ast : ModuleAst,
+  opts : RunOptions,
+  per_function~ : Bool = false,
+  max_total_steps~ : Int32 = DEFAULT_MAX_TOTAL_STEPS,
+  per_package~ : Bool = false,
+) -> (RunResult, Array[PackageRun]) {
   let funcs : Map[String, Func] = Map([])
   for f in ast.all_funcs_including_tests() {
     if !funcs.contains(f.name) {
@@ -1584,67 +1631,130 @@ pub fn run_module(
   let mut count = 0
   let mut stopped_by_budget = false
   let mut stopped_by_count = false
+  // The GROUPS: one per package in the per-package mode, and ONE group that
+  // holds the whole module otherwise.  The loop below is the same either
+  // way -- the difference is that the budget is read from the GROUP's
+  // counter, and a group is a package.
+  let names : Array[String] = if per_package {
+    module_packages(ast)
+  } else {
+    [""]
+  }
+  let groups : Map[String, Array[Func]] = if per_package {
+    functions_by_package(ast)
+  } else {
+    let one : Map[String, Array[Func]] = Map([])
+    one[""] = ast.all_funcs()
+    one
+  }
   // The GLOBAL REGION is computed once, before any function runs: the
-  // top-level bindings are constants of the module.
+  // top-level bindings are constants of the module.  Its events belong to
+  // the package that DECLARES them, and they are counted before the run so
+  // that a package's own count includes them.
   let (global_values, global_events) = eval_globals(funcs, opts, ast)
   for e in global_events {
     all_events.push(e)
   }
-  for f in ast.all_funcs() {
-    if opts.entry_filter != "" && f.name != opts.entry_filter {
-      continue
+  let global_counts = count_events_by_package(ast, global_events)
+  // The per-package rows, one per package, in the order the packages were
+  // met.
+  let packages : Array[PackageRun] = []
+  for pkg_name in names {
+    let pkg_funcs : Array[Func] = match groups.get(pkg_name) {
+      Some(g) => g
+      None => []
     }
-    // The COUNT cap: an explicit bound on how many functions are entered. It
-    // is OFF by default, and what stops the default scan is the budget below.
-    if !per_function && opts.max_functions > 0 && count >= opts.max_functions {
-      skipped.push(f.name)
-      stopped_by_count = true
-      continue
+    // The budget of THIS group.  In the module-wide mode there is one group,
+    // so this is the module's budget, read from the same counter as before.
+    let mut pkg_steps = 0
+    let mut pkg_run = 0
+    let mut pkg_skipped = 0
+    let mut pkg_findings = 0
+    let mut pkg_events = match global_counts.get(pkg_name) {
+      Some(n) => n
+      None => 0
     }
-    // The STEP BUDGET: the module-wide bound on WORK. It is checked before
-    // a function is entered, so the scan overshoots it by at most one
-    // function's own budget.
-    if !per_function && max_total_steps > 0 && total_steps >= max_total_steps {
-      skipped.push(f.name)
-      stopped_by_budget = true
-      continue
+    let mut pkg_stopped = false
+    for f in pkg_funcs {
+      if opts.entry_filter != "" && f.name != opts.entry_filter {
+        continue
+      }
+      // The COUNT cap: an explicit bound on how many functions are entered.
+      // It is OFF by default, and what stops the default scan is the budget
+      // below.
+      if !per_function && opts.max_functions > 0 && count >= opts.max_functions {
+        skipped.push(f.name)
+        stopped_by_count = true
+        pkg_skipped = pkg_skipped + 1
+        continue
+      }
+      // The STEP BUDGET: the bound on WORK.  It is checked before a function
+      // is entered, so the scan overshoots it by at most one function's own
+      // budget.  In the per-package mode it is the GROUP's steps that are
+      // compared, so the budget is spent per package.
+      if !per_function && max_total_steps > 0 && pkg_steps >= max_total_steps {
+        skipped.push(f.name)
+        stopped_by_budget = true
+        pkg_stopped = true
+        pkg_skipped = pkg_skipped + 1
+        continue
+      }
+      if f.body.length() == 0 {
+        skipped.push(f.name)
+        pkg_skipped = pkg_skipped + 1
+        continue
+      }
+      let r = run_function(
+        f,
+        funcs,
+        opts,
+        count,
+        global_values~,
+        ffi=ffi_map(ast),
+      )
+      count = count + 1
+      pkg_run = pkg_run + 1
+      total_steps = total_steps + r.steps
+      pkg_steps = pkg_steps + r.steps
+      pkg_events = pkg_events + r.events.length()
+      for e in r.events {
+        all_events.push(e)
+      }
+      for finding in r.findings {
+        all_findings.push(finding)
+        pkg_findings = pkg_findings + 1
+      }
+      ranges.merge_from(r.ranges)
     }
-    if f.body.length() == 0 {
-      skipped.push(f.name)
-      continue
+    if per_package {
+      packages.push({
+        name: pkg_name,
+        functions_run: pkg_run,
+        functions_skipped: pkg_skipped,
+        steps: pkg_steps,
+        events: pkg_events,
+        findings: pkg_findings,
+        stopped_by_budget: pkg_stopped,
+      })
     }
-    let r = run_function(
-      f,
-      funcs,
-      opts,
-      count,
-      global_values~,
-      ffi=ffi_map(ast),
-    )
-    count = count + 1
-    total_steps = total_steps + r.steps
-    for e in r.events {
-      all_events.push(e)
-    }
-    for finding in r.findings {
-      all_findings.push(finding)
-    }
-    ranges.merge_from(r.ranges)
   }
-  {
-    events: all_events,
-    findings: all_findings,
-    ranges,
-    steps: total_steps,
-    trials: count,
-    functions_run: count,
-    functions_skipped: skipped,
-    max_total_steps: if per_function {
-      0
-    } else {
-      max_total_steps
+  (
+    {
+      events: all_events,
+      findings: all_findings,
+      ranges,
+      steps: total_steps,
+      trials: count,
+      functions_run: count,
+      functions_skipped: skipped,
+      max_total_steps: if per_function {
+        0
+      } else {
+        max_total_steps
+      },
+      stopped_by_budget,
+      stopped_by_count,
     },
-    stopped_by_budget,
-    stopped_by_count,
-  }
+    packages,
+  )
 }

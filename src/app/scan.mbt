@@ -291,7 +291,10 @@ pub fn ScanStats::parse_rate(self : ScanStats) -> Double {
 ///
 #cfg(any(target="native", target="wasm"))
 priv struct WalkState {
-  files : Array[String]
+  /// The files the walk found, each with the PACKAGE it belongs to: the
+  /// directory that holds the `moon.pkg` the file is part of. The module's
+  /// ROOT package is "".
+  files : Array[(String, String)]
   mut truncated : Bool
 }
 
@@ -304,6 +307,7 @@ async fn walk_dir(
   limit : Int32,
   depth : Int32,
   excludes : Array[String],
+  pkg : String,
 ) -> Unit {
   if st.files.length() >= limit || depth > 24 {
     st.truncated = true
@@ -311,6 +315,20 @@ async fn walk_dir(
   }
   let entries = @fs.readdir(dir, include_hidden=false, sort=true) catch {
     _ => return
+  }
+  // THE PACKAGE OF THIS DIRECTORY.  A MoonBit package is the directory that
+  // holds its `moon.pkg`, so a directory that holds one IS a package, and the
+  // files of its subdirectories belong to it until one of them holds its own.
+  // The module's root package is "".
+  let own = @fs.kind(path_join(dir, "moon.pkg")) catch { _ => @fs.Unknown }
+  let here = if own == @fs.Regular {
+    if rel == "" {
+      ""
+    } else {
+      rel
+    }
+  } else {
+    pkg
   }
   for name in entries {
     if st.files.length() >= limit {
@@ -339,9 +357,9 @@ async fn walk_dir(
     let rel_path = if rel == "" { name } else { rel + "/" + name }
     let kind = @fs.kind(full) catch { _ => @fs.Unknown }
     if kind == @fs.Directory {
-      walk_dir(full, rel_path, st, limit, depth + 1, excludes)
+      walk_dir(full, rel_path, st, limit, depth + 1, excludes, here)
     } else if kind == @fs.Regular && name.has_suffix(".mbt") {
-      st.files.push(rel_path)
+      st.files.push((rel_path, here))
     }
   }
 }
@@ -361,13 +379,14 @@ pub async fn load_module(
   excludes~ : Array[String] = [],
 ) -> (ModuleAst, ScanStats) {
   let st : WalkState = { files: [], truncated: false, }
-  walk_dir(root, "", st, file_limit, 0, excludes)
+  walk_dir(root, "", st, file_limit, 0, excludes, "")
   let files : Array[SourceFile] = []
   let stats = ScanStats::new()
-  for rel in st.files {
+  for (rel, pkg) in st.files {
     let full = path_join(root, rel)
     let text = @fs.read_text(full) catch { _ => continue }
     let sf = parse_file(rel, text)
+    sf.set_package_path(pkg)
     stats.add_file(sf)
     files.push(sf)
   }

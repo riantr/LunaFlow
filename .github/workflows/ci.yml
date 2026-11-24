@@ -420,6 +420,26 @@ jobs:
       - name: Check that the package envelope check can fail
         run: node scripts/qa/package_envelope_falsify.mjs
 
+      # THE PER-PACKAGE MODE, MEASURED.  The step budget is a bound on the
+      # work, and the work of a module is the work of its PACKAGES, so a
+      # module-wide budget is spent on the first packages in file order.  The
+      # per-package mode gives each package its own budget, and the check
+      # runs the scan both ways and reads which one reached further -- with
+      # the same one-step budget, the module-wide scan enters ONE function and
+      # the per-package scan enters one in EVERY package.
+      #
+      # The check also holds the SPLIT honest: the per-package traces must
+      # hold every event of the module, once, and each event must belong to
+      # the package whose file it names.
+      - name: Check the per-package mode
+        run: node scripts/qa/per_package.mjs
+
+      # ... and this one proves the check above can go RED: it breaks COPIES
+      # of the artefacts under `_build/` -- never a tracked file -- and
+      # asserts the check notices, and that it notices the right thing.
+      - name: Check that the per-package check can fail
+        run: node scripts/qa/per_package_falsify.mjs
+
       - name: Robustness corpus
         run: node scripts/qa/fuzz.mjs
 

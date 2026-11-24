@@ -1753,6 +1753,10 @@ fn undecided_section(findings : Array[Finding]) -> String {
 /// with their class, and `stability` the result of the layout-stability
 /// self-check. A caller that does not use them gets the report without those
 /// sections.
+///
+/// `packages` is the per-package breakdown, and it is empty in the
+/// module-wide mode: there was no per-package run, so there is no
+/// per-package result to report.
 pub fn render_report(
   input : ReportInput,
   per_function~ : Bool = false,
@@ -1766,6 +1770,7 @@ pub fn render_report(
   ipc~ : IpcModel? = None,
   findings_out~ : Array[Finding] = [],
   counterexamples~ : MinimizeResult? = None,
+  packages~ : Array[PackageRun] = [],
 ) -> String {
   let out = StringBuilder()
   let md = "docs/design.md"
@@ -1859,6 +1864,37 @@ pub fn render_report(
     "| Entry selection | " +
     (if per_function {
       "every function (the step budget and the `--max-functions` cap were lifted)"
+    } else if packages.length() > 0 {
+      // THE PER-PACKAGE RULE.  Each package is a run of its own, so the
+      // budget that stops it is the budget of ONE package, and a module of N
+      // packages has a budget of N times the one.  A reader who sees the
+      // budget and does not see WHICH package it belongs to would read it as
+      // the module's, so the row names the packages that spent theirs.
+      let mut spent = 0
+      for p in packages {
+        if p.stopped_by_budget {
+          spent = spent + 1
+        }
+      }
+      if spent == 0 {
+        "every function was entered, PACKAGE BY PACKAGE: each of the " +
+        packages.length().to_string() +
+        " packages had its own step budget (" +
+        input.run.max_total_steps.to_string() +
+        " steps) and none of them was reached; " +
+        input.run.functions_run.to_string() +
+        " functions were entered"
+      } else {
+        "every function, PACKAGE BY PACKAGE, each package with its own step budget (" +
+        input.run.max_total_steps.to_string() +
+        " steps): " +
+        spent.to_string() +
+        " of the " +
+        packages.length().to_string() +
+        " packages spent their budget, and " +
+        input.run.functions_run.to_string() +
+        " functions were entered"
+      }
     } else if input.run.stopped_by_count {
       "the first " +
       input.run.functions_run.to_string() +
@@ -1878,6 +1914,40 @@ pub fn render_report(
     }) +
     " |\n",
   )
+  if packages.length() > 0 {
+    // THE PACKAGE TABLE.  A scan that entered every function of every
+    // package but one is a different thing from a scan that stopped in the
+    // middle of the first package, and only the per-package counts tell the
+    // two apart.
+    out.write_string("\n### 2.1 The packages\n\n")
+    out.write_string(
+      "The scan ran package by package, and each package was a run of its own with its own step budget. The table says what each one cost.\n\n",
+    )
+    out.write_string(
+      "| Package | Functions entered | Functions skipped | Steps | Trace events | Findings | Its own budget |\n",
+    )
+    out.write_string("| --- | --- | --- | --- | --- | --- | --- |\n")
+    for p in packages {
+      out.write_string(
+        "| `" +
+        md_escape(p.name) +
+        "` | " +
+        p.functions_run.to_string() +
+        " | " +
+        p.functions_skipped.to_string() +
+        " | " +
+        p.steps.to_string() +
+        " | " +
+        p.events.to_string() +
+        " | " +
+        p.findings.to_string() +
+        " | " +
+        (if p.stopped_by_budget { "spent" } else { "not reached" }) +
+        " |\n",
+      )
+    }
+    out.write_string("\n")
+  }
   out.write_string(
     "| Wall time (analyzer) | " + input.elapsed_ms.to_string() + " ms |\n",
   )

@@ -114,6 +114,8 @@ pub fn format_double(Double) -> String
 
 pub fn funcs_with_contracts(ModuleAst) -> Array[String]
 
+pub fn functions_by_package(ModuleAst) -> Map[String, Array[Func]]
+
 pub fn global_deps(Expr) -> Array[String]
 
 pub fn global_order(Map[String, Global]) -> (Array[String], Array[String])
@@ -172,9 +174,13 @@ pub fn mermaid_label(String) -> String
 
 pub fn minimize_counterexamples(ModuleAst, RunOptions, Array[Finding], Int32, Int32) -> MinimizeResult
 
+pub fn module_packages(ModuleAst) -> Array[String]
+
 pub fn node_text(Map[String, String], DepNode) -> String
 
 pub fn normalize_ws(String) -> String
+
+pub fn package_of_files(ModuleAst) -> Map[String, String]
 
 pub fn parse_cobertura(String, String) -> Coverage
 
@@ -208,7 +214,7 @@ pub fn read_line_at(Array[String], Int32) -> String
 
 pub fn render_args(Array[Expr]) -> String
 
-pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], growth? : Array[Finding], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?, findings_out? : Array[Finding], counterexamples? : MinimizeResult?) -> String
+pub fn render_report(ReportInput, per_function? : Bool, globals? : Array[GlobalRow], allocs? : Array[AllocSite], growth? : Array[Finding], stability? : StabilityResult?, issues? : Array[ParseIssue], ffi? : FfiModel?, conc? : ConcModel?, ipc? : IpcModel?, findings_out? : Array[Finding], counterexamples? : MinimizeResult?, packages? : Array[PackageRun]) -> String
 
 pub fn run_abstract(ModuleAst, Int32, Int32) -> AbsResult
 
@@ -217,6 +223,8 @@ pub fn run_function(Func, Map[String, Func], RunOptions, Int32, global_values? :
 pub fn run_function_by_name(ModuleAst, String, RunOptions) -> RunResult
 
 pub fn run_module(ModuleAst, RunOptions, per_function? : Bool, max_total_steps? : Int32) -> RunResult
+
+pub fn run_module_packages(ModuleAst, RunOptions, per_function? : Bool, max_total_steps? : Int32, per_package? : Bool) -> (RunResult, Array[PackageRun])
 
 pub fn safe_stem(String) -> String
 
@@ -893,6 +901,16 @@ pub fn NodeKind::not_equal(Self, Self) -> Bool
 
 type P
 
+pub struct PackageRun {
+  name : String
+  functions_run : Int32
+  functions_skipped : Int32
+  steps : Int32
+  events : Int32
+  findings : Int32
+  stopped_by_budget : Bool
+}
+
 pub struct Param {
   name : String
   ty : String
@@ -1049,6 +1067,7 @@ pub fn SliceResult::new(String, SliceDirection) -> Self
 
 pub struct SourceFile {
   path : String
+  mut package_path : String
   lines : Array[String]
   funcs : Array[Func]
   issues : Array[ParseIssue]
@@ -1061,6 +1080,7 @@ pub struct SourceFile {
   mut unsupported_stmts : Int32
 }
 pub fn SourceFile::new(String, String) -> Self
+pub fn SourceFile::set_package_path(Self, String) -> Unit
 
 pub struct Span {
   file : String
