@@ -55,11 +55,40 @@ function walk(dir, out = []) {
 // can be located. The scanner is a state machine, not a regex sweep: a `//`
 // inside a string is not a comment, and a string inside a comment is not a
 // string.
+//
+// THE MULTI-LINE STRING, AND THE BLIND SPOT IT CAUSED.  MoonBit's multi-line
+// string has NO TERMINATOR: the literal opens with `#|`, EVERY content line
+// carries the `#|` prefix, and the literal ends at the first line that does
+// NOT carry it -- the module's own `src/app/lexer.mbt` states this, and
+// `src/app/block_string_test.mbt` pins it.  A bare `#|` line is an EMPTY
+// line of the literal, not the end of it.
+//
+// This scanner used to look for a `|#` closer, which never comes -- and a
+// closer that is never found blanks THE REST OF THE FILE.  MEASURED, by
+// evaluating the stripper out of THIS file: the check read 20,964 code lines
+// of the tree before the repair and reads 24,321 after it -- 3,357 more, 16.0
+// % more.  `src/command/command.mbt` was the worst case: its 65-line usage
+// text is one multi-line literal, and the 1,158 code lines after it were
+// invisible.  A reserved identifier planted after that literal left the check
+// GREEN.  `scripts/qa/coverage_route_falsify.mjs` is the proof, and it runs
+// on COPIES.
+//
+// The rule now: a `#|` whose line carries nothing before it is a literal
+// CONTENT line, and the whole line is blanked.  A `#|` anywhere else is
+// inside a comment or a normal string, which the earlier branches already
+// consumed; if one is ever left over, the REST OF THE LINE is blanked -- which
+// cannot swallow the file, and is the failure mode worth avoiding.
 function stripNonCode(src) {
   let out = '';
   let i = 0;
   const n = src.length;
   const blank = (text) => text.replace(/[^\n]/g, ' ');
+  // Is the position at the start of a line, ignoring the indentation?
+  const atLineStart = (at) => {
+    let j = at - 1;
+    while (j >= 0 && (src[j] === ' ' || src[j] === '\t')) j -= 1;
+    return j < 0 || src[j] === '\n';
+  };
   while (i < n) {
     const two = src.slice(i, i + 2);
     if (two === '//') {
@@ -77,8 +106,17 @@ function stripNonCode(src) {
       continue;
     }
     if (two === '#|') {
-      const end = src.indexOf('|#', i + 2);
-      const stop = end === -1 ? n : end + 2;
+      const end = src.indexOf('\n', i);
+      const stop = end === -1 ? n : end;
+      if (atLineStart(i)) {
+        // A literal CONTENT line: the whole line is string content.
+        out += blank(src.slice(i, stop));
+        i = stop;
+        continue;
+      }
+      // Not a content line, so it is inside a comment or a normal string --
+      // both of which the branches above consume.  If one is ever left over,
+      // the REST OF THE LINE is string content: that cannot swallow the file.
       out += blank(src.slice(i, stop));
       i = stop;
       continue;

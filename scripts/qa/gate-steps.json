@@ -41,6 +41,7 @@
   "node scripts/qa/deep_nesting_probe.mjs",
   "node scripts/qa/vendor_isolation.mjs",
   "node scripts/qa/coverage_route.mjs",
+  "node scripts/qa/coverage_route_falsify.mjs",
   "node scripts/qa/ifds_spike.mjs --corpus fixtures --label fixtures",
   "node scripts/qa/ifds_spike.mjs --corpus fixtures --label fixtures-falsify --falsify",
   "node scripts/qa/headings.mjs README.md",

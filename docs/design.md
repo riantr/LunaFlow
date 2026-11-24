@@ -1676,7 +1676,24 @@ pass; the coverage tooling is simply stricter.
 reserved identifier and on a **stale trace tree** — a `.trace.source` written
 before the module was renamed, which makes every report fail with *"invalid
 source range"* — and it is falsified against both failure modes, so it is a gate
-and not a decoration. The other **8 of the 9** formats read the same data
+and not a decoration.
+
+**THE FALSIFICATION ARRIVED LATE, AND THE CHECK WAS BLIND UNTIL IT DID.** The 0.1.27
+release notes published that this check "is falsified against both failure modes:
+it is proved to fail, not assumed to" — and no falsifier for it existed in the
+repository. The check's own string-stripper treated a `#|` as the start of a
+block string closed by `|#`, but MoonBit's multi-line string has **no
+terminator**: the literal opens with `#|`, every content line carries the
+prefix, and it ends at the first line that does not. The closer was therefore
+never found, and the stripper blanked **the rest of the file** — MEASURED by
+evaluating the stripper out of the tracked source, the check read **20,964** of
+the tree's code lines where it reads **24,321** now, **3,357 more, 16.0 % more**,
+and `src/command/command.mbt` alone lost **1,158** of its **1,260** to its own
+65-line usage literal. A reserved identifier planted after that literal left
+the check **green**: it measured nothing about the code after the literal and
+said OK. The stripper is repaired, and `scripts/qa/coverage_route_falsify.mjs`
+now plants a reserved identifier in three places and asserts the check goes red
+and names the file — on **copies**, so no tracked source is ever written. The other **8 of the 9** formats read the same data
 without parsing the source — `bisect`, `caret`, `summary`, `full_summary`,
 `sorted_summary`, `cobertura`, `html`, `coveralls` — so a module that *does* use
 a reserved word still has a route: *"use -f caret to report coverage without

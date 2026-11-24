@@ -159,6 +159,18 @@ jobs:
           moon coverage report -f simp_caret > _build/qa/simp_caret.txt
           tail -n 1 _build/qa/simp_caret.txt
 
+      # ... and this one proves the check above can go RED.  It runs the real
+      # check on COPIES of the tree under `_build/` -- never a tracked file --
+      # and plants a reserved identifier in three places: after a multi-line
+      # literal, in a file with no literal, and before any literal.  It exists
+      # because the check's own string-stripper used to look for a `|#` closer
+      # that MoonBit's multi-line string never has, which blanked the rest of
+      # the file: the check read 20,964 of the tree's code lines where it
+      # reads 24,321 now, and a reserved identifier planted after a literal
+      # left it GREEN.
+      - name: Check that the coverage-route check can fail
+        run: node scripts/qa/coverage_route_falsify.mjs
+
       # THE IFDS SPIKE. A MEASUREMENT, not a feature: the spike lives in
       # `src/app/ifds_spike_wbtest.mbt` and is not reachable from the CLI. The
       # harness drives it over the fixture corpus and checks the four
