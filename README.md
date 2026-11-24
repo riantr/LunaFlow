@@ -636,6 +636,8 @@ than the standalone module provided.
 
 **AND THE DEFAULT FLIP BROKE THREE CHECKERS — ONE OF THEM HAD BEEN PASSING FOR THE WRONG REASON.** A run writes **one trace file per package** now, and three harnesses still assumed one file per run. The gherkin runner **named** the trace, so it read a file that does not exist and the scenario crashed. The e2e harness named it too, and it read a **leftover** from a run before the flip: it compared that leftover with itself and called the run deterministic. And the coverage check demanded the report's wording "the step budget was not reached", which the per-package report words as "none of them was reached". **THE E2E ONE MATTERS MOST: its size ceiling took the FIRST trace file in the directory — which, for the static-analysis module, was a **0-byte** file — and called it the run's evidence.** The trace is now **FOUND**: every `*_trace.jsonl` in the output directory, sorted, and **summed**, and the output directory is emptied before the run, for the same reason the module runs already emptied theirs. A check that measures nothing is not a check, and this one measured nothing **and passed**.
 
+**AND THE PUBLISHED 0.1.37 REPRODUCES THIS TREE EXACTLY.** The peer round was run again against the published release, and `moonx riantr/LunaFlow@latest .` over this tree agrees with the local build on **every** counter: 66 files, 1,202 functions, 7,746 statements, 230,577 events, 28,420 steps, 48 L2 findings, 45 taint sinks, VCs 2 / 1 / 3 — and their findings sidecars are **byte-identical**. The published release writes **ten** traces, one per package, exactly as the local build does: the new default is what a reader gets, not only what the source says. The peer analyzer's own verdict on the tree did not move: **73 of 76** files fully understood, **0** findings withheld, and all **3** actionable findings in the deliberately vulnerable fixture corpus, none in the source that ships.
+
 **AND THE GATE IS GREEN, ALL OF IT: 54 steps, 54 passed, 0 failed, 0 unknown.** The tests are **339** on all three targets. The gate is the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed.
 
 **THE PEER ROUND FOUND A REAL DEFECT, IN THE LOADER.** `moonx riantr/moonbit_static_analysis@latest .` over this tree reported `src/app/scan.mbt` as a file it could not parse — and that file IS the loader: the file that walks the tree. The cause was a tuple pattern in a `for` header (`for (rel, pkg) in st.files`), one of the peer's three known blind spots, which 0.1.36 had introduced. The tuple is now unpacked inside the loop, and the peer reads the file whole again: **73 of 76** files understood (**96.0 %**), the three gaps are exactly the ones in `docs/qa/PEER_PARSE_GAPS.json`, and **0** findings are withheld. The peer's own classification of the tree improved with it (`unreliable` 44 → **39**).
@@ -3577,9 +3579,9 @@ traceable to a file in `reports/`:
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **1,108 ms** to **1,180 ms**, while every
+runs over the tree this commit names read **1,108 ms** to **1,192 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
-**identical on all five**. The counts are the deterministic measure; the time is
+**identical on every one of them**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
 committed artefacts: the committed doubleML artefact read **16.0 s**, and the
 count it carries is the artefact's own. **The doubleML wall clock moved with
