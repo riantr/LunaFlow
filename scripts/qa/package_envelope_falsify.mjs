@@ -115,7 +115,7 @@ runModel('truth', clone(TRUTH), null);
 // F3 -- a report that is not packed at all.
 {
   const m = clone(TRUTH);
-  const report = 'reports/riantr_moonbit_doubleML@latest_0.164.64.md';
+  const report = 'reports/riantr_moonbit_doubleML@latest_0.164.66.md';
   m.artefacts = [...m.artefacts, { path: report }];
   m.packed = m.packed.filter((f) => f.path !== report);
   runModel('F3 a report that is not packed', m, 'every report, sidecar and summary is packed');
@@ -126,7 +126,7 @@ runModel('truth', clone(TRUTH), null);
   const m = clone(TRUTH);
   m.packed = [
     ...m.packed,
-    { path: 'reports/riantr_moonbit_doubleML@latest_0.164.64_trace.jsonl', bytes: 80_863_997 },
+    { path: 'reports/riantr_moonbit_doubleML@latest_0.164.66_root_trace.jsonl', bytes: 80_863_997 },
   ];
   runModel('F4 a raw trace in the package', m, 'no raw trace is packed');
 }

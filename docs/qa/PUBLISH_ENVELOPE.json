@@ -13,5 +13,6 @@
   "rejected_entries": 172,
   "rejected_server_status": "400 Bad Request, detail: Invalid ZIP archive",
   "measured_at": "2026-11-23",
-  "note": "The registry's real ceiling lies between the accepted 0.1.34 and the rejected 0.1.35. This file records where the measurement put it, not where the registry says it is: the registry's answer names no limit at all."
+  "note": "The registry's real ceiling lies between the accepted 0.1.34 and the rejected 0.1.35. This file records where the measurement put it, not where the registry says it is: the registry's answer names no limit at all.",
+  "note_2026_11_24": "The two records above are HISTORICAL FACTS about two uploads and are not renamed: the entry they name is the trace as it was packed then. The corpus it names has since moved -- doubleML is 0.164.66 now -- and the committed trace of that corpus was regenerated under the per-package default, so it is ONE FILE PER PACKAGE: 17 files for the static-analysis module and 1 for doubleML, whose root package holds all 220 of its files. The envelope check reads only the two byte numbers above, so it is unaffected by the regeneration."
 }

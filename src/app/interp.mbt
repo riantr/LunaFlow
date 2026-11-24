@@ -1558,6 +1558,16 @@ pub fn run_function_by_name(
 /// `max_total_steps` is an optional argument too, and it defaults to
 /// `DEFAULT_MAX_TOTAL_STEPS`; 0 means "no budget".
 ///
+/// THIS IS THE MODULE-WIDE RUNNER, and it stays that one.  The budget here is
+/// the MODULE's: one budget for the whole module, spent on the first packages
+/// in file order.  The per-package mode -- one budget per package -- is
+/// `run_module_packages`, and it is what the command-line tool uses by
+/// default.  The two are kept apart on purpose: `max_total_steps` means "the
+/// module's budget" in THIS function, and a caller that already passes it
+/// must keep getting what it asked for.  A budget that silently became a
+/// per-package one would change what the number MEANS, and no signature check
+/// would catch that.
+///
 /// THE COST IS REAL and it was measured: on `riantr/moonbit_doubleML@0.164.64`
 /// (2,529 functions) the capped run took 11.4 s and 47,835 steps, and the
 /// uncapped one 123.2 s and 465,001 steps, with 2,103,552 trace events
@@ -1575,6 +1585,13 @@ pub fn run_module(
     opts,
     per_function~,
     max_total_steps~,
+    // The MODULE-WIDE runner, whatever the per-package runner's own default
+    // is.  `max_total_steps` is documented here as the MODULE's budget, and a
+    // budget that silently became a per-package one would change what the
+    // number MEANS for every caller that already uses it -- a change no
+    // signature check would catch.  The per-package runner is
+    // `run_module_packages`, whose default is the per-package mode.
+    per_package=false,
   )
   result
 }
@@ -1610,12 +1627,25 @@ pub fn run_module(
 /// The returned breakdown is EMPTY when `per_package` is false: there was no
 /// per-package run, so there is no per-package result to report.
 ///
+/// `per_package` DEFAULTS TO TRUE: the per-package mode is the default scan.
+/// It became the default because the measurement says it is the better
+/// default -- a module-wide budget is a bound on the FIRST packages in file
+/// order, so the rest of the tree is never interpreted, and the per-package
+/// budget reaches the whole module.  MEASURED on
+/// `riantr/moonbit_static_analysis@0.5.4` (17 packages): the module-wide
+/// budget entered 711 of 1,437 functions, and this mode entered 1,212 and
+/// reached every other package whole.
+///
+/// `run_module` is the module-wide runner and says so: it passes
+/// `per_package=false` explicitly, because its `max_total_steps` is the
+/// MODULE's budget.
+///
 pub fn run_module_packages(
   ast : ModuleAst,
   opts : RunOptions,
   per_function~ : Bool = false,
   max_total_steps~ : Int32 = DEFAULT_MAX_TOTAL_STEPS,
-  per_package~ : Bool = false,
+  per_package~ : Bool = true,
 ) -> (RunResult, Array[PackageRun]) {
   let funcs : Map[String, Func] = Map([])
   for f in ast.all_funcs_including_tests() {

@@ -1,0 +1,15 @@
+{"k":"enter","fn":"main","file":"src/cli/main.mbt","line":4,"stmt":0,"name":"main","value":"0","tainted":true,"trial":0,"detail":""}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":7,"stmt":0,"name":".all","value":"?","tainted":false,"trial":0,"detail":"@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":36,"stmt":0,"name":".literate","value":"?","tainted":false,"trial":0,"detail":"@pipeline,@moonfiles,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":35,"stmt":0,"name":".render_result","value":"?","tainted":false,"trial":0,"detail":"@pipeline,@moonfiles,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":45,"stmt":0,"name":"@core.IfaceSymTab.empty","value":"0","tainted":false,"trial":0,"detail":"@pipeline,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":42,"stmt":0,"name":".run","value":"?","tainted":false,"trial":0,"detail":"@pipeline,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":41,"stmt":0,"name":".render_result","value":"?","tainted":false,"trial":0,"detail":"@pipeline,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":55,"stmt":0,"name":"@core.IfaceSymTab.empty","value":"0","tainted":false,"trial":0,"detail":"@moonfiles,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":52,"stmt":0,"name":".iface","value":"?","tainted":false,"trial":0,"detail":"@moonfiles,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":51,"stmt":0,"name":".render_reports","value":"?","tainted":false,"trial":0,"detail":"@moonfiles,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":61,"stmt":0,"name":".proof","value":"?","tainted":false,"trial":0,"detail":"@moonfiles,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":61,"stmt":0,"name":".render_reports","value":"?","tainted":false,"trial":0,"detail":"@moonfiles,@samples"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":68,"stmt":0,"name":".pyroduct_flavored","value":"?","tainted":false,"trial":0,"detail":"@statecheck"}
+{"k":"call","fn":"main","file":"src/cli/main.mbt","line":68,"stmt":0,"name":".render","value":"?","tainted":false,"trial":0,"detail":"@statecheck"}
+{"k":"def","fn":"main","file":"src/cli/main.mbt","line":4,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}

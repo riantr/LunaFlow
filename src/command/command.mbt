@@ -96,7 +96,10 @@ struct Opts {
   mut metrics : Bool
   /// Enter EVERY function as an entry point, with no `--max-functions` cap.
   mut per_function : Bool
-  /// Scan PACKAGE BY PACKAGE, each package with its own step budget.
+  /// Scan PACKAGE BY PACKAGE, each package with its own step budget.  This
+  /// is the DEFAULT: the measurement says it is the better default, because a
+  /// module-wide budget is spent on the first packages in file order and the
+  /// rest of the tree is never interpreted.
   mut per_package : Bool
   /// Re-sample the analysis and report which findings depend on the sample.
   mut stability : Bool
@@ -136,7 +139,7 @@ fn Opts::default() -> Opts {
     explain_all: false,
     metrics: false,
     per_function: false,
-    per_package: false,
+    per_package: true,
     stability: false,
     counterexamples: false,
     counterexample_limit: 64,
@@ -170,9 +173,9 @@ fn usage() -> String {
     #|  --max-functions <n> cap on interpreted functions (default: 0, no cap;
     #|                      the default scan enters EVERY function)
     #|  --max-total-steps <n>
-    #|                      the step budget of the dynamic layer: the module's
-    #|                      own by default, and EACH PACKAGE's own under
-    #|                      --per-package (default: 100000; 0 = no budget)
+    #|                      the step budget of the dynamic layer: EACH PACKAGE's
+    #|                      own by default, and the MODULE's own under
+    #|                      --module-wide (default: 100000; 0 = no budget)
     #|  --slice <crit>      slice criterion: <var>@<fn>, <fn>:<line>, or <var>
     #|  --function <fn>     interpret only this function (default: all)
     #|  --level <1|2|3>     proof strength: 1 interpreter, 2 values, 3 contracts (default 1)
@@ -198,7 +201,12 @@ fn usage() -> String {
     #|  --per-function      enter EVERY function as an entry point, with the
     #|                      step budget and the --max-functions cap lifted
     #|  --per-package       scan PACKAGE BY PACKAGE, each package with its own
-    #|                      step budget, and write one trace per package
+    #|                      step budget, and write one trace per package.  This
+    #|                      is the DEFAULT; the flag states it explicitly
+    #|  --module-wide       one step budget for the WHOLE MODULE, spent on the
+    #|                      first packages in file order, and one trace file for
+    #|                      the module.  This is what the scan used to do by
+    #|                      default
     #|  --counterexamples   re-run each finding an execution produced on its own
     #|                      input, and shrink that input to the smallest one
     #|                      that still reproduces it (report 5.12)
@@ -429,6 +437,14 @@ fn parse_args(args : Array[String]) -> (String, Opts)? {
       i = i + 1
     } else if a == "--per-package" {
       o.per_package = true
+      i = i + 1
+    } else if a == "--module-wide" {
+      // The MODULE-WIDE budget: ONE budget for the whole module, spent on the
+      // first packages in file order.  This is what the scan used to do by
+      // default, and it is still the right choice when the modules compared
+      // are of very different sizes -- then the per-package budget multiplies
+      // the work by the package count.
+      o.per_package = false
       i = i + 1
     } else if a == "--stability" {
       o.stability = true

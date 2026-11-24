@@ -16,14 +16,18 @@
 //   F4  the report states the MODULE-WIDE rule while the artefacts are the
 //       per-package ones -- the report states a rule that is not the rule
 //       that was followed
+//   F5  the metrics do not carry the packages line -- the artefacts are not
+//       the per-package ones, which is what a MODULE-WIDE run looks like
 //
 // It also runs a CONTROL: a change that says nothing about which coverage
 // was measured (the budget's NUMBER), which the checker must NOT notice.
 // Without the control, a checker that failed on every possible edit would
 // look like a checker that works.
 //
-// The scan is run ONCE and its artefacts are captured: the falsifier copies
-// them, and the tracked tree is never written.
+// The scan is run ONCE -- with NO mode flag, because the per-package mode is
+// the DEFAULT now, so the artefacts are the ones the tool ships -- and its
+// artefacts are captured: the falsifier copies them, and the tracked tree is
+// never written.
 //
 // Usage: node scripts/qa/per_package_falsify.mjs
 //
@@ -67,7 +71,7 @@ const ARTEFACTS = (() => {
   const exe = requireCli(ROOT);
   const out = join(WORK, 'scan');
   mkdirSync(out, { recursive: true });
-  const run = spawnSync(exe, ['analyze', '--dir', '.', '--out', out, '--metrics', '--per-package'], {
+  const run = spawnSync(exe, ['analyze', '--dir', '.', '--out', out, '--metrics'], {
     cwd: ROOT,
     encoding: 'utf8',
     timeout: 900000,
@@ -219,6 +223,21 @@ mustStayGreen('the unmutated copies', truth);
     return true;
   });
   mustGoRed('F4 a rule the artefacts do not show', dir, 'states the per-package rule');
+}
+
+// F5 -- the metrics do not carry the packages line: the artefacts are not the
+// per-package ones.
+{
+  const dir = copyArtefacts('f5', (d) => {
+    const p = join(d, 'metrics.txt');
+    const text = readFileSync(p, 'utf8');
+    const lines = text.split(/\r?\n/);
+    const kept = lines.filter((l) => !/^METRICS\tpackages\t/.test(l));
+    if (kept.length === lines.length) return false;
+    writeFileSync(p, kept.join('\n'), 'utf8');
+    return true;
+  });
+  mustGoRed('F5 artefacts that are not the per-package ones', dir, 'the metrics say the scan was the per-package one');
 }
 
 // The CONTROL -- the budget's NUMBER says nothing about which coverage was

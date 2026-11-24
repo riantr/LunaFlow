@@ -30,8 +30,8 @@ Measured on the tree this commit names.
 
 **Item 1.** The fixture scan with `--max-findings 3` produced **4** bounded
 tables — of 6, 8, 9 and 6 findings — and the sidecar kept all **29** fixture
-findings. The committed doubleML artefact shows the cap of **300 of 2,503**,
-its count table sums to **2,503**, and its sidecar holds **3,600** findings.
+findings. The committed doubleML artefact shows the cap of **300 of 2,511**,
+its count table sums to **2,511**, and its sidecar holds **3,610** findings.
 
 **Item 2.** The fixture carries **4** `TAINT-ALLOC` findings, and both
 spelling assertions pass. The two-file module (`a.mbt` and `b.mbt`, the same

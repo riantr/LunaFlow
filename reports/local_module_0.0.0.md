@@ -27,7 +27,16 @@
 | Trace events | 604 |
 | Interpreted steps | 156 |
 | Observed functions | 12 |
-| Entry selection | every function was entered (12); the step budget (100000 steps) was not reached |
+| Entry selection | every function was entered, PACKAGE BY PACKAGE: each of the 1 packages had its own step budget (100000 steps) and none of them was reached; 12 functions were entered |
+
+### 2.1 The packages
+
+The scan ran package by package, and each package was a run of its own with its own step budget. The table says what each one cost.
+
+| Package | Functions entered | Functions skipped | Steps | Trace events | Findings | Its own budget |
+| --- | --- | --- | --- | --- | --- | --- |
+| `` | 12 | 0 | 156 | 561 | 50 | not reached |
+
 | Wall time (analyzer) | 4 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 

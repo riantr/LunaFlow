@@ -246,9 +246,18 @@ if (!ARTIFACTS) {
   const stopped = metrics['stopped-by'];
   const row = coverage.selection ?? '';
   if (stopped === 'none') {
+    // The row states the claim in the MODE's own words.  The module-wide mode
+    // says "the step budget (100000 steps) was not reached"; the per-package
+    // mode -- the DEFAULT since 0.1.37 -- says "each of the 10 packages had its
+    // own step budget (100000 steps) and none of them was reached".  The CLAIM
+    // is the same in both: every function was entered, and no bound was
+    // reached.  The wording belongs to the tool, so the check accepts both
+    // wordings of the one claim; it does not accept a third.
     check(
       'the report says every function was entered when no bound stopped the scan',
-      /every function was entered/.test(row) && /was not reached/.test(row) && !/cap applies/.test(row),
+      /every function was entered/.test(row) &&
+        /(was not reached|none of them was reached)/.test(row) &&
+        !/cap applies/.test(row),
       row,
     );
     check(

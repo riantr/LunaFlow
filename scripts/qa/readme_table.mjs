@@ -63,6 +63,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { resolveCli } from './cli_bin.mjs';
+import { committedArtefactStem } from './committed_artefact.mjs';
 
 const root = resolve(process.cwd());
 const readmePath = join(root, 'README.md');
@@ -138,11 +139,24 @@ function gateTable(md) {
 
 ///|
 /// The summary file that goes with a table row.
+///
+/// The version is part of the file name, and the REGISTRY moves it (doubleML
+/// went 0.164.64 -> 0.164.66), so the version is READ from the row that
+/// names it -- the row says `-> 0.164.66` -- instead of being carried here.
+/// A checker that carried the version would stop finding the artefact the
+/// day the registry moved, and would then compare nothing.
 function summaryFor(key) {
-  if (key.includes('doubleML'))
-    return 'reports/riantr_moonbit_doubleML@latest_0.164.64_summary.json';
-  if (key.includes('static_analysis'))
-    return 'reports/riantr_moonbit_static_analysis@latest_0.5.4_summary.json';
+  const version = /→\s*(\d+\.\d+\.\d+)/.exec(key);
+  if (key.includes('doubleML')) {
+    return version
+      ? `reports/riantr_moonbit_doubleML@latest_${version[1]}_summary.json`
+      : null;
+  }
+  if (key.includes('static_analysis')) {
+    return version
+      ? `reports/riantr_moonbit_static_analysis@latest_${version[1]}_summary.json`
+      : null;
+  }
   if (key.includes('vuln_demo')) return 'reports/local_module_0.0.0_summary.json';
   return null;
 }
@@ -379,14 +393,21 @@ if (!gate) {
 // So they are measured HERE, from the artefact itself, and the prose is
 // compared with the measurement. The check reads the artefact; it does not
 // carry the numbers.
-const artefactBase = 'reports/riantr_moonbit_doubleML@latest_0.164.64';
-const artefactMdPath = join(root, artefactBase + '.md');
-const artefactJsonlPath = join(root, artefactBase + '_findings.jsonl');
-if (!existsSync(artefactMdPath) || !existsSync(artefactJsonlPath)) {
-  check('the committed doubleML artefact is present', false, artefactBase);
+// The committed artefact is FOUND, not named: the corpus version is part of
+// the file name and the registry moves it, so a checker that carried the
+// version would stop finding the artefact the day the registry moved -- and
+// would then compare nothing.
+const artefactBase = committedArtefactStem(root, 'riantr_moonbit_doubleML@latest_');
+if (!artefactBase) {
+  check('the committed doubleML artefact is present', false, join(root, 'reports'));
 } else {
-  const artefactMd = readFileSync(artefactMdPath, 'utf8');
-  const artefactRows = readFileSync(artefactJsonlPath, 'utf8')
+  const artefactMdPath = artefactBase + '.md';
+  const artefactJsonlPath = artefactBase + '_findings.jsonl';
+  if (!existsSync(artefactMdPath) || !existsSync(artefactJsonlPath)) {
+    check('the committed doubleML artefact is present', false, artefactBase);
+  } else {
+    const artefactMd = readFileSync(artefactMdPath, 'utf8');
+    const artefactRows = readFileSync(artefactJsonlPath, 'utf8')
     .trim()
     .split('\n')
     .filter((l) => l.trim() !== '')
@@ -493,6 +514,7 @@ if (!existsSync(artefactMdPath) || !existsSync(artefactJsonlPath)) {
         );
       }
     }
+  }
   }
 }
 

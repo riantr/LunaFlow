@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, existsSync, statSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { resolveCli } from './cli_bin.mjs';
+import { traceBody, traceBytes, traceFiles } from './run_artefacts.mjs';
 
 const root = process.cwd();
 const exe = resolveCli(root);
@@ -81,9 +82,18 @@ const sliceNodes = (md) => {
 };
 
 function assertArtefacts(label, dir, stem) {
-  for (const suffix of ['.md', '_summary.json', '_trace.jsonl', '_findings.jsonl']) {
+  for (const suffix of ['.md', '_summary.json', '_findings.jsonl']) {
     check(`${label}: artefact ${stem}${suffix}`, existsSync(join(dir, stem + suffix)));
   }
+  // The trace is FOUND, not named.  The per-package mode is the DEFAULT since
+  // 0.1.37, so a run writes one trace file per package and there is no single
+  // name to state -- and a directory that has been used before still holds the
+  // file the OLD name pointed at, from a run before the default flip.  Naming
+  // that file would compare a leftover with itself.
+  const traces = traceFiles(dir);
+  const bytes = traceBytes(dir, traces);
+  check(`${label}: the trace files are written`, traces.length > 0, traces.join(', ') || 'none');
+  check(`${label}: the trace is not empty`, bytes > 0, `${bytes} B in ${traces.length} file(s)`);
 }
 
 // The findings tables are BOUNDED, so the report no longer holds every
@@ -146,6 +156,12 @@ function checkSidecar(label, dir, stem, md, summary) {
 // --- fixture, twice into the same dir, for determinism -------------------
 const f1 = join(outRoot, 'det');
 const f2 = join(outRoot, 'det');
+// THE OUTPUT DIRECTORY IS EMPTIED BEFORE THE RUN, for the same reason the
+// module runs below empty theirs: the per-package mode writes one trace file
+// per package, and a directory that has been used before still holds the file
+// the OLD single-trace name pointed at -- a leftover this run did not write.
+// The determinism check compared that leftover with itself and passed.
+rmSync(f1, { recursive: true, force: true });
 runCli('fixture run1', ['analyze', '--dir', 'fixtures/vuln_demo', '--out', f1, '--funnel', '--slice', 'i@copy_prefix']);
 
 const stem = 'local_module_0.0.0';
@@ -154,20 +170,24 @@ const detSummary1 = existsSync(join(f1, `${stem}_summary.json`))
   ? readFileSync(join(f1, `${stem}_summary.json`), 'utf8')
   : '';
 const detReport1 = existsSync(join(f1, `${stem}.md`)) ? readFileSync(join(f1, `${stem}.md`), 'utf8') : '';
-const detTrace1 = existsSync(join(f1, `${stem}_trace.jsonl`))
-  ? readFileSync(join(f1, `${stem}_trace.jsonl`), 'utf8')
-  : '';
+const detTraceFiles1 = traceFiles(f1);
+const detTrace1 = traceBody(f1, detTraceFiles1);
 
 runCli('fixture run2', ['analyze', '--dir', 'fixtures/vuln_demo', '--out', f2, '--funnel', '--slice', 'i@copy_prefix']);
 
 if (existsSync(join(f1, `${stem}_summary.json`))) {
   const detSummary2 = readFileSync(join(f1, `${stem}_summary.json`), 'utf8');
   const detReport2 = readFileSync(join(f1, `${stem}.md`), 'utf8');
-  const detTrace2 = readFileSync(join(f1, `${stem}_trace.jsonl`), 'utf8');
+  const detTraceFiles2 = traceFiles(f1);
+  const detTrace2 = traceBody(f1, detTraceFiles2);
   const s1 = JSON.parse(detSummary1);
   const s2 = JSON.parse(detSummary2);
   check('A13 determinism: summaries identical except elapsed_ms', strip(s1) === strip(s2), `elapsed ${s1.elapsed_ms} vs ${s2.elapsed_ms} ms`);
-  check('A13 determinism: trace JSONL byte-identical', detTrace1 === detTrace2, `${detTrace1.length} B`);
+  check(
+    'A13 determinism: trace JSONL byte-identical',
+    detTrace1 === detTrace2 && detTraceFiles1.join('|') === detTraceFiles2.join('|'),
+    `${detTraceFiles1.length} file(s), ${detTrace1.length} B`,
+  );
   const mdNormalized = (md) => md.replace(/\d+(?:\.\d+)?\s*ms/g, '<ms>');
   check('A13 determinism: report identical except timing figures', mdNormalized(detReport1) === mdNormalized(detReport2));
   check('A6 dead code == 3', s1.dead_code === 3, `${s1.dead_code}`);
@@ -269,15 +289,18 @@ for (const mod of modules) {
   check(`${mod.label} A10: slice nodes >= ${mod.minSlice}`, sliceNodes(md) >= mod.minSlice, `${sliceNodes(md)}`);
   check(`${mod.label} A11: wall time <= 60 s`, ms <= 60000, `${Math.round(ms)} ms`);
   check(`${mod.label} A12: report <= 512 KB`, statSync(join(dir, mdName)).size <= 512 * 1024, `${statSync(join(dir, mdName)).size} B`);
-  const trace = readdirSync(dir).find((f) => f.endsWith('_trace.jsonl'));
-  const traceBytes = trace ? statSync(join(dir, trace)).size : 0;
+  // The trace's TOTAL size, not one package's: the ceiling is about the
+  // evidence the run produced, and the per-package mode splits that evidence
+  // into one file per package.  Taking the FIRST file measured one package and
+  // called it the whole.
+  const traceTotal = traceBytes(dir);
   // The trace grew again, and for the same reason as before: the default scan
   // now enters every function the module's STEP BUDGET covers instead of the
   // first 150 in file order, so the documented recipe's trace went from
   // 37.6 MB to 77.1 MB on doubleML and from 2.5 MB to 73.1 MB on the
   // static-analysis module.  The ceiling moves with the coverage, as it has
   // before.
-  check(`${mod.label} A12: trace <= 128 MB`, traceBytes <= 128 * 1024 * 1024, `${(traceBytes / 1024 / 1024).toFixed(1)} MB`);
+  check(`${mod.label} A12: trace <= 128 MB`, traceTotal <= 128 * 1024 * 1024, `${(traceTotal / 1024 / 1024).toFixed(1)} MB`);
   check(`${mod.label} A15: abstract findings >= 1`, summary.abstract_findings >= 1, `${summary.abstract_findings}`);
   check(`${mod.label} A17: funnel diagram present`, /flowchart LR[\s\S]*L1\[/.test(md));
   check(`${mod.label} A9: per-point table non-empty`, /### 6\.1 Per-program-point observations[\s\S]*?\n\| /.test(md));
@@ -304,8 +327,7 @@ if (!skipModules) {
     if (mdName) {
       const summary = summaryOf(full, mdName.slice(0, -3));
       const mdBytes = statSync(join(full, mdName)).size;
-      const trace = readdirSync(full).find((f) => f.endsWith('_trace.jsonl'));
-      const traceBytes = trace ? statSync(join(full, trace)).size : 0;
+      const traceTotal = traceBytes(full);
       check('doubleML full A11: wall time <= 60 s', ms <= 60000, `${Math.round(ms)} ms`);
       check('doubleML full A12: report <= 512 KB', mdBytes <= 512 * 1024, `${mdBytes} B`);
       // The trace grew because the analyzer now understands more of the
@@ -318,7 +340,7 @@ if (!skipModules) {
       // 150 in file order.  Measured on this run: 931003 events and 139.9 MB,
       // where the count cap gave 387638 events and 70.3 MB.  The ceiling
       // moves with the coverage, as it has before.
-      check('doubleML full A12: trace <= 192 MB', traceBytes <= 192 * 1024 * 1024, `${(traceBytes / 1024 / 1024).toFixed(1)} MB`);
+      check('doubleML full A12: trace <= 192 MB', traceTotal <= 192 * 1024 * 1024, `${(traceTotal / 1024 / 1024).toFixed(1)} MB`);
       check('doubleML full: trace events > 100k', summary.trace_events > 100000, `${summary.trace_events}`);
       // doubleML has no unreachable statements, and the analyzer now says so.
       // The floor it used to carry -- 100 findings -- was the shredding bug:

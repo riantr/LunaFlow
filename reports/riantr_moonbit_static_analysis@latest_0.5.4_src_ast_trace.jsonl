@@ -1,0 +1,32 @@
+{"k":"source","fn":"BOp::symbol","file":"src/ast/ast.mbt","line":66,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"BOp::symbol","file":"src/ast/ast.mbt","line":66,"stmt":0,"name":"BOp::symbol","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"BOp::symbol","file":"src/ast/ast.mbt","line":67,"stmt":0,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self { OpAdd => + OpSub => - OpMul => * OpDiv => / OpMod => % OpEq => == OpNe => != OpLt => < OpLe => <= OpGt => > OpGe => >= OpAnd => && OpOr => || OpBitAnd => & OpBitOr => | OpBitXor => ^ OpShl => << OpShr => >> OpPipe => <| OpMatch => =~}"}
+{"k":"def","fn":"BOp::symbol","file":"src/ast/ast.mbt","line":66,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"ImportSpec::path","file":"src/ast/ast.mbt","line":782,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"ImportSpec::path","file":"src/ast/ast.mbt","line":782,"stmt":0,"name":"ImportSpec::path","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"ImportSpec::path","file":"src/ast/ast.mbt","line":783,"stmt":1,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self { IImport(p) | IStar(p) => p IAliased(p, _) | IAliasedStar(p, _) => p}"}
+{"k":"def","fn":"ImportSpec::path","file":"src/ast/ast.mbt","line":782,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"ImportSpec::alias_name","file":"src/ast/ast.mbt","line":792,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"ImportSpec::alias_name","file":"src/ast/ast.mbt","line":792,"stmt":0,"name":"ImportSpec::alias_name","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"ImportSpec::alias_name","file":"src/ast/ast.mbt","line":793,"stmt":2,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self { IAliased(_, a) | IAliasedStar(_, a) => a IImport(_) | IStar(_) => }"}
+{"k":"def","fn":"ImportSpec::alias_name","file":"src/ast/ast.mbt","line":792,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"ImportSpec::is_star","file":"src/ast/ast.mbt","line":802,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"ImportSpec::is_star","file":"src/ast/ast.mbt","line":802,"stmt":0,"name":"ImportSpec::is_star","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"ImportSpec::is_star","file":"src/ast/ast.mbt","line":803,"stmt":3,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self { IStar(_) | IAliasedStar(_, _) => true IImport(_) | IAliased(_, _) => false}"}
+{"k":"def","fn":"ImportSpec::is_star","file":"src/ast/ast.mbt","line":802,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"ImportSpec::render","file":"src/ast/ast.mbt","line":812,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"ImportSpec::render","file":"src/ast/ast.mbt","line":812,"stmt":0,"name":"ImportSpec::render","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"ImportSpec::render","file":"src/ast/ast.mbt","line":813,"stmt":4,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self { IImport(p) => p IStar(p) => \\{p} * IAliased(p, a) => \\{p} @\\{a} IAliasedStar(p, a) => \\{p} @\\{a} *}"}
+{"k":"def","fn":"ImportSpec::render","file":"src/ast/ast.mbt","line":812,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":835,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":835,"stmt":0,"name":"Expr::assigned_base","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":836,"stmt":5,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(n) => Some(n) EField(base, _) => base.assigned_base() EIndex(base, _) => base.assigned_base() ETupleField(base, _) => base.assigned_base() _ => None}"}
+{"k":"def","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":835,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":846,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":846,"stmt":0,"name":"Expr::is_valid_target","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":847,"stmt":6,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(_) | EField(_, _) | EIndex(_, _) | ETupleField(_, _) => true _ => false}"}
+{"k":"def","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":846,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":862,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":862,"stmt":0,"name":"Expr::is_qualifier","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":863,"stmt":7,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(n) => n.has_prefix(@) EField(base, _) => base.is_qualifier() _ => false}"}
+{"k":"def","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":862,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}

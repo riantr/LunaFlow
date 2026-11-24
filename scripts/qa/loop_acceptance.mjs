@@ -41,6 +41,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { resolveCli } from './cli_bin.mjs';
+import { committedArtefactStem } from './committed_artefact.mjs';
 
 const root = resolve(process.cwd());
 const work = join(root, '_build', 'qa', 'loop_acceptance');
@@ -205,9 +206,18 @@ if (scan.status === 0) {
   );
 }
 
-// 1b. the COMMITTED doubleML artefact -- the one the registry serves
-const stem = join(root, 'reports', 'riantr_moonbit_doubleML@latest_0.164.64');
-if (existsSync(stem + '.md') && existsSync(stem + '_findings.jsonl')) {
+// 1b. the COMMITTED doubleML artefact -- the one the registry serves.
+//
+// The corpus version is part of the file name and the REGISTRY moves it (it
+// went 0.164.64 -> 0.164.66), so the artefact is FOUND in the tree's own
+// reports directory rather than NAMED here: a checker that carried the
+// version would stop finding the artefact the day the registry moved, and
+// would then quietly check nothing.
+const stem = committedArtefactStem(root, 'riantr_moonbit_doubleML@latest_');
+if (!stem) {
+  check('the committed doubleML artefact is present', false, join(root, 'reports'));
+}
+if (stem && existsSync(stem + '.md') && existsSync(stem + '_findings.jsonl')) {
   const lines = readFileSync(stem + '.md', 'utf8').split('\n');
   const tables = countTables(lines);
   const l2 = tables.find((t) => t.marker && t.marker.whole > 1000);

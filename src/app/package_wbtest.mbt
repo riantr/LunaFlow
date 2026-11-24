@@ -145,10 +145,47 @@ test "the count cap stays module-wide in the per-package mode" {
 test "the module-wide mode reports no per-package breakdown" {
   let ast = two_package_ast()
   let opts = small_opts()
-  let (_run, packages) = run_module_packages(ast, opts, max_total_steps=100000)
+  // The module-wide mode is asked for EXPLICITLY, because the per-package
+  // mode is the default now: without the argument this call would run
+  // package by package and would come back with a breakdown.
+  let (_run, packages) = run_module_packages(
+    ast,
+    opts,
+    max_total_steps=100000,
+    per_package=false,
+  )
   // There was no per-package run, so there is no per-package result: an
   // empty list, not a list with one row for the whole module.
   inspect(packages.length(), content="0")
+}
+
+///|
+test "the per-package mode is the DEFAULT" {
+  let ast = two_package_ast()
+  let opts = small_opts()
+  // The SAME one-step budget as the module-wide test above, and NO
+  // per_package argument: the default mode spends the budget again in the
+  // next package, so it enters TWO functions where the module-wide runner
+  // enters one.
+  let (run, packages) = run_module_packages(ast, opts, max_total_steps=1)
+  inspect(run.functions_run, content="2")
+  inspect(run.stopped_by_budget, content="true")
+  // And the breakdown is there: the default mode says what each package cost.
+  inspect(packages.length(), content="2")
+  inspect(packages[0].name, content="src/a")
+  inspect(packages[1].name, content="src/b")
+}
+
+///|
+test "run_module stays the MODULE-WIDE runner" {
+  let ast = two_package_ast()
+  let opts = small_opts()
+  // The library's module-wide runner is NOT the default mode, on purpose:
+  // its `max_total_steps` means "the MODULE's budget", and a caller that
+  // already passes it must keep getting what it asked for.
+  let wide = run_module(ast, opts, max_total_steps=1)
+  inspect(wide.functions_run, content="1")
+  inspect(wide.stopped_by_budget, content="true")
 }
 
 ///|

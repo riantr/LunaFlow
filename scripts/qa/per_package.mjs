@@ -296,6 +296,15 @@ function checkArtefacts(dir, report, metricsText) {
     facts.selection ?? '(no row)',
   );
 
+  // The metrics say the run was the per-package one: the `METRICS packages`
+  // line is printed by the per-package mode and by no other, so its ABSENCE
+  // is what a module-wide run looks like.
+  check(
+    'the metrics say the scan was the per-package one',
+    pkgMetrics !== null,
+    pkgMetrics ? '' : 'no `METRICS packages` line',
+  );
+
   // The metrics agree with the table about the number of packages.
   if (pkgMetrics) {
     check(
@@ -336,13 +345,17 @@ if (!ARTIFACTS) {
   const base = join(ROOT, '_build', 'qa', 'per_package');
   rmSync(base, { recursive: true, force: true });
 
-  const wide = runScan(exe, [], join(base, 'wide'));
+  // The module-wide mode is asked for by NAME: it used to be what a scan
+  // with no flags did, and it is not any more.
+  const wide = runScan(exe, ['--module-wide'], join(base, 'wide'));
   if (!wide) process.exit(2);
   const per = runScan(exe, ['--per-package'], join(base, 'per'));
   if (!per) process.exit(2);
+  const def = runScan(exe, [], join(base, 'default'));
+  if (!def) process.exit(2);
   const tiny = runScan(exe, ['--per-package', '--max-total-steps', '1'], join(base, 'tiny'));
   if (!tiny) process.exit(2);
-  const tinyWide = runScan(exe, ['--max-total-steps', '1'], join(base, 'tinywide'));
+  const tinyWide = runScan(exe, ['--module-wide', '--max-total-steps', '1'], join(base, 'tinywide'));
   if (!tinyWide) process.exit(2);
 
   // The artefacts of the per-package run, so the falsifier has something to
@@ -368,6 +381,45 @@ if (!ARTIFACTS) {
     'the per-package mode writes one trace file per package',
     per.traceFiles.length === parsePackageTable(per.report).length,
     `${per.traceFiles.length} file(s)`,
+  );
+
+  // THE DEFAULT IS THE PER-PACKAGE MODE.  A scan with NO flags must behave
+  // exactly like the explicit `--per-package` scan, and NOT like the
+  // module-wide one: the default is a claim about the tool, and it has to be
+  // measured, not read off the source.
+  const defTable = parsePackageTable(def.report);
+  const defFacts = parseReportFacts(def.report);
+  check(
+    'the DEFAULT scan is the per-package mode: it writes one trace file per package',
+    def.traceFiles.length === defTable.length && defTable.length > 1,
+    `${def.traceFiles.length} file(s), ${defTable.length} package(s) in the table`,
+  );
+  check(
+    'the DEFAULT scan states the per-package rule',
+    defFacts.selection !== null && /PACKAGE BY PACKAGE/.test(defFacts.selection),
+    defFacts.selection ?? '(no row)',
+  );
+  const defMetrics = parseMetrics(def.text, 'funcs');
+  const explicitMetrics = parseMetrics(per.text, 'funcs');
+  check(
+    'the DEFAULT scan and the explicit --per-package scan are the same scan',
+    defMetrics !== null &&
+      explicitMetrics !== null &&
+      defMetrics.entered === explicitMetrics.entered &&
+      defMetrics.steps === explicitMetrics.steps &&
+      defMetrics.events === explicitMetrics.events,
+    `default ${defMetrics?.entered}/${defMetrics?.steps}, explicit ${explicitMetrics?.entered}/${explicitMetrics?.steps}`,
+  );
+  // And the module-wide mode is still REACHABLE, and is the other one.
+  check(
+    'the --module-wide mode is the module-wide scan: one trace file',
+    wide.traceFiles.length === 1,
+    `${wide.traceFiles.length} file(s)`,
+  );
+  check(
+    'the --module-wide mode reports no package table',
+    parsePackageTable(wide.report).length === 0,
+    `${parsePackageTable(wide.report).length} row(s)`,
   );
 
   // THE BUDGET IS SPENT AGAIN IN THE NEXT PACKAGE.  The same one-step budget

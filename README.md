@@ -234,7 +234,8 @@ The module is a library plus an executable, so "what you get" is a set of
 | `LunaFlow analyze --exclude <name>` | skip a directory name while walking (repeatable) | the same report |
 | `LunaFlow analyze --metrics` | the ADEQUACY block: read, understood, entered, found | four `METRICS` lines |
 | `LunaFlow analyze --per-function` | every function entered as an entry point, with the step budget and the `--max-functions` cap lifted | the same report, with no budget on the dynamic layer |
-| `LunaFlow analyze --per-package` | the module scanned package by package, each package with its own step budget | the same report, with a package table and one trace per package |
+| `LunaFlow analyze --per-package` | **the default**: the module scanned package by package, each package with its own step budget | the same report, with a package table and one trace per package |
+| `LunaFlow analyze --module-wide` | one step budget for the whole module, spent on the first packages in file order | the same report, with **one** trace file and no package table |
 | `LunaFlow analyze --stability` | re-sample the analysis and report which findings depend on the sample | report §5.6 |
 | `LunaFlow analyze --counterexamples` | re-run each finding an execution produced on its own input, and shrink that input to the smallest one that still reproduces it | report §5.12 |
 | `LunaFlow analyze --level 2` + the EVA | the memory-safety and undefined-behaviour classes | report §5.3 |
@@ -259,7 +260,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.36
+moon add riantr/LunaFlow@0.1.37
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -267,7 +268,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.36",
+  "riantr/LunaFlow@0.1.37",
 }
 ```
 
@@ -318,7 +319,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.36](https://mooncakes.io/docs/riantr/LunaFlow@0.1.36).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.37](https://mooncakes.io/docs/riantr/LunaFlow@0.1.37).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -609,19 +610,51 @@ every package that uses it says so in
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
 
+### What changed in 0.1.37
+
+**THE DEFAULT SCAN NOW RUNS PACKAGE BY PACKAGE. A scan with no mode flag does what `--per-package` did, and `--module-wide` is the new name for what it used to do. The measurement that justified the mode is the measurement that decided the default: a module-wide budget is spent on the FIRST packages in file order, so the rest of the tree is never interpreted.**
+
+**WHAT CHANGED, EXACTLY.**
+
+- **The CLI's default.** `Opts.per_package` is now **true**, so `LunaFlow analyze` scans package by package and writes **one trace file per package**. The flag `--per-package` still exists and still means the same thing — it is now the default, stated explicitly.
+- **The new flag `--module-wide`.** One step budget for the WHOLE module, spent on the first packages in file order, and **one** trace file for the module. This is what the scan used to do by default, and it is still the right choice when the modules compared are of very different sizes, because then the per-package budget multiplies the work by the package count.
+- **The library.** `run_module_packages(..., per_package?)` now **defaults to true**. `run_module` is **unchanged** and stays the **module-wide** runner: its `max_total_steps` means "the module's budget", and a budget that silently became a per-package one would change what the number MEANS for every caller that already passes it — a change no signature check would catch. `release_interface.mjs` still finds **0** breaks a consumer can see.
+- **The count cap stays module-wide.** `--max-functions` bounds the dynamic layer's entry points across the whole module, because a reader who asked for "150 functions" did not ask for "150 functions per package".
+
+**THE COMMITTED ARTEFACTS WERE REGENERATED** under the new default, with the same recipe (`--funnel --trials 4` and one slice each), and the numbers moved because the mode reads more:
+
+| corpus | what moved | module-wide | the per-package default |
+|---|---|---|---|
+| `static_analysis` 0.5.4 | L1 events | 464,097 | **673,492** |
+| | taint sinks | 188 | **291** |
+| | findings | 404 | **513** |
+| | trace files | 1 | **17** |
+| `doubleML` 0.164.66 | — | one package, so the mode changes nothing | |
+| `fixtures/vuln_demo` | — | one package; the trace is **byte-identical** | |
+
+**AND THE REGISTRY MOVED UNDER THE MEASUREMENT.** doubleML is now **0.164.66**, not 0.164.64, so the committed artefact names the version the registry served and the measurement was re-run against that same corpus. The fixture's trace is **byte-identical** across the two modes — one package, one file, the same bytes — which is the cleanest possible statement that the mode changes nothing when there is only one package.
+
+**AND THE DEFAULT FLIP BROKE THREE CHECKERS — ONE OF THEM HAD BEEN PASSING FOR THE WRONG REASON.** A run writes **one trace file per package** now, and three harnesses still assumed one file per run. The gherkin runner **named** the trace, so it read a file that does not exist and the scenario crashed. The e2e harness named it too, and it read a **leftover** from a run before the flip: it compared that leftover with itself and called the run deterministic. And the coverage check demanded the report's wording "the step budget was not reached", which the per-package report words as "none of them was reached". **THE E2E ONE MATTERS MOST: its size ceiling took the FIRST trace file in the directory — which, for the static-analysis module, was a **0-byte** file — and called it the run's evidence.** The trace is now **FOUND**: every `*_trace.jsonl` in the output directory, sorted, and **summed**, and the output directory is emptied before the run, for the same reason the module runs already emptied theirs. A check that measures nothing is not a check, and this one measured nothing **and passed**.
+
+**AND THE GATE IS GREEN, ALL OF IT: 54 steps, 54 passed, 0 failed, 0 unknown.** The tests are **339** on all three targets. The gate is the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed.
+
+**THE PEER ROUND FOUND A REAL DEFECT, IN THE LOADER.** `moonx riantr/moonbit_static_analysis@latest .` over this tree reported `src/app/scan.mbt` as a file it could not parse — and that file IS the loader: the file that walks the tree. The cause was a tuple pattern in a `for` header (`for (rel, pkg) in st.files`), one of the peer's three known blind spots, which 0.1.36 had introduced. The tuple is now unpacked inside the loop, and the peer reads the file whole again: **73 of 76** files understood (**96.0 %**), the three gaps are exactly the ones in `docs/qa/PEER_PARSE_GAPS.json`, and **0** findings are withheld. The peer's own classification of the tree improved with it (`unreliable` 44 → **39**).
+
+**THE CHECKERS THAT CARRIED THE OLD CORPUS VERSION WERE FIXED, NOT PATCHED.** **Seven** of them named the corpus version in their own source, and the registry moved doubleML from 0.164.64 to 0.164.66 while this was being written. A checker that carries the version stops finding the artefact the day the registry moves, and then compares **nothing**, which looks exactly like a pass. **Four** of them now **FIND** the committed artefact in the tree's own reports directory — through one shared helper, `scripts/qa/committed_artefact.mjs` — and the README's table row says which version it names. The other three still carry a version **on purpose**, and each says why: `verify.mjs` validates a named artefact, the envelope falsifier must name a real path to build a failing package, and the measurement driver pins the corpus it measured and falls back to the newest one that is there.
+
 ### What changed in 0.1.36
 
 **THE SCAN CAN NOW RUN PACKAGE BY PACKAGE, and the measurement says exactly what that buys: it gets PAST the analysis cap on a module that has several packages, and it does NOT get past the publish ceiling. The ceiling is a limit on the TOTAL size of the evidence, and more coverage means MORE evidence — so the mode moves the publish problem away, not past it.**
 
 **THE MODE.** A MoonBit package is the directory that holds its `moon.pkg`. The step budget is a bound on the WORK, and the work of a module is the work of its packages — so a module-wide budget is spent on the FIRST packages in file order, and the rest of the tree is never interpreted. `--per-package` gives each package its own budget: a module of N packages has a budget of N times the one. The `--max-functions` count cap stays **module-wide** — a reader who asked for "150 functions" did not ask for "150 functions per package". The trace is written **one file per package**, and the report gains a package table: what each package cost, and whether its own budget was reached.
 
-**THE MEASUREMENT (A) — THE ANALYSIS CAP.** Three corpora, three modes: the module-wide default, `--per-package`, and `--per-function` with no budget at all, which is the ceiling the analyser can reach. Measured with `--trials 4` on the corpora as they are fetched.
+**THE MEASUREMENT (A) — THE ANALYSIS CAP.** Three corpora, three modes: `--module-wide`, `--per-package` (**the default since 0.1.37**), and `--per-function` with no budget at all, which is the ceiling the analyser can reach. Measured with `--trials 4` on the corpora as they are fetched — doubleML is **0.164.66** now, the version the registry serves.
 
-| corpus | packages | module-wide (the default) | `--per-package` | every function |
+| corpus | packages | `--module-wide` | `--per-package` (the default) | every function |
 |---|---|---|---|---|
 | this tree | 10 | 862 functions · 27,571 steps · 139,659 events · **63 of 66** files | **862** functions · 27,571 steps · 139,659 events · **63 of 66** files | 862 · 27,571 · 139,659 · 63 of 66 |
 | `riantr/moonbit_static_analysis@latest` | 17 | 711 functions · 100,958 steps · 464,053 events · **70 of 263** files | **1,212** functions · 136,821 steps · 673,448 events · **128 of 263** files | 1,437 · 156,721 · 884,312 · 153 of 263 |
-| `riantr/moonbit_doubleML@latest` | **1** | 275 functions · 101,569 steps · 514,475 events · **27 of 220** files | **275** functions · 101,569 steps · 514,475 events · **27 of 220** files | 1,411 · 465,001 · 2,103,552 · 145 of 220 |
+| `riantr/moonbit_doubleML@latest` | **1** | 274 functions · 100,020 steps · 508,366 events · **27 of 220** files | **274** functions · 100,020 steps · 508,366 events · **27 of 220** files | 1,411 · 465,973 · 2,107,384 · 145 of 220 |
 
 **THE MODE IS WORTH EXACTLY WHAT THE PACKAGE COUNT SAYS.** On the static-analysis module the per-package budget takes the scan from **711** functions to **1,212** — **sixteen of the seventeen packages whole**, and only `src/flow` spending its own budget — and it reads **128 of 263** files against the module-wide **70 of 263**. On this tree the module-wide budget is never reached, so the two modes are the same scan. And on **doubleML the mode does NOTHING AT ALL**: that module is **FLAT** — one `moon.pkg`, at its root, so all **220** of its files sit in the root package. There is one package, the package's budget IS the module's budget, and every number above is identical on both sides. That last fact is what decides the publish question.
 
@@ -633,14 +666,14 @@ than the standalone module provided.
 | this tree | `--per-package` | **10** | 22,691,389 | **21,923,396** |
 | `static_analysis` | module-wide | 1 | 76,591,727 | 76,591,727 |
 | `static_analysis` | `--per-package` | **17** | **111,328,416** | **78,902,704** |
-| `doubleML` | module-wide | 1 | 80,855,304 | 80,855,304 |
-| `doubleML` | `--per-package` | **1** | 80,855,304 | 80,855,304 |
+| `doubleML` | module-wide | 1 | 80,035,384 | 80,035,384 |
+| `doubleML` | `--per-package` | **1** | 80,035,384 | 80,035,384 |
 
 **THE ANSWER IS NO, AND THERE ARE THREE REASONS, ALL MEASURED.**
 
 1. **The TOTAL is the binding constraint, and a split does not touch it.** The parts sum to the whole: this tree's ten files add up to the same **22,691,389** bytes its one file held. And the mode interprets MORE, so the total GROWS — on the static-analysis module from **76,591,727** to **111,328,416** bytes, because the extra coverage is extra evidence.
 2. **The LARGEST ENTRY does not reliably shrink either.** On the static-analysis module it GREW, from **76,591,727** to **78,902,704** bytes: `src/flow` holds **478,594** of the module's **673,448** events, so the coverage gain inside the biggest package outweighed the split. The split only helps when one package does not hold the whole module — and on this tree it took the largest entry from **22,691,389** to **21,923,396**, a **3.4 %** shave, because `src/app` holds almost everything.
-3. **The module whose trace BROKE the envelope is a single-package module.** The upload that 0.1.35's first attempt refused carried an **80,863,997**-byte entry, `reports/riantr_moonbit_doubleML@latest_0.164.64_trace.jsonl` — and doubleML's files are all in its root package, so that trace **cannot be split at all**: one package, one file, **80,855,304** bytes either way.
+3. **The module whose trace BROKE the envelope is a single-package module.** The upload that 0.1.35's first attempt refused carried an **80,863,997**-byte entry — the doubleML trace, `reports/riantr_moonbit_doubleML@latest_0.164.64_trace.jsonl` as it was named then — and doubleML's files are all in its root package, so that trace **cannot be split at all**: one package, one file, **80,035,384** bytes either way.
 
 **SO THE WAY PAST THE PUBLISH CEILING IS THE ONE 0.1.35 TOOK**: the raw traces stay in the repository and out of the package. The per-package mode's contribution is to the ANALYSIS cap, and that one is real.
 
@@ -1082,13 +1115,13 @@ without it.
 
 **The bound.** A findings table can be long enough to bury the finding you were
 looking for, so it is capped at **300 rows** and the cap is stated in the table
-itself: the marker row reads *(truncated at 300 of 2503 rows)*, and the note
+itself: the marker row reads *(truncated at 300 of 2511 rows)*, and the note
 under it says which of the whole set were not shown. **No finding is lost to the
 bound** — every one of them is in the report's `_findings.jsonl` sidecar, one
 JSON object per finding, and the count table above the rows is the **whole set,
 family by family**: it sums to exactly the number the marker names. Measured on
-the committed doubleML artefact, the L2's table shows 300 of **2,503**, its count
-table sums to **2,503**, and the sidecar holds **3,600**.
+the committed doubleML artefact, the L2's table shows 300 of **2,511**, its count
+table sums to **2,511**, and the sidecar holds **3,610**.
 
 **D1 — five rules that could never fire.** Five rules matched only the `::`
 spelling of a qualified path, and the parser renders a qualified path with a
@@ -3121,7 +3154,7 @@ moonx riantr/moonbit_static_analysis@latest <target> [flags]
 | `--level <n>` | the analysis level (default `1`). |
 | `--trials <n>` | how many samples the dynamic layer runs (default `8`). |
 | `--max-functions <n>` | an explicit cap on the functions the **dynamic** layer enters as entry points (default `0`, no cap). The default bound is the step budget below; this flag is for a caller who wants a count of its own. It does **not** cap the abstract layer: that one analyses the whole module, is bounded by its own step budget, and report §5.2 states how much of the module it covered. |
-| `--max-total-steps <n>` | the module-wide **step budget** of the dynamic layer (default `100000`; `0` means no budget). The default scan enters **every** function of the module, and this is the bound that stops it — a bound on the work, not on the count of functions. Report §2 says which bound stopped the scan. |
+| `--max-total-steps <n>` | the **step budget** of the dynamic layer (default `100000`; `0` means no budget). It is **each package's own** budget by default, and the **module's** own under `--module-wide`. The default scan enters **every** function of the module, and this is the bound that stops it — a bound on the work, not on the count of functions. Report §2 says which bound stopped the scan. |
 | `--slice <criterion>` | the slicing criterion, spelled exactly — a criterion that names no function yields an empty slice **and** one fewer function run. |
 | `--forward` | the slice direction: forward from the criterion. |
 | `--backward` | the slice direction: backward to the criterion (the default). |
@@ -3140,7 +3173,8 @@ moonx riantr/moonbit_static_analysis@latest <target> [flags]
 | `--explain-all` | the whole roster, each family's three parts, then stop. No scan runs. |
 | `--metrics` | print the adequacy block: how much was checked, not what was found. It changes no finding count above it. |
 | `--per-function` | enter the analysis at each **function** rather than at the module. |
-| `--per-package` | scan **package by package**, each package with its own step budget. A module of N packages has a budget of N times the one, and the trace is written one file per package. |
+| `--per-package` | scan **package by package**, each package with its own step budget. A module of N packages has a budget of N times the one, and the trace is written one file per package. **This is the default.** |
+| `--module-wide` | one step budget for the **whole module**, spent on the first packages in file order, and one trace file for the module. This is what the scan did by default before 0.1.37. |
 | `--stability` | re-run the analysis at several sample sizes and report which findings depend on the sample. |
 | `--counterexamples` | re-run each finding an execution produced on its own input, and shrink that input to the smallest one that still reproduces it — report §5.12. It re-runs the analyser, so it is opt-in. |
 | `--counterexample-limit <n>` | how many findings the counterexample minimisation may cover (default `64`). The findings it leaves out are counted in the report. |
@@ -3243,9 +3277,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 82 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 82 warnings, 0 errors |
 | `moon check --target js` | exit 0, 93 warnings, 0 errors |
-| `moon test src/app --target native` | **337 passed, 0 failed** |
-| `moon test src/app --target wasm` | **337 passed, 0 failed** |
-| `moon test src/app --target js` | **337 passed, 0 failed** |
+| `moon test src/app --target native` | **339 passed, 0 failed** |
+| `moon test src/app --target wasm` | **339 passed, 0 failed** |
+| `moon test src/app --target js` | **339 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
 | `moon build src/cli --target native` | exit 0 |
@@ -3265,7 +3299,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/metamorphic.mjs` | **every check agrees** — the findings do not depend on the source's spelling: the same program with other identifiers, with its functions in another order, or with `a + b` written as `b + a`, makes the same claims |
 | `node scripts/qa/cfg_signatures.mjs` | **every check agrees** — a signature does not depend on the target: every definition of one name in a compilation unit takes the same number of parameters |
 | `node scripts/qa/cfg_signatures_falsify.mjs` | **every check agrees** — the signature check goes red when the invariant is broken, and it names the function that broke it (on a **copy** of the tree; the source is not touched) |
-| `node scripts/qa/peer_scan.mjs` | **every check agrees** — the peer analyzer reports **no actionable finding in this project's own source**; the fixture corpus is deliberately vulnerable, so it is excluded, and the exclusion is printed. The verdict has a **coverage** as well as a count: the peer must withhold **no** finding, and the files it did not fully parse must be exactly the ones in `docs/qa/PEER_PARSE_GAPS.json` — **71 of 74** files fully understood |
+| `node scripts/qa/peer_scan.mjs` | **every check agrees** — the peer analyzer reports **no actionable finding in this project's own source**; the fixture corpus is deliberately vulnerable, so it is excluded, and the exclusion is printed. The verdict has a **coverage** as well as a count: the peer must withhold **no** finding, and the files it did not fully parse must be exactly the ones in `docs/qa/PEER_PARSE_GAPS.json` — **73 of 76** files fully understood |
 | `node scripts/qa/peer_scan_falsify.mjs` | **every check agrees** — the peer-scan check goes red when a gap is not recorded, when a gap that does not exist is recorded, when a construct's error kind is not the peer's own, and when the peer's report says it withheld a finding; and it stays green on a rewording it must not notice (on **copies** of the ledger and of the peer's captured report; the tracked files are never touched) |
 | `node scripts/qa/selfscan_register.mjs` | **every check agrees** — the register of the analyser's claims about its own source against a live self-scan: every claim is registered with the count that was measured, every registered claim is still made, the headline is the measured count, the rows add up to it, every family it names is a family the analyser has, every site it names is still in the source, and every claim an execution produced is either reproduced by an input or **listed in the report as one no input reproduced** |
 | `node scripts/qa/selfscan_register_falsify.mjs` | **every check agrees** — the register check goes red on a dropped claim, a count that was not measured, a stale headline, a claim that is not made and a family that does not exist, and it stays green on a rewording it must not notice (on a **copy** of the register; the tracked source is never touched) |
@@ -3273,12 +3307,12 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/l1_coverage_falsify.mjs` | **every check agrees** — the coverage check goes red when the metrics and the report disagree about how many functions were entered, when a truncation the report does not state is in the metrics, and when the report states the old count cap; and it stays green on a change that says nothing about the coverage (on **copies** of the artefacts; the tracked files are never touched) |
 | `node scripts/qa/package_envelope.mjs` | **5 passed, 0 failed** — the package the registry can read: the tree's own file set (**git's** ignore rules, not a re-implementation of them) is measured against the envelope the registry has already accepted, read from `docs/qa/PUBLISH_ENVELOPE.json`, and it says in both directions whether the raw traces are packed (they must not be) and tracked (they must be) |
 | `node scripts/qa/package_envelope_falsify.mjs` | **14 passed, 0 failed** — the envelope check goes red on a package that carries more unpacked bytes than the registry has accepted, on one that carries a single file bigger than the registry has accepted, on a missing artefact, and on a trace that is packed or untracked; it goes red on a package with no trace at all, so it cannot pass vacuously; and it stays green on a control (on **copies**; the tracked files are never touched) |
-| `node scripts/qa/per_package.mjs` | **15 passed, 0 failed** — the per-package mode: every package the report names is a directory that holds a `moon.pkg`, the per-package traces hold every event exactly once and every event belongs to its own package, the report's package table adds up to the module, the report states the rule it followed, the two modes agree when no budget was reached, and with the **same one-step budget** the module-wide scan enters **1** function while the per-package scan enters one in **every** package |
-| `node scripts/qa/per_package_falsify.mjs` | **10 passed, 0 failed** — the per-package check goes red when an event lands in the wrong package's trace, when a trace loses an event, when the report's package table does not add up, and when the report states the module-wide rule; and it stays green on a control (on **copies**; the tracked files are never touched) |
+| `node scripts/qa/per_package.mjs` | **21 passed, 0 failed** — the per-package mode: every package the report names is a directory that holds a `moon.pkg`, the per-package traces hold every event exactly once and every event belongs to its own package, the report's package table adds up to the module, the report states the rule it followed, the two modes agree when no budget was reached, and with the **same one-step budget** the module-wide scan enters **1** function while the per-package scan enters one in **every** package — and, since the mode is the DEFAULT, that the **default** scan writes one trace per package, states the per-package rule and is identical to the explicit `--per-package` scan, while `--module-wide` writes one trace and no package table |
+| `node scripts/qa/per_package_falsify.mjs` | **12 passed, 0 failed** — the per-package check goes red when an event lands in the wrong package's trace, when a trace loses an event, when the report's package table does not add up, when the report states the module-wide rule, and when the **default** scan's metrics carry no packages line at all; and it stays green on a control (on **copies**; the tracked files are never touched) |
 | `node scripts/qa/published_items.mjs 0.1.36` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
 | `node scripts/qa/published_items_falsify.mjs 0.1.36` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** |
-| `node scripts/qa/e2e.mjs` | **69 passed, 0 failed** |
+| `node scripts/qa/e2e.mjs` | **70 passed, 0 failed** — the fixture, the two validation modules and the full doubleML run, with the trace **found** in the output directory and **summed** over the packages, and the output directory emptied before the run so no earlier run's file can be read |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
 | `node scripts/qa/path_traversal.mjs` | **7 passed, 0 failed** |
 | `node scripts/qa/deep_nesting_probe.mjs` | **2 passed, 0 failed** |
@@ -3522,19 +3556,19 @@ traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.64 | 220 | 30,258 | 514,531 | 3,316 | 0 (no specs) | 0 | 264 | 16.1 s |
-| `riantr/moonbit_static_analysis@latest` → 0.5.4 | 263 | 17,843 | 464,097 | 188 | 0 (no specs) | 0 | 188 | 8.4 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.66 | 220 | 30,284 | 508,422 | 3,326 | 0 (no specs) | 0 | 265 | 16.0 s |
+| `riantr/moonbit_static_analysis@latest` → 0.5.4 | 263 | 17,843 | 673,492 | 188 | 0 (no specs) | 0 | 291 | 14.2 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 66 | 7,729 | 230,577 | 48 | 2 / 1 / 3 | 0 | 45 | 1,117 ms |
+| `LunaFlow` itself (`--dir .`) | 66 | 7,746 | 230,577 | 48 | 2 / 1 / 3 | 0 | 45 | 1,108 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **1,117 ms** to **1,449 ms**, while every
+runs over the tree this commit names read **1,108 ms** to **1,180 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on all five**. The counts are the deterministic measure; the time is
 an observation of this machine under this load. The same holds for the three
-committed artefacts: the committed doubleML artefact read **16.1 s**, and the
+committed artefacts: the committed doubleML artefact read **16.0 s**, and the
 count it carries is the artefact's own. **The doubleML wall clock moved with
 the machine, not with the analyser:** the same corpus read **10.0 s** when
 0.1.33 was published and **11.7 s – 12.9 s** over four runs on this machine
@@ -3754,7 +3788,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **66 files, 7,729 statements, 230,577 events, 48 L2
+On this tree the row reads **66 files, 7,746 statements, 230,577 events, 48 L2
 findings, 0 dead and 45 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
@@ -3832,22 +3866,24 @@ moon run src/cli --target native -- analyze riantr/moonbit_doubleML@latest \
 
 **There is NO `--max-functions` cap in that recipe, and adding one changes every
 L1 number.** Measured on the committed artefacts: with `--max-functions 120` the
-doubleML run produces **198,182** trace events; without it, **514,531**. The cap
+doubleML run produces **198,694** trace events; without it, **508,422**. The cap
 binds the **dynamic** layer's entry points, and with them the trace.
 
 **What bounds that recipe now is the STEP BUDGET, not a count of functions.**
 The default scan enters **every** function of the module and stops when the
-module's **100,000**-step budget is spent — a bound on the work, not on how
-many functions there are. Measured on the committed artefacts: the doubleML
-run spends its budget after **275** of the module's **1,411** functions
-(**101,569** steps, **514,531** trace events), the static-analysis one after
-**711** of **1,437** (**100,958** steps, **464,097** events), and the
-fixture's budget is never reached, so **every one of its 12** functions is
-entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it, and `--per-package` spends it per package.
+**100,000**-step budget is spent — a bound on the work, not on how
+many functions there are — and since 0.1.37 that budget is **each package's
+own**. Measured on the committed artefacts: the doubleML run is **one**
+package, so its budget is the module's, and it stops after **100,020** steps
+and **508,422** trace events; the static-analysis one has **17** packages and
+spends **136,821** steps across them for **673,492** events — **sixteen of the
+seventeen packages whole**, and only `src/flow` spending its own budget; and
+the fixture's budget is never reached, so **every one of its 12** functions is
+entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it, and `--module-wide` spends it once for the whole module.
 
 **The abstract layer's scope is NOT that cap.** It analyses the whole module — all
 **1,411** doubleML functions — and is bounded by its own step budget instead, so the
-L2 row of the funnel reads **3316 findings, 1411 functions, 272316 steps** in *both*
+L2 row of the funnel reads **3326 findings, 1411 functions, 272404 steps** in *both*
 runs — the capped run's L1 row drops to 120 functions and its L2 row does not move.
 Report §5.2 states that scope in words, so a reader can tell a complete analysis
 from a truncated one instead of having to infer it.
@@ -3858,7 +3894,7 @@ and vendored trees, not `_test.mbt` — and the abstract layer's universe filter
 on the **function**, so a plain helper in a test file is analysed and a
 `test "..." { }` block is not. For doubleML that is **129 of 220 files**. What says
 how much of the output is about test code is the finding split: on the committed
-doubleML artefact, **486 of the 2,503** findings in §5.2 (**19.4 %**) are in the
+doubleML artefact, **486 of the 2,511** findings in §5.2 (**19.4 %**) are in the
 129 files named `*_test.mbt` — and every one of them is in a helper, not in a
 test block.
 
@@ -4000,7 +4036,7 @@ ledger and of the peer's own captured report.
 | the analyser's claims about its own source | 26 registered | **29 registered, 29 measured** |
 | claims with no registered answer | **3** | **0** |
 | the peer's actionable findings in `src/` | 0 | **0** |
-| the peer's files it fully understood | not published | **71 of 74**, the other 3 pinned in `docs/qa/PEER_PARSE_GAPS.json` |
+| the peer's files it fully understood | not published | **73 of 76**, the other 3 pinned in `docs/qa/PEER_PARSE_GAPS.json` |
 | the peer check's own checks | 1 | **6** |
 | the published-artefact check's checks | 11 | **14** |
 | the gate | 46 steps | **52 steps** |

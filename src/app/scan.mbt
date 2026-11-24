@@ -382,7 +382,17 @@ pub async fn load_module(
   walk_dir(root, "", st, file_limit, 0, excludes, "")
   let files : Array[SourceFile] = []
   let stats = ScanStats::new()
-  for (rel, pkg) in st.files {
+  // The TUPLE is unpacked inside the loop, not in the loop's pattern.  The
+  // peer analyser -- the one this project checks itself against -- does not
+  // model a tuple pattern in a `for` header, so writing it there made the
+  // peer stop reading this file at this line: the loader is the file that
+  // walks the tree, and a file the peer cannot read is a file the peer's
+  // "no actionable finding in this project's own source" claim does not
+  // cover.  The same numbers come out either way; this only keeps the claim
+  // whole.
+  for entry in st.files {
+    let rel = entry.0
+    let pkg = entry.1
     let full = path_join(root, rel)
     let text = @fs.read_text(full) catch { _ => continue }
     let sf = parse_file(rel, text)

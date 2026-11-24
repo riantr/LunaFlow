@@ -34,6 +34,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { resolveCli } from './cli_bin.mjs';
+import { committedArtefact } from './committed_artefact.mjs';
 
 const root = resolve(process.cwd());
 const work = join(root, '_build', 'qa', 'plus_size', 'shapes');
@@ -304,13 +305,17 @@ if (!existsSync(ledgerPath)) {
 
   // The committed artefact is the one a reader can check. Every removed site
   // must be ABSENT from it, and every added site PRESENT in it.
-  const artefact = join(
+  //
+  // The artefact is FOUND, not named: the corpus version is part of the file
+  // name and the registry moves it, so a checker that carried the version
+  // would stop finding the artefact -- and would then compare nothing.
+  const artefact = committedArtefact(
     root,
-    'reports',
-    'riantr_moonbit_doubleML@latest_0.164.64_findings.jsonl',
+    'riantr_moonbit_doubleML@latest_',
+    '_findings.jsonl',
   );
-  if (!existsSync(artefact)) {
-    check('the committed doubleML artefact is present', false, artefact);
+  if (!artefact) {
+    check('the committed doubleML artefact is present', false, join(root, 'reports'));
   } else {
     const committed = readFileSync(artefact, 'utf8')
       .split('\n')

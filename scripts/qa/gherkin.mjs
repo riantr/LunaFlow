@@ -13,6 +13,7 @@ import {
 } from 'node:fs';
 import { join, relative } from 'node:path';
 import { resolveCli } from './cli_bin.mjs';
+import { traceBody, traceFiles } from './run_artefacts.mjs';
 
 const root = process.cwd();
 const featuresDir = join(root, process.argv[2] ?? 'features');
@@ -73,12 +74,17 @@ const steps = [
     const args = ['analyze', '--dir', 'fixtures/vuln_demo', '--out', dir, '--funnel', '--slice', 'i@copy_prefix'];
     CLI(args);
     const s1 = readFileSync(join(dir, `${FIXTURE_STEM}_summary.json`), 'utf8');
-    const t1 = readFileSync(join(dir, `${FIXTURE_STEM}_trace.jsonl`), 'utf8');
+    // The trace is FOUND, not named: the per-package mode writes one trace file
+    // per package, so there is no single name to state, and the file the old
+    // name pointed at is a leftover of an earlier run.
+    ctx.traceFilesA = traceFiles(dir);
+    const t1 = traceBody(dir, ctx.traceFilesA);
     CLI(args);
     ctx.summaryA = s1;
     ctx.summaryB = readFileSync(join(dir, `${FIXTURE_STEM}_summary.json`), 'utf8');
+    ctx.traceFilesB = traceFiles(dir);
     ctx.traceA = t1;
-    ctx.traceB = readFileSync(join(dir, `${FIXTURE_STEM}_trace.jsonl`), 'utf8');
+    ctx.traceB = traceBody(dir, ctx.traceFilesB);
     return { ok: true };
   }],
   [/^I analyze a module with (\d+) nested if statements$/, (ctx, m) => {
@@ -190,8 +196,10 @@ const steps = [
     };
   }],
   [/^the two traces are byte identical$/, (ctx) => ({
-    ok: ctx.traceA === ctx.traceB,
-    detail: `${ctx.traceA.length} B`,
+    ok:
+      ctx.traceA === ctx.traceB &&
+      ctx.traceFilesA.join('|') === ctx.traceFilesB.join('|'),
+    detail: `${ctx.traceFilesA.length} file(s), ${ctx.traceA.length} B`,
   })],
   [/^the report records a parse gap$/, (ctx) => {
     const md = readFileSync(ctx.mdPath, 'utf8');

@@ -133,7 +133,10 @@ const CORPORA = [
     module: 'riantr/moonbit_doubleML',
     version: null,
     dir: null,
-    pinned: '0.164.64',
+    // The version the REGISTRY serves: it moved 0.164.64 -> 0.164.66, and the
+    // committed artefact was regenerated against the corpus the registry
+    // serves now, so the measurement must describe the same corpus.
+    pinned: '0.164.66',
   },
 ];
 
@@ -150,7 +153,12 @@ for (const c of CORPORA) {
 }
 
 const MODES = [
-  { name: 'wide', args: [] },
+  // The MODULE-WIDE mode is asked for by NAME: it used to be what a scan with
+  // no flags did, and it is not any more.
+  { name: 'wide', args: ['--module-wide'] },
+  // The per-package mode is asked for by name too, even though it is now the
+  // DEFAULT: a measurement that named the mode it measured could not be
+  // confused with a measurement of the default.
   { name: 'per', args: ['--per-package'] },
   { name: 'free', args: ['--per-function'] },
 ];
