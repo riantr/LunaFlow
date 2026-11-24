@@ -74,6 +74,10 @@ struct Interp {
   max_depth : Int32
   mut depth : Int32
   mut budget : Bool
+  /// The RECURSION DEPTH budget was exhausted: the call chain was not
+  /// followed any deeper.  Like the step budget, it is reported ONCE, and
+  /// like the step budget it is a claim the analyser could NOT DECIDE.
+  mut depth_budget : Bool
   reads : Array[String]
   mut func_name : String
   mut file : String
@@ -102,6 +106,7 @@ fn Interp::new(
     max_depth: opts.max_depth,
     depth: 0,
     budget: false,
+    depth_budget: false,
     reads: [],
     func_name: "",
     file: "",
@@ -931,6 +936,53 @@ fn eval_call(
         if p.depth < p.max_depth {
           call_user(p, target, arg_vals, span)
         } else {
+          // The RECURSION DEPTH budget was exhausted, so the call chain was
+          // NOT followed any deeper.  The value the call would have returned
+          // is unknown, and everything computed from it is unknown too, so
+          // nothing about the rest of the chain was decided.
+          //
+          // That is a claim the analyser could NOT DECIDE -- not a claim about
+          // the module -- and it is reported as such, with the same family and
+          // the same verdict as the step budget above.
+          //
+          // BEFORE THIS, THE TRUNCATION WAS SILENT.  A recursive module and a
+          // clean one produced the same report: the value that could not be
+          // computed was simply absent, and an absent claim is
+          // indistinguishable from a decided and clean one.
+          if !p.depth_budget {
+            p.depth_budget = true
+            p.findings.push(
+              Finding::undecided(
+                FBudget,
+                p.file,
+                span.start_line,
+                p.func_name,
+                "the recursion depth budget was exhausted: the call chain was not followed past this depth, so no claim about the rest of it was decided",
+                "dynamic",
+                0.6,
+                "max_depth=" +
+                p.max_depth.to_string() +
+                " depth=" +
+                p.depth.to_string() +
+                " call=" +
+                name,
+              ),
+            )
+            p.events.push(
+              TraceEvent::new(
+                EvBudget,
+                p.func_name,
+                p.file,
+                span.start_line,
+                0,
+                name,
+                "",
+                false,
+                p.trial,
+                "depth budget",
+              ),
+            )
+          }
           Val::new(VUnknown, t)
         }
       None =>

@@ -1699,6 +1699,22 @@ without parsing the source — `bisect`, `caret`, `summary`, `full_summary`,
 a reserved word still has a route: *"use -f caret to report coverage without
 parsing"*.
 
+**THE RECURSION FIX COSTS ONE CLAIM AND ONE EVENT, AND THE WALL CLOCK DOES NOT SEE
+THEM.** The L1's depth guard used to return `VUnknown` when the recursion budget
+was spent — no claim, no event, no trace — so a truncated analysis looked like a
+clean one. It now reports an **undecided** `BUDGET-EXCEEDED` claim and an
+`EvBudget` event, the way the step budget already reports itself, and the limit
+itself is unchanged (**6**, at `src/command/command.mbt:1044`): the fix changes the
+**report**, not the budget. MEASURED, paired on this machine: the tree **without**
+the fix read **2,036 ms** to **2,343 ms** over five self-scans, the tree **with** it
+read **2,092 ms** to **2,168 ms** minutes later, and the medians — **2,100 ms** and
+**2,142 ms** — differ by **42 ms**, which is smaller than the **307 ms** spread the
+same binary showed over its own five runs. The self-scan's counts did move, and by
+exactly what the fix adds: **68** files, **7,833** statements and **230,667** events
+where the row read **66**, **7,746** and **230,577**. The committed artefacts did
+not move at all — **0** depth-budget findings in each of `doubleML` and
+`static_analysis` — so `reports/` was not regenerated.
+
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the
 trace instead of buffering it.
@@ -1817,7 +1833,7 @@ These are verdicts on what fits **here**, not on the peer: the repair loop, the 
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 339 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 351 unit/integration tests | `src/app/*_test.mbt` |
 
 The raw traces of D5 are committed to the repository and are **not** part of the
 published package (§7.2): the registry refuses an archive it cannot read, and they
@@ -1828,7 +1844,7 @@ are what made it unreadable.
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 339 passed, 0 failed | 339/339 |
+| A2 | Tests | `moon test src/app --target native` ≥ 351 passed, 0 failed | 351/351 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.66, 0.5.4 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.88 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |

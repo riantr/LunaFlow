@@ -2,8 +2,8 @@
 /// THE SELF-SCAN'S CLAIMS ABOUT THIS SOURCE, AND THE GUARDS THAT ANSWER
 /// THEM.
 ///
-/// MEASURED (2026-11-24), at level 3: the analyser over its own source
-/// reports 61 findings in `src/` and `src/command/` -- and every one of them
+/// MEASURED (2026-11-25), at level 3: the analyser over its own source
+/// reports 62 findings in `src/` and `src/command/` -- and every one of them
 /// is a MAY-claim about an index or a divisor, answered by a guard that is IN
 /// the source, or (for `srcs_label`) by a MEASURED property of the standard
 /// library.  None of them is a defect.
@@ -27,7 +27,8 @@
 /// `command.mbt` are claims the analyser had never made, because it had
 /// never looked at that code.
 ///
-/// AND WHY IT IS 61 NOW.  The per-package mode added code of its own --
+/// AND WHY IT WAS 61 AFTER THE PER-PACKAGE MODE.  The per-package mode
+/// added code of its own --
 /// `src/app/package.mbt` and the trace splitter in `src/command` -- and the
 /// analyser made FIVE new claims about it.  FOUR of them were FIXED rather
 /// than registered, because a guard can answer them:
@@ -50,6 +51,24 @@
 /// `SourceFile::new` gained a field, the entry ordinals of every function
 /// after it moved, and the interpreter now exhausts its budget one statement
 /// later.
+///
+/// AND WHY IT IS 62 NOW.  The RECURSION DEPTH budget is a CLAIM the analyser
+/// makes, not a truncation it makes silently.  `parser.mbt` is a
+/// recursive-descent parser: `parse_if` calls `parse_expr`, and when the
+/// analyser interprets its OWN source it follows THAT call chain -- its own
+/// recursion -- six levels deep before the depth budget stops it.  The claim
+/// is REGISTERED, and it is the same family as the step-budget rows above: a
+/// budget cannot be answered by a guard, because the budget IS the bound, and
+/// the honest claim is *the call chain was not followed past this depth, so no
+/// claim about the rest of it was decided*.
+///
+/// BEFORE THE FIX, THAT TRUNCATION WAS SILENT.  The value the call would have
+/// returned was simply absent, and an absent claim is indistinguishable from a
+/// decided and clean one -- so a recursive module and a clean one produced the
+/// same report.  The fix is in `src/app/interp.mbt`: the depth guard now
+/// reports what it could not decide, with the same family and the same
+/// UNDECIDED verdict as the step budget above it.
+///
 ///
 /// The list below is the REGISTER: what the analyser claims, and what makes
 /// the claim false.  A claim that is registered is a claim that has been
@@ -99,6 +118,7 @@
 ///   parser.mbt is_op                      BUDGET-EXCEEDED       the interpreter's step budget
 ///   parser.mbt parse_file                 BUDGET-EXCEEDED       the interpreter's step budget
 ///   parser.mbt parse_expr                 INFINITE-LOOP         the `break` is in a construct the parser does not model
+///   parser.mbt parse_if                   BUDGET-EXCEEDED       the recursion depth budget
 ///   report.mbt rule_dimension_matrix      3 x INDEX-OOB         `a < len` and `b < len`
 ///   report.mbt top_funcs                  BUDGET-EXCEEDED       the interpreter's step budget
 ///                                         TAINT-INDEX-RANGE     `j + 1 < len - i` and `k < len`

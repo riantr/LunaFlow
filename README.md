@@ -636,9 +636,11 @@ than the standalone module provided.
 
 **AND THE DEFAULT FLIP BROKE THREE CHECKERS — ONE OF THEM HAD BEEN PASSING FOR THE WRONG REASON.** A run writes **one trace file per package** now, and three harnesses still assumed one file per run. The gherkin runner **named** the trace, so it read a file that does not exist and the scenario crashed. The e2e harness named it too, and it read a **leftover** from a run before the flip: it compared that leftover with itself and called the run deterministic. And the coverage check demanded the report's wording "the step budget was not reached", which the per-package report words as "none of them was reached". **THE E2E ONE MATTERS MOST: its size ceiling took the FIRST trace file in the directory — which, for the static-analysis module, was a **0-byte** file — and called it the run's evidence.** The trace is now **FOUND**: every `*_trace.jsonl` in the output directory, sorted, and **summed**, and the output directory is emptied before the run, for the same reason the module runs already emptied theirs. A check that measures nothing is not a check, and this one measured nothing **and passed**.
 
-**AND THE PUBLISHED 0.1.37 REPRODUCES THIS TREE EXACTLY.** The peer round was run again against the published release, and `moonx riantr/LunaFlow@latest .` over this tree agrees with the local build on **every** counter: 66 files, 1,202 functions, 7,746 statements, 230,577 events, 28,420 steps, 48 L2 findings, 45 taint sinks, VCs 2 / 1 / 3 — and their findings sidecars are **byte-identical**. The published release writes **ten** traces, one per package, exactly as the local build does: the new default is what a reader gets, not only what the source says. The peer analyzer's own verdict on the tree did not move: **73 of 76** files fully understood, **0** findings withheld, and all **3** actionable findings in the deliberately vulnerable fixture corpus, none in the source that ships.
+**AND THE PUBLISHED 0.1.37 REPRODUCED THIS TREE EXACTLY AS IT STOOD AT THE RELEASE.** The peer round was run again against the published release, and `moonx riantr/LunaFlow@latest .` over the tree of that day agrees with the local build on **every** counter: 66 files, 1,202 functions, 7,746 statements, 230,577 events, 28,420 steps, 48 L2 findings, 45 taint sinks, VCs 2 / 1 / 3 — and their findings sidecars are **byte-identical**. The published release writes **ten** traces, one per package, exactly as the local build does: the new default is what a reader gets, not only what the source says. The peer analyzer's own verdict on the tree did not move: **73 of 76** files fully understood, **0** findings withheld, and all **3** actionable findings in the deliberately vulnerable fixture corpus, none in the source that ships.
 
-**AND THE GATE IS GREEN, ALL OF IT: 55 steps, 55 passed, 0 failed, 0 unknown.** The tests are **339** on all three targets. 0.1.37 itself shipped with the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed — and a **55th** was added after the release, when one of the gates turned out to be **blind**.
+**AND THE PEER ROUND WAS RUN AGAIN OVER THE TREE THAT CARRIES THE FIX, AND THE ONE DIFFERENCE IS THE FIX.** Over the tree as it stands now the published **0.1.37** and the local build agree on **every** counter except **two**: the published release reports **230,666** trace events and **119** findings, the local build **230,667** and **120**. Everything else is identical — 68 files, 1,223 functions, 7,833 statements, 28,434 steps, 48 L2 findings, 45 taint sinks, VCs 2 / 1 / 3. The difference is exactly the one claim the recursion fix adds and the one trace event it writes: **one of each**.
+
+**AND THE GATE IS GREEN, ALL OF IT: 55 steps, 55 passed, 0 failed, 0 unknown.** The tests are **351** on all three targets — 0.1.37 shipped **339**, and the recursion fix that followed it added **12**. 0.1.37 itself shipped with the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed — and a **55th** was added after the release, when one of the gates turned out to be **blind**.
 **AND ONE OF THE GATES WAS BLIND — the coverage-route check could not fail, and it said it could.** `scripts/qa/coverage_route.mjs` strips comments and string literals before it looks for the identifiers the coverage reporter's lexer reserves, and its stripper treated a `#|` as the start of a block string closed by `|#`. **MoonBit's multi-line string has NO terminator** — the literal opens with `#|`, every content line carries the prefix, and it ends at the first line that does not. So the closer was never found, and the stripper blanked **the rest of the file**. MEASURED by evaluating the stripper out of the tracked source: the check read **20,964** of the tree's code lines where it reads **24,321** now — **3,357 more, 16.0 % more**. `src/command/command.mbt` was the worst case: its 65-line usage text is one multi-line literal, and the **1,158** code lines after it were invisible.
 
 **THE CONSEQUENCE WAS A CHECK THAT MEASURED NOTHING AND SAID OK.** A reserved identifier planted after that literal left the check **green** — proved on a **copy**, by a falsifier that now ships: `scripts/qa/coverage_route_falsify.mjs` plants one in three places (after a multi-line literal, in a file with no literal, and before any literal) and asserts the check goes **red** for the right reason and names the file, plus a **control** it must not notice. **11 checks.**
@@ -3298,9 +3300,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 82 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 82 warnings, 0 errors |
 | `moon check --target js` | exit 0, 93 warnings, 0 errors |
-| `moon test src/app --target native` | **339 passed, 0 failed** |
-| `moon test src/app --target wasm` | **339 passed, 0 failed** |
-| `moon test src/app --target js` | **339 passed, 0 failed** |
+| `moon test src/app --target native` | **351 passed, 0 failed** |
+| `moon test src/app --target wasm` | **351 passed, 0 failed** |
+| `moon test src/app --target js` | **351 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) — and it reads the **whole** tree: the string-stripper it uses understands MoonBit's multi-line string, which has **no terminator**, so nothing after one is invisible to it |
 | `node scripts/qa/coverage_route_falsify.mjs` | **11 passed, 0 failed** — the coverage-route check goes red on a reserved identifier planted **after a multi-line literal**, in a file with no literal and before any literal, and names the file; and it stays green on a control (on **copies** of the tree; the tracked sources are never touched) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
@@ -3581,15 +3583,19 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.66 | 220 | 30,284 | 508,422 | 3,326 | 0 (no specs) | 0 | 265 | 16.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.5.4 | 263 | 17,843 | 673,492 | 188 | 0 (no specs) | 0 | 291 | 14.2 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 66 | 7,746 | 230,577 | 48 | 2 / 1 / 3 | 0 | 45 | 1,108 ms |
+| `LunaFlow` itself (`--dir .`) | 68 | 7,833 | 230,667 | 48 | 2 / 1 / 3 | 0 | 45 | 2,092 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
 below are measured. The wall clock is the **one noisy cell** in that table: five
-runs over the tree this commit names read **1,108 ms** to **1,192 ms**, while every
+runs over the tree this commit names read **2,092 ms** to **2,168 ms**, while every
 count — files, statements, events, L2 findings, VCs, dead, sinks — came back
 **identical on every one of them**. The counts are the deterministic measure; the time is
-an observation of this machine under this load. The same holds for the three
+an observation of this machine under this load.
+
+**THE JUMP FROM 1,108 ms IS THE MACHINE, MEASURED PAIRED, NOT THE CHANGE.** The same tree **without** the recursion fix — the fix is one claim and one trace event — read **2,036 ms** to **2,343 ms** over five runs on this machine minutes earlier, and the tree **with** it read **2,092 ms** to **2,168 ms** minutes later. The two ranges overlap, and the medians — **2,100 ms** without the fix, **2,142 ms** with it — differ by **42 ms**, which is smaller than the **307 ms** spread the same binary showed over its own five runs. One further run, taken **immediately after the rebuild**, read **4,687 ms**: the binary was cold, and it is not in the published set. The change costs one claim and one event, and the wall clock does not see them.
+
+The same holds for the three
 committed artefacts: the committed doubleML artefact read **16.0 s**, and the
 count it carries is the artefact's own. **The doubleML wall clock moved with
 the machine, not with the analyser:** the same corpus read **10.0 s** when
@@ -3810,7 +3816,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **66 files, 7,746 statements, 230,577 events, 48 L2
+On this tree the row reads **68 files, 7,833 statements, 230,667 events, 48 L2
 findings, 0 dead and 45 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
@@ -3961,6 +3967,105 @@ workload** has been run — the two analyzers were pointed at different modules,
 so the numbers are not comparable. The comparison baseline in
 `docs/design.md` §8 covers Frama-C / TrustInSoft Analyzer, Joern, CodeQL, SVF
 and Soot as a **design** comparison, not as a measured head-to-head.
+
+### The QA round of 2026-11-25
+
+Two questions, asked of the tree that 0.1.37 shipped: **is every finding family pinned by a test**, and **what happens when the interpreter runs out of depth**.
+
+#### The first question: forty-one families, and the one nothing pins
+
+The roster is **41** finding families. **Five** of them are RESERVED — `PARSE-GAP`,
+`USE-AFTER-FREE`, `POINTER-ARITHMETIC`, `MEMORY-LEAK` and `FORMAT-STRING` — and they
+never fire, by construction. Of the **36** that do:
+
+| coverage | families |
+| --- | --- |
+| blackbox **and** whitebox | **6** — `DEAD-CODE`, `UNREACHABLE`, `INFINITE-LOOP`, `TAINT-INDEX`, `INDEX-OOB`, `FFI-SIGNATURE-CONFLICT` |
+| blackbox only | **26** |
+| whitebox only | **3** — `TAINT-ALLOC`, `RANGE-VIOLATION`, `BUDGET-EXCEEDED` |
+| **no test at all** | **1** — `UNSUPPORTED`, produced at `src/app/abs.mbt:1245` |
+
+`UNSUPPORTED` is the gap this round leaves **open**, and it is a gap rather than a
+defect: the family fires on a construct the parser does not model, and no fixture
+asks for that shape yet. It is reported, not patched.
+
+#### The second question: the corpus contains no recursion at all
+
+**ZERO** of the **251** embedded sources in the test corpus and **ZERO** of the **6**
+fixture files contain a self-recursive function, and **ZERO** mutually recursive
+pairs. That was measured with **two independent algorithms** — one that matches the
+braces of a body, one that slices the body out by text — and the two agree exactly,
+so the zero is not one parser's opinion.
+
+The analyser's **own** source is the opposite: **61** self-recursive functions and
+**16** mutually recursive pairs. The shape it sees most is the shape no test pins.
+
+**THE SELF-LOOP HANDLING IS CORRECT, BUT THE SHAPE IS UNPINNED.** An empty loop body
+makes `last_node` fall back to the header, so the CFG carries the self-loop `h → h`;
+the empty-body and the with-body variants produce the **same 5** findings
+(`UNREACHABLE`, `DEAD-CODE`, `INFINITE-LOOP` ×3). But **0 of the 251** embedded
+sources has an empty loop body, so that shape is right by the accident of the
+implementation rather than by a test.
+
+#### And the round found a real defect: recursion lost its findings, silently
+
+**THE DEPTH GUARD RETURNED `VUnknown` AND SAID NOTHING.** `src/app/interp.mbt`
+followed a call chain until the depth budget was spent, and then returned
+`VUnknown` — **no claim, no event, no trace**. A truncated analysis was
+indistinguishable from a clean one: the report said "nothing to report" where it
+should have said "I stopped looking".
+
+**THE FIX REPORTS THE TRUNCATION; IT DOES NOT DEEPEN THE ANALYSIS.** The depth limit
+itself is unchanged — it is **6**, at `src/command/command.mbt:1044` — and no
+`--max-depth` flag was added, because the scope of this fix is the **report**, not
+the budget. At the guard the interpreter now emits an **undecided**
+`BUDGET-EXCEEDED` claim and an `EvBudget` trace event, exactly as the step budget
+already does. **No new family was needed**: `BUDGET-EXCEEDED` already means "an
+analysis budget was exhausted", and the two budgets are told apart by the claim's
+**message** and **evidence**, the same way the L1 and the L2 step budgets already
+share the family. The claim is made **once per function run**, mirroring the step
+budget's own flag.
+
+**THE ATTRIBUTION NEEDS CORRECTING, AND IT MATTERS: THE L2's LOSS IS NOT
+RECURSION'S.** The L2 does not follow user calls at all — a disclosed limitation,
+"the analyzer follows the call graph one function at a time" — so its `INDEX-OOB`
+loss happens on an ordinary, **non-recursive** call too. What the recursion fix
+repairs is the **L1's** depth guard.
+
+#### MEASURED
+
+| probe | before | after |
+| --- | --- | --- |
+| a self-recursive function | **0** claims, no event | **1** claim — verdict `unknown`, evidence `max_depth=6 depth=6 call=r_rec` |
+| a mutually recursive pair | **0** claims | **2** claims — one per entry point |
+| an ordinary, **non-recursive** call chain | **0** claims | **0** claims — the analyser must not claim a depth budget for an ordinary call |
+
+**THE FALSIFICATION IS PROVEN, NOT ASSUMED.** With the fix reverted the two new test
+files fail **cleanly** — `expected 1, actual 0` and `false is not true`, no panic and
+no abort — and with it they pass **9 of 9**. A test that aborts the binary takes the
+other tests' results down with it, so every read of a claim is guarded.
+
+**THE COMMITTED ARTEFACTS DID NOT MOVE, AND THAT WAS MEASURED, NOT ASSUMED.**
+`doubleML` 0.164.66 and `static_analysis` 0.5.4 each report **0** depth-budget
+findings — **19** and **34** step-budget findings, unchanged — so `reports/` was
+**not** regenerated and the published totals stand.
+
+**AND THE ANALYSER'S OWN SOURCE NOW MAKES ONE MORE CLAIM, AND IT IS REGISTERED.**
+The self-scan says **62** claims where it said **61**: `parser.mbt parse_if` reaches
+the depth budget at `src/app/parser.mbt:1300`, with the evidence
+`max_depth=6 depth=6 call=parse_expr` — the analyser's own recursive-descent parser.
+A budget cannot be answered by a guard, because **the budget is the bound**, so the
+claim is **registered** in `src/app/selfscan_guards_wbtest.mbt` rather than guarded
+away. `node scripts/qa/selfscan_register.mjs` → **83 passed, 0 failures**.
+
+**AND THE SECOND DEFECT THE ROUND FOUND WAS DIAGNOSED, NOT CHANGED.** The CLI's
+default output directory is the repository's own committed `reports/`, and a
+**non-existent** target exits **0** and writes "0 files / 0 findings" into it — that
+is how the committed artefact was overwritten once. The behaviour is **unchanged**
+here: it is a decision for the maintainers, not a defect this fix patches. What the
+round adds is the **written-down** failure mode, and the finding that the gate is
+innocent — all **55** steps were run individually with a tree check and **none**
+writes to `reports/`.
 
 ### The QA round of 2026-11-23
 
