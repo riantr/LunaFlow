@@ -415,3 +415,89 @@ test "a tainted value that reaches abort is reported as UNSUPPORTED" {
     #|}
   inspect(eva_count(literal, @app.FUnsupported), content="0")
 }
+
+///|
+/// TAINT-ALLOC, driven from a SOURCE STRING rather than from the abstract
+/// layer's internals.
+///
+/// The family means "a tainted value may control an allocation size": a
+/// parameter is an untrusted value, so `Array::make(n, 0)` hands the runtime
+/// a COUNT the program does not control. The size is read from the tainted
+/// value; that is the whole claim.
+///
+/// UNTIL THIS TEST IT WAS WHITEBLOCK-ONLY -- `alloc_rules_wbtest.mbt` drove
+/// it, and no blackbox test did. It is not a weaker claim in a blackbox file:
+/// both helpers call `run_abstract(ast, 10, 1000)`, so the same source is
+/// measured by the same layer. Only the file kind differed.
+test "an allocation whose size comes from a parameter is TAINT-ALLOC" {
+  let src =
+    #|pub fn make_window(n : Int) -> Array[Int] {
+    #|  Array::make(n, 0)
+    #|}
+  let findings = eva_all(src)
+  let mut alloc = 0
+  for f in findings {
+    if f.kind == @app.FTaintAlloc {
+      alloc = alloc + 1
+      // The message names the parameter the size came from, so the reader
+      // can see WHERE the count was taken from.
+      assert_true(f.message.contains("may control an allocation size"))
+      assert_true(f.message.contains("n"))
+      inspect(f.mode, content="L2-abstract")
+      inspect(f.fn_name, content="make_window")
+    }
+  }
+  inspect(alloc, content="1")
+}
+
+///|
+/// THE CONTROL for TAINT-ALLOC: a CONSTANT size is not tainted, and the
+/// family must stay silent. Without this arm a rule that flagged every
+/// allocation would pass the test above.
+test "an allocation with a constant size is not TAINT-ALLOC" {
+  let src =
+    #|pub fn make_window() -> Array[Int] {
+    #|  Array::make(4, 0)
+    #|}
+  inspect(eva_count(src, @app.FTaintAlloc), content="0")
+}
+
+///|
+/// RANGE-VIOLATION, from the same source and the same layer -- a DIFFERENT
+/// claim about it.
+///
+/// `TAINT-ALLOC` says the size is untrusted; this says the size may be
+/// NEGATIVE, which the runtime cannot satisfy. Both are true of
+/// `Array::make(n, 0)` with an untrusted `n`, and they are separate families
+/// because they are separate defects: a size can be tainted and still
+/// provably non-negative, and it can be untainted and still negative.
+test "an allocation whose size may be negative is a RANGE-VIOLATION" {
+  let src =
+    #|pub fn make_window(n : Int) -> Array[Int] {
+    #|  Array::make(n, 0)
+    #|}
+  let findings = eva_all(src)
+  let mut negative = 0
+  for f in findings {
+    if f.kind == @app.FRangeViolation {
+      negative = negative + 1
+      // The message is the NEGATIVE-SIZE one, not the other production
+      // site of this family (an assertion that may fail), so the test pins
+      // WHICH range violation it found.
+      assert_true(f.message.contains("allocation size may be negative"))
+      inspect(f.mode, content="L2-abstract")
+    }
+  }
+  inspect(negative, content="1")
+}
+
+///|
+/// THE CONTROL for RANGE-VIOLATION: a constant size cannot be negative, so
+/// the same defect must not be claimed for `Array::make(4, 0)`.
+test "an allocation with a constant size cannot be a negative range" {
+  let src =
+    #|pub fn make_window() -> Array[Int] {
+    #|  Array::make(4, 0)
+    #|}
+  inspect(eva_count(src, @app.FRangeViolation), content="0")
+}

@@ -640,7 +640,7 @@ than the standalone module provided.
 
 **AND THE PEER ROUND WAS RUN AGAIN OVER THE TREE THAT CARRIES THE FIX, AND THE ONE DIFFERENCE IS THE FIX.** Over the tree as it stands now the published **0.1.37** and the local build agree on **every** counter except **two**: the published release reports **230,666** trace events and **119** findings, the local build **230,667** and **120**. Everything else is identical — 68 files, 1,223 functions, 7,833 statements, 28,434 steps, 48 L2 findings, 45 taint sinks, VCs 2 / 1 / 3. The difference is exactly the one claim the recursion fix adds and the one trace event it writes: **one of each**.
 
-**AND THE GATE IS GREEN, ALL OF IT: 55 steps, 55 passed, 0 failed, 0 unknown.** The tests are **354** on all three targets — 0.1.37 shipped **339**, the recursion fix that followed it added **12**, the sink test that closed the last untested family added **1**, and the two CFG self-loop tests added **2**. 0.1.37 itself shipped with the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed — and a **55th** was added after the release, when one of the gates turned out to be **blind**.
+**AND THE GATE IS GREEN, ALL OF IT: 55 steps, 55 passed, 0 failed, 0 unknown.** The tests are **354** on all three targets — 0.1.37 shipped **339**, the recursion fix that followed it added **12**, the sink test that closed the last untested family added **1**, the two CFG self-loop tests added **2**, and the four allocation tests that closed the last whitebox-only families added **4**. 0.1.37 itself shipped with the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed — and a **55th** was added after the release, when one of the gates turned out to be **blind**.
 **AND ONE OF THE GATES WAS BLIND — the coverage-route check could not fail, and it said it could.** `scripts/qa/coverage_route.mjs` strips comments and string literals before it looks for the identifiers the coverage reporter's lexer reserves, and its stripper treated a `#|` as the start of a block string closed by `|#`. **MoonBit's multi-line string has NO terminator** — the literal opens with `#|`, every content line carries the prefix, and it ends at the first line that does not. So the closer was never found, and the stripper blanked **the rest of the file**. MEASURED by evaluating the stripper out of the tracked source: the check read **20,964** of the tree's code lines where it reads **24,321** now — **3,357 more, 16.0 % more**. `src/command/command.mbt` was the worst case: its 65-line usage text is one multi-line literal, and the **1,158** code lines after it were invisible.
 
 **THE CONSEQUENCE WAS A CHECK THAT MEASURED NOTHING AND SAID OK.** A reserved identifier planted after that literal left the check **green** — proved on a **copy**, by a falsifier that now ships: `scripts/qa/coverage_route_falsify.mjs` plants one in three places (after a multi-line literal, in a file with no literal, and before any literal) and asserts the check goes **red** for the right reason and names the file, plus a **control** it must not notice. **11 checks.**
@@ -3300,9 +3300,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 82 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 82 warnings, 0 errors |
 | `moon check --target js` | exit 0, 93 warnings, 0 errors |
-| `moon test src/app --target native` | **354 passed, 0 failed** |
-| `moon test src/app --target wasm` | **354 passed, 0 failed** |
-| `moon test src/app --target js` | **354 passed, 0 failed** |
+| `moon test src/app --target native` | **358 passed, 0 failed** |
+| `moon test src/app --target wasm` | **358 passed, 0 failed** |
+| `moon test src/app --target js` | **358 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) — and it reads the **whole** tree: the string-stripper it uses understands MoonBit's multi-line string, which has **no terminator**, so nothing after one is invisible to it |
 | `node scripts/qa/coverage_route_falsify.mjs` | **11 passed, 0 failed** — the coverage-route check goes red on a reserved identifier planted **after a multi-line literal**, in a file with no literal and before any literal, and names the file; and it stays green on a control (on **copies** of the tree; the tracked sources are never touched) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
@@ -3583,7 +3583,7 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.66 | 220 | 30,284 | 508,422 | 3,326 | 0 (no specs) | 0 | 265 | 16.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.5.4 | 263 | 17,843 | 673,492 | 188 | 0 (no specs) | 0 | 291 | 14.2 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 68 | 7,864 | 230,667 | 48 | 2 / 1 / 3 | 0 | 45 | 2,092 ms |
+| `LunaFlow` itself (`--dir .`) | 68 | 7,888 | 230,667 | 48 | 2 / 1 / 3 | 0 | 45 | 2,092 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
@@ -3816,7 +3816,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **68 files, 7,864 statements, 230,667 events, 48 L2
+On this tree the row reads **68 files, 7,888 statements, 230,667 events, 48 L2
 findings, 0 dead and 45 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
@@ -3976,7 +3976,8 @@ Two questions, asked of the tree that 0.1.37 shipped: **is every finding family 
 
 The roster is **41** finding families. **Five** of them are RESERVED — `PARSE-GAP`,
 `USE-AFTER-FREE`, `POINTER-ARITHMETIC`, `MEMORY-LEAK` and `FORMAT-STRING` — and they
-never fire, by construction. Of the **36** that do:
+never fire, by construction. Of the **36** that do — **measured on the 0.1.37 tree, and
+kept here as that measurement; the paragraphs below state what changed since**:
 
 | coverage | families |
 | --- | --- |
@@ -3991,9 +3992,10 @@ a tainted value that reaches `abort` is reported as `UNSUPPORTED`, with the evid
 naming the callee, the mode the abstract layer files it under, and the function it was
 found in — **plus a control in the same test**, the same sink called with a literal
 argument, which must produce no claim at all. Without the control a rule that reported
-every `abort` would pass. The count is now **7 / 27 / 2 / 0**: seven families with
+every `abort` would pass. The count is now **9 / 27 / 0 / 0**: nine families with
 both a blackbox and a whitebox test (`BUDGET-EXCEEDED` joined them with the recursion
-fix), twenty-seven blackbox only, two whitebox only, and **none untested**.
+fix, and `TAINT-ALLOC` and `RANGE-VIOLATION` with the allocation tests below),
+twenty-seven blackbox only, **none** whitebox only, and **none untested**.
 
 **THE FALSIFICATION IS PROVEN, NOT ASSUMED.** With the producing site at
 `src/app/abs.mbt:1249` re-pointed at another family, the new test fails at exactly the
@@ -4008,6 +4010,36 @@ pin is removed is not a test.
 L2 treats specially because the parser does not model what they do to control flow.
 The contract in `family.mbt` says so; the name does not. The test now pins the
 difference by asserting the message, which reads *"may reach abort/panic"*.
+
+**AND THE LAST TWO WHITEBOX-ONLY FAMILIES WERE WHITEBOX-ONLY BY PLACEMENT, NOT BY
+NATURE.** The audit reported `TAINT-ALLOC` and `RANGE-VIOLATION` as covered by
+`alloc_rules_wbtest.mbt` and nothing else. But that file's own `abs_count` calls
+`run_abstract(ast, 10, 1000)` — **exactly** what `eva_test.mbt`'s `eva_count` calls —
+so the same source string is measured by the same layer, and only the FILE KIND
+differed. Four tests in `src/app/eva_test.mbt` now drive both families from a source,
+each with a control:
+
+| family | positive | control |
+| --- | --- | --- |
+| `TAINT-ALLOC` | `Array::make(n, 0)` with an untrusted `n` → exactly 1, message *"may control an allocation size"*, naming `n` | `Array::make(4, 0)` → **0** |
+| `RANGE-VIOLATION` | the same source → exactly 1, message *"allocation size may be negative"* | a constant size → **0** |
+
+The two families are separate on purpose, and the same source carries both: a size can
+be tainted and provably non-negative, or untainted and negative. The assertions pin
+WHICH range violation it is — `family.mbt` has two production sites for it, and the
+negative-size message is the one this source produces.
+
+**THE FALSIFICATIONS ARE PROVEN, AND FOR `TAINT-ALLOC` THEY RUN IN OPPOSITE
+DIRECTIONS.** Making the family never fire (`abs.mbt:1195` → `if false`) reddens the
+**positive** and leaves the control green; making it always fire (`|| constant_size`)
+leaves the positive green and reddens the **control**. A test that survived both would
+measure nothing. For `RANGE-VIOLATION` the sign test (`abs.mbt:1209`) was removed the
+same way: positive red, control green. Each falsification was measured by the FAILING
+TEST NAME out of a whole-suite run, not by parsing a summary line — two earlier
+versions of that harness were wrong, and both were wrong in the MEASUREMENT: one could
+not tell a compile failure from a test failure, and one passed a filter with spaces
+through a shell, so `size` arrived as a positional DIRECTORY argument
+(*"Failed to canonicalize input filter directory `size`"*).
 
 #### The second question: the corpus contains no recursion at all
 
