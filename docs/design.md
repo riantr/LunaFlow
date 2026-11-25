@@ -1710,7 +1710,7 @@ the fix read **2,036 ms** to **2,343 ms** over five self-scans, the tree **with*
 read **2,092 ms** to **2,168 ms** minutes later, and the medians — **2,100 ms** and
 **2,142 ms** — differ by **42 ms**, which is smaller than the **307 ms** spread the
 same binary showed over its own five runs. The self-scan's counts did move, and by
-exactly what the fix adds: **68** files, **7,846** statements and **230,667** events
+exactly what the fix adds: **68** files, **7,864** statements and **230,667** events
 where the row read **66**, **7,746** and **230,577**. The committed artefacts did
 not move at all — **0** depth-budget findings in each of `doubleML` and
 `static_analysis` — so `reports/` was not regenerated.
@@ -1833,7 +1833,7 @@ These are verdicts on what fits **here**, not on the peer: the repair loop, the 
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 352 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 354 unit/integration tests | `src/app/*_test.mbt` |
 
 The raw traces of D5 are committed to the repository and are **not** part of the
 published package (§7.2): the registry refuses an archive it cannot read, and they
@@ -1844,7 +1844,7 @@ are what made it unreadable.
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 352 passed, 0 failed | 352/352 |
+| A2 | Tests | `moon test src/app --target native` ≥ 354 passed, 0 failed | 354/354 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.66, 0.5.4 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.88 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
