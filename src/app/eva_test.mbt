@@ -361,3 +361,57 @@ test "the family profile selects the EVA families by their code" {
   inspect(findings.length(), content="1")
   assert_true(findings[0].kind == @app.FIntOverflow)
 }
+
+///|
+/// THE ONE FAMILY THE AUDIT FOUND WITH NO TEST AT ALL.
+///
+/// `FUnsupported` is the family `family.mbt` titles `UnsupportedSink` and
+/// documents as "a tainted value may reach abort/panic": abort, panic and
+/// `fail` are SINKS the L2 treats specially, because the parser does not
+/// model what they do to control flow.
+///
+/// THE NAME READS LIKE SOMETHING ELSE, AND THE DIFFERENCE IS WORTH PINNING.
+/// It sounds like "a construct the parser could not model" -- and that is
+/// `PARSE-GAP`, a RESERVED family that never becomes a finding. A reader
+/// who met this code would have no way to learn which one they were looking
+/// at. The audit of 2026-11-25 measured 36 families that fire, and this was
+/// the one with no test asserting it; this is the answer.
+///
+/// THE VALUE HAS TO BE TAINTED FOR THE CLAIM TO BE MADE. The sink alone is
+/// not enough, or every `abort` in every module would be reported -- the
+/// control below pins that too, with a literal argument that must stay
+/// silent.
+test "a tainted value that reaches abort is reported as UNSUPPORTED" {
+  // The taint comes from `idx` being used as an ARRAY INDEX: that is how
+  // the L2 decides a value is untrusted. `v` then carries it.
+  let tainted =
+    #|pub fn pick(values : Array[Int], idx : Int) -> Unit {
+    #|  let v = values[idx]
+    #|  abort(v.to_string())
+    #|}
+  let mut unsupported = 0
+  for f in eva_all(tainted) {
+    if f.kind == @app.FUnsupported {
+      unsupported = unsupported + 1
+      // The message names the parameters whose values could reach the sink,
+      // so the reader can see WHERE the taint entered the function.
+      assert_true(f.message.contains("may reach abort/panic"))
+      assert_true(f.message.contains("idx"))
+      // The evidence is the CALLEE: which sink the value reached.
+      inspect(f.evidence, content="abort")
+      // Filed by the abstract layer, not by the evolved value analysis.
+      inspect(f.mode, content="L2-abstract")
+      inspect(f.fn_name, content="pick")
+    }
+  }
+  // Exactly one, so a second copy of the finding cannot pass this arm.
+  inspect(unsupported, content="1")
+  // THE CONTROL, in the same test: the SAME sink with an argument that
+  // carries no taint must produce no claim at all. Without it, a rule that
+  // reported every `abort` would pass the arm above.
+  let literal =
+    #|pub fn stop() -> Unit {
+    #|  abort("literal")
+    #|}
+  inspect(eva_count(literal, @app.FUnsupported), content="0")
+}
