@@ -83,7 +83,6 @@ fn rec_mutual_source() -> String {
     #|pub fn ping(n : Int) -> Int {
     #|  pong(n)
     #|}
-    #|
     #|pub fn pong(n : Int) -> Int {
     #|  ping(n)
     #|}
@@ -98,7 +97,6 @@ fn rec_flat_source() -> String {
     #|pub fn helper(n : Int) -> Int {
     #|  n
     #|}
-    #|
     #|pub fn caller(n : Int) -> Int {
     #|  helper(n)
     #|}

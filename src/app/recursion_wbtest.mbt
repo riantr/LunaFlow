@@ -146,7 +146,6 @@ test "the recursion: a flat call chain makes no claim and no event" {
     #|pub fn helper(n : Int) -> Int {
     #|  n
     #|}
-    #|
     #|pub fn caller(n : Int) -> Int {
     #|  helper(n)
     #|}
