@@ -12,12 +12,19 @@ import {
   readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync, rmSync, statSync,
 } from 'node:fs';
 import { join, relative } from 'node:path';
-import { resolveCli } from './cli_bin.mjs';
+import { requireCli } from './cli_bin.mjs';
 import { traceBody, traceFiles } from './run_artefacts.mjs';
 
 const root = process.cwd();
 const featuresDir = join(root, process.argv[2] ?? 'features');
-const exe = resolveCli(root);
+// The binary is REQUIRED, not resolved: this runner does not build it, so a
+// tree where it is missing is a tree where the check CANNOT RUN -- and a check
+// that cannot run says nothing about the tree.  `requireCli` exits 2 with the
+// cause named, which is how this harness says UNKNOWN; `resolveCli` would
+// hand back a path that is not there, and the scenario would fail as if the
+// analyser had answered wrongly.  That is a false accusation: the gate would
+// report the tree as broken when the truth is that nothing ran.
+const exe = requireCli(root);
 const work = join(root, '_build', 'qa', 'gherkin');
 
 const CLI = (args, cwd = root) =>

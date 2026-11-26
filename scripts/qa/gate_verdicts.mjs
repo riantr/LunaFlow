@@ -206,6 +206,71 @@ check(
 check('  and the run exits 1', odd.code === 1, `exit ${odd.code}`);
 
 // ---------------------------------------------------------------------------
+// 1b. the failure summary carries the way out
+// ---------------------------------------------------------------------------
+
+console.log('\n== the failure summary ==');
+
+// A failing check may print the command that fixes it.  The gate's summary
+// shows the step's verdict lines -- and a remedy line is one of them, or the
+// reader is left with the failure and no command.  This is not a
+// hypothetical: the package-envelope check prints `git add -f -- ...` when a
+// raw trace is on disk but not in the index yet.
+const noisy = runGate(
+  [
+    "node -e \"console.log('FAIL  the tree did not agree'); console.log('FIX  git add -f -- reports/x.jsonl'); process.exit(1)\"",
+  ],
+  'noisy',
+);
+check(
+  'the gate prints the failure a step reported',
+  /FAIL\s+the tree did not agree/.test(noisy.out),
+);
+check(
+  '  and the way out it offered with it',
+  /FIX\s+git add -f -- reports\/x\.jsonl/.test(noisy.out),
+);
+
+// And the REASON.  A harness prints its verdict on one line and the reason on
+// the indented lines under it -- the convention in this harness -- and the
+// summary used to filter those away: the gherkin step of the failed 54-step
+// release gate was reported as `FAIL  <scenario>` and named no cause at all.
+// The reason has to survive with the verdict.
+//
+// The line about the demo FIXTURE is in there on purpose: "fixture" contains
+// "fix", so a remedy anchor that is not anchored at the start of the line
+// takes that line for a remedy -- and the summary then shows it twice, once
+// as a verdict and once as a reason.  This harness, the feature files and the
+// e2e harness all say "fixture", so the anchor has to be exact.
+const FIXTURE_LINE = '        When I analyze the demo fixture - exit=null';
+// The command is assembled so that it does NOT contain the literal line: the
+// gate echoes the failing command twice, and an echo would be counted as an
+// occurrence of the line.  Only the step's OUTPUT carries it.
+const explained = runGate(
+  [
+    "node -e \"const L='        When I analyze the demo ' + 'fixture - exit=null'; console.log('FAIL  the scenario did not run'); console.log('        Given the built CLI binary - missing cli.exe'); console.log(L); console.log('        Then the run exits successfully - exit=n/a'); process.exit(1)\"",
+  ],
+  'explained',
+);
+check(
+  'the gate keeps the reason a step printed under its verdict',
+  /Given the built CLI binary - missing cli\.exe/.test(explained.out),
+);
+check(
+  '  and the reason after it',
+  /Then the run exits successfully - exit=n\/a/.test(explained.out),
+);
+check(
+  '  and a line that merely contains "fix" is shown ONCE, not taken for a remedy',
+  explained.out.split(FIXTURE_LINE).length - 1 === 1,
+  `${explained.out.split(FIXTURE_LINE).length - 1} occurrence(s)`,
+);
+check(
+  '  and the verdict it belongs to',
+  /FAIL\s+the scenario did not run/.test(explained.out),
+);
+
+// ---------------------------------------------------------------------------
 // 2. the convention, on the shipped checks
 // ---------------------------------------------------------------------------
 

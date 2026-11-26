@@ -47,6 +47,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { requireCli } from './cli_bin.mjs';
+import { grouped } from './number_format.mjs';
 
 const ROOT = resolve(new URL('../../', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const EXE = requireCli(ROOT);
@@ -331,6 +332,26 @@ console.log(`the ceiling: total <= ${MAX_TOTAL} bytes, largest entry <= ${MAX_EN
 for (const r of results) {
   console.log(
     `${r.corpus} ${r.mode}: total ${r.trace_total_bytes <= MAX_TOTAL ? 'WITHIN' : 'OVER'} the ceiling, largest entry ${r.trace_largest_bytes <= MAX_ENTRY ? 'WITHIN' : 'OVER'} it`,
+  );
+}
+// The README's rows, READY TO PASTE.  The driver used to print raw columns
+// and leave a human to map them onto the README's table -- and a human did
+// that once wrong, which is how the README's numbers came to disagree with
+// the artefact they were measured from.  So the rows are printed in the
+// README's own shape: the NUMBERS are the measurement, and the emphasis is
+// the author's.
+console.log('');
+console.log("the README's measurement table -- copy these rows into the table in README.md:");
+console.log('| corpus | mode | trace files | total bytes | largest entry |');
+console.log('|---|---|---|---|---|');
+for (const r of results) {
+  if (r.mode !== 'wide' && r.mode !== 'per') continue;
+  // The corpus cell is written the way the README writes it: a name with a
+  // space in it is plain, a module name is in code ticks.
+  const corpus = r.corpus.includes(' ') ? r.corpus : `\`${r.corpus}\``;
+  const mode = r.mode === 'wide' ? 'module-wide' : '`--per-package`';
+  console.log(
+    `| ${corpus} | ${mode} | ${r.trace_files} | ${grouped(r.trace_total_bytes)} | ${grouped(r.trace_largest_bytes)} |`,
   );
 }
 console.log('');

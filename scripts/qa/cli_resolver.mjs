@@ -17,9 +17,11 @@
 //
 // Usage: node scripts/qa/cli_resolver.mjs
 
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { resolveCli } from './cli_bin.mjs';
+import { pathToFileURL } from 'node:url';
+import { resolveCli, requireCli } from './cli_bin.mjs';
 
 const root = process.cwd();
 const dir = join(root, '_build', 'qa', 'cli_resolver');
@@ -49,6 +51,44 @@ check('finds the executable named cli', existsSync(found) && found.endsWith('cli
 rmSync(join(exeDir, 'cli'), { force: true });
 found = resolveCli(dir);
 check('reports no binary when nothing is built', !existsSync(found), found);
+
+// And the OTHER half of the resolver's contract: a harness that needs the
+// binary must not go on to fail somewhere else when it is not there.  It must
+// stop with exit 2 -- "no verdict" -- and NAME the cause, because a missing
+// binary says nothing about the tree, and a harness that reports it as a
+// failed check accuses the tree of being broken.
+//
+// `requireCli` calls process.exit, so it is driven in a CHILD: the code is
+// passed as an argument, with no shell in between, and the URL of the module
+// is built with pathToFileURL so a Windows path is not mistaken for one.
+const moduleUrl = pathToFileURL(join(root, 'scripts', 'qa', 'cli_bin.mjs')).href;
+const call = (fn) =>
+  spawnSync(
+    process.execPath,
+    ['--input-type=module', '-e', `import { ${fn} } from '${moduleUrl}'; ${fn}(${JSON.stringify(dir)});`],
+    { encoding: 'utf8', timeout: 120000 },
+  );
+const missing = call('requireCli');
+check(
+  'requireCli exits 2 when the binary is not there -- no verdict, not a failure',
+  missing.status === 2,
+  `exit=${missing.status}`,
+);
+check(
+  '  and it names the cause and the way to get it',
+  /missing CLI binary/.test(missing.stderr ?? '') &&
+    /moon build src\/cli/.test(missing.stderr ?? ''),
+  (missing.stderr ?? '').split(/\r?\n/).filter(Boolean)[0] ?? '',
+);
+
+// With the binary there, the same call returns it and says nothing.
+writeFileSync(join(exeDir, 'cli.exe'), 'binary');
+const present = call('requireCli');
+check(
+  'requireCli returns the binary when it is there',
+  present.status === 0,
+  `exit=${present.status}`,
+);
 
 rmSync(dir, { recursive: true, force: true });
 

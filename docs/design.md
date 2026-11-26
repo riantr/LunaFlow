@@ -1609,6 +1609,15 @@ entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it, a
 
 **THE PER-PACKAGE MODE's SIZES, because the PUBLISH envelope is where its cost shows.** The envelope is the one the registry has already accepted (`docs/qa/PUBLISH_ENVELOPE.json`): **46,274,868** bytes unpacked and a **39,479,846**-byte largest entry. Measured with `--trials 4`: on this tree the split takes the trace from **22,707,387** bytes in one file to the same **22,707,387** bytes in ten, with the largest entry down to **21,939,394**; on the static-analysis module it GROWS, from **76,591,727** bytes in one file to **112,175,918** in seventeen, the largest entry up to **78,902,704**, because the mode interprets more and the evidence is more; on doubleML it does not change a byte, because there is one package — one file, **80,035,384** bytes. The ceiling is a limit on the TOTAL, and a split does not touch the total.
 
+**AND THE MEASUREMENT IS OF A MOVING TARGET, so the table moves with it.** The "this tree" row
+measures **this** repository: between 2026-11-24 and 2026-11-26 the source changed, this
+tree's own trace grew by **15,998** bytes (**22,691,389** → **22,707,387**), and the table
+kept the earlier measurement until a check caught it. The two corpus rows measure **pinned**
+corpora, so they move only when the registry moves. So `scripts/qa/measure_per_package.mjs`
+prints the README's rows ready to paste, and `scripts/qa/readme_table.mjs` compares the
+table, the prose and this section against the artefact — and names the command to run when
+they differ.
+
 The statement counts fell and the dead-code column emptied because the old
 numbers were wrong: the parser shredded every construct it did not model into
 one statement per fragment, and a shredded fragment ate the closing brace of
@@ -1627,6 +1636,11 @@ bytes and a **39,479,846**-byte entry. The limit is a check now:
 `scripts/qa/package_envelope.mjs` measures the package the tree would publish and
 keeps it inside the envelope the registry has already accepted, and
 `docs/qa/PUBLISH_ENVELOPE.json` records where the measurement put the boundary.
+When a raw trace is on disk but not yet in the index, that check **measures which
+ignore rule matched it** and prints the command that stages it — `git add -f` for
+a path the rule matches, `git add` for one it does not — because the rule that
+keeps the traces out of the package is the same rule that makes a plain `git add`
+refuse them.
 
 Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The **76.3 MB** JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-total-steps` or stream events to disk.
 

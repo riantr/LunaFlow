@@ -36,6 +36,14 @@
 // accident: the artefacts a reader uses (the report, the sidecar, the summary)
 // are packed, and the raw traces -- which stay in the repository -- are not.
 //
+// And when a raw trace is NOT in the repository, the check says WHY and WHAT TO
+// RUN.  The rule that keeps the traces out of the package is the very rule that
+// makes a plain `git add` refuse them, so a failure that says only "not
+// tracked" is a dead end: the reader is left with the fact and no command.  The
+// rule is MEASURED (`git check-ignore`), not assumed, and the falsifier proves
+// both branches of the advice -- `git add -f` for a path a rule matches, and
+// `git add` for one that no rule matches.
+//
 // Usage:
 //   node scripts/qa/package_envelope.mjs [--packed <json>] [--archive <zip>]
 //
@@ -63,6 +71,9 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`);
 };
 const note = (text) => console.log(`NOTE  ${text}`);
+// The way out, when there is one.  A check that says what is wrong and stops
+// there leaves the reader to work out the command; this prints it.
+const fix = (text) => console.log(`FIX  ${text}`);
 
 const argValue = (flag) => {
   const i = process.argv.indexOf(flag);
@@ -90,6 +101,38 @@ function gitPaths(args) {
   const r = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0) return null;
   return r.stdout.split('\0').filter((s) => s !== '');
+}
+
+/// Which ignore rule matches each of these paths -- git's own answer, and the
+/// answer the packer is built on.
+///
+/// Two flags are not optional, and both were MEASURED rather than assumed:
+///
+///   --no-index   without it git does not report a rule for a TRACKED path, and
+///                every raw trace here is tracked AND ignored -- so the
+///                measurement would come back empty and the check would name
+///                the wrong cause.
+///   --stdin      `-z` only makes sense with `--stdin`, and with both of them
+///                git emits FOUR NUL-separated fields per record -- source,
+///                line, pattern, path -- instead of one line per path.
+function ignoreRules(paths) {
+  const rules = new Map();
+  if (paths.length === 0) return rules;
+  const r = spawnSync('git', ['check-ignore', '-v', '-z', '--no-index', '--stdin'], {
+    cwd: ROOT,
+    encoding: 'buffer',
+    input: Buffer.from(paths.join('\0') + '\0', 'utf8'),
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  // 0: at least one path is ignored.  1: none of them is.  Both are answers;
+  // anything else is not an answer at all, and then no rule is claimed.
+  if (r.status !== 0 && r.status !== 1) return rules;
+  const fields = (r.stdout ?? Buffer.alloc(0)).toString('utf8').split('\0');
+  for (let i = 0; i + 3 < fields.length; i += 4) {
+    const [source, line, pattern, path] = fields.slice(i, i + 4);
+    rules.set(path, `${source}:${line}:${pattern}`);
+  }
+  return rules;
 }
 
 /// The model: what goes into the archive, what the artefacts are, and what the
@@ -138,10 +181,22 @@ export function measureModel() {
   const traces = [];
   const reportsDir = join(ROOT, 'reports');
   if (existsSync(reportsDir)) {
-    for (const name of readdirSync(reportsDir)) {
+    const names = readdirSync(reportsDir);
+    // Which rule hides each trace is MEASURED, because the remedy depends on
+    // it: a path a rule matches cannot be staged with a plain `git add`.
+    const rules = ignoreRules(
+      names.filter((n) => n.endsWith('_trace.jsonl')).map((n) => `reports/${n}`),
+    );
+    for (const name of names) {
       const rel = `reports/${name}`;
-      if (name.endsWith('_trace.jsonl')) traces.push({ path: rel, tracked: tracked.has(rel) });
-      else if (name.endsWith('.md') || name.endsWith('_findings.jsonl') || name.endsWith('_summary.json')) {
+      if (name.endsWith('_trace.jsonl')) {
+        traces.push({
+          path: rel,
+          tracked: tracked.has(rel),
+          ignored: rules.has(rel),
+          ignoredBy: rules.get(rel) ?? null,
+        });
+      } else if (name.endsWith('.md') || name.endsWith('_findings.jsonl') || name.endsWith('_summary.json')) {
         artefacts.push({ path: rel });
       }
     }
@@ -222,7 +277,9 @@ export function envelopeChecks(model, envelope) {
   const largest = model.packed.reduce((a, f) => (f.bytes > a.bytes ? f : a), { path: '-', bytes: 0 });
 
   const results = [];
-  const add = (name, ok, detail) => results.push({ name, ok, detail });
+  // `remedy` is what to RUN when the check fails: a check that says what is
+  // wrong and stops there leaves the reader to work out the command.
+  const add = (name, ok, detail, remedy = []) => results.push({ name, ok, detail, remedy });
 
   add(
     'the package fits the envelope the registry has accepted (unpacked bytes)',
@@ -256,6 +313,26 @@ export function envelopeChecks(model, envelope) {
   // The traces stay in the repository, and there is at least one of them: a
   // model with NO trace must not pass this check vacuously.
   const untracked = model.traces.filter((t) => !t.tracked);
+  // WHY a trace is untracked decides WHAT to run.  A path an ignore rule
+  // matches cannot be staged with a plain `git add` -- git refuses it -- and
+  // that rule is the very one that keeps the trace out of the package.  So the
+  // check names the rule and prints the command that stages it.
+  const remedy = [];
+  if (untracked.length > 0) {
+    const forced = untracked.filter((t) => t.ignored);
+    const plain = untracked.filter((t) => !t.ignored);
+    if (forced.length > 0) {
+      const rules = [...new Set(forced.map((t) => t.ignoredBy).filter(Boolean))];
+      remedy.push(
+        `${forced.length} of them are matched by the ignore rule ${rules.join(', ')}, so \`git add\` alone refuses them:`,
+      );
+      remedy.push(`git add -f -- ${forced.map((t) => t.path).join(' ')}`);
+    }
+    if (plain.length > 0) {
+      remedy.push(`${plain.length} of them are matched by no ignore rule, so \`git add\` takes them:`);
+      remedy.push(`git add -- ${plain.map((t) => t.path).join(' ')}`);
+    }
+  }
   add(
     'every raw trace is still tracked by git',
     model.traces.length > 0 && untracked.length === 0,
@@ -263,7 +340,8 @@ export function envelopeChecks(model, envelope) {
       ? 'there is no raw trace at all, so this check has nothing to compare'
       : untracked.length === 0
         ? `${model.traces.length} trace(s), all tracked`
-        : `not tracked: ${untracked.map((t) => t.path).join(', ')}`,
+        : `${untracked.length} of ${model.traces.length} trace(s) are on disk but not in the git index`,
+    remedy,
   );
 
   return { results, total, largest };
@@ -302,7 +380,10 @@ if (DUMP) {
 }
 
 const { results, total, largest } = envelopeChecks(model, envelope);
-for (const r of results) check(r.name, r.ok, r.detail);
+for (const r of results) {
+  check(r.name, r.ok, r.detail);
+  for (const line of r.remedy ?? []) fix(line);
+}
 
 console.log(
   `      package: ${model.packed.length} file(s), ${total} bytes unpacked, largest ${largest.path} at ${largest.bytes} bytes`,

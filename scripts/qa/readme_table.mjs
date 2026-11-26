@@ -64,6 +64,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { resolveCli } from './cli_bin.mjs';
 import { committedArtefactStem } from './committed_artefact.mjs';
+import { grouped } from './number_format.mjs';
 
 const root = resolve(process.cwd());
 const readmePath = join(root, 'README.md');
@@ -83,6 +84,10 @@ const check = (name, ok, detail = '') => {
   if (!ok) failures += 1;
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`);
 };
+// The way out, when there is one.  A check that says what is wrong and stops
+// there leaves the reader to work out WHICH side is the stale one -- and the
+// gate's failure summary shows these lines, so the remedy is not lost.
+const fix = (text) => console.log(`FIX  ${text}`);
 
 const num = (cell) => {
   const t = cell.trim().replace(/,/g, '');
@@ -573,6 +578,36 @@ function measurementTable(text) {
 }
 
 ///|
+/// The PROSE that repeats the measurement: everything after the measurement
+/// table, up to the next heading.  The table is NOT part of it -- the point is
+/// that the numbers are stated AGAIN, in the prose.
+function measurementProse(text) {
+  const lines = text.split('\n');
+  const h = lines.findIndex((l) => l.startsWith('| corpus | mode | trace files |'));
+  if (h < 0) return null;
+  const after = lines.slice(h + 1);
+  const tableEnd = after.findIndex((l) => !l.startsWith('|'));
+  if (tableEnd === -1) return null;
+  const body = after.slice(tableEnd);
+  const heading = body.findIndex((l) => l.startsWith('#'));
+  const prose = (heading === -1 ? body : body.slice(0, heading)).join('\n');
+  return prose.trim() ? prose : null;
+}
+
+///|
+/// The body of a section: from its heading to the next one.  It scopes a
+/// check to the part of a document that publishes a measurement, so a number
+/// that happens to appear elsewhere in the file cannot stand in for it.
+function section(text, prefix) {
+  const lines = text.split('\n');
+  const h = lines.findIndex((l) => l.startsWith(prefix));
+  if (h < 0) return null;
+  const body = lines.slice(h + 1);
+  const heading = body.findIndex((l) => l.startsWith('#'));
+  return (heading === -1 ? body : body.slice(0, heading)).join('\n');
+}
+
+///|
 /// A published cell: no emphasis, no thousands separator.
 function plain(cell) {
   return String(cell ?? '')
@@ -592,6 +627,10 @@ if (!existsSync(MEAS_PATH)) {
   } else {
     const byKey = new Map();
     for (const r of meas.results ?? []) byKey.set(`${r.corpus}|${r.mode}`, r);
+
+    // The rows that did not agree, so the reader can be told ONCE what to do
+    // rather than once per row.
+    const behind = [];
 
     for (const cells of measRows) {
       const corpus = plain(cells[0]);
@@ -630,9 +669,78 @@ if (!existsSync(MEAS_PATH)) {
       } else {
         const diffs = [];
         published.forEach((p, i) => {
-          if (p !== measured[i]) diffs.push(`${names[i]}: README ${p} vs the artefact ${measured[i]}`);
+          if (p !== measured[i]) {
+            diffs.push(`${names[i]}: README ${grouped(p)} vs the artefact ${grouped(measured[i])}`);
+          }
         });
+        if (diffs.length > 0) behind.push(`${label}: ${diffs.join('; ')}`);
         check(`${label}: every number matches the measurement artefact`, diffs.length === 0, diffs.join('; '));
+      }
+    }
+
+    if (behind.length > 0) {
+      // THE WAY OUT.  The artefact carries the date it was measured on, and the
+      // driver that measured it PRINTS the README's rows, so the reader is
+      // left with two numbers and no idea which of them is the stale one.
+      fix(
+        `the measurement table is behind the artefact (measured ${meas.measured_at ?? 'on an unrecorded date'}): ${behind.join(' | ')} -- re-run \`node scripts/qa/measure_per_package.mjs\` and copy the README rows it prints`,
+      );
+    }
+
+    // The table is not the only place the measurement is published: the
+    // README's own paragraphs state the same byte counts, and
+    // `docs/design.md` §7.2 states them again.  A number that drifts in the
+    // prose is published just as loudly as one that drifts in the table.
+    //
+    // The table's numbers went stale ONCE already: the 0.1.37 work changed THIS
+    // tree's source, so this tree's own trace grew by 15,998 bytes (the
+    // 2026-11-24 measurement said 22,691,389 and the 2026-11-26 one says
+    // 22,707,387), and the table kept the earlier measurement until a check
+    // caught it.  The tree's own row moves with every source change; the two
+    // corpus rows move only when the registry moves.
+    const measuredBytes = new Set();
+    for (const r of meas.results ?? []) {
+      if (r.mode !== 'wide' && r.mode !== 'per') continue;
+      measuredBytes.add(r.trace_total_bytes);
+      measuredBytes.add(r.trace_largest_bytes);
+    }
+    const designPath = join(root, 'docs', 'design.md');
+    const byteClaims = [
+      {
+        name: 'the README prose states every measured byte count',
+        text: measurementProse(md),
+        missing: 'the prose after the measurement table was not found',
+      },
+      {
+        name: 'the design document states every measured byte count',
+        text: existsSync(designPath) ? section(readFileSync(designPath, 'utf8'), '### 7.2') : null,
+        missing: 'docs/design.md (or its §7.2) is missing',
+      },
+    ];
+    for (const c of byteClaims) {
+      if (!c.text) {
+        check(c.name, false, c.missing);
+        continue;
+      }
+      const missing = [...measuredBytes].filter((n) => !c.text.includes(grouped(n)));
+      if (falsify) {
+        // The falsified expectation must FAIL: with the measurement moved, the
+        // prose would no longer state the numbers.
+        const nudged = [...measuredBytes].map((n) => n + 1);
+        const stillPasses = nudged.every((n) => c.text.includes(grouped(n)));
+        check(
+          `${c.name} -- the falsified expectation fails, as it must`,
+          !stillPasses,
+          stillPasses ? 'the claim passed with a wrong expectation: it is vacuous' : '',
+        );
+      } else {
+        check(
+          c.name,
+          missing.length === 0,
+          missing.length === 0
+            ? `${measuredBytes.size} byte count(s)`
+            : `not stated: ${missing.map(grouped).join(', ')}`,
+        );
       }
     }
   }

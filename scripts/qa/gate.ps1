@@ -146,7 +146,40 @@ if ($fail.Count -gt 0) {
   Write-Output '== FAILED: the check ran, and the tree did not agree =='
   foreach ($r in $fail) {
     Write-Output "  $($r.cmd)   (exit $($r.code))"
-    $r.out -split "`n" | Where-Object { $_ -match 'FAIL|error|Error|not ok' } | Select-Object -First 8 | ForEach-Object {
+    # THE REASON IS PART OF THE FAILURE, and it was being filtered out.
+    #
+    # A harness prints its verdict on one line and the REASON on the indented
+    # lines under it -- that is the convention in this harness, and it is what
+    # `gherkin.mjs` does.  A filter that keeps only the verdict therefore
+    # printed the command and the exit code and nothing else: the summary of
+    # the gherkin step in the failed 54-step release gate said
+    # `FAIL  <scenario>` and named no cause at all.  MEASURED with this
+    # filter, read out of this file: three reason lines, zero survive.
+    #
+    # So the indented lines under a verdict are kept WITH it.
+    #
+    # `FIX` is in the filter because a remedy line IS part of the failure: a
+    # check that says what is wrong and prints the command that fixes it must
+    # not have that command filtered out of the summary.
+    #
+    # It is anchored at the START of the line, and it has to be: the word
+    # "fixture" contains "fix", so a looser anchor read every harness line
+    # that mentioned the demo fixture as a remedy -- and the run_artefacts
+    # helper, the feature files and the e2e harness all say "fixture".  The
+    # remedy lines are printed at the start of the line, so `^FIX` is exact.
+    $kept = @()
+    $all = $r.out -split "`n"
+    for ($i = 0; $i -lt $all.Count -and $kept.Count -lt 12; $i++) {
+      $line = $all[$i]
+      if ($line -notmatch 'FAIL|error|Error|not ok|^FIX') { continue }
+      $kept += $line
+      $j = $i + 1
+      while ($j -lt $all.Count -and $kept.Count -lt 12 -and $all[$j] -match '^\s+\S') {
+        $kept += $all[$j]
+        $j++
+      }
+    }
+    $kept | ForEach-Object {
       Write-Output "        $_"
     }
   }

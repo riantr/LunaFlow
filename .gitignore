@@ -43,6 +43,7 @@ __pycache__/
 # summary -- the artefacts a reader uses -- are small, and they stay.
 #
 # The traces stay in the repository, and they stay tracked: a trace that a
-# new corpus produces is committed with `git add -f`, and the package
-# envelope check fails if one of them is neither committed nor packed.
+# new corpus produces is committed with `git add -f` -- and when one of them
+# is missing from the index, the package envelope check says WHICH ignore rule
+# matched it and prints the command that stages it.
 /reports/*_trace.jsonl
