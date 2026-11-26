@@ -543,3 +543,11 @@ jobs:
       # names the right reason.
       - name: Check that the peer-scan check can fail
         run: node scripts/qa/peer_scan_falsify.mjs
+
+      # THE GATE LISTS MUST NOT DRIFT.  The peer scan above was CI step 56
+      # and was never a local gate step, so five commits reported "gate
+      # green" while CI was red on it.  This check asserts the one-way
+      # invariant that failure taught: every check CI runs must also be run
+      # by the local gate.  The other direction is harmless and only noted.
+      - name: Check that the gate lists have not drifted
+        run: node scripts/qa/gate_parity.mjs
