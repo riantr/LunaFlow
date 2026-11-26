@@ -170,7 +170,7 @@ Unsupported constructs are counted, not hidden: `match` arms, `impl` bodies, fun
 
 | Module | Statements understood | Unsupported | Coverage |
 | --- | --- | --- | ---: |
-| doubleML 0.164.66 | 30,003 | 281 | **99.07 %** |
+| doubleML 0.164.68 | 30,052 | 281 | **99.07 %** |
 | static_analysis 0.4.50 | 15,854 | 738 | **95.55 %** |
 | quickcheck 0.15.1 | 1,549 | 355 | **81.3 %** |
 
@@ -236,9 +236,9 @@ State: `Map[var -> AbsCell{value, sources}]`. Transfer functions:
 
 **The one exception was known and recorded, and it is now closed.** The length of a container used to inherit the container's **content** taint, and the content's taint says nothing about the count — the same shape as the blanket rule above. The layer did not make a claim its own value domain could refute (a size that is provably constant is not reported), but at the three sites where the size is `top` the claim was a *may*-claim the layer could not prove. The repair separates the taint that reaches a container's **size** from the taint that reaches its **contents**: `AbsVal`'s array value carries the **size's** taint, and the size's taint is computed where the size is produced — a literal's count is fixed by the code, `Array::make(n, x)`'s count is `n`, a caller's array's count is the caller's choice, a `push` carries the old count's taint, and a join unions the two. That is a change to the value domain with a published-interface cost (`AbsVal::AArr` grew a third component), and it was **made** in IFDS Phase 2, declared in the release notes and enforced by `scripts/qa/release_interface.mjs`. `docs/qa/IFDS_PHASE2.md` has the plan, the measurement and the adjudication; `docs/qa/IFDS_PHASE2_ACCEPTANCE.md` has the acceptance record.
 
-Cost: linear in the number of statements × fixpoint rounds; measured 3,316 findings from the 1411 doubleML functions in the same run as L1 (9.6 s total), and 188 findings from the 1422 static_analysis functions (1.7 s total). The step count is the deterministic measure: **272,316** steps on doubleML, against 167,211 before the value domain was repaired — the repair analyses the loop bodies the defective boolean literal used to prune — and 185,766 before the size/contents separation. The wall clock is the machine's: the same tree read 10.1 s and 16.0 s in one session, and the step count did not move.
+Cost: linear in the number of statements × fixpoint rounds; measured **3,356** findings from the **1,411** doubleML functions in the same run as L1, and **190** findings from the **1,457** static_analysis functions. The step count is the deterministic measure: the abstract layer took **272,573** steps on doubleML and **202,201** on static-analysis, against 167,211 on doubleML before the value domain was repaired — the repair analyses the loop bodies the defective boolean literal used to prune — and 185,766 before the size/contents separation. The wall clock is the machine's: the same tree read 10.1 s and 16.0 s in one session, and the step count did not move.
 
-**The universe excludes the `test` BLOCKS, and nothing else.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt` — and `ModuleAst::all_funcs()` filters on the **function** (`fn.is_test`), not on the file. So an ordinary helper that lives in a `_test.mbt` file is analysed, and a `test "..." { }` block is not. For a module whose test files are most of its code that is worth stating: **129 of doubleML's 220 `.mbt` files are test files**. What says how much of the output is about test code is the finding split, not the scope line: measured on the committed doubleML artefact, **486 of the 2,511 findings shown in §5.2 (19.4 %) are in test files**, and every one of them is in a helper (`v120_check_enet`, `count_eq`, `expand_v091_iivm_data`, …), not in a test block.
+**The universe excludes the `test` BLOCKS, and nothing else.** The module as scanned holds every `.mbt` file the scanner found — test files included; the scanner excludes build and vendored trees, not `_test.mbt` — and `ModuleAst::all_funcs()` filters on the **function** (`fn.is_test`), not on the file. So an ordinary helper that lives in a `_test.mbt` file is analysed, and a `test "..." { }` block is not. For a module whose test files are most of its code that is worth stating: **129 of doubleML's 220 `.mbt` files are test files**. What says how much of the output is about test code is the finding split, not the scope line: measured on the committed doubleML artefact, **486 of the 2,541 findings shown in §5.2 (19.1 %) are in test files**, and every one of them is in a helper (`v120_check_enet`, `count_eq`, `expand_v091_iivm_data`, …), not in a test block.
 
 Precision: sound relative to the abstract semantics, but joins and widening lose path and value precision; the default interval bound (`±1,000,000`) is a practical closure, not the mathematical top. Every L2 finding carries `mode = L2-abstract` so it is never confused with an observed L1 fact.
 
@@ -348,7 +348,7 @@ Budgets: 2000 steps per trial, 64 iterations per loop, 6 frames of call depth, a
 
 **THE BUDGET IS SPENT PER PACKAGE, AND THAT IS NOW THE DEFAULT.** A MoonBit package is the directory that holds its `moon.pkg`, and the work of a module is the work of its packages — so a module-wide budget is spent on the FIRST packages in file order, and the rest of the tree is never interpreted. `--per-package` gives each package its own budget, so a module of N packages has a budget of N times the one; **since 0.1.37 it is what a scan does with no flag at all**, and `--module-wide` asks for the old behaviour by name. The `--max-functions` count cap stays module-wide, because a reader who asked for "150 functions" did not ask for "150 functions per package". The trace is written one file per package, and the report gains a package table that says what each package cost and whether its own budget was reached.
 
-MEASURED on `riantr/moonbit_static_analysis@0.5.4` (17 packages): the module-wide budget enters **711** of 1,437 functions and stops inside `src/flow`, while the per-package mode enters **1,212** and reaches every other package whole. On `riantr/moonbit_doubleML@0.164.66` the mode does **nothing at all** — that module is FLAT, one `moon.pkg` at its root, so all 220 of its files sit in the root package and there is only one package. §7.2 has the sizes.
+MEASURED on `riantr/moonbit_static_analysis@0.6.0` (17 packages): the module-wide budget enters **711** of 1,457 functions and stops inside `src/flow`, while the per-package mode enters **1,231** and reaches every other package whole. On `riantr/moonbit_doubleML@0.164.68` the mode does **nothing at all** — that module is FLAT, one `moon.pkg` at its root, so all 220 of its files sit in the root package and there is only one package. §7.2 has the sizes.
 
 **Implicit flows.** When a loop condition is tainted, numeric variables read by that condition are marked tainted (control dependence). This is what lets `while i < len { buffer[i] }` report a tainted index even though `i` is initialized to `0`. It is deliberately conservative; see §5.5 for the precision cost.
 
@@ -1562,8 +1562,8 @@ cap (the default scan's bound is the **step budget**, not a count):
 
 | Module | Files | Statements | L1 events | L2 findings | L3 proved/failed/unknown | Dead | Taint sinks | Wall time | Report | Trace |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| doubleML 0.164.66 | 220 | 30,284 | 508,422 | **3,326** | 0 / 0 / 0 (no specs) | 0 | 265 | **16.0 s** | **416 KB** | 76.3 MB |
-| static_analysis 0.5.4 | 263 | 17,843 | 673,492 | **188** | 0 / 0 / 0 (no specs) | 0 | 291 | **14.2 s** | **279 KB** | **106.2 MB** in 17 (largest 75.3 MB) |
+| doubleML 0.164.68 | 220 | 30,333 | 508,422 | **3,356** | 0 / 0 / 0 (no specs) | 0 | 265 | **16.0 s** | **416 KB** | 76.3 MB |
+| static_analysis 0.6.0 | 270 | 18,336 | 676,331 | **190** | 0 / 0 / 0 (no specs) | 0 | 293 | **12.3 s** | **281 KB** | **107.0 MB** in 17 (largest 75.2 MB) |
 | fixtures/vuln_demo | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms | 37 KB | 79 KB |
 
 Sizes are in **KB = 1024 bytes**, against a 512 KB limit, so the doubleML report
@@ -1602,12 +1602,12 @@ default scan enters **every** function of the module and stops when the
 since 0.1.37. Measured on the committed artefacts: the doubleML run is **one**
 package, so its budget is the module's, and it stops after **100,020** steps and
 **508,422** trace events; the static-analysis one has **17** packages, and it
-spends **136,821** steps across them for **673,492** events — **sixteen of the
+spends **137,326** steps across them for **676,331** events — **sixteen of the
 seventeen packages whole**, and only `src/flow` spending its own budget; and the
 fixture's budget is never reached, so **every one of its 12** functions is
 entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it, and `--module-wide` spends it once for the whole module.
 
-**THE PER-PACKAGE MODE's SIZES, because the PUBLISH envelope is where its cost shows.** The envelope is the one the registry has already accepted (`docs/qa/PUBLISH_ENVELOPE.json`): **46,274,868** bytes unpacked and a **39,479,846**-byte largest entry. Measured with `--trials 4`: on this tree the split takes the trace from **22,691,389** bytes in one file to the same **22,691,389** bytes in ten, with the largest entry down to **21,923,396**; on the static-analysis module it GROWS, from **76,591,727** bytes in one file to **111,328,416** in seventeen, the largest entry up to **78,902,704**, because the mode interprets more and the evidence is more; on doubleML it does not change a byte, because there is one package — one file, **80,035,384** bytes. The ceiling is a limit on the TOTAL, and a split does not touch the total.
+**THE PER-PACKAGE MODE's SIZES, because the PUBLISH envelope is where its cost shows.** The envelope is the one the registry has already accepted (`docs/qa/PUBLISH_ENVELOPE.json`): **46,274,868** bytes unpacked and a **39,479,846**-byte largest entry. Measured with `--trials 4`: on this tree the split takes the trace from **22,707,387** bytes in one file to the same **22,707,387** bytes in ten, with the largest entry down to **21,939,394**; on the static-analysis module it GROWS, from **76,591,727** bytes in one file to **112,175,918** in seventeen, the largest entry up to **78,902,704**, because the mode interprets more and the evidence is more; on doubleML it does not change a byte, because there is one package — one file, **80,035,384** bytes. The ceiling is a limit on the TOTAL, and a split does not touch the total.
 
 The statement counts fell and the dead-code column emptied because the old
 numbers were wrong: the parser shredded every construct it did not model into
@@ -1637,7 +1637,7 @@ Deep-QA measurements (2026-11-11, `scripts/qa/load.mjs`, `scripts/qa/e2e.mjs`, `
 | doubleML full run (`@latest` → 0.164.64), wall time | 8.5–9 s |
 | doubleML full run, peak working set (sampled) | 295.9 MB |
 | doubleML full run, trace size / events | 69.6 MB / 448,001 (default `--trials 8`) |
-| doubleML with a `--max-functions 120` cap (`--trials 4`, no slice) | 193,906 events, 85 sinks, 0 dead, 9.2 s — re-measured on 2026-11-24 on 0.164.66 with the slice: **198,694** events, 155 sinks, 0 dead, 7.2 s |
+| doubleML with a `--max-functions 120` cap (`--trials 4`, no slice) | 193,906 events, 85 sinks, 0 dead, 9.2 s — re-measured on 2026-11-26 on 0.164.68 with the slice: **198,694** events, 155 sinks, 0 dead, 7.1 s |
 | fixture run, peak working set | 7.5 MB |
 | 4 concurrent doubleML runs vs sequential | 1,392 ms vs 5,145 ms (**3.70×**, no failures) |
 | LunaFlow's own line coverage (`moon coverage`, `src/app` scope) | **57.35 %** (4,052 / 7,065 coverable lines of `src/app`) |
@@ -1713,7 +1713,9 @@ same binary showed over its own five runs. The self-scan's counts did move, and 
 exactly what the fix adds: **68** files, **7,888** statements and **230,667** events
 where the row read **66**, **7,746** and **230,577**. The committed artefacts did
 not move at all — **0** depth-budget findings in each of `doubleML` and
-`static_analysis` — so `reports/` was not regenerated.
+`static_analysis` — so the fix changed no published total. (`reports/` WAS
+regenerated afterwards, and for a different reason: the **registry** moved the
+corpora, not the fix. See the pre-release rehearsal in the README.)
 
 Peak memory is ≈5× the trace size, because the JSONL is materialised as one
 String before it is written. That is the same argument as §11 item 4: stream the
@@ -1845,7 +1847,7 @@ are what made it unreadable.
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
 | A2 | Tests | `moon test src/app --target native` ≥ 358 passed, 0 failed | 358/358 |
-| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.66, 0.5.4 |
+| A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.68, 0.6.0 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.88 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
 | A6 | Dead code | fixture reports exactly 3 `DEAD-CODE` + 1 `UNREACHABLE` | 3 / 1 |
@@ -1869,7 +1871,7 @@ A6/A7 are pinned by unit tests rather than by the report, so they remain valid e
 **Where the "Measured" column comes from.** It records the **committed artefacts** in
 `reports/`, regenerated with the release recipe — `--funnel --trials 4` and
 one slice each, with **no** `--max-functions` cap — when `@latest` resolved to
-**0.164.66** and **0.5.4**. Every cell is that artefact's own counter, so it is
+**0.164.68** and **0.6.0**. Every cell is that artefact's own counter, so it is
 traceable to a file: A4 is `(statements − unsupported) / statements`, A11 is the
 artefact's `elapsed_ms`, A12 is the artefact's size on disk, and A10 is the node
 count of the slice section. `scripts/qa/e2e.mjs` re-measures the same thresholds

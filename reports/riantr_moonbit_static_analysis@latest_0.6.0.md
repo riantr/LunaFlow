@@ -1,4 +1,4 @@
-# LunaFlow analysis report — riantr/moonbit_static_analysis@0.5.4
+# LunaFlow analysis report — riantr/moonbit_static_analysis@0.6.0
 
 > Trace-driven (dynamic-first) control-flow, data-flow, value-range and slicing analysis for a mooncakes.io module.
 
@@ -7,9 +7,9 @@
 | Item | Value |
 | --- | --- |
 | Requested coordinate | `riantr/moonbit_static_analysis@latest` |
-| Resolved version | `0.5.4` |
-| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.5.4` for ingestion, execution and reporting |
-| Source root | `./.repos/riantr/moonbit_static_analysis/0.5.4` |
+| Resolved version | `0.6.0` |
+| Pinning strategy | `@latest` resolved through `moon fetch` (local registry index, newest non-yanked version) and pinned to `0.6.0` for ingestion, execution and reporting |
+| Source root | `./.repos/riantr/moonbit_static_analysis/0.6.0` |
 | Declared target | `wasm` |
 | Direct dependencies | (none) |
 
@@ -17,17 +17,17 @@
 
 | Metric | Value |
 | --- | --- |
-| Source files parsed | 263 |
-| Functions extracted | 3244 |
-| Statements understood | 17843 |
-| Statements unsupported | 766 |
-| Frontend coverage | 95.8% |
+| Source files parsed | 270 |
+| Functions extracted | 3305 |
+| Statements understood | 18336 |
+| Statements unsupported | 774 |
+| Frontend coverage | 95.9% |
 | Parse issues | 0 |
-| CFG functions | 600 of 1437 — the first 600 in file order; 837 functions had no CFG and can carry no CFG finding |
-| Trace events | 673492 |
-| Interpreted steps | 136821 |
-| Observed functions | 1212 |
-| Entry selection | every function, PACKAGE BY PACKAGE, each package with its own step budget (100000 steps): 1 of the 17 packages spent their budget, and 1212 functions were entered |
+| CFG functions | 600 of 1457 — the first 600 in file order; 857 functions had no CFG and can carry no CFG finding |
+| Trace events | 676331 |
+| Interpreted steps | 137326 |
+| Observed functions | 1231 |
+| Entry selection | every function, PACKAGE BY PACKAGE, each package with its own step budget (100000 steps): 1 of the 17 packages spent their budget, and 1231 functions were entered |
 
 ### 2.1 The packages
 
@@ -39,21 +39,21 @@ The scan ran package by package, and each package was a run of its own with its 
 | `src/ast` | 8 | 0 | 8 | 32 | 0 | not reached |
 | `src/cli` | 1 | 0 | 24 | 15 | 0 | not reached |
 | `src/core` | 57 | 0 | 2165 | 6336 | 1122 | not reached |
-| `src/flow` | 519 | 225 | 100424 | 478594 | 107214 | spent |
+| `src/flow` | 519 | 226 | 100424 | 478594 | 107214 | spent |
 | `src/walk` | 60 | 0 | 325 | 2733 | 13 | not reached |
 | `src/lexer` | 50 | 0 | 5669 | 12507 | 2549 | not reached |
-| `src/types` | 24 | 0 | 163 | 1359 | 7 | not reached |
+| `src/types` | 33 | 0 | 222 | 1549 | 7 | not reached |
 | `src/interp` | 53 | 0 | 339 | 2058 | 9 | not reached |
-| `src/parser` | 138 | 0 | 12293 | 42514 | 230 | not reached |
+| `src/parser` | 147 | 0 | 12723 | 45077 | 233 | not reached |
 | `src/report` | 22 | 0 | 71 | 378 | 0 | not reached |
 | `src/jsoncli` | 16 | 0 | 74 | 376 | 4 | not reached |
 | `src/samples` | 1 | 0 | 1 | 12 | 0 | not reached |
-| `src/pipeline` | 67 | 0 | 493 | 2346 | 14 | not reached |
+| `src/pipeline` | 68 | 0 | 509 | 2432 | 14 | not reached |
 | `src/moonfiles` | 42 | 0 | 10976 | 110609 | 1854 | not reached |
 | `src/statecheck` | 4 | 0 | 1356 | 2018 | 384 | not reached |
 | `` | 3 | 0 | 31 | 71 | 0 | not reached |
 
-| Wall time (analyzer) | 14243 ms |
+| Wall time (analyzer) | 12348 ms |
 | Selected level | L3 (funnel: L1 → L2 → L3) |
 
 ## 3. Proof-strength levels and funnel
@@ -75,8 +75,8 @@ flowchart LR
   classDef l1 fill:#dcedc8,stroke:#33691e
   classDef l2 fill:#fff9c4,stroke:#f9a825
   classDef l3 fill:#e1bee7,stroke:#6a1b9a
-  L1["L1 concrete: 371 findings"]:::l1
-  L2["L2 abstract: 188 findings, 138 new"]:::l2
+  L1["L1 concrete: 374 findings"]:::l1
+  L2["L2 abstract: 190 findings, 139 new"]:::l2
   L3["L3 contracts: 0 proved / 0 failed / 0 unknown"]:::l3
   L1 -->|"dedup, escalate"| L2
   L2 -->|"critical functions"| L3
@@ -84,15 +84,15 @@ flowchart LR
 
 | Level | Checks | New vs previous | Functions / VCs | Note |
 | --- | --- | --- | --- | --- |
-| L1 concrete | 371 findings | — | 1212 functions | observed facts |
-| L2 abstract | 188 findings | 138 | 1437 functions, 200263 steps | exhaustive over the input abstraction |
-| L3 contracts | 0 VCs | 0 failed, 0 unknown | 178 critical functions | specs required |
+| L1 concrete | 374 findings | — | 1231 functions | observed facts |
+| L2 abstract | 190 findings | 139 | 1457 functions, 202201 steps | exhaustive over the input abstraction |
+| L3 contracts | 0 VCs | 0 failed, 0 unknown | 180 critical functions | specs required |
 
 ### 3.3 Escalation and specification gaps
 
-Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `path_tail`, `pred_of`, `bb_is_leader`, `bb_entry`, `bb_exits`, `Bb::dump`, `lower_stmts`, `lower_if`, `Cfg::node_after`, `build_seq`, `build_else`, `Cfg::dump`, `cfl_call_site_at`, `cfl_return_site_at`, `cfl_program_entry`, `cfl_ordinary_from`, `cfl_node_of_key`, `reverse_postorder`, `dominators`, `compute_idom`, `dominance_frontiers`, `pta_site_names`, `pta_step`, `pta_sweep_heap`, `ir_blocks`, `ssa_check`, `new_ssa`, `collect_defs`, `place_phis`, `prepare`, `assign_versions`, `index_of_name`, `rename`, `rename_block`, `phi_version`, `index_of`, `unwind`, `finish`, `subscript`, `raises_with_payload`, `reaches`, `icfg_of`, `ifds_reach_rel`, `ifds_explode`, `ifds_supergraph_text`, `ifds_supergraph_returns`, `live_in`, `solve_round_robin`, `join_of_nodes`, `live_out`, `solve_propagation`, `avail_transfer`, `avail_in`, `solve_edges`, `cprop_after`, `taint_analyze`, `ir_block_of`, `ir_exits`, `bb_node_line`, `bb_block_lines`, `bb_edges`, `dnum_digits`, `join_all`, `cs_result_of_list`, `cfl_labels_text`, `ifds_tabulate`, `ifds_tabulate_text`, `interval_state_join`, `pta_fs_step`, `first_node_at`, `reaching_kill`, `reaching_in`, `reaching_use_defs`, `ssa_lines`, `solve_worklist`, `declared_types`, `cg_collect_lets`, `build_call_graph`, `cp_store_node`, `cp_call_node`, `cp_return_site`, `cp_count_label`, `powerset_of`, `defs_and_uses`, `pta_inter_run`, `dm_param_source`, `dm_recompute`, `pta_demand_run`, `cprop_intra_in`, `Walker::bind`, `Walker::unshadow_param`, `Walker::bind_pattern`, `Walker::audit_frame`, `as_array`, `closer_ahead`, `Lexer::run`, `Lexer::lex_attribute`, `Lexer::lex_number`, `Lexer::slice`, `Lexer::lex_string`, `Lexer::lex_regex`, `Lexer::lex_template_string`, `Lexer::copy_interp`, `Lexer::at_lambda_head_after`, `Lexer::copy_nested_string`, `Lexer::copy_nested_char`, `Lexer::lex_char`, `Lexer::lex_block_string`, `Lexer::lex_name`, `Lexer::lex_op`, `parse_double`, `parse_hex_double`, `Infer::declare_sym`, `ann_to_list_ty`, `sig_at`, `omittable_at`, `alias_of`, `Parser::peek`, `Parser::span`, `Parser::bump`, `starts_variant`, `Parser::skip_indexed`, `Parser::parse_is`, `Parser::rest_binding_at`, `Parser::shorthand_field_at`, `Parser::at_log_payload_brace`, `Parser::skip_log_payload`, `Parser::at_arrow_lambda`, `Parser::at_next`, `Parser::at_struct_literal`, `Parser::peek2`, `file_request`, `merge_group`, `taint_message`, `arg_list`, `name_list`, `trim_sp`, `moonbit_fences`, `fence_census`, `take_n`, `ident_from`, `label_type`, `type_annotation_of`, `paren_parts`, `strip_fn_modifiers`, `type_names`, `top_level_paren`, `audit`, `mermaid_states`, `resolve_label`, `Cfg::source_order`, `cfl_chain`, `intersect`, `ir_block_succ`, `interval_state_same`, `solve_widening`, `narrow_round`, `states_after`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `enter_guard`, `lit_step`, `collect_using`, `declared_name_after_kw`, `taint_findings`
+Escalated functions (have at least one L1/L2 finding or a contract): `dir_of`, `ok_segment`, `ssa_cost_over_files`, `mm_parsed_with`, `mm_after_last`, `path_tail`, `pred_of`, `bb_is_leader`, `bb_entry`, `bb_exits`, `Bb::dump`, `lower_stmts`, `lower_if`, `Cfg::node_after`, `build_seq`, `build_else`, `Cfg::dump`, `cfl_call_site_at`, `cfl_return_site_at`, `cfl_program_entry`, `cfl_ordinary_from`, `cfl_node_of_key`, `reverse_postorder`, `dominators`, `compute_idom`, `dominance_frontiers`, `pta_site_names`, `pta_step`, `pta_sweep_heap`, `ir_blocks`, `ssa_check`, `new_ssa`, `collect_defs`, `place_phis`, `prepare`, `assign_versions`, `index_of_name`, `rename`, `rename_block`, `phi_version`, `index_of`, `unwind`, `finish`, `subscript`, `raises_with_payload`, `reaches`, `icfg_of`, `ifds_reach_rel`, `ifds_explode`, `ifds_supergraph_text`, `ifds_supergraph_returns`, `live_in`, `solve_round_robin`, `join_of_nodes`, `live_out`, `solve_propagation`, `avail_transfer`, `avail_in`, `solve_edges`, `cprop_after`, `taint_analyze`, `ir_block_of`, `ir_exits`, `bb_node_line`, `bb_block_lines`, `bb_edges`, `dnum_digits`, `join_all`, `cs_result_of_list`, `cfl_labels_text`, `ifds_tabulate`, `ifds_tabulate_text`, `interval_state_join`, `pta_fs_step`, `first_node_at`, `reaching_kill`, `reaching_in`, `reaching_use_defs`, `ssa_lines`, `solve_worklist`, `declared_types`, `cg_collect_lets`, `build_call_graph`, `cp_store_node`, `cp_call_node`, `cp_return_site`, `cp_count_label`, `powerset_of`, `defs_and_uses`, `pta_inter_run`, `dm_param_source`, `dm_recompute`, `pta_demand_run`, `cprop_intra_in`, `Walker::bind`, `Walker::unshadow_param`, `Walker::bind_pattern`, `Walker::audit_frame`, `as_array`, `closer_ahead`, `Lexer::run`, `Lexer::lex_attribute`, `Lexer::lex_number`, `Lexer::slice`, `Lexer::lex_string`, `Lexer::lex_regex`, `Lexer::lex_template_string`, `Lexer::copy_interp`, `Lexer::at_lambda_head_after`, `Lexer::copy_nested_string`, `Lexer::copy_nested_char`, `Lexer::lex_char`, `Lexer::lex_block_string`, `Lexer::lex_name`, `Lexer::lex_op`, `parse_double`, `parse_hex_double`, `Infer::declare_sym`, `ann_to_list_ty`, `sig_at`, `omittable_at`, `alias_of`, `Parser::peek`, `Parser::span`, `Parser::bump`, `group_end`, `Parser::tuple_struct_refs`, `starts_variant`, `Parser::skip_indexed`, `Parser::parse_is`, `Parser::rest_binding_at`, `Parser::shorthand_field_at`, `Parser::at_log_payload_brace`, `Parser::skip_log_payload`, `Parser::at_arrow_lambda`, `Parser::at_next`, `Parser::at_struct_literal`, `Parser::peek2`, `file_request`, `merge_group`, `taint_message`, `arg_list`, `name_list`, `trim_sp`, `moonbit_fences`, `fence_census`, `take_n`, `ident_from`, `label_type`, `type_annotation_of`, `paren_parts`, `strip_fn_modifiers`, `type_names`, `top_level_paren`, `audit`, `mermaid_states`, `resolve_label`, `Cfg::source_order`, `cfl_chain`, `intersect`, `ir_block_succ`, `interval_state_same`, `solve_widening`, `narrow_round`, `states_after`, `cprop_whole_and_apart`, `cprop_distributes`, `cprop_distribution_report`, `dl_taint_facts_of`, `dl_same_triple`, `ss_step`, `ss_sweep`, `union_of`, `dl_facts_of`, `dl_has_tuple`, `enter_guard`, `lit_step`, `collect_using`, `declared_name_after_kw`, `taint_findings`
 
-Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `path_tail (src/core/core.mbt:59)`, `bb_is_leader (src/flow/bb.mbt:280)`, `bb_entry (src/flow/bb.mbt:378)`, `bb_exits (src/flow/bb.mbt:415)`, `Bb::dump (src/flow/bb.mbt:455)`, `lower_stmts (src/flow/ir.mbt:175)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `Cfg::node_after (src/flow/cfg.mbt:203)`, `pred_of (src/flow/cfg.mbt:268)`, `build_seq (src/flow/cfg.mbt:299)`, `build_else (src/flow/cfg.mbt:481)`, `Cfg::dump (src/flow/cfg.mbt:508)`, `cfl_call_site_at (src/flow/cfl.mbt:145)`, `cfl_return_site_at (src/flow/cfl.mbt:164)`, `cfl_program_entry (src/flow/cfl.mbt:254)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_node_of_key (src/flow/cfl.mbt:490)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_site_names (src/flow/pta.mbt:362)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `ssa_check (src/flow/ssa.mbt:250)`, `new_ssa (src/flow/ssa.mbt:362)`, `collect_defs (src/flow/ssa.mbt:409)`, `place_phis (src/flow/ssa.mbt:446)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `rename (src/flow/ssa.mbt:678)`, `rename_block (src/flow/ssa.mbt:704)`, `phi_version (src/flow/ssa.mbt:873)`, `unwind (src/flow/ssa.mbt:911)`, `index_of_name (src/flow/ssa.mbt:924)`, `index_of (src/flow/ssa.mbt:937)`, `finish (src/flow/ssa.mbt:950)`, `subscript (src/flow/ssa.mbt:1184)`, `raises_with_payload (src/flow/icfg.mbt:204)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `ifds_explode (src/flow/ifds.mbt:286)`, `ifds_supergraph_text (src/flow/ifds.mbt:357)`, `ifds_supergraph_returns (src/flow/ifds.mbt:443)`, `live_in (src/flow/live.mbt:373)`, `live_out (src/flow/live.mbt:403)`, `avail_transfer (src/flow/avail.mbt:369)`, `avail_in (src/flow/avail.mbt:453)`, `cprop_after (src/flow/cprop.mbt:399)`, `taint_analyze (src/flow/taint.mbt:237)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_of (src/flow/ir_cfg.mbt:192)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `ir_exits (src/flow/ir_cfg.mbt:307)`, `bb_node_line (src/flow/bb_test.mbt:127)`, `bb_block_lines (src/flow/bb_test.mbt:133)`, `bb_edges (src/flow/bb_test.mbt:164)`, `dnum_digits (src/flow/datalog.mbt:592)`, `join_all (src/flow/lattice.mbt:89)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `cs_result_of_list (src/flow/pta_ctx.mbt:429)`, `cfl_labels_text (src/flow/cfl_test.mbt:77)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `ifds_tabulate_text (src/flow/ifds_tab.mbt:124)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `pta_fs_step (src/flow/pta_flow.mbt:202)`, `first_node_at (src/flow/pta_test.mbt:205)`, `reaching_kill (src/flow/reaching.mbt:134)`, `reaching_in (src/flow/reaching.mbt:229)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `ssa_lines (src/flow/ssa_test.mbt:63)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `declared_types (src/flow/callgraph.mbt:502)`, `cg_collect_lets (src/flow/callgraph.mbt:515)`, `build_call_graph (src/flow/callgraph.mbt:725)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `cp_return_site (src/flow/icfg_test.mbt:136)`, `cp_count_label (src/flow/icfg_test.mbt:153)`, `powerset_of (src/flow/laws_test.mbt:76)`, `defs_and_uses (src/flow/laws_test.mbt:298)`, `pta_inter_run (src/flow/pta_inter.mbt:478)`, `dm_param_source (src/flow/pta_demand.mbt:269)`, `dm_recompute (src/flow/pta_demand.mbt:303)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_intra_in (src/flow/cprop_intra.mbt:101)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `Walker::bind (src/walk/walk.mbt:256)`, `Walker::unshadow_param (src/walk/walk.mbt:330)`, `Walker::bind_pattern (src/walk/walk.mbt:633)`, `Walker::audit_frame (src/walk/walk.mbt:667)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `Lexer::run (src/lexer/lexer.mbt:368)`, `Lexer::lex_attribute (src/lexer/lexer.mbt:523)`, `lit_step (src/lexer/lexer.mbt:582)`, `Lexer::lex_number (src/lexer/lexer.mbt:624)`, `Lexer::slice (src/lexer/lexer.mbt:853)`, `Lexer::lex_string (src/lexer/lexer.mbt:864)`, `Lexer::lex_regex (src/lexer/lexer.mbt:944)`, `Lexer::lex_template_string (src/lexer/lexer.mbt:1005)`, `Lexer::copy_interp (src/lexer/lexer.mbt:1067)`, `Lexer::at_lambda_head_after (src/lexer/lexer.mbt:1254)`, `Lexer::copy_nested_string (src/lexer/lexer.mbt:1407)`, `Lexer::copy_nested_char (src/lexer/lexer.mbt:1430)`, `Lexer::lex_char (src/lexer/lexer.mbt:1483)`, `Lexer::lex_block_string (src/lexer/lexer.mbt:1777)`, `Lexer::lex_name (src/lexer/lexer.mbt:1915)`, `Lexer::lex_op (src/lexer/lexer.mbt:1972)`, `parse_double (src/lexer/lexer.mbt:2245)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `Infer::declare_sym (src/types/infer.mbt:191)`, `ann_to_list_ty (src/types/types.mbt:174)`, `sig_at (src/interp/interp.mbt:1112)`, `omittable_at (src/interp/interp.mbt:3374)`, `alias_of (src/parser/parser.mbt:84)`, `Parser::peek (src/parser/parser.mbt:304)`, `Parser::span (src/parser/parser.mbt:309)`, `Parser::bump (src/parser/parser.mbt:314)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `Parser::skip_indexed (src/parser/parser.mbt:2221)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `Parser::parse_is (src/parser/parser.mbt:4595)`, `Parser::rest_binding_at (src/parser/parser.mbt:4730)`, `Parser::shorthand_field_at (src/parser/parser.mbt:4765)`, `Parser::at_log_payload_brace (src/parser/parser.mbt:5411)`, `Parser::skip_log_payload (src/parser/parser.mbt:5420)`, `Parser::at_arrow_lambda (src/parser/parser.mbt:6255)`, `Parser::at_next (src/parser/parser.mbt:6414)`, `Parser::at_struct_literal (src/parser/parser.mbt:6460)`, `Parser::peek2 (src/parser/parser.mbt:6679)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `arg_list (src/pipeline/taintcheck.mbt:177)`, `name_list (src/pipeline/taintcheck.mbt:196)`, `trim_sp (src/moonfiles/moonfiles.mbt:43)`, `moonbit_fences (src/moonfiles/moonfiles.mbt:211)`, `fence_census (src/moonfiles/moonfiles.mbt:257)`, `take_n (src/moonfiles/moonfiles.mbt:460)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`, `label_type (src/moonfiles/moonfiles.mbt:575)`, `type_annotation_of (src/moonfiles/moonfiles.mbt:608)`, `paren_parts (src/moonfiles/moonfiles.mbt:659)`, `strip_fn_modifiers (src/moonfiles/moonfiles.mbt:757)`, `type_names (src/moonfiles/moonfiles.mbt:818)`, `top_level_paren (src/moonfiles/moonfiles.mbt:1087)`, `audit (src/statecheck/statecheck.mbt:53)`
+Functions escalated without any contract (spec gap at L3): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `path_tail (src/core/core.mbt:59)`, `bb_is_leader (src/flow/bb.mbt:280)`, `bb_entry (src/flow/bb.mbt:378)`, `bb_exits (src/flow/bb.mbt:415)`, `Bb::dump (src/flow/bb.mbt:455)`, `lower_stmts (src/flow/ir.mbt:175)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `Cfg::node_after (src/flow/cfg.mbt:203)`, `pred_of (src/flow/cfg.mbt:268)`, `build_seq (src/flow/cfg.mbt:299)`, `build_else (src/flow/cfg.mbt:481)`, `Cfg::dump (src/flow/cfg.mbt:508)`, `cfl_call_site_at (src/flow/cfl.mbt:145)`, `cfl_return_site_at (src/flow/cfl.mbt:164)`, `cfl_program_entry (src/flow/cfl.mbt:254)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_node_of_key (src/flow/cfl.mbt:490)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_site_names (src/flow/pta.mbt:362)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `ssa_check (src/flow/ssa.mbt:250)`, `new_ssa (src/flow/ssa.mbt:362)`, `collect_defs (src/flow/ssa.mbt:409)`, `place_phis (src/flow/ssa.mbt:446)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `rename (src/flow/ssa.mbt:678)`, `rename_block (src/flow/ssa.mbt:704)`, `phi_version (src/flow/ssa.mbt:873)`, `unwind (src/flow/ssa.mbt:911)`, `index_of_name (src/flow/ssa.mbt:924)`, `index_of (src/flow/ssa.mbt:937)`, `finish (src/flow/ssa.mbt:950)`, `subscript (src/flow/ssa.mbt:1184)`, `raises_with_payload (src/flow/icfg.mbt:204)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `ifds_explode (src/flow/ifds.mbt:286)`, `ifds_supergraph_text (src/flow/ifds.mbt:357)`, `ifds_supergraph_returns (src/flow/ifds.mbt:443)`, `live_in (src/flow/live.mbt:373)`, `live_out (src/flow/live.mbt:403)`, `avail_transfer (src/flow/avail.mbt:369)`, `avail_in (src/flow/avail.mbt:453)`, `cprop_after (src/flow/cprop.mbt:399)`, `taint_analyze (src/flow/taint.mbt:237)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_of (src/flow/ir_cfg.mbt:192)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `ir_exits (src/flow/ir_cfg.mbt:307)`, `bb_node_line (src/flow/bb_test.mbt:127)`, `bb_block_lines (src/flow/bb_test.mbt:133)`, `bb_edges (src/flow/bb_test.mbt:164)`, `dnum_digits (src/flow/datalog.mbt:592)`, `join_all (src/flow/lattice.mbt:89)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `cs_result_of_list (src/flow/pta_ctx.mbt:429)`, `cfl_labels_text (src/flow/cfl_test.mbt:77)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `ifds_tabulate_text (src/flow/ifds_tab.mbt:124)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `pta_fs_step (src/flow/pta_flow.mbt:202)`, `first_node_at (src/flow/pta_test.mbt:205)`, `reaching_kill (src/flow/reaching.mbt:134)`, `reaching_in (src/flow/reaching.mbt:229)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `ssa_lines (src/flow/ssa_test.mbt:63)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `declared_types (src/flow/callgraph.mbt:502)`, `cg_collect_lets (src/flow/callgraph.mbt:515)`, `build_call_graph (src/flow/callgraph.mbt:725)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `cp_return_site (src/flow/icfg_test.mbt:136)`, `cp_count_label (src/flow/icfg_test.mbt:153)`, `powerset_of (src/flow/laws_test.mbt:76)`, `defs_and_uses (src/flow/laws_test.mbt:298)`, `pta_inter_run (src/flow/pta_inter.mbt:478)`, `dm_param_source (src/flow/pta_demand.mbt:269)`, `dm_recompute (src/flow/pta_demand.mbt:303)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_intra_in (src/flow/cprop_intra.mbt:101)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `Walker::bind (src/walk/walk.mbt:256)`, `Walker::unshadow_param (src/walk/walk.mbt:330)`, `Walker::bind_pattern (src/walk/walk.mbt:633)`, `Walker::audit_frame (src/walk/walk.mbt:667)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `Lexer::run (src/lexer/lexer.mbt:368)`, `Lexer::lex_attribute (src/lexer/lexer.mbt:523)`, `lit_step (src/lexer/lexer.mbt:582)`, `Lexer::lex_number (src/lexer/lexer.mbt:624)`, `Lexer::slice (src/lexer/lexer.mbt:853)`, `Lexer::lex_string (src/lexer/lexer.mbt:864)`, `Lexer::lex_regex (src/lexer/lexer.mbt:944)`, `Lexer::lex_template_string (src/lexer/lexer.mbt:1005)`, `Lexer::copy_interp (src/lexer/lexer.mbt:1067)`, `Lexer::at_lambda_head_after (src/lexer/lexer.mbt:1254)`, `Lexer::copy_nested_string (src/lexer/lexer.mbt:1407)`, `Lexer::copy_nested_char (src/lexer/lexer.mbt:1430)`, `Lexer::lex_char (src/lexer/lexer.mbt:1483)`, `Lexer::lex_block_string (src/lexer/lexer.mbt:1777)`, `Lexer::lex_name (src/lexer/lexer.mbt:1915)`, `Lexer::lex_op (src/lexer/lexer.mbt:1972)`, `parse_double (src/lexer/lexer.mbt:2245)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `Infer::declare_sym (src/types/infer.mbt:191)`, `ann_to_list_ty (src/types/types.mbt:174)`, `sig_at (src/interp/interp.mbt:1112)`, `omittable_at (src/interp/interp.mbt:3374)`, `alias_of (src/parser/parser.mbt:87)`, `Parser::peek (src/parser/parser.mbt:308)`, `Parser::span (src/parser/parser.mbt:313)`, `Parser::bump (src/parser/parser.mbt:318)`, `group_end (src/parser/parser.mbt:1346)`, `Parser::tuple_struct_refs (src/parser/parser.mbt:1667)`, `collect_using (src/parser/parser.mbt:1921)`, `starts_variant (src/parser/parser.mbt:1984)`, `Parser::skip_indexed (src/parser/parser.mbt:2630)`, `declared_name_after_kw (src/parser/parser.mbt:3474)`, `Parser::parse_is (src/parser/parser.mbt:5004)`, `Parser::rest_binding_at (src/parser/parser.mbt:5139)`, `Parser::shorthand_field_at (src/parser/parser.mbt:5174)`, `Parser::at_log_payload_brace (src/parser/parser.mbt:5820)`, `Parser::skip_log_payload (src/parser/parser.mbt:5829)`, `Parser::at_arrow_lambda (src/parser/parser.mbt:6664)`, `Parser::at_next (src/parser/parser.mbt:6823)`, `Parser::at_struct_literal (src/parser/parser.mbt:6869)`, `Parser::peek2 (src/parser/parser.mbt:7088)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:496)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `arg_list (src/pipeline/taintcheck.mbt:177)`, `name_list (src/pipeline/taintcheck.mbt:196)`, `trim_sp (src/moonfiles/moonfiles.mbt:43)`, `moonbit_fences (src/moonfiles/moonfiles.mbt:211)`, `fence_census (src/moonfiles/moonfiles.mbt:257)`, `take_n (src/moonfiles/moonfiles.mbt:460)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`, `label_type (src/moonfiles/moonfiles.mbt:575)`, `type_annotation_of (src/moonfiles/moonfiles.mbt:608)`, `paren_parts (src/moonfiles/moonfiles.mbt:659)`, `strip_fn_modifiers (src/moonfiles/moonfiles.mbt:757)`, `type_names (src/moonfiles/moonfiles.mbt:818)`, `top_level_paren (src/moonfiles/moonfiles.mbt:1087)`, `audit (src/statecheck/statecheck.mbt:53)`
 
 ## 4. Control-flow analysis
 
@@ -1078,8 +1078,8 @@ Observed path (trial 0, first 24 events): `def@363` -> `def@364` -> `def@365` ->
 | BUDGET-EXCEEDED | warning | unknown | join_of_nodes | src/flow/lattice.mbt:115 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
 | BUDGET-EXCEEDED | warning | unknown | join_of_nodes | src/flow/lattice.mbt:113 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
 | BUDGET-EXCEEDED | warning | unknown | Lexer::run | src/lexer/lexer.mbt:399 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | unknown | Parser::skip_indexed | src/parser/parser.mbt:2229 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
-| BUDGET-EXCEEDED | warning | unknown | Parser::parse_is | src/parser/parser.mbt:4626 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | Parser::skip_indexed | src/parser/parser.mbt:2638 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
+| BUDGET-EXCEEDED | warning | unknown | Parser::parse_is | src/parser/parser.mbt:5035 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
 | BUDGET-EXCEEDED | warning | unknown | moonbit_fences | src/moonfiles/moonfiles.mbt:242 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
 | BUDGET-EXCEEDED | warning | unknown | fence_census | src/moonfiles/moonfiles.mbt:277 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
 | BUDGET-EXCEEDED | warning | unknown | moonbit_fences | src/moonfiles/moonfiles.mbt:242 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided | dynamic | 0.6 |
@@ -1404,21 +1404,23 @@ flowchart LR
 | TAINT-INDEX-RANGE | warning | certain | ann_to_list_ty | src/types/types.mbt:183 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
 | TAINT-INDEX | error | certain | sig_at | src/interp/interp.mbt:1116 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 | TAINT-INDEX | error | certain | omittable_at | src/interp/interp.mbt:3378 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX-RANGE | warning | certain | alias_of | src/parser/parser.mbt:89 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
-| TAINT-INDEX | error | certain | Parser::peek | src/parser/parser.mbt:305 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::span | src/parser/parser.mbt:310 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::bump | src/parser/parser.mbt:315 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | starts_variant | src/parser/parser.mbt:1609 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::rest_binding_at | src/parser/parser.mbt:4734 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::shorthand_field_at | src/parser/parser.mbt:4766 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::at_log_payload_brace | src/parser/parser.mbt:5413 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::at_log_payload_brace | src/parser/parser.mbt:5416 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::skip_log_payload | src/parser/parser.mbt:5435 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::skip_log_payload | src/parser/parser.mbt:5438 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::at_arrow_lambda | src/parser/parser.mbt:6259 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::at_next | src/parser/parser.mbt:6415 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::at_struct_literal | src/parser/parser.mbt:6462 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
-| TAINT-INDEX | error | certain | Parser::peek2 | src/parser/parser.mbt:6681 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX-RANGE | warning | certain | alias_of | src/parser/parser.mbt:92 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
+| TAINT-INDEX | error | certain | Parser::peek | src/parser/parser.mbt:309 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::span | src/parser/parser.mbt:314 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::bump | src/parser/parser.mbt:319 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | group_end | src/parser/parser.mbt:1350 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::tuple_struct_refs | src/parser/parser.mbt:1678 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | starts_variant | src/parser/parser.mbt:1999 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::rest_binding_at | src/parser/parser.mbt:5143 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::shorthand_field_at | src/parser/parser.mbt:5175 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::at_log_payload_brace | src/parser/parser.mbt:5822 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::at_log_payload_brace | src/parser/parser.mbt:5825 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::skip_log_payload | src/parser/parser.mbt:5844 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::skip_log_payload | src/parser/parser.mbt:5847 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::at_arrow_lambda | src/parser/parser.mbt:6668 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::at_next | src/parser/parser.mbt:6824 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::at_struct_literal | src/parser/parser.mbt:6871 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
+| TAINT-INDEX | error | certain | Parser::peek2 | src/parser/parser.mbt:7090 | tainted value reaches an array index / buffer offset | dynamic+symbolic | 0.8 |
 | TAINT-INDEX-RANGE | warning | certain | file_request | src/jsoncli/main.mbt:447 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
 | TAINT-INDEX-RANGE | warning | certain | file_request | src/jsoncli/main.mbt:448 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
 | TAINT-INDEX-RANGE | warning | certain | arg_list | src/pipeline/taintcheck.mbt:188 | untrusted input determines an array index; the observed index was inside the array, so no out-of-bounds access was witnessed | dynamic+symbolic | 0.5 |
@@ -1451,7 +1453,7 @@ flowchart LR
 
 Abstract interpretation joins all paths and widens loops, so these alarms are *may* properties: a hit means the abstract state cannot exclude the defect, not that a concrete input was observed. Three rules keep the may-analysis from crying wolf. A branch that is unreachable in ONE iteration of a loop is not reported, because the loop's state changes between the iterations. A tainted index is only claimed when the container is known to be an array: the analyzer cannot see the type of a struct's field, and a Map's key is not an offset that untrusted input chose. And an allocation size that is PROVABLY CONSTANT is not claimed as one that untrusted input chose: no tainted value controls a size that is the same on every input.
 
-**Scope.** The abstract layer analysed 1437 of 1437 — every function the abstract layer can analyse, in 200263 steps.
+**Scope.** The abstract layer analysed 1457 of 1457 — every function the abstract layer can analyse, in 202201 steps.
 
 | Rule | Severity | Verdict | Function | Location | Message | Method | Confidence |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1540,11 +1542,12 @@ Abstract interpretation joins all paths and widens loops, so these alarms are *m
 | TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:344 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:345 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | certain | closer_ahead | src/lexer/lexer.mbt:352 | tainted value from parameter `start` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | certain | collect_using | src/parser/parser.mbt:1539 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | certain | collect_using | src/parser/parser.mbt:1547 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | certain | starts_variant | src/parser/parser.mbt:1609 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | certain | declared_name_after_kw | src/parser/parser.mbt:3083 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
-| TAINT-INDEX | error | certain | declared_name_after_kw | src/parser/parser.mbt:3086 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | group_end | src/parser/parser.mbt:1350 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | collect_using | src/parser/parser.mbt:1929 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | collect_using | src/parser/parser.mbt:1937 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | starts_variant | src/parser/parser.mbt:1999 | tainted value from parameter `i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | declared_name_after_kw | src/parser/parser.mbt:3492 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
+| TAINT-INDEX | error | certain | declared_name_after_kw | src/parser/parser.mbt:3495 | tainted value from parameter `kw_i` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | UNREACHABLE | info | certain | taint_findings | src/pipeline/taintcheck.mbt:80 | else-branch is unreachable for the abstract input set | L2-abstract | 0.8 |
 | TAINT-INDEX | error | certain | ident_from | src/moonfiles/moonfiles.mbt:512 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
 | TAINT-INDEX | error | certain | ident_from | src/moonfiles/moonfiles.mbt:513 | tainted value from parameter `from` may reach an array index / buffer offset | L2-abstract | 0.6 |
@@ -1641,14 +1644,15 @@ The index class is proved by the interval the abstract domain already computes �
 | INTEGER-OVERFLOW | error | certain | lit_step | src/lexer/lexer.mbt:586 | the result may leave the range of its integer type, and MoonBit wraps it silently | L2-EVA | 0.7 |
 | INDEX-OOB | error | certain | parse_hex_double | src/lexer/lexer.mbt:2389 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | certain | parse_hex_double | src/lexer/lexer.mbt:2394 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | certain | collect_using | src/parser/parser.mbt:1539 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | certain | collect_using | src/parser/parser.mbt:1547 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | certain | starts_variant | src/parser/parser.mbt:1609 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | certain | declared_name_after_kw | src/parser/parser.mbt:3083 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | certain | declared_name_after_kw | src/parser/parser.mbt:3086 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | group_end | src/parser/parser.mbt:1350 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | collect_using | src/parser/parser.mbt:1929 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | collect_using | src/parser/parser.mbt:1937 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | starts_variant | src/parser/parser.mbt:1999 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | declared_name_after_kw | src/parser/parser.mbt:3492 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | declared_name_after_kw | src/parser/parser.mbt:3495 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | certain | file_request | src/jsoncli/main.mbt:447 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | certain | file_request | src/jsoncli/main.mbt:448 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
-| INDEX-OOB | error | certain | merge_group | src/pipeline/pipeline.mbt:479 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
+| INDEX-OOB | error | certain | merge_group | src/pipeline/pipeline.mbt:507 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | certain | taint_message | src/pipeline/taintcheck.mbt:145 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | certain | ident_from | src/moonfiles/moonfiles.mbt:512 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
 | INDEX-OOB | error | certain | ident_from | src/moonfiles/moonfiles.mbt:513 | index may be out of bounds on some inputs | L2-EVA | 0.6 |
@@ -1716,7 +1720,7 @@ MoonBit has no addresses: there is no pointer type, no address arithmetic and no
 
 The classification is STATIC: it is computed over the AST, so it does not depend on which inputs a run sampled.
 
-Allocation sites: 404 — HEAP 207, FRAME 197.
+Allocation sites: 418 — HEAP 215, FRAME 203.
 
 | Allocation | Kind | Region | Location | Why |
 | --- | --- | --- | --- | --- |
@@ -1761,7 +1765,7 @@ Allocation sites: 404 — HEAP 207, FRAME 197.
 | moonbit_version | array literal | **HEAP** — heap (escapes the frame) | src/sa/provenance.mbt:444 | passed to a call the analyzer cannot see into, so it may outlive the frame |
 | mm_parsed_with | array literal | **FRAME** — frame (does not escape) | src/sa/mermaid_test.mbt:86 | bound to the local fams and never leaves the frame |
 
-_Showing the first 40 of 404 allocation sites._
+_Showing the first 40 of 418 allocation sites._
 
 
 #### 5.5.1 A collection that only grows
@@ -1813,8 +1817,8 @@ One thing the measurement REFUSED to support: `write` is **exhaustive**. It loop
 
 | Call | Receiver | Count discarded | Bound to | Location |
 | --- | --- | --- | --- | --- |
-| `peek` | `self` | no | - | `src/parser/parser.mbt:324` |
-| `peek` | `self` | no | `t` | `src/parser/parser.mbt:2193` |
+| `peek` | `self` | no | - | `src/parser/parser.mbt:328` |
+| `peek` | `self` | no | `t` | `src/parser/parser.mbt:2602` |
 
 #### 5.9.2 The views that went stale
 
@@ -1873,8 +1877,8 @@ _No findings._
 | BUDGET-EXCEEDED | warning | join_of_nodes | src/flow/lattice.mbt:115 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 | BUDGET-EXCEEDED | warning | pred_of | src/flow/cfg.mbt:285 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 | BUDGET-EXCEEDED | warning | Lexer::run | src/lexer/lexer.mbt:399 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
-| BUDGET-EXCEEDED | warning | Parser::skip_indexed | src/parser/parser.mbt:2229 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
-| BUDGET-EXCEEDED | warning | Parser::parse_is | src/parser/parser.mbt:4626 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | Parser::skip_indexed | src/parser/parser.mbt:2638 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
+| BUDGET-EXCEEDED | warning | Parser::parse_is | src/parser/parser.mbt:5035 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 | BUDGET-EXCEEDED | warning | moonbit_fences | src/moonfiles/moonfiles.mbt:242 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 | BUDGET-EXCEEDED | warning | fence_census | src/moonfiles/moonfiles.mbt:277 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
 | BUDGET-EXCEEDED | warning | strip_fn_modifiers | src/moonfiles/moonfiles.mbt:799 | the execution budget was exhausted: the rest of this function was not executed, so no claim about it was decided |
@@ -1884,8 +1888,8 @@ _No findings._
 
 | Family | dynamic+symbolic | L2-EVA | L2-abstract | dynamic | Total |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| TAINT-INDEX | 220 | · | 76 | · | 296 |
-| INDEX-OOB | · | 92 | · | · | 92 |
+| TAINT-INDEX | 222 | · | 77 | · | 299 |
+| INDEX-OOB | · | 93 | · | · | 93 |
 | TAINT-INDEX-RANGE | 62 | · | · | · | 62 |
 | BUDGET-EXCEEDED | · | · | · | 47 | 47 |
 | TAINT-ALLOC | 9 | · | 10 | · | 19 |
@@ -1894,7 +1898,7 @@ _No findings._
 | INFINITE-LOOP | · | · | 2 | · | 2 |
 | INTEGER-OVERFLOW | · | 2 | · | · | 2 |
 | DIVISION-BY-ZERO | · | 1 | · | · | 1 |
-| **Total** | **291** | **95** | **93** | **47** | **526** |
+| **Total** | **293** | **96** | **94** | **47** | **530** |
 
 10 families over 4 method(s); 2 of them were found by MORE THAN ONE method and so rest on more than one kind of evidence: TAINT-INDEX, TAINT-ALLOC.
 
@@ -1929,10 +1933,10 @@ Every definition event is keyed by function, source line and variable, so a valu
 | bb_of | 190 | n | ? |
 | bb_of | 208 | v | 1, 2, 3, 4, 5, 6 |
 | bump | 1715 | n | ? |
-| parse | 109 | p | ? |
-| parse | 129 | _ | ? |
+| parse | 112 | p | ? |
 | parse | 133 | _ | ? |
-| parse | 175 | _ | ? |
+| parse | 137 | _ | ? |
+| parse | 179 | _ | ? |
 | show | 108 | ks | () |
 | audit | 54 | all | [] |
 | cfg_of | 244 | b | ? |
@@ -1946,7 +1950,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | line_of | 57 | r | 0, 1 |
 | main | 44 | args | ? |
 | main | 459 | raw | ? |
-| parse | 136 | sp | ? |
+| parse | 140 | sp | ? |
 | pow10 | 2228 | r | 1 |
 | pow10 | 2229 | i | 0 |
 | pow10 | 2232 | r | 10, 100, 1000, 10000, 100000, 1000000 |
@@ -1967,7 +1971,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | trim_sp | 46 | b | 0, 3, 16, 64, 1, ? |
 | trim_sp | 54 | i | 0, 1, 2, 3, 4, 5 |
 | unwind | 913 | n | ? |
-| alias_of | 88 | i | 1, 2, 3, 4, 5, 6 |
+| alias_of | 91 | i | 1, 2, 3, 4, 5, 6 |
 | bb_of | 187 | cur | [] |
 | bb_of | 195 | cur | [?] |
 | cs_push | 265 | i | ? |
@@ -2080,7 +2084,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | live_out | 412 | v | 1, 2, 3, 4, 5, 6 |
 | names0570 | 54 | n | 0 |
 | one_body | 215 | g | ? |
-| parse | 122 | body | [] |
+| parse | 126 | body | [] |
 | path_tail | 61 | i | 0 |
 | path_tail | 63 | n | 0, 3, 16, 64 |
 | path_tail | 66 | j | 2, 3, 4, 5, 6, 7 |
@@ -2109,7 +2113,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | Cfg::dump | 529 | v | 1, 2, 3, 4, 5, 6 |
 | aggregate | 467 | v | 0, 1, -1 |
 | aggregate | 468 | n | ? |
-| alias_of | 87 | buf | ? |
+| alias_of | 90 | buf | ? |
 | as_array | 1289 | i | -1, 0, 1, 2 |
 | as_array | 1292 | i | 0 |
 | audit | 124 | reach | ? |
@@ -2177,9 +2181,9 @@ Every definition event is keyed by function, source line and variable, so a valu
 | rsplit_at | 495 | i | 0 |
 | run_core | 308 | wr | ? |
 | run_core | 320 | tr | ? |
-| run_core | 397 | n1 | 0 |
-| run_core | 398 | n2 | 0 |
-| run_core | 399 | n3 | 0 |
+| run_core | 425 | n1 | 0 |
+| run_core | 426 | n2 | 0 |
+| run_core | 427 | n3 | 0 |
 | ssa_check | 253 | i | 0 |
 | ssa_check | 263 | i | 1, 2, 3, 4, 5, 6 |
 | ssa_check | 267 | d | 0 |
@@ -2255,7 +2259,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | Bb | dump | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
 | Ir | dump | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 |  |
 | add_flow | g | 0 | 1 | 3 | 0, 1 | src/flow/taint.mbt:444:3-448:4 |
-| alias_of | i | 1 | 63 | 80 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | src/parser/parser.mbt:88:5-90:6 |
+| alias_of | i | 1 | 63 | 80 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | src/parser/parser.mbt:91:5-93:6 |
 | arg_list | i | 0 | 3 | 10 | 0, 1, 2, 3 | src/pipeline/taintcheck.mbt:179:3 |
 | as_array | i | -1 | 2 | 5 | -1, 0, 1, 2 | src/walk/walk.mbt:1289:3 |
 | audit | grew | 0 | 1 | 4 | true, false | src/statecheck/statecheck.mbt:126:3 |
@@ -2291,6 +2295,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | count0555 | n | 0 | 0 | 4 | 0 | src/pipeline/pipeline_0555_test.mbt:34:3 |
 | count0571 | n | 0 | 3 | 10 | 0, 1, 2, 3 | src/pipeline/signcheck_test.mbt:45:3 |
 | count0571 | r | -1 | 1 | 6 | 0, 1, -1 | src/pipeline/signcheck_test.mbt:46:3-50:4 |
+| group_end | j | -1 | 0 | 2 | -1, 0 | src/parser/parser.mbt:1352:3 |
 | intersect | x | -1 | -1 | 4 | -1 | src/flow/dom.mbt:286:3 |
 | intersect | y | -1 | -1 | 4 | -1 | src/flow/dom.mbt:287:3 |
 | ir_blocks | i | -1 | 64 | 199 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir_cfg.mbt:179:5 |
@@ -2308,9 +2313,9 @@ Every definition event is keyed by function, source line and variable, so a valu
 | pow10 | <ret> | 1.0000000000000002e+64 | 1.0000000000000002e+64 | 4 | 1.0000000000000002e+64 | src/lexer/lexer.mbt:2226:1-2236:2 |
 | rsplit_at | i | 0 | 0 | 68 | 0 | src/moonfiles/moonfiles.mbt:482:3 |
 | rsplit_at | j | 0 | 0 | 64 | 0 | src/moonfiles/moonfiles.mbt:484:5 |
-| run_core | n1 | 0 | 0 | 20 | 0 | src/pipeline/pipeline.mbt:397:3 |
-| run_core | n2 | 0 | 0 | 20 | 0 | src/pipeline/pipeline.mbt:398:3 |
-| run_core | n3 | 0 | 0 | 20 | 0 | src/pipeline/pipeline.mbt:399:3 |
+| run_core | n1 | 0 | 0 | 20 | 0 | src/pipeline/pipeline.mbt:425:3 |
+| run_core | n2 | 0 | 0 | 20 | 0 | src/pipeline/pipeline.mbt:426:3 |
+| run_core | n3 | 0 | 0 | 20 | 0 | src/pipeline/pipeline.mbt:427:3 |
 | ssa_check | d | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:267:3 |
 | ssa_check | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:253:3 |
 | ssa_check | k | 0 | 64 | 835 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ssa.mbt:297:5 |
@@ -2364,7 +2369,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | lower_stmts | i | 0 | 64 | 294 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ir.mbt:180:3 |
 | main | contexts | 0 | 0 | 1 | false | main.mbt:198:3 |
 | main | ssa_cost | 0 | 0 | 1 | false | main.mbt:203:3 |
-| merge_group | r | -1 | 1 | 12 | 0, 1, -1 | src/pipeline/pipeline.mbt:470:3-476:4 |
+| merge_group | r | -1 | 1 | 12 | 0, 1, -1 | src/pipeline/pipeline.mbt:498:3-504:4 |
 | n_omittable | n | 0 | 0 | 1 | 0 | src/interp/interp.mbt:3453:3 |
 | paren_parts | i | 0 | 64 | 87 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/moonfiles/moonfiles.mbt:663:3 |
 | parse_count | n | 0 | 0 | 1 | 0 | main.mbt:13:3 |
@@ -2392,6 +2397,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | drel_add | <ret> | 0 | 0 | 4 | false | src/flow/datalog.mbt:143:5-151:2 |
 | fence_census | i | 0 | 1900 | 7604 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/moonfiles/moonfiles.mbt:262:3 |
 | file_request | i | 0 | 0 | 4 | 0 | src/jsoncli/main.mbt:445:3 |
+| has_edge | <ret> | 0 | 0 | 4 | false | src/types/typegraph.mbt:78:1-89:2 |
 | has_hole | <ret> | 0 | 1 | 4 | false, true | src/pipeline/deadstore.mbt:133:5-140:2 |
 | hiding_spans | t | -1 | 1 | 6 | 0, 1, -1 | src/walk/walk.mbt:501:3-508:4 |
 | icfg_of | caller | 0 | 0 | 1 | 0 | src/flow/icfg.mbt:345:3 |
@@ -2432,8 +2438,8 @@ Every definition event is keyed by function, source line and variable, so a valu
 | cfl_chain | steps | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:522:3 |
 | cfl_path_word | e | -1 | 1 | 6 | 0, 1, -1 | src/flow/cfl.mbt:215:3-217:4 |
 | cfl_state_key | s | -1 | 1 | 6 | 0, 1, -1 | src/flow/cfl.mbt:482:3-484:4 |
-| collect_using | j | 0 | 3 | 4 | 0, 1, 2, 3 | src/parser/parser.mbt:1537:3 |
-| collect_using | n | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1536:3 |
+| collect_using | j | 0 | 3 | 4 | 0, 1, 2, 3 | src/parser/parser.mbt:1927:3 |
+| collect_using | n | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1926:3 |
 | count0522 | <ret> | 0 | 3 | 4 | 0, 1, 3, 2 | src/pipeline/pipeline_0522_test.mbt:14:1-22:2 |
 | count0524 | <ret> | 0 | 0 | 4 | 0 | src/pipeline/pipeline_0524_test.mbt:18:1-26:2 |
 | count0555 | <ret> | 0 | 0 | 4 | 0 | src/pipeline/pipeline_0555_test.mbt:33:1-41:2 |
@@ -2447,6 +2453,8 @@ Every definition event is keyed by function, source line and variable, so a valu
 | defs_and_uses | v | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/laws_test.mbt:303:3 |
 | first_line | done | 0 | 0 | 5 | false | src/sa/provenance.mbt:482:3 |
 | first_node_at | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_test.mbt:206:3 |
+| group_end | <ret> | 0 | 2 | 4 | 0, 1, 2 | src/parser/parser.mbt:1346:1-1370:2 |
+| group_end | depth | 0 | 0 | 1 | 0 | src/parser/parser.mbt:1351:3 |
 | icfg_of | skipped | 0 | 0 | 4 | 0 | src/flow/icfg.mbt:296:3 |
 | ifds_tabulate | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds_tab.mbt:72:3 |
 | index_of_name | i | 0 | 0 | 334 | 0 | src/flow/ssa.mbt:925:3 |
@@ -2459,7 +2467,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | is_hiding | <ret> | 0 | 1 | 4 | false, true | src/sa/main.mbt:80:5-87:2 |
 | is_letter | <ret> | 1 | 1 | 4 | true | src/lexer/lexer.mbt:250:1-252:2 |
 | join_of_nodes | i | 0 | 64 | 15661 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/lattice.mbt:110:3 |
-| merge_group | rep | -1 | 1 | 9 | 0, 1, -1 | src/pipeline/pipeline.mbt:479:3 |
+| merge_group | rep | -1 | 1 | 9 | 0, 1, -1 | src/pipeline/pipeline.mbt:507:3 |
 | names0570 | <ret> | 0 | 0 | 4 | 0 | src/lexer/lexer_0570_test.mbt:52:1-62:2 |
 | pta_after | <ret> | 1 | 1 | 4 | true | src/flow/pta.mbt:308:1-332:2 |
 | pta_inter_run | i | 0 | 0 | 5 | 0 | src/flow/pta_inter.mbt:484:3 |
@@ -2496,9 +2504,11 @@ Every definition event is keyed by function, source line and variable, so a valu
 | cp_count_label | n | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg_test.mbt:155:3 |
 | cp_return_site | k | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/icfg_test.mbt:137:3 |
 | cprop_intra_in | v | 0 | 14 | 60 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/cprop_intra.mbt:104:3 |
+| cycle_on | started | 0 | 0 | 4 | false | src/types/typegraph.mbt:170:3 |
 | d_strata | changed | 0 | 1 | 6 | true, false | src/flow/datalog.mbt:871:3 |
 | declared_types | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/callgraph.mbt:504:3 |
 | drule_safe | <ret> | 1 | 1 | 1 | true | src/flow/datalog.mbt:334:5-343:2 |
+| enum_body_refs | i | -1 | -1 | 4 | -1 | src/parser/parser.mbt:1461:3 |
 | has_notice | <ret> | 0 | 0 | 4 | false | src/parser/parser_0434_test.mbt:58:1-65:2 |
 | has_report | <ret> | 0 | 0 | 4 | false | src/pipeline/pipeline_0433_test.mbt:39:1-46:2 |
 | hole_can_reach | h | 0 | 1 | 3 | 0, 1 | src/walk/walk.mbt:574:3-578:4 |
@@ -2507,7 +2517,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | literate | n_parse | 0 | 0 | 4 | 0 | src/moonfiles/moonfiles.mbt:332:3 |
 | main | explain_all | 0 | 0 | 1 | false | main.mbt:186:3 |
 | main | honor_nosec | 0 | 0 | 1 | false | main.mbt:179:3 |
-| merge_findings | r | -1 | 1 | 6 | 0, 1, -1 | src/pipeline/pipeline.mbt:443:3-449:4 |
+| merge_findings | r | -1 | 1 | 6 | 0, 1, -1 | src/pipeline/pipeline.mbt:471:3-477:4 |
 | mm_check | in_note | 0 | 0 | 4 | false | src/sa/mermaid_test.mbt:310:3 |
 | mm_id_char | <ret> | 1 | 1 | 4 | true | src/sa/mermaid_test.mbt:197:1-199:2 |
 | mm_parsed_with | i | 0 | 2 | 6 | 0, 1, 2 | src/sa/mermaid_test.mbt:92:3-95:4 |
@@ -2542,6 +2552,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | solve_worklist | v | 0 | 4 | 9 | 0, 1, 2, 3, 4 | src/flow/worklist.mbt:279:5 |
 | ssa_check | unique | 1 | 1 | 1 | true | src/flow/ssa.mbt:266:3 |
 | taint_analyze | fi | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/taint.mbt:241:3 |
+| type_expr_refs | i | -1 | -1 | 4 | -1 | src/parser/parser.mbt:1393:3 |
 | aggregate | n_calls | 0 | 0 | 4 | 0 | src/sa/main.mbt:458:3 |
 | aggregate | notices | 0 | 0 | 4 | 0 | src/sa/main.mbt:453:3 |
 | assign_versions | a | 0 | 6 | 7 | 0, 1, 2, 3, 4, 5, 6 | src/flow/ssa.mbt:626:5 |
@@ -2590,7 +2601,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | name_set_eq | <ret> | 1 | 1 | 4 | true | src/flow/live.mbt:102:5-115:2 |
 | paren_parts | close | 0 | 64 | 4 | 0, 3, 16, 64 | src/moonfiles/moonfiles.mbt:662:3 |
 | paren_parts | depth | 0 | 1 | 170 | 0, 1 | src/moonfiles/moonfiles.mbt:661:3 |
-| parse | first_error | 0 | 0 | 4 | 0 | src/parser/parser.mbt:102:3 |
+| parse | first_error | 0 | 0 | 4 | 0 | src/parser/parser.mbt:105:3 |
 | parse_double | base | 0 | 0 | 4 | 0 | src/lexer/lexer.mbt:2277:3 |
 | parse_double | frac | 0 | 0 | 4 | 0 | src/lexer/lexer.mbt:2249:3 |
 | pfg_expr_stores | n | 0 | 0 | 5 | 0 | src/flow/pfg.mbt:305:3 |
@@ -2613,6 +2624,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | assign_versions | vi | 0 | 0 | 1 | 0 | src/flow/ssa.mbt:587:3 |
 | bb_is_leader | <ret> | 1 | 1 | 4 | true | src/flow/bb.mbt:280:1-296:2 |
 | build_call_graph | i | 0 | 3 | 10 | 0, 1, 2, 3 | src/flow/callgraph.mbt:731:3 |
+| build_type_graph | d | -1 | 1 | 12 | 0, 1, -1 | src/types/typegraph.mbt:61:3-65:4 |
 | cfl_call_site_at | i | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:146:3 |
 | civil_from_days | mp | 9 | 10 | 4 | 9, 10 | src/sa/provenance.mbt:164:3 |
 | closer_ahead | <ret> | 0 | 0 | 4 | false | src/lexer/lexer.mbt:330:1-353:2 |
@@ -2620,7 +2632,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | count_family | <ret> | 0 | 0 | 4 | 0 | src/pipeline/pipeline_test.mbt:838:1-846:2 |
 | count_parse_with | n | 0 | 0 | 4 | 0 | src/pipeline/pipeline_0428_test.mbt:42:3 |
 | dnum_mag_cmp | <ret> | -1 | 0 | 4 | 0, -1 | src/flow/datalog.mbt:611:1-631:2 |
-| ends_variant | <ret> | 0 | 0 | 3 | false | src/parser/parser.mbt:1620:1-1638:2 |
+| ends_variant | <ret> | 0 | 0 | 3 | false | src/parser/parser.mbt:2010:1-2028:2 |
 | fparse_reports | rep | -1 | 1 | 12 | 0, 1, -1 | src/lexer/lexer_0500_test.mbt:17:3-21:4 |
 | icfg_of | unresolved | 0 | 0 | 1 | 0 | src/flow/icfg.mbt:344:3 |
 | ifds_definitions | g | -1 | 1 | 6 | 0, 1, -1 | src/flow/ifds.mbt:215:3-221:4 |
@@ -2642,12 +2654,13 @@ Every definition event is keyed by function, source line and variable, so a valu
 | pta_inter_run | head | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_inter.mbt:524:3 |
 | quoted_runs | inside | 0 | 0 | 8 | false | src/report/predicate.mbt:77:3 |
 | render_reports | rep | -1 | 1 | 12 | 0, 1, -1 | src/jsoncli/main.mbt:377:3-379:4 |
-| rep_lens_rank | best | 0 | 0 | 13 | 0 | src/pipeline/pipeline.mbt:498:3 |
+| rep_lens_rank | best | 0 | 0 | 13 | 0 | src/pipeline/pipeline.mbt:526:3 |
 | sign_state_eq | same | 1 | 1 | 1 | true | src/flow/sign.mbt:363:3 |
 | solve_worklist | any | 0 | 1 | 266 | true, false | src/flow/worklist.mbt:276:3 |
 | source_after | <ret> | 0 | 0 | 4 | false | src/flow/cfg.mbt:139:5-144:2 |
 | ssa_check | dangling | 0 | 0 | 1 | 0 | src/flow/ssa.mbt:293:3 |
 | ssa_check | resolved | 1 | 1 | 1 | true | src/flow/ssa.mbt:292:3 |
+| struct_body_refs | i | -1 | -1 | 4 | -1 | src/parser/parser.mbt:1534:3 |
 | truncated_fn | <ret> | -1 | -1 | 4 | -1 | src/walk/walk.mbt:1963:1-1974:2 |
 | Cfg | source_order | 1 | 64 | 64 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 |  |
 | Cfg | source_order | -1 | 62 | 126 | 0, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 |  |
@@ -2666,12 +2679,12 @@ Every definition event is keyed by function, source line and variable, so a valu
 | civil_from_days | era | 4 | 4 | 4 | 4 | src/sa/provenance.mbt:159:3 |
 | civil_from_days | yoe | 369 | 369 | 4 | 369 | src/sa/provenance.mbt:161:3 |
 | collect_local_fns | s | 0 | 0 | 2 | 0 | src/interp/interp.mbt:3472:3-3494:4 |
-| collect_using | <ret> | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1531:1-1584:2 |
+| collect_using | <ret> | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1921:1-1974:2 |
 | contains_bang | <ret> | 0 | 1 | 4 | false, true | src/moonfiles/moonfiles.mbt:108:1-120:2 |
 | count_notices | <ret> | 0 | 3 | 4 | 0, 1, 3, 2 | src/sa/main.mbt:200:5-208:2 |
 | cp_store_node | <ret> | 61 | 63 | 3 | 63, 62, 61 | src/flow/icfg_test.mbt:95:1-117:2 |
 | cs_result_of_list | i | 0 | 64 | 69 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_ctx.mbt:430:3 |
-| declares_type | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:1710:1-1716:2 |
+| declares_type | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:2100:1-2106:2 |
 | first_line_of | <ret> | 0 | 0 | 4 | 0 | src/pipeline/pipeline_0424_test.mbt:409:1-417:2 |
 | first_node_at | <ret> | 0 | 0 | 4 | 0 | src/flow/pta_test.mbt:205:1-215:2 |
 | first_node_at | found | -1 | 0 | 8 | -1, 0 | src/flow/pta_test.mbt:207:3 |
@@ -2679,14 +2692,14 @@ Every definition event is keyed by function, source line and variable, so a valu
 | is_ident_char | <ret> | 1 | 1 | 8 | true | src/lexer/lexer.mbt:1314:1-1319:2 |
 | is_type_noise | <ret> | 0 | 0 | 4 | false | src/moonfiles/moonfiles.mbt:529:1-543:2 |
 | join_flow | all_break | 0 | 1 | 9 | true, false | src/interp/interp.mbt:222:3 |
-| method_holder | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:3060:1-3062:2 |
+| method_holder | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:3469:1-3471:2 |
 | parse_hex_double | hi | 0 | 0 | 4 | 0 | src/lexer/lexer.mbt:2386:3 |
 | parse_hex_double | lo | 0 | 0 | 4 | 0 | src/lexer/lexer.mbt:2392:3 |
 | parse_nosec | line_no | 0 | 0 | 8 | 0 | src/sa/profile.mbt:287:3 |
 | profile_keeps | <ret> | 0 | 0 | 1 | false | src/sa/profile.mbt:148:5-157:2 |
 | pta_demand_run | head | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/pta_demand.mbt:457:3 |
 | reaching_use_defs | v | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/reaching.mbt:259:3 |
-| rep_lens_rank | <ret> | 0 | 0 | 1 | 0 | src/pipeline/pipeline.mbt:497:1-505:2 |
+| rep_lens_rank | <ret> | 0 | 0 | 1 | 0 | src/pipeline/pipeline.mbt:525:1-533:2 |
 | reverse_postorder | k | -1 | 63 | 130 | 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52 | src/flow/dom.mbt:213:3 |
 | sign_state_eq | <ret> | 1 | 1 | 1 | true | src/flow/sign.mbt:362:5-383:2 |
 | solve_propagation | i | 0 | 3 | 23 | 0, 1, 2, 3 | src/flow/worklist.mbt:100:5 |
@@ -2713,7 +2726,8 @@ Every definition event is keyed by function, source line and variable, so a valu
 | cp_count_label | <ret> | 64 | 64 | 4 | 64 | src/flow/icfg_test.mbt:153:1-169:2 |
 | cp_return_site | <ret> | -1 | -1 | 4 | -1 | src/flow/icfg_test.mbt:136:1-147:2 |
 | cp_return_site | found | -1 | -1 | 4 | -1 | src/flow/icfg_test.mbt:138:3 |
-| declares_value | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:1699:1-1706:2 |
+| declares_value | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:2089:1-2096:2 |
+| enum_body_refs | depth | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1462:3 |
 | fence_census | display | 0 | 0 | 4 | 0 | src/moonfiles/moonfiles.mbt:261:3 |
 | hole_can_reach | <ret> | 0 | 1 | 4 | false, true | src/walk/walk.mbt:573:1-580:2 |
 | ifds_tabulate_text | i | 0 | 64 | 65 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/flow/ifds_tab.mbt:126:3 |
@@ -2730,7 +2744,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | pta_sweep_heap | <ret> | 1 | 1 | 4 | true | src/flow/pta.mbt:605:5-622:2 |
 | solve_widening | iters | 0 | 1 | 6 | 0, 1 | src/flow/interval.mbt:626:3 |
 | span_in_extent | <ret> | 1 | 1 | 1 | true | src/walk/walk.mbt:470:5-472:2 |
-| starts_variant | <ret> | 0 | 1 | 3 | true, false | src/parser/parser.mbt:1594:1-1610:2 |
+| starts_variant | <ret> | 0 | 1 | 3 | true, false | src/parser/parser.mbt:1984:1-2000:2 |
 | strip_fn_modifiers | i | 0 | 64 | 4389 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/moonfiles/moonfiles.mbt:770:9 |
 | truncated_fn | suspect | -1 | -1 | 2 | -1 | src/walk/walk.mbt:1967:3 |
 | type_annotation_of | i | 0 | 63 | 84 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/moonfiles/moonfiles.mbt:611:3 |
@@ -2741,6 +2755,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | Interval | holds | 0 | 0 | 4 | false |  |
 | Lexer | lex_char | 0 | 0 | 2 | 0 |  |
 | Lexer | lex_number | 0 | 0 | 1 | false |  |
+| Parser | alias_refs | -1 | -1 | 1 | -1 |  |
 | Parser | at_next | 1 | 1 | 1 | true |  |
 | aggregate | n_unchecked | 0 | 0 | 4 | 0 | src/sa/main.mbt:457:3 |
 | assign_versions | total | 64 | 64 | 1 | 64 | src/flow/ssa.mbt:625:5 |
@@ -2766,6 +2781,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | pta_inter_run | no_body | 0 | 0 | 1 | 0 | src/flow/pta_inter.mbt:519:3 |
 | pta_inter_run | skipped | 0 | 0 | 1 | 0 | src/flow/pta_inter.mbt:518:3 |
 | raises_with_payload | i | 0 | 0 | 4 | 0 | src/flow/icfg.mbt:205:3 |
+| reports_text_0647 | rep | -1 | 1 | 6 | 0, 1, -1 | src/pipeline/pipeline_0647_test.mbt:333:3-335:4 |
 | solve_propagation | any | 0 | 1 | 1033 | true, false | src/flow/worklist.mbt:97:3 |
 | ssa_cost_over_files | i | 0 | 3 | 14 | 0, 1, 2, 3 | src/sa/ssa_cost.mbt:106:3 |
 | top_level_paren | depth | 0 | 0 | 4 | 0 | src/moonfiles/moonfiles.mbt:1089:3 |
@@ -2792,6 +2808,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | solve_widening | changed | 0 | 0 | 2 | false | src/flow/interval.mbt:639:5 |
 | source_sites | prev_line | -1 | -1 | 1 | -1 | src/flow/taint.mbt:310:3 |
 | split_top_commas | depth | 0 | 0 | 4 | 0 | src/moonfiles/moonfiles.mbt:551:3 |
+| struct_body_refs | depth | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1535:3 |
 | taint_spec_sink_text | k | 0 | 0 | 4 | 0 | src/flow/taint.mbt:202:3 |
 | taint_spec_sink_text | n | 0 | 0 | 4 | 0 | src/flow/taint.mbt:217:3 |
 | Interval | is_full | 1 | 1 | 4 | true |  |
@@ -2824,8 +2841,8 @@ Every definition event is keyed by function, source line and variable, so a valu
 | cfl_pair_counts | excluded | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:456:3 |
 | cfl_pair_counts | ordinary | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:454:3 |
 | cfl_return_site_at | <ret> | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:164:1-176:2 |
-| collect_declared_names | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/parser/parser.mbt:1357:3 |
-| declared_name_after_kw | i | 0 | 3 | 4 | 0, 1, 2, 3 | src/parser/parser.mbt:3066:3 |
+| collect_declared_names | i | 0 | 64 | 260 | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | src/parser/parser.mbt:1747:3 |
+| declared_name_after_kw | i | 0 | 3 | 4 | 0, 1, 2, 3 | src/parser/parser.mbt:3475:3 |
 | has_lexscan_notice | <ret> | 0 | 0 | 1 | false | src/parser/parser_0615_test.mbt:65:1-72:2 |
 | is_family_id_shape | <ret> | 0 | 0 | 4 | false | src/sa/profile.mbt:222:1-240:2 |
 | parse_iface | import_depth | 0 | 0 | 12 | 0 | src/moonfiles/moonfiles.mbt:1314:3 |
@@ -2870,7 +2887,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | TraitTable | is_trait | 0 | 0 | 4 | false |  |
 | cfl_pair_counts | realizable | 0 | 0 | 4 | 0 | src/flow/cfl.mbt:455:3 |
 | ifds_supergraph_text | n_c2r | 0 | 0 | 1 | 0 | src/flow/ifds.mbt:360:3 |
-| is_binding_head_name | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:4804:1-4812:2 |
+| is_binding_head_name | <ret> | 0 | 0 | 4 | false | src/parser/parser.mbt:5213:1-5221:2 |
 | taint_spec_sink_text | <ret> | 1 | 1 | 4 | true | src/flow/taint.mbt:199:5-226:2 |
 | IfaceSymTab | has_type | 0 | 0 | 4 | false |  |
 | Lexer | copy_interp | 0 | 0 | 4 | false |  |
@@ -2889,9 +2906,9 @@ Every definition event is keyed by function, source line and variable, so a valu
 | Parser | is_c_style_for | 0 | 0 | 1 | 0 |  |
 | Parser | next_is_lbrace | 0 | 0 | 1 | false |  |
 | Parser | skip_modifiers | 0 | 1 | 129 | true, false |  |
-| collect_declared_names | depth | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1356:3 |
-| collect_declared_names | paren | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1362:3 |
-| declared_name_after_kw | moved | 1 | 1 | 4 | true | src/parser/parser.mbt:3080:3 |
+| collect_declared_names | depth | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1746:3 |
+| collect_declared_names | paren | 0 | 0 | 4 | 0 | src/parser/parser.mbt:1752:3 |
+| declared_name_after_kw | moved | 1 | 1 | 4 | true | src/parser/parser.mbt:3489:3 |
 | Parser | at_arrow_lambda | 1 | 1 | 1 | true |  |
 | Parser | at_tuple_struct | 0 | 0 | 1 | false |  |
 | Parser | c_for_init | 0 | 0 | 1 | false |  |
@@ -2918,8 +2935,8 @@ Every definition event is keyed by function, source line and variable, so a valu
 | Parser | pattern_binding_at | 0 | 0 | 4 | false |  |
 | Parser | shorthand_field_at | 0 | 0 | 4 | false |  |
 | Parser | skip_rest_of_block | 1 | 2 | 129 | 1, 2 |  |
-| collect_declared_names | enum_body | 0 | 0 | 4 | false | src/parser/parser.mbt:1361:3 |
-| collect_declared_names | in_holder | 0 | 0 | 4 | false | src/parser/parser.mbt:1365:3 |
+| collect_declared_names | enum_body | 0 | 0 | 4 | false | src/parser/parser.mbt:1751:3 |
+| collect_declared_names | in_holder | 0 | 0 | 4 | false | src/parser/parser.mbt:1755:3 |
 | parse_moon_mod_imports | in_import | 0 | 0 | 4 | false | src/sa/main.mbt:1926:3 |
 | Lexer | at_lambda_head_after | 1 | 1 | 1 | true |  |
 | Parser | parse_catch_pattern | 0 | 0 | 1 | 0 |  |
@@ -2929,7 +2946,7 @@ Every definition event is keyed by function, source line and variable, so a valu
 | collect_iface_symtabs | skipped_dot | 0 | 0 | 4 | 0 | src/sa/main.mbt:2086:3 |
 | Parser | at_log_payload_brace | 1 | 1 | 1 | true |  |
 | Parser | skip_to_arg_boundary | 0 | 0 | 1 | 0 |  |
-| collect_declared_names | enum_pending | 0 | 0 | 4 | false | src/parser/parser.mbt:1359:3 |
+| collect_declared_names | enum_pending | 0 | 0 | 4 | false | src/parser/parser.mbt:1749:3 |
 | Parser | parse_external_binding | 0 | 0 | 4 | false |  |
 | Lexer | lex_block_string | 0 | 1 | 129 | false, true |  |
 | Lexer | lex_block_string | 0 | 0 | 1 | false |  |
@@ -3094,6 +3111,8 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | dm_let | line | [-1000000, 1000000] | 1 |
 | dm_write | fi | [-1000000, 1000000] | 1 |
 | finish | phis | [0, 0] | 1 |
+| group_end | i | [-1000000, 1000000] | 1 |
+| group_end | j | [-1000000, 1000004] | 6 |
 | hc_let | line | [-1000000, 1000000] | 1 |
 | hi_val_le | a | [-1000000, 1000000] | 1 |
 | hi_val_le | b | [-1000000, 1000000] | 1 |
@@ -3367,6 +3386,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | dtest_body_of | i | [0, 1000001] | 6 |
 | finish | versions | [0, 0] | 1 |
 | first_node_at | i | [0, 1000001] | 6 |
+| group_end | depth | [0, 0] | 1 |
 | icfg_of | skipped | [0, 0] | 1 |
 | ident_from | from | [-1000000, 1000000] | 1 |
 | ifds_tabulate | i | [0, 1000001] | 7 |
@@ -3419,6 +3439,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | declared_types | i | [0, 1000001] | 6 |
 | digit_value | base | [-1000000, 1000000] | 1 |
 | dl_same_triple | i | [0, 1000001] | 6 |
+| enum_body_refs | i | [-1000000, 1000000] | 1 |
 | interval_point | i | [-1000000, 1000000] | 1 |
 | ir_leader_text | b | [0, 1000001] | 6 |
 | label_type | depth | [-1000001, 1000001] | 11 |
@@ -3459,6 +3480,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | ssa_if_else | line | [-1000000, 1000000] | 1 |
 | starts_variant | i | [-1000000, 1000000] | 1 |
 | taint_analyze | fi | [0, 1000002] | 13 |
+| type_expr_refs | i | [-1000000, 1000000] | 1 |
 | Cfg | kind_label | [-1000000, 1000000] | 1 |
 | Cfg | node_after | [-1000000, 1000000] | 1 |
 | Cfg | node_after | [-1000000, 1000000] | 1 |
@@ -3502,6 +3524,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | cp_store_node | nth | [-1000000, 1000000] | 1 |
 | dist_name_at | line | [-1000000, 1000000] | 1 |
 | dm_param_source | i | [0, 1000001] | 6 |
+| enum_body_refs | to | [-1000000, 1000000] | 1 |
 | fence_census | live | [0, 0] | 1 |
 | first_line_of | out | [0, 0] | 1 |
 | interval_range | hi | [-1000000, 1000000] | 1 |
@@ -3530,6 +3553,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | top_level_paren | d | [-1000001, 1000001] | 55 |
 | top_level_paren | i | [0, 1000001] | 6 |
 | top_level_paren | j | [0, 1000004] | 30 |
+| type_expr_refs | to | [-1000000, 1000000] | 1 |
 | value_exit_expr | w | [-1000000, 1000000] | 1 |
 | version_parts | cur | [-1, 0] | 13 |
 | Builder | link | [-1000000, 1000000] | 1 |
@@ -3576,6 +3600,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | ss_deepest | deepest | [0, 0] | 1 |
 | ssa_check | dangling | [0, 0] | 1 |
 | strip_visibility | i | [0, 1000002] | 10 |
+| struct_body_refs | i | [-1000000, 1000000] | 1 |
 | Cfg | source_order | [1, 1000001] | 6 |
 | Cfg | source_order | [-1, 999999] | 15 |
 | Cfg | source_order | [0, 1000001] | 7 |
@@ -3603,6 +3628,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | cp_return_site | call | [-1000000, 1000000] | 1 |
 | cs_result_of_list | i | [0, 1000001] | 6 |
 | dl_taint_facts_of | i | [0, 1000001] | 12 |
+| enum_body_refs | from | [-1000000, 1000000] | 1 |
 | first_node_at | found | [-1, 1000000] | 6 |
 | has_field0616 | value | [-1000000, 1000000] | 1 |
 | ifds_reach_rel | node | [-1000000, 1000000] | 1 |
@@ -3628,7 +3654,9 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | solve_round_robin | i | [0, 1000000] | 7 |
 | solve_round_robin | n | [-1000000, 1000000] | 1 |
 | solve_round_robin | v | [0, 1000000] | 12 |
+| struct_body_refs | to | [-1000000, 1000000] | 1 |
 | taint_spec_sink | arg | [-1000000, 1000000] | 1 |
+| type_expr_refs | from | [-1000000, 1000000] | 1 |
 | widen_interval | next | [-1000000, 1000000] | 1 |
 | widen_interval | prev | [-1000000, 1000000] | 1 |
 | Interp | exec_alt | [-1000000, 1000000] | 1 |
@@ -3652,6 +3680,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | dl_pointer_agrees | fi | [-1000000, 1000000] | 1 |
 | dl_pointer_answer | fi | [-1000000, 1000000] | 1 |
 | dl_taint_facts_of | fi | [-1000000, 1000000] | 1 |
+| enum_body_refs | depth | [0, 0] | 1 |
 | fence_census | display | [0, 0] | 1 |
 | ifds_tabulate_text | i | [0, 1000001] | 7 |
 | interval_state_bot | i | [0, 1000000] | 7 |
@@ -3678,6 +3707,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | type_annotation_of | i | [0, 1000001] | 6 |
 | Interp | exec_alt | [-1000000, 1000000] | 1 |
 | Lexer | lex_char | [0, 1000001] | 16 |
+| Parser | alias_refs | [-1, -1] | 1 |
 | aggregate | n_unchecked | [0, 0] | 1 |
 | assign_versions | total | [0, 6] | 5 |
 | build_call_graph | head | [0, 1000001] | 7 |
@@ -3709,6 +3739,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | raises_with_payload | i | [0, 1000001] | 6 |
 | ssa_cost_over_files | i | [0, 1000001] | 6 |
 | states_after | transfer | [-1000000, 1000000] | 1 |
+| struct_body_refs | from | [-1000000, 1000000] | 1 |
 | top_level_paren | depth | [-1000001, 1000001] | 11 |
 | Interp | eval_call | [-1000000, 1000000] | 1 |
 | Interp | exec_stmt | [-1000000, 1000000] | 1 |
@@ -3736,6 +3767,7 @@ These intervals are the abstract interpreter's fixpoint approximation at widenin
 | source_sites | prev_line | [-1, -1] | 1 |
 | split_top_commas | depth | [-1000001, 1000001] | 13 |
 | strip_visibility | depth | [-1000001, 1000001] | 11 |
+| struct_body_refs | depth | [0, 0] | 1 |
 | taint_spec_sink_text | k | [0, 2] | 4 |
 | taint_spec_sink_text | n | [0, 0] | 1 |
 | Interp | analyze_fn | [-1000000, 1000000] | 1 |
@@ -3886,7 +3918,7 @@ Deductive verification is WP-style: each contract becomes verification condition
 
 _No verification condition generated._
 
-Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `path_tail (src/core/core.mbt:59)`, `bb_is_leader (src/flow/bb.mbt:280)`, `bb_entry (src/flow/bb.mbt:378)`, `bb_exits (src/flow/bb.mbt:415)`, `Bb::dump (src/flow/bb.mbt:455)`, `lower_stmts (src/flow/ir.mbt:175)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `Cfg::node_after (src/flow/cfg.mbt:203)`, `pred_of (src/flow/cfg.mbt:268)`, `build_seq (src/flow/cfg.mbt:299)`, `build_else (src/flow/cfg.mbt:481)`, `Cfg::dump (src/flow/cfg.mbt:508)`, `cfl_call_site_at (src/flow/cfl.mbt:145)`, `cfl_return_site_at (src/flow/cfl.mbt:164)`, `cfl_program_entry (src/flow/cfl.mbt:254)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_node_of_key (src/flow/cfl.mbt:490)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_site_names (src/flow/pta.mbt:362)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `ssa_check (src/flow/ssa.mbt:250)`, `new_ssa (src/flow/ssa.mbt:362)`, `collect_defs (src/flow/ssa.mbt:409)`, `place_phis (src/flow/ssa.mbt:446)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `rename (src/flow/ssa.mbt:678)`, `rename_block (src/flow/ssa.mbt:704)`, `phi_version (src/flow/ssa.mbt:873)`, `unwind (src/flow/ssa.mbt:911)`, `index_of_name (src/flow/ssa.mbt:924)`, `index_of (src/flow/ssa.mbt:937)`, `finish (src/flow/ssa.mbt:950)`, `subscript (src/flow/ssa.mbt:1184)`, `raises_with_payload (src/flow/icfg.mbt:204)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `ifds_explode (src/flow/ifds.mbt:286)`, `ifds_supergraph_text (src/flow/ifds.mbt:357)`, `ifds_supergraph_returns (src/flow/ifds.mbt:443)`, `live_in (src/flow/live.mbt:373)`, `live_out (src/flow/live.mbt:403)`, `avail_transfer (src/flow/avail.mbt:369)`, `avail_in (src/flow/avail.mbt:453)`, `cprop_after (src/flow/cprop.mbt:399)`, `taint_analyze (src/flow/taint.mbt:237)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_of (src/flow/ir_cfg.mbt:192)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `ir_exits (src/flow/ir_cfg.mbt:307)`, `bb_node_line (src/flow/bb_test.mbt:127)`, `bb_block_lines (src/flow/bb_test.mbt:133)`, `bb_edges (src/flow/bb_test.mbt:164)`, `dnum_digits (src/flow/datalog.mbt:592)`, `join_all (src/flow/lattice.mbt:89)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `cs_result_of_list (src/flow/pta_ctx.mbt:429)`, `cfl_labels_text (src/flow/cfl_test.mbt:77)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `ifds_tabulate_text (src/flow/ifds_tab.mbt:124)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `pta_fs_step (src/flow/pta_flow.mbt:202)`, `first_node_at (src/flow/pta_test.mbt:205)`, `reaching_kill (src/flow/reaching.mbt:134)`, `reaching_in (src/flow/reaching.mbt:229)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `ssa_lines (src/flow/ssa_test.mbt:63)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `declared_types (src/flow/callgraph.mbt:502)`, `cg_collect_lets (src/flow/callgraph.mbt:515)`, `build_call_graph (src/flow/callgraph.mbt:725)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `cp_return_site (src/flow/icfg_test.mbt:136)`, `cp_count_label (src/flow/icfg_test.mbt:153)`, `powerset_of (src/flow/laws_test.mbt:76)`, `defs_and_uses (src/flow/laws_test.mbt:298)`, `pta_inter_run (src/flow/pta_inter.mbt:478)`, `dm_param_source (src/flow/pta_demand.mbt:269)`, `dm_recompute (src/flow/pta_demand.mbt:303)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_intra_in (src/flow/cprop_intra.mbt:101)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `Walker::bind (src/walk/walk.mbt:256)`, `Walker::unshadow_param (src/walk/walk.mbt:330)`, `Walker::bind_pattern (src/walk/walk.mbt:633)`, `Walker::audit_frame (src/walk/walk.mbt:667)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `Lexer::run (src/lexer/lexer.mbt:368)`, `Lexer::lex_attribute (src/lexer/lexer.mbt:523)`, `lit_step (src/lexer/lexer.mbt:582)`, `Lexer::lex_number (src/lexer/lexer.mbt:624)`, `Lexer::slice (src/lexer/lexer.mbt:853)`, `Lexer::lex_string (src/lexer/lexer.mbt:864)`, `Lexer::lex_regex (src/lexer/lexer.mbt:944)`, `Lexer::lex_template_string (src/lexer/lexer.mbt:1005)`, `Lexer::copy_interp (src/lexer/lexer.mbt:1067)`, `Lexer::at_lambda_head_after (src/lexer/lexer.mbt:1254)`, `Lexer::copy_nested_string (src/lexer/lexer.mbt:1407)`, `Lexer::copy_nested_char (src/lexer/lexer.mbt:1430)`, `Lexer::lex_char (src/lexer/lexer.mbt:1483)`, `Lexer::lex_block_string (src/lexer/lexer.mbt:1777)`, `Lexer::lex_name (src/lexer/lexer.mbt:1915)`, `Lexer::lex_op (src/lexer/lexer.mbt:1972)`, `parse_double (src/lexer/lexer.mbt:2245)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `Infer::declare_sym (src/types/infer.mbt:191)`, `ann_to_list_ty (src/types/types.mbt:174)`, `sig_at (src/interp/interp.mbt:1112)`, `omittable_at (src/interp/interp.mbt:3374)`, `alias_of (src/parser/parser.mbt:84)`, `Parser::peek (src/parser/parser.mbt:304)`, `Parser::span (src/parser/parser.mbt:309)`, `Parser::bump (src/parser/parser.mbt:314)`, `collect_using (src/parser/parser.mbt:1531)`, `starts_variant (src/parser/parser.mbt:1594)`, `Parser::skip_indexed (src/parser/parser.mbt:2221)`, `declared_name_after_kw (src/parser/parser.mbt:3065)`, `Parser::parse_is (src/parser/parser.mbt:4595)`, `Parser::rest_binding_at (src/parser/parser.mbt:4730)`, `Parser::shorthand_field_at (src/parser/parser.mbt:4765)`, `Parser::at_log_payload_brace (src/parser/parser.mbt:5411)`, `Parser::skip_log_payload (src/parser/parser.mbt:5420)`, `Parser::at_arrow_lambda (src/parser/parser.mbt:6255)`, `Parser::at_next (src/parser/parser.mbt:6414)`, `Parser::at_struct_literal (src/parser/parser.mbt:6460)`, `Parser::peek2 (src/parser/parser.mbt:6679)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:468)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `arg_list (src/pipeline/taintcheck.mbt:177)`, `name_list (src/pipeline/taintcheck.mbt:196)`, `trim_sp (src/moonfiles/moonfiles.mbt:43)`, `moonbit_fences (src/moonfiles/moonfiles.mbt:211)`, `fence_census (src/moonfiles/moonfiles.mbt:257)`, `take_n (src/moonfiles/moonfiles.mbt:460)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`, `label_type (src/moonfiles/moonfiles.mbt:575)`, `type_annotation_of (src/moonfiles/moonfiles.mbt:608)`, `paren_parts (src/moonfiles/moonfiles.mbt:659)`, `strip_fn_modifiers (src/moonfiles/moonfiles.mbt:757)`, `type_names (src/moonfiles/moonfiles.mbt:818)`, `top_level_paren (src/moonfiles/moonfiles.mbt:1087)`, `audit (src/statecheck/statecheck.mbt:53)`
+Specification gaps (escalated, no `//@ requires`/`//@ ensures`): `dir_of (src/sa/main.mbt:1778)`, `ok_segment (src/sa/main.mbt:2043)`, `mermaid_states (src/sa/mermaid.mbt:43)`, `ssa_cost_over_files (src/sa/ssa_cost.mbt:89)`, `resolve_label (src/sa/provenance.mbt:260)`, `mm_parsed_with (src/sa/mermaid_test.mbt:85)`, `mm_after_last (src/sa/mermaid_test.mbt:245)`, `path_tail (src/core/core.mbt:59)`, `bb_is_leader (src/flow/bb.mbt:280)`, `bb_entry (src/flow/bb.mbt:378)`, `bb_exits (src/flow/bb.mbt:415)`, `Bb::dump (src/flow/bb.mbt:455)`, `lower_stmts (src/flow/ir.mbt:175)`, `lower_if (src/flow/ir.mbt:279)`, `Cfg::source_order (src/flow/cfg.mbt:163)`, `Cfg::node_after (src/flow/cfg.mbt:203)`, `pred_of (src/flow/cfg.mbt:268)`, `build_seq (src/flow/cfg.mbt:299)`, `build_else (src/flow/cfg.mbt:481)`, `Cfg::dump (src/flow/cfg.mbt:508)`, `cfl_call_site_at (src/flow/cfl.mbt:145)`, `cfl_return_site_at (src/flow/cfl.mbt:164)`, `cfl_program_entry (src/flow/cfl.mbt:254)`, `cfl_ordinary_from (src/flow/cfl.mbt:278)`, `cfl_node_of_key (src/flow/cfl.mbt:490)`, `cfl_chain (src/flow/cfl.mbt:515)`, `dominators (src/flow/dom.mbt:94)`, `dominance_frontiers (src/flow/dom.mbt:137)`, `reverse_postorder (src/flow/dom.mbt:184)`, `compute_idom (src/flow/dom.mbt:229)`, `intersect (src/flow/dom.mbt:280)`, `pta_site_names (src/flow/pta.mbt:362)`, `pta_step (src/flow/pta.mbt:506)`, `pta_sweep_heap (src/flow/pta.mbt:605)`, `ssa_check (src/flow/ssa.mbt:250)`, `new_ssa (src/flow/ssa.mbt:362)`, `collect_defs (src/flow/ssa.mbt:409)`, `place_phis (src/flow/ssa.mbt:446)`, `prepare (src/flow/ssa.mbt:502)`, `assign_versions (src/flow/ssa.mbt:586)`, `rename (src/flow/ssa.mbt:678)`, `rename_block (src/flow/ssa.mbt:704)`, `phi_version (src/flow/ssa.mbt:873)`, `unwind (src/flow/ssa.mbt:911)`, `index_of_name (src/flow/ssa.mbt:924)`, `index_of (src/flow/ssa.mbt:937)`, `finish (src/flow/ssa.mbt:950)`, `subscript (src/flow/ssa.mbt:1184)`, `raises_with_payload (src/flow/icfg.mbt:204)`, `reaches (src/flow/icfg.mbt:250)`, `icfg_of (src/flow/icfg.mbt:284)`, `ifds_reach_rel (src/flow/ifds.mbt:246)`, `ifds_explode (src/flow/ifds.mbt:286)`, `ifds_supergraph_text (src/flow/ifds.mbt:357)`, `ifds_supergraph_returns (src/flow/ifds.mbt:443)`, `live_in (src/flow/live.mbt:373)`, `live_out (src/flow/live.mbt:403)`, `avail_transfer (src/flow/avail.mbt:369)`, `avail_in (src/flow/avail.mbt:453)`, `cprop_after (src/flow/cprop.mbt:399)`, `taint_analyze (src/flow/taint.mbt:237)`, `ir_blocks (src/flow/ir_cfg.mbt:169)`, `ir_block_of (src/flow/ir_cfg.mbt:192)`, `ir_block_succ (src/flow/ir_cfg.mbt:224)`, `ir_exits (src/flow/ir_cfg.mbt:307)`, `bb_node_line (src/flow/bb_test.mbt:127)`, `bb_block_lines (src/flow/bb_test.mbt:133)`, `bb_edges (src/flow/bb_test.mbt:164)`, `dnum_digits (src/flow/datalog.mbt:592)`, `join_all (src/flow/lattice.mbt:89)`, `join_of_nodes (src/flow/lattice.mbt:104)`, `cs_result_of_list (src/flow/pta_ctx.mbt:429)`, `cfl_labels_text (src/flow/cfl_test.mbt:77)`, `ifds_tabulate (src/flow/ifds_tab.mbt:70)`, `ifds_tabulate_text (src/flow/ifds_tab.mbt:124)`, `interval_state_join (src/flow/interval.mbt:538)`, `interval_state_same (src/flow/interval.mbt:554)`, `solve_widening (src/flow/interval.mbt:611)`, `narrow_round (src/flow/interval.mbt:675)`, `pta_fs_step (src/flow/pta_flow.mbt:202)`, `first_node_at (src/flow/pta_test.mbt:205)`, `reaching_kill (src/flow/reaching.mbt:134)`, `reaching_in (src/flow/reaching.mbt:229)`, `reaching_use_defs (src/flow/reaching.mbt:254)`, `ssa_lines (src/flow/ssa_test.mbt:63)`, `solve_round_robin (src/flow/worklist.mbt:36)`, `solve_propagation (src/flow/worklist.mbt:78)`, `states_after (src/flow/worklist.mbt:132)`, `solve_edges (src/flow/worklist.mbt:176)`, `solve_worklist (src/flow/worklist.mbt:261)`, `declared_types (src/flow/callgraph.mbt:502)`, `cg_collect_lets (src/flow/callgraph.mbt:515)`, `build_call_graph (src/flow/callgraph.mbt:725)`, `cp_store_node (src/flow/icfg_test.mbt:95)`, `cp_call_node (src/flow/icfg_test.mbt:122)`, `cp_return_site (src/flow/icfg_test.mbt:136)`, `cp_count_label (src/flow/icfg_test.mbt:153)`, `powerset_of (src/flow/laws_test.mbt:76)`, `defs_and_uses (src/flow/laws_test.mbt:298)`, `pta_inter_run (src/flow/pta_inter.mbt:478)`, `dm_param_source (src/flow/pta_demand.mbt:269)`, `dm_recompute (src/flow/pta_demand.mbt:303)`, `pta_demand_run (src/flow/pta_demand.mbt:394)`, `cprop_intra_in (src/flow/cprop_intra.mbt:101)`, `cprop_whole_and_apart (src/flow/ifds_distrib.mbt:90)`, `cprop_distributes (src/flow/ifds_distrib.mbt:135)`, `cprop_distribution_report (src/flow/ifds_distrib.mbt:157)`, `dl_taint_facts_of (src/flow/datalog_taint.mbt:195)`, `dl_same_triple (src/flow/datalog_taint.mbt:361)`, `ss_step (src/flow/pta_storeless.mbt:326)`, `ss_sweep (src/flow/pta_storeless.mbt:401)`, `union_of (src/flow/reaching_test.mbt:59)`, `dl_facts_of (src/flow/datalog_pointer.mbt:85)`, `dl_has_tuple (src/flow/datalog_pointer.mbt:296)`, `Walker::bind (src/walk/walk.mbt:256)`, `Walker::unshadow_param (src/walk/walk.mbt:330)`, `Walker::bind_pattern (src/walk/walk.mbt:633)`, `Walker::audit_frame (src/walk/walk.mbt:667)`, `as_array (src/walk/walk.mbt:1287)`, `enter_guard (src/walk/guardfacts.mbt:481)`, `closer_ahead (src/lexer/lexer.mbt:330)`, `Lexer::run (src/lexer/lexer.mbt:368)`, `Lexer::lex_attribute (src/lexer/lexer.mbt:523)`, `lit_step (src/lexer/lexer.mbt:582)`, `Lexer::lex_number (src/lexer/lexer.mbt:624)`, `Lexer::slice (src/lexer/lexer.mbt:853)`, `Lexer::lex_string (src/lexer/lexer.mbt:864)`, `Lexer::lex_regex (src/lexer/lexer.mbt:944)`, `Lexer::lex_template_string (src/lexer/lexer.mbt:1005)`, `Lexer::copy_interp (src/lexer/lexer.mbt:1067)`, `Lexer::at_lambda_head_after (src/lexer/lexer.mbt:1254)`, `Lexer::copy_nested_string (src/lexer/lexer.mbt:1407)`, `Lexer::copy_nested_char (src/lexer/lexer.mbt:1430)`, `Lexer::lex_char (src/lexer/lexer.mbt:1483)`, `Lexer::lex_block_string (src/lexer/lexer.mbt:1777)`, `Lexer::lex_name (src/lexer/lexer.mbt:1915)`, `Lexer::lex_op (src/lexer/lexer.mbt:1972)`, `parse_double (src/lexer/lexer.mbt:2245)`, `parse_hex_double (src/lexer/lexer.mbt:2335)`, `Infer::declare_sym (src/types/infer.mbt:191)`, `ann_to_list_ty (src/types/types.mbt:174)`, `sig_at (src/interp/interp.mbt:1112)`, `omittable_at (src/interp/interp.mbt:3374)`, `alias_of (src/parser/parser.mbt:87)`, `Parser::peek (src/parser/parser.mbt:308)`, `Parser::span (src/parser/parser.mbt:313)`, `Parser::bump (src/parser/parser.mbt:318)`, `group_end (src/parser/parser.mbt:1346)`, `Parser::tuple_struct_refs (src/parser/parser.mbt:1667)`, `collect_using (src/parser/parser.mbt:1921)`, `starts_variant (src/parser/parser.mbt:1984)`, `Parser::skip_indexed (src/parser/parser.mbt:2630)`, `declared_name_after_kw (src/parser/parser.mbt:3474)`, `Parser::parse_is (src/parser/parser.mbt:5004)`, `Parser::rest_binding_at (src/parser/parser.mbt:5139)`, `Parser::shorthand_field_at (src/parser/parser.mbt:5174)`, `Parser::at_log_payload_brace (src/parser/parser.mbt:5820)`, `Parser::skip_log_payload (src/parser/parser.mbt:5829)`, `Parser::at_arrow_lambda (src/parser/parser.mbt:6664)`, `Parser::at_next (src/parser/parser.mbt:6823)`, `Parser::at_struct_literal (src/parser/parser.mbt:6869)`, `Parser::peek2 (src/parser/parser.mbt:7088)`, `file_request (src/jsoncli/main.mbt:441)`, `merge_group (src/pipeline/pipeline.mbt:496)`, `taint_findings (src/pipeline/taintcheck.mbt:60)`, `taint_message (src/pipeline/taintcheck.mbt:144)`, `arg_list (src/pipeline/taintcheck.mbt:177)`, `name_list (src/pipeline/taintcheck.mbt:196)`, `trim_sp (src/moonfiles/moonfiles.mbt:43)`, `moonbit_fences (src/moonfiles/moonfiles.mbt:211)`, `fence_census (src/moonfiles/moonfiles.mbt:257)`, `take_n (src/moonfiles/moonfiles.mbt:460)`, `ident_from (src/moonfiles/moonfiles.mbt:509)`, `label_type (src/moonfiles/moonfiles.mbt:575)`, `type_annotation_of (src/moonfiles/moonfiles.mbt:608)`, `paren_parts (src/moonfiles/moonfiles.mbt:659)`, `strip_fn_modifiers (src/moonfiles/moonfiles.mbt:757)`, `type_names (src/moonfiles/moonfiles.mbt:818)`, `top_level_paren (src/moonfiles/moonfiles.mbt:1087)`, `audit (src/statecheck/statecheck.mbt:53)`
 
 ## 9. Method summary
 

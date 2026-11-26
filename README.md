@@ -625,14 +625,14 @@ than the standalone module provided.
 
 | corpus | what moved | module-wide | the per-package default |
 |---|---|---|---|
-| `static_analysis` 0.5.4 | L1 events | 464,097 | **673,492** |
-| | taint sinks | 188 | **291** |
-| | findings | 404 | **513** |
+| `static_analysis` 0.6.0 | L1 events | 464,097 | **676,331** |
+| | taint sinks | 188 | **293** |
+| | findings | 406 | **517** |
 | | trace files | 1 | **17** |
-| `doubleML` 0.164.66 | — | one package, so the mode changes nothing | |
+| `doubleML` 0.164.68 | — | one package, so the mode changes nothing | |
 | `fixtures/vuln_demo` | — | one package; the trace is **byte-identical** | |
 
-**AND THE REGISTRY MOVED UNDER THE MEASUREMENT.** doubleML is now **0.164.66**, not 0.164.64, so the committed artefact names the version the registry served and the measurement was re-run against that same corpus. The fixture's trace is **byte-identical** across the two modes — one package, one file, the same bytes — which is the cleanest possible statement that the mode changes nothing when there is only one package.
+**AND THE REGISTRY MOVED UNDER THE MEASUREMENT.** doubleML is now **0.164.68**, not 0.164.66, so the committed artefact names the version the registry served and the measurement was re-run against that same corpus. The fixture's trace is **byte-identical** across the two modes — one package, one file, the same bytes — which is the cleanest possible statement that the mode changes nothing when there is only one package.
 
 **AND THE DEFAULT FLIP BROKE THREE CHECKERS — ONE OF THEM HAD BEEN PASSING FOR THE WRONG REASON.** A run writes **one trace file per package** now, and three harnesses still assumed one file per run. The gherkin runner **named** the trace, so it read a file that does not exist and the scenario crashed. The e2e harness named it too, and it read a **leftover** from a run before the flip: it compared that leftover with itself and called the run deterministic. And the coverage check demanded the report's wording "the step budget was not reached", which the per-package report words as "none of them was reached". **THE E2E ONE MATTERS MOST: its size ceiling took the FIRST trace file in the directory — which, for the static-analysis module, was a **0-byte** file — and called it the run's evidence.** The trace is now **FOUND**: every `*_trace.jsonl` in the output directory, sorted, and **summed**, and the output directory is emptied before the run, for the same reason the module runs already emptied theirs. A check that measures nothing is not a check, and this one measured nothing **and passed**.
 
@@ -640,7 +640,7 @@ than the standalone module provided.
 
 **AND THE PEER ROUND WAS RUN AGAIN OVER THE TREE THAT CARRIES THE FIX, AND THE ONE DIFFERENCE IS THE FIX.** Over the tree as it stands now the published **0.1.37** and the local build agree on **every** counter except **two**: the published release reports **230,666** trace events and **119** findings, the local build **230,667** and **120**. Everything else is identical — 68 files, 1,230 functions, 7,888 statements, 28,434 steps, 48 L2 findings, 45 taint sinks, VCs 2 / 1 / 3. The difference is exactly the one claim the recursion fix adds and the one trace event it writes: **one of each**.
 
-**AND THE GATE IS GREEN, ALL OF IT: 59 steps, 59 passed, 0 failed, 0 unknown.** The tests are **354** on all three targets — 0.1.37 shipped **339**, the recursion fix that followed it added **12**, the sink test that closed the last untested family added **1**, the two CFG self-loop tests added **2**, and the four allocation tests that closed the last whitebox-only families added **4**. 0.1.37 itself shipped with the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed — and a **55th** was added after the release, when one of the gates turned out to be **blind**. A **56th** followed the peer round: `scripts/qa/peer_scan.mjs` was CI step 56 all along and was **not** in the local gate, so a local 55/55 could sit beside a red CI — and did, for five commits, until the peer round named the failing step. The **57th and 58th** closed what that investigation exposed: the peer scan's own falsifier, which CI ran and the gate did not, and `scripts/qa/gate_parity.mjs`, which asserts the one-way invariant the failure taught — **every check CI runs must also be run by the local gate**.
+**AND THE GATE IS GREEN, ALL OF IT: 59 steps, 59 passed, 0 failed, 0 unknown.** The tests are **358** on all three targets — 0.1.37 shipped **339**, the recursion fix that followed it added **12**, the sink test that closed the last untested family added **1**, the two CFG self-loop tests added **2**, and the four allocation tests that closed the last whitebox-only families added **4**. 0.1.37 itself shipped with the same **54** steps as 0.1.36 — the default flip added no step, because the claims it needed went into the checks that already existed — and a **55th** was added after the release, when one of the gates turned out to be **blind**. A **56th** followed the peer round: `scripts/qa/peer_scan.mjs` was CI step 56 all along and was **not** in the local gate, so a local 55/55 could sit beside a red CI — and did, for five commits, until the peer round named the failing step. The **57th and 58th** closed what that investigation exposed: the peer scan's own falsifier, which CI ran and the gate did not, and `scripts/qa/gate_parity.mjs`, which asserts the one-way invariant the failure taught — **every check CI runs must also be run by the local gate**.
 **AND ONE OF THE GATES WAS BLIND — the coverage-route check could not fail, and it said it could.** `scripts/qa/coverage_route.mjs` strips comments and string literals before it looks for the identifiers the coverage reporter's lexer reserves, and its stripper treated a `#|` as the start of a block string closed by `|#`. **MoonBit's multi-line string has NO terminator** — the literal opens with `#|`, every content line carries the prefix, and it ends at the first line that does not. So the closer was never found, and the stripper blanked **the rest of the file**. MEASURED by evaluating the stripper out of the tracked source: the check read **20,964** of the tree's code lines where it reads **24,321** now — **3,357 more, 16.0 % more**. `src/command/command.mbt` was the worst case: its 65-line usage text is one multi-line literal, and the **1,158** code lines after it were invisible.
 
 **THE CONSEQUENCE WAS A CHECK THAT MEASURED NOTHING AND SAID OK.** A reserved identifier planted after that literal left the check **green** — proved on a **copy**, by a falsifier that now ships: `scripts/qa/coverage_route_falsify.mjs` plants one in three places (after a multi-line literal, in a file with no literal, and before any literal) and asserts the check goes **red** for the right reason and names the file, plus a **control** it must not notice. **11 checks.**
@@ -650,7 +650,7 @@ than the standalone module provided.
 
 **THE PEER ROUND FOUND A REAL DEFECT, IN THE LOADER.** `moonx riantr/moonbit_static_analysis@latest .` over this tree reported `src/app/scan.mbt` as a file it could not parse — and that file IS the loader: the file that walks the tree. The cause was a tuple pattern in a `for` header (`for (rel, pkg) in st.files`), one of the peer's three known blind spots, which 0.1.36 had introduced. The tuple is now unpacked inside the loop, and the peer reads the file whole again: **73 of 76** files understood (**96.0 %**), the three gaps are exactly the ones in `docs/qa/PEER_PARSE_GAPS.json`, and **0** findings are withheld. The peer's own classification of the tree improved with it (`unreliable` 44 → **39**).
 
-**THE CHECKERS THAT CARRIED THE OLD CORPUS VERSION WERE FIXED, NOT PATCHED.** **Seven** of them named the corpus version in their own source, and the registry moved doubleML from 0.164.64 to 0.164.66 while this was being written. A checker that carries the version stops finding the artefact the day the registry moves, and then compares **nothing**, which looks exactly like a pass. **Four** of them now **FIND** the committed artefact in the tree's own reports directory — through one shared helper, `scripts/qa/committed_artefact.mjs` — and the README's table row says which version it names. The other three still carry a version **on purpose**, and each says why: `verify.mjs` validates a named artefact, the envelope falsifier must name a real path to build a failing package, and the measurement driver pins the corpus it measured and falls back to the newest one that is there.
+**THE CHECKERS THAT CARRIED THE OLD CORPUS VERSION WERE FIXED, NOT PATCHED.** **Seven** of them named the corpus version in their own source, and the registry moved doubleML from 0.164.66 to 0.164.68 while this was being written. A checker that carries the version stops finding the artefact the day the registry moves, and then compares **nothing**, which looks exactly like a pass. **Four** of them now **FIND** the committed artefact in the tree's own reports directory — through one shared helper, `scripts/qa/committed_artefact.mjs` — and the README's table row says which version it names. The other three still carry a version **on purpose**, and each says why: `verify.mjs` validates a named artefact, the envelope falsifier must name a real path to build a failing package, and the measurement driver pins the corpus it measured and falls back to the newest one that is there.
 
 **THE PUBLISHED BYTES, MEASURED FROM THE REGISTRY'S OWN COPY — not from this tree.** A local build says what this source produces; it does not say what a reader downloads. So the record below is the cached package the registry served, `~/.moon/registry/cache/riantr/LunaFlow/0.1.37.zip`:
 
@@ -671,31 +671,31 @@ That is the release verified through the artefact a reader actually gets. It can
 
 **THE MODE.** A MoonBit package is the directory that holds its `moon.pkg`. The step budget is a bound on the WORK, and the work of a module is the work of its packages — so a module-wide budget is spent on the FIRST packages in file order, and the rest of the tree is never interpreted. `--per-package` gives each package its own budget: a module of N packages has a budget of N times the one. The `--max-functions` count cap stays **module-wide** — a reader who asked for "150 functions" did not ask for "150 functions per package". The trace is written **one file per package**, and the report gains a package table: what each package cost, and whether its own budget was reached.
 
-**THE MEASUREMENT (A) — THE ANALYSIS CAP.** Three corpora, three modes: `--module-wide`, `--per-package` (**the default since 0.1.37**), and `--per-function` with no budget at all, which is the ceiling the analyser can reach. Measured with `--trials 4` on the corpora as they are fetched — doubleML is **0.164.66** now, the version the registry serves.
+**THE MEASUREMENT (A) — THE ANALYSIS CAP.** Three corpora, three modes: `--module-wide`, `--per-package` (**the default since 0.1.37**), and `--per-function` with no budget at all, which is the ceiling the analyser can reach. Measured with `--trials 4` on the corpora as they are fetched — doubleML is **0.164.68** now, the version the registry serves.
 
 | corpus | packages | `--module-wide` | `--per-package` (the default) | every function |
 |---|---|---|---|---|
-| this tree | 10 | 862 functions · 27,571 steps · 139,659 events · **63 of 66** files | **862** functions · 27,571 steps · 139,659 events · **63 of 66** files | 862 · 27,571 · 139,659 · 63 of 66 |
-| `riantr/moonbit_static_analysis@latest` | 17 | 711 functions · 100,958 steps · 464,053 events · **70 of 263** files | **1,212** functions · 136,821 steps · 673,448 events · **128 of 263** files | 1,437 · 156,721 · 884,312 · 153 of 263 |
-| `riantr/moonbit_doubleML@latest` | **1** | 274 functions · 100,020 steps · 508,366 events · **27 of 220** files | **274** functions · 100,020 steps · 508,366 events · **27 of 220** files | 1,411 · 465,973 · 2,107,384 · 145 of 220 |
+| this tree | 10 | 871 functions · 27,585 steps · 139,746 events · **65 of 68** files | **871** functions · 27,585 steps · 139,746 events · **65 of 68** files | 871 · 27,585 · 139,746 · 65 of 68 |
+| `riantr/moonbit_static_analysis@latest` | 17 | 711 functions · 100,958 steps · 464,053 events · **70 of 270** files | **1,231** functions · 137,326 steps · 676,287 events · **132 of 270** files | 1,457 · 157,232 · 887,177 · 158 of 270 |
+| `riantr/moonbit_doubleML@latest` | **1** | 274 functions · 100,020 steps · 508,366 events · **27 of 220** files | **274** functions · 100,020 steps · 508,366 events · **27 of 220** files | 1,411 · 466,031 · 2,107,384 · 145 of 220 |
 
-**THE MODE IS WORTH EXACTLY WHAT THE PACKAGE COUNT SAYS.** On the static-analysis module the per-package budget takes the scan from **711** functions to **1,212** — **sixteen of the seventeen packages whole**, and only `src/flow` spending its own budget — and it reads **128 of 263** files against the module-wide **70 of 263**. On this tree the module-wide budget is never reached, so the two modes are the same scan. And on **doubleML the mode does NOTHING AT ALL**: that module is **FLAT** — one `moon.pkg`, at its root, so all **220** of its files sit in the root package. There is one package, the package's budget IS the module's budget, and every number above is identical on both sides. That last fact is what decides the publish question.
+**THE MODE IS WORTH EXACTLY WHAT THE PACKAGE COUNT SAYS.** On the static-analysis module the per-package budget takes the scan from **711** functions to **1,231** — **sixteen of the seventeen packages whole**, and only `src/flow` spending its own budget — and it reads **132 of 270** files against the module-wide **70 of 270**. On this tree the module-wide budget is never reached, so the two modes are the same scan. And on **doubleML the mode does NOTHING AT ALL**: that module is **FLAT** — one `moon.pkg`, at its root, so all **220** of its files sit in the root package. There is one package, the package's budget IS the module's budget, and every number above is identical on both sides. That last fact is what decides the publish question.
 
 **THE MEASUREMENT (B) — THE PUBLISH CEILING.** The ceiling is the envelope the registry has ALREADY accepted, read from `docs/qa/PUBLISH_ENVELOPE.json`: the whole package at **46,274,868** bytes unpacked and the largest single entry at **39,479,846**. The per-package mode splits the TRACE, so the largest-entry half is the half it could have addressed:
 
 | corpus | mode | trace files | total bytes | largest entry |
 |---|---|---|---|---|
-| this tree | module-wide | 1 | 22,691,389 | 22,691,389 |
-| this tree | `--per-package` | **10** | 22,691,389 | **21,923,396** |
+| this tree | module-wide | 1 | 22,707,387 | 22,707,387 |
+| this tree | `--per-package` | **10** | 22,707,387 | **21,939,394** |
 | `static_analysis` | module-wide | 1 | 76,591,727 | 76,591,727 |
-| `static_analysis` | `--per-package` | **17** | **111,328,416** | **78,902,704** |
+| `static_analysis` | `--per-package` | **17** | **112,175,918** | **78,902,704** |
 | `doubleML` | module-wide | 1 | 80,035,384 | 80,035,384 |
 | `doubleML` | `--per-package` | **1** | 80,035,384 | 80,035,384 |
 
 **THE ANSWER IS NO, AND THERE ARE THREE REASONS, ALL MEASURED.**
 
-1. **The TOTAL is the binding constraint, and a split does not touch it.** The parts sum to the whole: this tree's ten files add up to the same **22,691,389** bytes its one file held. And the mode interprets MORE, so the total GROWS — on the static-analysis module from **76,591,727** to **111,328,416** bytes, because the extra coverage is extra evidence.
-2. **The LARGEST ENTRY does not reliably shrink either.** On the static-analysis module it GREW, from **76,591,727** to **78,902,704** bytes: `src/flow` holds **478,594** of the module's **673,448** events, so the coverage gain inside the biggest package outweighed the split. The split only helps when one package does not hold the whole module — and on this tree it took the largest entry from **22,691,389** to **21,923,396**, a **3.4 %** shave, because `src/app` holds almost everything.
+1. **The TOTAL is the binding constraint, and a split does not touch it.** The parts sum to the whole: this tree's ten files add up to the same **22,707,387** bytes its one file held. And the mode interprets MORE, so the total GROWS — on the static-analysis module from **76,591,727** to **112,175,918** bytes, because the extra coverage is extra evidence.
+2. **The LARGEST ENTRY does not reliably shrink either.** On the static-analysis module it GREW, from **76,591,727** to **78,902,704** bytes: `src/flow` holds **478,594** of the module's **676,287** events, so the coverage gain inside the biggest package outweighed the split. The split only helps when one package does not hold the whole module — and on this tree it took the largest entry from **22,707,387** to **21,939,394**, a **3.4 %** shave, because `src/app` holds almost everything.
 3. **The module whose trace BROKE the envelope is a single-package module.** The upload that 0.1.35's first attempt refused carried an **80,863,997**-byte entry — the doubleML trace, `reports/riantr_moonbit_doubleML@latest_0.164.64_trace.jsonl` as it was named then — and doubleML's files are all in its root package, so that trace **cannot be split at all**: one package, one file, **80,035,384** bytes either way.
 
 **SO THE WAY PAST THE PUBLISH CEILING IS THE ONE 0.1.35 TOOK**: the raw traces stay in the repository and out of the package. The per-package mode's contribution is to the ANALYSIS cap, and that one is real.
@@ -1138,13 +1138,13 @@ without it.
 
 **The bound.** A findings table can be long enough to bury the finding you were
 looking for, so it is capped at **300 rows** and the cap is stated in the table
-itself: the marker row reads *(truncated at 300 of 2511 rows)*, and the note
+itself: the marker row reads *(truncated at 300 of 2541 rows)*, and the note
 under it says which of the whole set were not shown. **No finding is lost to the
 bound** — every one of them is in the report's `_findings.jsonl` sidecar, one
 JSON object per finding, and the count table above the rows is the **whole set,
 family by family**: it sums to exactly the number the marker names. Measured on
-the committed doubleML artefact, the L2's table shows 300 of **2,511**, its count
-table sums to **2,511**, and the sidecar holds **3,610**.
+the committed doubleML artefact, the L2's table shows 300 of **2,541**, its count
+table sums to **2,541**, and the sidecar holds **3,640**.
 
 **D1 — five rules that could never fire.** Five rules matched only the `::`
 spelling of a qualified path, and the parser renders a qualified path with a
@@ -3581,8 +3581,8 @@ traceable to a file in `reports/`:
 
 | Module | Files | Statements | L1 events | L2 findings | L3 VCs | Dead | Taint sinks | Time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `riantr/moonbit_doubleML@latest` → 0.164.66 | 220 | 30,284 | 508,422 | 3,326 | 0 (no specs) | 0 | 265 | 16.0 s |
-| `riantr/moonbit_static_analysis@latest` → 0.5.4 | 263 | 17,843 | 673,492 | 188 | 0 (no specs) | 0 | 291 | 14.2 s |
+| `riantr/moonbit_doubleML@latest` → 0.164.68 | 220 | 30,333 | 508,422 | 3,356 | 0 (no specs) | 0 | 265 | 16.0 s |
+| `riantr/moonbit_static_analysis@latest` → 0.6.0 | 270 | 18,336 | 676,331 | 190 | 0 (no specs) | 0 | 293 | 12.3 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms |
 | `LunaFlow` itself (`--dir .`) | 68 | 7,888 | 230,667 | 48 | 2 / 1 / 3 | 0 | 45 | 2,092 ms |
 
@@ -3905,7 +3905,7 @@ many functions there are — and since 0.1.37 that budget is **each package's
 own**. Measured on the committed artefacts: the doubleML run is **one**
 package, so its budget is the module's, and it stops after **100,020** steps
 and **508,422** trace events; the static-analysis one has **17** packages and
-spends **136,821** steps across them for **673,492** events — **sixteen of the
+spends **137,326** steps across them for **676,331** events — **sixteen of the
 seventeen packages whole**, and only `src/flow` spending its own budget; and
 the fixture's budget is never reached, so **every one of its 12** functions is
 entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it, and `--module-wide` spends it once for the whole module.
@@ -3923,7 +3923,7 @@ and vendored trees, not `_test.mbt` — and the abstract layer's universe filter
 on the **function**, so a plain helper in a test file is analysed and a
 `test "..." { }` block is not. For doubleML that is **129 of 220 files**. What says
 how much of the output is about test code is the finding split: on the committed
-doubleML artefact, **486 of the 2,511** findings in §5.2 (**19.4 %**) are in the
+doubleML artefact, **486 of the 2,541** findings in §5.2 (**19.1 %**) are in the
 129 files named `*_test.mbt` — and every one of them is in a helper, not in a
 test block.
 
@@ -3979,10 +3979,26 @@ the artefact is. Nothing compared the artefact against what `@latest` resolves t
 and the gap was not hypothetical: measured on **2026-11-26**, both corpora had
 moved while every check stayed green.
 
-| corpus | committed artefact | `@latest` on 2026-11-26 | what moved |
+**IT FOUND DRIFT, AND THE DRIFT WAS REPAIRED.** The committed artefacts were
+regenerated with the same recipe against the corpus the registry serves — doubleML
+**0.164.68**, static-analysis **0.6.0** — and every published number was
+rewritten from the new artefacts. The rehearsal now exits **0**: every corpus still
+resolves to the version its artefact records.
+
+| corpus | the artefact that was | the artefact that is | what moved |
 | --- | --- | --- | --- |
 | `riantr/moonbit_doubleML` | 0.164.66 | **0.164.68** | statements 30,284 → 30,333; L2 3,326 → 3,356; findings 3,610 → 3,640 |
 | `riantr/moonbit_static_analysis` | 0.5.4 | **0.6.0** | files 263 → 270; statements 17,843 → 18,336; events 673,492 → 676,331; sinks 291 → 293; findings 513 → 517 |
+
+**AND THE RECIPE WAS PROVED, NOT ASSUMED.** The recipe is RECONSTRUCTED from the
+artefact, so a difference could have been the recipe rather than the corpus.
+Measured: re-running **0.164.66** with the recipe the committed artefact states —
+`--funnel --trials 4 --slice theta_hat@aggregate_coef_se` — reproduces it
+**counter for counter** (all **19** counters identical), and the report differs in
+**three lines** only: the coordinate asked for, the pinning strategy, and the wall
+clock. The same recipe on **0.6.0** reproduces the static-analysis artefact the same
+way — the same **19** counters, and the module coordinate the only difference. So the
+difference the rehearsal reports is the CORPUS and nothing else.
 
 `node scripts/qa/release_rehearsal.mjs` re-runs the **published recipe** against
 `@latest` for every registry corpus that has a committed artefact, and compares the
@@ -4148,10 +4164,12 @@ files fail **cleanly** — `expected 1, actual 0` and `false is not true`, no pa
 no abort — and with it they pass **9 of 9**. A test that aborts the binary takes the
 other tests' results down with it, so every read of a claim is guarded.
 
-**THE COMMITTED ARTEFACTS DID NOT MOVE, AND THAT WAS MEASURED, NOT ASSUMED.**
-`doubleML` 0.164.66 and `static_analysis` 0.5.4 each report **0** depth-budget
-findings — **19** and **34** step-budget findings, unchanged — so `reports/` was
-**not** regenerated and the published totals stand.
+**THE RECURSION FIX MOVED NOTHING IN THE COMMITTED ARTEFACTS, AND THAT WAS MEASURED, NOT ASSUMED.**
+`doubleML` 0.164.68 and `static_analysis` 0.6.0 each report **0** depth-budget
+findings — **19** and **34** step-budget findings, unchanged — so the fix itself
+changed no published total. (`reports/` WAS regenerated afterwards, and for a
+different reason: the **registry** moved the corpora, not the fix. See the
+pre-release rehearsal above.)
 
 **AND THE ANALYSER'S OWN SOURCE NOW MAKES ONE MORE CLAIM, AND IT IS REGISTERED.**
 The self-scan says **62** claims where it said **61**: `parser.mbt parse_if` reaches

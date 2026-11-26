@@ -126,17 +126,17 @@ const CORPORA = [
     module: 'riantr/moonbit_static_analysis',
     version: null,
     dir: null,
-    pinned: '0.5.4',
+    pinned: '0.6.0',
   },
   {
     key: 'doubleML',
     module: 'riantr/moonbit_doubleML',
     version: null,
     dir: null,
-    // The version the REGISTRY serves: it moved 0.164.64 -> 0.164.66, and the
+    // The version the REGISTRY serves: it moved 0.164.66 -> 0.164.68, and the
     // committed artefact was regenerated against the corpus the registry
     // serves now, so the measurement must describe the same corpus.
-    pinned: '0.164.66',
+    pinned: '0.164.68',
   },
 ];
 

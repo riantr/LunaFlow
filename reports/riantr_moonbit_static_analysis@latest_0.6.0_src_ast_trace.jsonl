@@ -18,15 +18,15 @@
 {"k":"enter","fn":"ImportSpec::render","file":"src/ast/ast.mbt","line":812,"stmt":0,"name":"ImportSpec::render","value":"1","tainted":true,"trial":0,"detail":""}
 {"k":"unsupported","fn":"ImportSpec::render","file":"src/ast/ast.mbt","line":813,"stmt":4,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self { IImport(p) => p IStar(p) => \\{p} * IAliased(p, a) => \\{p} @\\{a} IAliasedStar(p, a) => \\{p} @\\{a} *}"}
 {"k":"def","fn":"ImportSpec::render","file":"src/ast/ast.mbt","line":812,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
-{"k":"source","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":835,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
-{"k":"enter","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":835,"stmt":0,"name":"Expr::assigned_base","value":"1","tainted":true,"trial":0,"detail":""}
-{"k":"unsupported","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":836,"stmt":5,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(n) => Some(n) EField(base, _) => base.assigned_base() EIndex(base, _) => base.assigned_base() ETupleField(base, _) => base.assigned_base() _ => None}"}
-{"k":"def","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":835,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
-{"k":"source","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":846,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
-{"k":"enter","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":846,"stmt":0,"name":"Expr::is_valid_target","value":"1","tainted":true,"trial":0,"detail":""}
-{"k":"unsupported","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":847,"stmt":6,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(_) | EField(_, _) | EIndex(_, _) | ETupleField(_, _) => true _ => false}"}
-{"k":"def","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":846,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
-{"k":"source","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":862,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
-{"k":"enter","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":862,"stmt":0,"name":"Expr::is_qualifier","value":"1","tainted":true,"trial":0,"detail":""}
-{"k":"unsupported","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":863,"stmt":7,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(n) => n.has_prefix(@) EField(base, _) => base.is_qualifier() _ => false}"}
-{"k":"def","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":862,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":898,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":898,"stmt":0,"name":"Expr::assigned_base","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":899,"stmt":5,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(n) => Some(n) EField(base, _) => base.assigned_base() EIndex(base, _) => base.assigned_base() ETupleField(base, _) => base.assigned_base() _ => None}"}
+{"k":"def","fn":"Expr::assigned_base","file":"src/ast/ast.mbt","line":898,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":909,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":909,"stmt":0,"name":"Expr::is_valid_target","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":910,"stmt":6,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(_) | EField(_, _) | EIndex(_, _) | ETupleField(_, _) => true _ => false}"}
+{"k":"def","fn":"Expr::is_valid_target","file":"src/ast/ast.mbt","line":909,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}
+{"k":"source","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":925,"stmt":0,"name":"self","value":"?","tainted":true,"trial":0,"detail":"parameter"}
+{"k":"enter","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":925,"stmt":0,"name":"Expr::is_qualifier","value":"1","tainted":true,"trial":0,"detail":""}
+{"k":"unsupported","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":926,"stmt":7,"name":"match","value":"","tainted":false,"trial":0,"detail":"match self.kind { EName(n) => n.has_prefix(@) EField(base, _) => base.is_qualifier() _ => false}"}
+{"k":"def","fn":"Expr::is_qualifier","file":"src/ast/ast.mbt","line":925,"stmt":-1,"name":"<ret>","value":"()","tainted":false,"trial":0,"detail":""}

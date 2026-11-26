@@ -10,8 +10,8 @@ const required = [
   // The artefacts are regenerated when the analyser changes, and the module
   // version is part of the file name, so the pin moves with them. These are
   // the versions the committed reports were generated from.
-  'riantr_moonbit_doubleML@latest_0.164.66.md',
-  'riantr_moonbit_static_analysis@latest_0.5.4.md',
+  'riantr_moonbit_doubleML@latest_0.164.68.md',
+  'riantr_moonbit_static_analysis@latest_0.6.0.md',
   'local_module_0.0.0.md',
 ];
 
@@ -131,8 +131,8 @@ const summaryExpectations = [
   // every fragment that followed a `return` was one row. Neither module has
   // an unreachable statement, so both now report none. The fixture is the
   // dead-code fixture, and it still reports its three.
-  ['riantr_moonbit_doubleML@latest_0.164.66_summary.json', 25000, 0.95, 0, 0],
-  ['riantr_moonbit_static_analysis@latest_0.5.4_summary.json', 7000, 0.95, 0, 0],
+  ['riantr_moonbit_doubleML@latest_0.164.68_summary.json', 25000, 0.95, 0, 0],
+  ['riantr_moonbit_static_analysis@latest_0.6.0_summary.json', 7000, 0.95, 0, 0],
   ['local_module_0.0.0_summary.json', 30, 1.0, 3, 3],
 ];
 
