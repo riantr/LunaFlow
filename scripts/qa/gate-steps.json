@@ -44,6 +44,7 @@
   "node scripts/qa/coverage_route_falsify.mjs",
   "node scripts/qa/ifds_spike.mjs --corpus fixtures --label fixtures",
   "node scripts/qa/ifds_spike.mjs --corpus fixtures --label fixtures-falsify --falsify",
+  "node scripts/qa/peer_scan.mjs",
   "node scripts/qa/headings.mjs README.md",
   "node scripts/qa/headings.mjs docs/design.md",
   "node scripts/qa/headings.mjs docs/qa/IFDS_SPIKE.md",
