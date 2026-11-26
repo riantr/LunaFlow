@@ -3969,6 +3969,48 @@ so the numbers are not comparable. The comparison baseline in
 `docs/design.md` §8 covers Frama-C / TrustInSoft Analyzer, Joern, CodeQL, SVF
 and Soot as a **design** comparison, not as a measured head-to-head.
 
+### The pre-release rehearsal
+
+**THE ONE QUESTION THE REST OF THE HARNESS CANNOT ASK: does the registry still
+serve what the reports record?** Every other checker finds the artefact in
+`reports/` and compares the README against IT — `node scripts/qa/readme_table.mjs`
+does exactly that, and correctly. So the tree is internally consistent however old
+the artefact is. Nothing compared the artefact against what `@latest` resolves to,
+and the gap was not hypothetical: measured on **2026-11-26**, both corpora had
+moved while every check stayed green.
+
+| corpus | committed artefact | `@latest` on 2026-11-26 | what moved |
+| --- | --- | --- | --- |
+| `riantr/moonbit_doubleML` | 0.164.66 | **0.164.68** | statements 30,284 → 30,333; L2 3,326 → 3,356; findings 3,610 → 3,640 |
+| `riantr/moonbit_static_analysis` | 0.5.4 | **0.6.0** | files 263 → 270; statements 17,843 → 18,336; events 673,492 → 676,331; sinks 291 → 293; findings 513 → 517 |
+
+`node scripts/qa/release_rehearsal.mjs` re-runs the **published recipe** against
+`@latest` for every registry corpus that has a committed artefact, and compares the
+result with the artefact. **The recipe is reconstructed from the artefact, not
+hardcoded**: the level comes from its summary and the slice target is parsed from its
+own report heading (`### backward slice on \`buf@render_reports\``). The one constant
+is `--trials 4`, the documented release recipe in [§7.2](../docs/design.md) — and the
+constant is stated because **comparing counts across different flags is the trap**: an
+earlier round of this repository compared a `--trials 8` run against a `--trials 4`
+artefact and read the difference as drift.
+
+It exits **1** when a corpus moved, **2** when the registry could not be reached
+(UNKNOWN, not drift), and **0** when every corpus still resolves to its artefact's
+version. It does **not** rewrite this file: a tool that edits its own press release
+can hide the regression it exists to expose, so it PRINTS the rows to publish and a
+human applies them.
+
+```sh
+node scripts/qa/release_rehearsal.mjs                     # every corpus
+node scripts/qa/release_rehearsal.mjs --corpus static_analysis
+```
+
+**IT IS A MANUAL CI WORKFLOW, ON PURPOSE.**
+`.github/workflows/release-rehearsal.yml` is `workflow_dispatch` only. A registry
+moving is not the fault of the commit that happens to be pushed, and a job that fails
+every push for a reason the pusher cannot fix is a job people learn to ignore. The
+event this exists for is a **release**, so it is run before one — which is also the
+reason it is not one of the local gate's steps.
 ### The QA round of 2026-11-25
 
 Two questions, asked of the tree that 0.1.37 shipped: **is every finding family pinned by a test**, and **what happens when the interpreter runs out of depth**.

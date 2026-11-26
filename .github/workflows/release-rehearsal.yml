@@ -1,0 +1,74 @@
+name: release rehearsal
+
+# THE PRE-RELEASE REHEARSAL, AND WHY IT IS MANUAL.
+#
+# It answers one question the rest of the harness cannot: does the REGISTRY
+# still serve the version the committed artefacts record?  Every other checker
+# compares the README against the artefact in `reports/`, which is internally
+# consistent however old the artefact is -- so on 2026-11-26 both corpora had
+# moved (`doubleML` 0.164.66 -> 0.164.68, `static_analysis` 0.5.4 -> 0.6.0)
+# and every check stayed green.
+#
+# It is `workflow_dispatch` on purpose.  A registry moving is not the fault of
+# the commit that happens to be pushed, and a job that fails every push for a
+# reason the pusher cannot fix is a job people learn to ignore.  The event this
+# exists for is a RELEASE, so it is run before one.
+#
+# It does NOT edit the README.  A tool that rewrites its own press release can
+# hide the regression it was meant to expose; the script prints the rows to
+# publish and a human applies them.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-rehearsal
+  cancel-in-progress: true
+
+jobs:
+  rehearse:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The rehearsal reads `reports/`, which is committed -- no tags needed,
+          # but a full checkout keeps it identical to a developer's tree.
+          fetch-depth: 0
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      # The rehearsal re-runs the PUBLISHED recipe with THIS tree's CLI, so the
+      # binary has to be built first.  It is the same build the gate does.
+      - name: Update dependencies
+        run: moon update
+
+      - name: Build the CLI
+        run: moon build src/cli --target native
+
+      # Exit 1 means a corpus MOVED and the published numbers are stale.
+      # Exit 2 means the registry could not be reached -- UNKNOWN, not drift.
+      # The difference is printed either way.
+      #
+      # ONE run, not two: `tee` captures the output for the artifact while the
+      # terminal still shows it, and `pipefail` keeps the script's exit code
+      # (without it, the pipeline would report `tee`'s status and a MOVED corpus
+      # would read as success).
+      - name: Rehearse the release
+        run: |
+          set -o pipefail
+          node scripts/qa/release_rehearsal.mjs 2>&1 | tee _build/rehearsal.txt
+
+      - name: Upload the rehearsal report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-rehearsal
+          path: _build/rehearsal.txt
+          if-no-files-found: warn
