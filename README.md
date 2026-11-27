@@ -260,7 +260,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.37
+moon add riantr/LunaFlow@0.1.38
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -268,7 +268,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.37",
+  "riantr/LunaFlow@0.1.38",
 }
 ```
 
@@ -319,7 +319,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.37](https://mooncakes.io/docs/riantr/LunaFlow@0.1.37).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.38](https://mooncakes.io/docs/riantr/LunaFlow@0.1.38).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -377,11 +377,12 @@ local path needs the `./`.
 
 ### What the release was checked on
 
-`moon 0.1.20261117`, carrying `moonc v0.10.21+06da1ed44` — the toolchain the
-numbers in [Verification](#verification) were measured on. The **newest** one,
-`moon 0.1.20261119`, carrying `moonc v0.10.22+124d61d05`, is what the CI runner
-installs, so the whole gate is re-run against it side by side before every
-release, and its numbers are published in the same row. The older
+`moon 0.1.20261126` (ccd306a, 2026-11-26), carrying `moonc v1.0.0-rc1+3c0520448`
+— the toolchain the numbers in [Verification](#verification) were measured on,
+and the one the whole gate was run against for this release. The CI runner
+installs whatever the CDN serves as `latest` on the day it runs, so this row is
+a measurement of a moving target, and it is kept honest by re-running the whole
+gate against the newest toolchain before every release. The older
 `moon 0.1.20261102`, carrying `moonc v0.10.19+bee578715`, is still
 supported and is what the core-compatibility contract is measured against, so
 both build this module. The reason that is checked rather than hoped for is
@@ -609,6 +610,50 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.38
+
+**THE RECURSION GUARD WAS SILENT, AND A TRUNCATED ANALYSIS LOOKED LIKE A CLEAN ONE. 0.1.38 IS THE RELEASE THAT CARRIES THE FIX — and it is the first one that does: the published 0.1.37 was cut from `7cccda8` (2026-11-24, 23:12), and the fix landed the next morning (`32ca2e9`, 2026-11-25, 07:52), so the version the registry served until now truncated recursion SILENTLY. The published interface does not change: the `.mbti` this release publishes is byte-identical to the one 0.1.37 published, so no consumer's build can break.**
+
+**THE DEFECT.** The L1 interpreter followed a call chain until the recursion depth budget was spent, and then returned `VUnknown` — no claim, no event, no trace. A guard that returns "unknown" without saying so is not a guard: the report read as a clean run where the analyser had stopped looking.
+
+**THE FIX REPORTS THE TRUNCATION; IT DOES NOT DEEPEN THE ANALYSIS.** The depth limit itself is unchanged — it is **6**, at `src/command/command.mbt:1044` — and **no** `--max-depth` flag was added, because the scope of this fix is the REPORT, not the budget. At the guard the interpreter now emits an UNDECIDED `BUDGET-EXCEEDED` claim and an `EvBudget` trace event, exactly as the step budget already does. **No new family was needed**: `BUDGET-EXCEEDED` already means "an analysis budget was exhausted", and the two budgets are told apart by the claim's MESSAGE and EVIDENCE, the same way the L1 and the L2 step budgets already share the family. The claim is made **once per function run**, mirroring the step budget's own flag.
+
+**MEASURED, ON PROBES THE ANALYSER RUNS ITSELF.**
+
+| probe | before the fix | after the fix |
+|---|---|---|
+| a self-recursive function | 0 claims | **1** claim, verdict `unknown`, evidence `max_depth=6 depth=6 call=r_rec` |
+| a mutually recursive pair | 0 claims | **2** claims, one per entry point |
+| an ordinary, non-recursive call chain | 0 claims | **0** claims — the analyser must not claim a depth budget for an ordinary call |
+
+**THE FALSIFICATION IS PROVEN, NOT ASSUMED.** With the fix reverted the two new test files fail CLEANLY — `expected 1, actual 0` and `false is not true`, no panic and no abort — and with it they pass. A test that aborts the binary takes the other tests' results down with it, so every read of a claim is guarded. **12** new test blocks, in `src/app/recursion_test.mbt` (**6**) and `src/app/recursion_wbtest.mbt` (**6**): 339 → 351, on all three targets.
+
+**THE ATTRIBUTION NEEDS CORRECTING, AND IT MATTERS.** The L2's loss of `INDEX-OOB` over a recursive call is NOT recursion's: the L2 does not follow user calls at all — a disclosed limitation — so it loses that claim on an ordinary, non-recursive call too. What the recursion fix repairs is the L1's depth guard.
+
+**AND THE PUBLISHED 0.1.37 SAID 71 FINDINGS WHERE THIS TREE SAYS 72 — THE DIFFERENCE IS THE FIX, MEASURED ON THE SAME TREE WITH THE SAME INVOCATION.** The published 0.1.37 and the build of this tree were both run over this tree, with the same arguments, and their two summaries were compared field by field:
+
+| counter | published 0.1.37 | this tree | what moved |
+|---|---|---|---|
+| trace events | 230,666 | **230,667** | the fix's one `EvBudget` event |
+| findings | 71 | **72** | the fix's one `BUDGET-EXCEEDED` claim |
+| files · functions · statements | 68 · 1,230 · 7,888 | 68 · 1,230 · 7,888 | nothing |
+| unsupported statements | 382 | 382 | nothing |
+| steps | 28,434 | 28,434 | nothing |
+| taint sinks | 45 | 45 | nothing |
+| range variables | 416 | 416 | nothing |
+| dead code · unreachable · infinite loop | 0 · 0 · 0 | 0 · 0 · 0 | nothing |
+| level | 1 | 1 | nothing |
+
+**Sixteen** counters are equal and **two** moved, and the findings sidecars say the same thing: the one claim that is new is `BUDGET-EXCEEDED | src/app/parser.mbt:1300` — verdict `unknown`, evidence `max_depth=6 depth=6 call=parse_expr` — the analyser's own recursive-descent parser reaching the depth budget while it analyses its own source. The other **71** findings are identical, claim for claim: **not one** of them changed its message or its evidence. A budget cannot be answered by a guard, because THE BUDGET IS THE BOUND, so the claim is REGISTERED in `src/app/selfscan_guards_wbtest.mbt` rather than guarded away.
+
+**THE COMMITTED ARTEFACTS DID NOT MOVE, AND THAT WAS MEASURED, NOT ASSUMED.** `doubleML` **0.164.68** reports **19** `BUDGET-EXCEEDED` claims and `static_analysis` **0.6.0** reports **34** — every one of them a **step**-budget claim (`max_steps=2000`), and **not one** a depth-budget claim (`max_depth`). So `reports/` was NOT regenerated and the published totals stand.
+
+**THE PUBLISHED INTERFACE DOES NOT CHANGE.** The `.mbti` at `v0.1.37` and the one this release publishes are **byte-identical** — **26,207** bytes, **1,279** lines each — so `scripts/qa/release_interface.mjs` finds **0** breaks a consumer can see. The recursion guard lives inside the interpreter, and `Interp` is a private type: no declaration changed shape, so no consumer's build can break.**
+
+**AND THE MEASUREMENT WAS RE-RUN AFTER THE VERSION BUMP, AND EVERY COUNTER CAME BACK THE SAME.** The per-package measurement names this tree's traces after the module coordinate, so a version bump renames them; the artefact was regenerated with the driver, not edited by hand. On this tree: **871** functions, **27,585** steps, **139,746** events, **22,707,387** bytes of trace, largest entry **21,939,394** — every one of them the number the committed artefact already carried, and the two corpus rows the same: `static_analysis` **0.6.0** at **76,591,727** bytes module-wide and **112,175,918** per package, `doubleML` **0.164.68** at **80,035,384**. **Only the trace FILE NAMES moved, and they moved with the version in them.**
+
+**AND THE GATE IS GREEN, ALL OF IT: 59 steps, 59 passed, 0 failed, 0 unknown.** The tests are **358** on all three targets.
 
 ### What changed in 0.1.37
 
@@ -3350,7 +3395,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
 | `node scripts/qa/verify_published.mjs 0.1.37` | **4 passed, 0 failed** |
-`moon 0.1.20261117`, native backend, Windows 11, warm `.repos` cache.
+`moon 0.1.20261126` (ccd306a, 2026-11-26), native backend, Windows 11, warm `.repos` cache.
 
 **The gate has THREE verdicts, not two.** A check can end in three ways, and
 the difference between them is the difference between *"the tree is broken"*
@@ -3570,11 +3615,16 @@ not, so an import the project keeps **deliberately** — the runtime comes from 
 toolchain — is now **reported** rather than resolved; it is **recorded, not
 silenced**. Every other warning code is identical in count on both toolchains, on
 all three targets.
-The toolchain the CDN serves as `latest` **has been rebuilt** since this release
-was verified — it was `moon 0.1.20261117` then, it is `moon 0.1.20261119` now —
-but the runner takes whatever `latest` is on the day it runs, so this row is a
-measurement of a moving target and is kept honest by re-running it against the
-newest one before every release. The measured
+The toolchain the CDN serves as `latest` **has been rebuilt** repeatedly — it was
+`moon 0.1.20261117` when the previous release was verified, and this release was
+verified on `moon 0.1.20261126` — but the runner takes whatever `latest` is on
+the day it runs, so this row is a measurement of a moving target and is kept
+honest by re-running it against the newest one before every release.
+**AND THE NUMBERS DID NOT MOVE WITH THE TOOLCHAIN.** MEASURED on
+`moon 0.1.20261126` (ccd306a, 2026-11-26), the toolchain this release was
+verified on: `moon check` gave **82 / 82 / 93** warnings and **0** errors on
+native / wasm / js — the same three cells the gate table above publishes — and
+`moon test src/app` gave **358 passed, 0 failed** on each of the three. The measured
 runs committed with the reports — the
 **Time** column is the `elapsed_ms` of the committed artefact itself, so every cell is
 traceable to a file in `reports/`:
