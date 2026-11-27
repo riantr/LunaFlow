@@ -32,9 +32,18 @@
 // and compares the two, so the model cannot drift away from the packer
 // unnoticed.
 //
-// It also checks the OTHER half of the rule, the half that is easy to break by
-// accident: the artefacts a reader uses (the report, the sidecar, the summary)
-// are packed, and the raw traces -- which stay in the repository -- are not.
+// It also checks the OTHER half of the rule: the WHOLE CORPUS stays in the
+// repository and NONE of it is packed -- not the raw traces, and not the
+// reports, the sidecars and the summaries.  The corpus is evidence ABOUT
+// this tree; it is in the repository and in the repository's history, and a
+// package a reader downloads does not need a copy of it.
+//
+// And the corpus must still be TRACKED.  It leaves the package because an
+// ignore rule matches it, not because it was thrown away -- and a file that
+// is tracked and ignored at the same time is exactly the state every corpus
+// file is in now: the nineteen raw traces were in it before the rule
+// covered the rest, and the registry's own copy of 0.1.38 carries none of
+// them.
 //
 // And when a raw trace is NOT in the repository, the check says WHY and WHAT TO
 // RUN.  The rule that keeps the traces out of the package is the very rule that
@@ -182,11 +191,11 @@ export function measureModel() {
   const reportsDir = join(ROOT, 'reports');
   if (existsSync(reportsDir)) {
     const names = readdirSync(reportsDir);
-    // Which rule hides each trace is MEASURED, because the remedy depends on
-    // it: a path a rule matches cannot be staged with a plain `git add`.
-    const rules = ignoreRules(
-      names.filter((n) => n.endsWith('_trace.jsonl')).map((n) => `reports/${n}`),
-    );
+    // Which rule hides each corpus file is MEASURED, because the remedy
+    // depends on it: a path a rule matches cannot be staged with a plain
+    // `git add`.  EVERY corpus file is measured now -- the traces and the
+    // reports alike -- because the rule covers the whole directory.
+    const rules = ignoreRules(names.map((n) => `reports/${n}`));
     for (const name of names) {
       const rel = `reports/${name}`;
       if (name.endsWith('_trace.jsonl')) {
@@ -197,7 +206,12 @@ export function measureModel() {
           ignoredBy: rules.get(rel) ?? null,
         });
       } else if (name.endsWith('.md') || name.endsWith('_findings.jsonl') || name.endsWith('_summary.json')) {
-        artefacts.push({ path: rel });
+        artefacts.push({
+          path: rel,
+          tracked: tracked.has(rel),
+          ignored: rules.has(rel),
+          ignoredBy: rules.get(rel) ?? null,
+        });
       }
     }
   }
@@ -292,13 +306,54 @@ export function envelopeChecks(model, envelope) {
     `${largest.path} at ${largest.bytes} bytes, ceiling ${envelope.reference_largest_entry_bytes}`,
   );
 
-  const unpackedArtefacts = model.artefacts.filter((a) => !packedSet.has(a.path));
+  // THE CORPUS IS NOT PACKED.  The report, the sidecar and the summary are
+  // evidence about this tree, and the repository carries them; a package a
+  // reader downloads does not need a copy of them.
+  const packedArtefacts = model.artefacts.filter((a) => packedSet.has(a.path));
   add(
-    'every report, sidecar and summary is packed',
-    unpackedArtefacts.length === 0,
-    unpackedArtefacts.length === 0
-      ? `${model.artefacts.length} artefact(s)`
-      : `not packed: ${unpackedArtefacts.map((a) => a.path).join(', ')}`,
+    'no report, sidecar or summary is packed',
+    packedArtefacts.length === 0,
+    packedArtefacts.length === 0
+      ? `${model.artefacts.length} artefact(s), none of them packed`
+      : `packed: ${packedArtefacts.map((a) => a.path).join(', ')}`,
+    packedArtefacts.length === 0
+      ? []
+      : [
+        'the corpus has to stay out of the package, so the ignore rule has to match it -- the rule that matches it is measured by:',
+        `git check-ignore -v --no-index -- ${packedArtefacts.map((a) => a.path).join(' ')}`
+      ],
+  );
+
+  // AND IT IS STILL IN THE REPOSITORY.  The corpus leaves the package
+  // because a rule matches it, not because it was thrown away -- so a corpus
+  // file that is not in the index is a loss, and the way out is the same
+  // command the traces need: `git add -f` for a path a rule matches.
+  const untrackedArtefacts = model.artefacts.filter((a) => !a.tracked);
+  const artefactRemedy = [];
+  if (untrackedArtefacts.length > 0) {
+    const forced = untrackedArtefacts.filter((a) => a.ignored);
+    const plain = untrackedArtefacts.filter((a) => !a.ignored);
+    if (forced.length > 0) {
+      const rules = [...new Set(forced.map((a) => a.ignoredBy).filter(Boolean))];
+      artefactRemedy.push(
+        `${forced.length} of them are matched by the ignore rule ${rules.join(', ')}, so \`git add\` alone refuses them:`
+      );
+      artefactRemedy.push(`git add -f -- ${forced.map((a) => a.path).join(' ')}`);
+    }
+    if (plain.length > 0) {
+      artefactRemedy.push(`${plain.length} of them are matched by no ignore rule, so \`git add\` takes them:`);
+      artefactRemedy.push(`git add -- ${plain.map((a) => a.path).join(' ')}`);
+    }
+  }
+  add(
+    'every report, sidecar and summary is still tracked by git',
+    model.artefacts.length > 0 && untrackedArtefacts.length === 0,
+    model.artefacts.length === 0
+      ? 'there is no report, sidecar or summary at all, so this check has nothing to compare'
+      : untrackedArtefacts.length === 0
+        ? `${model.artefacts.length} artefact(s), all tracked`
+        : `${untrackedArtefacts.length} of ${model.artefacts.length} artefact(s) are on disk but not in the git index`,
+    artefactRemedy,
   );
 
   const packedTraces = model.traces.filter((t) => packedSet.has(t.path));

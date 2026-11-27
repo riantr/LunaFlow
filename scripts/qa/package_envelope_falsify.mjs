@@ -17,12 +17,15 @@
 //
 //   F1  the package carries more unpacked bytes than the registry has accepted
 //   F2  the package carries ONE file bigger than the registry has accepted
-//   F3  a report, a sidecar or a summary is not packed at all
+//   F3  a report, a sidecar or a summary IS packed -- the corpus must not be
+//       in the package
 //   F4  a raw trace IS packed -- the thing that broke the 0.1.35 upload
 //   F5  a raw trace is not tracked, so the evidence is not in the repository
 //   F6  there is NO raw trace at all -- the check must not pass vacuously
 //   F7  a raw trace that NO ignore rule matches -- `git add -f` would be the
 //       wrong advice, so the check must not print it
+//   F8  a report is not tracked -- the corpus leaves the PACKAGE, it must not
+//       leave the REPOSITORY
 //
 // And then it goes END TO END: the command the check prints is taken from the
 // check's OWN output and run against a REPLICA of the tree -- a real git
@@ -124,13 +127,27 @@ runModel('truth', clone(TRUTH), null);
   runModel('F2 a package with one entry over the ceiling', m, 'largest entry');
 }
 
-// F3 -- a report that is not packed at all.
+// F3 -- a report that IS packed.  The corpus is evidence about this tree;
+// the repository carries it and the package does not.
 {
   const m = clone(TRUTH);
   const report = 'reports/riantr_moonbit_doubleML@latest_0.164.68.md';
-  m.artefacts = [...m.artefacts, { path: report }];
-  m.packed = m.packed.filter((f) => f.path !== report);
-  runModel('F3 a report that is not packed', m, 'every report, sidecar and summary is packed');
+  m.packed = [...m.packed, { path: report, bytes: 426_043 }];
+  runModel('F3 a report that is packed', m, 'no report, sidecar or summary is packed');
+}
+
+// F8 -- a report that is not tracked: the corpus left the PACKAGE and now
+// it is leaving the REPOSITORY too, which is a loss.  The way out is the
+// same command the traces need, and the check has to NAME it.
+{
+  const m = clone(TRUTH);
+  m.artefacts = m.artefacts.map((a) => ({ ...a, tracked: false }));
+  const out = runModel('F8 a report that is not tracked', m, 'every report, sidecar and summary is still tracked by git');
+  check(
+    'F8: it names the ignore rule and the command that stages the report',
+    /FIX\s+.*git add -f --/.test(out),
+    remedyLines(out) || 'no FIX line',
+  );
 }
 
 // F4 -- a raw trace IS packed: the thing that broke the 0.1.35 upload.
@@ -182,9 +199,10 @@ runModel('truth', clone(TRUTH), null);
 // E1 -- END TO END: the command the check prints IS the command that works.
 //
 // The replica is a real git repository, under `_build/`, with this tree's own
-// .gitignore and one raw trace on disk that the index does not know yet -- the
-// state the 59-step gate was in when it went red on the package envelope.  The
-// tracked tree is never touched.
+// .gitignore and BOTH kinds of corpus file on disk that the index does not
+// know yet -- a raw trace and a report -- which is the state the 59-step gate
+// was in when it went red on the package envelope.  The tracked tree is never
+// touched.
 {
   const REPO = join(WORK, 'replica');
   mkdirSync(join(REPO, 'scripts', 'qa'), { recursive: true });
@@ -198,6 +216,7 @@ runModel('truth', clone(TRUTH), null);
   );
   writeFileSync(join(REPO, 'moon.mod'), 'name = "replica/demo"\n\nversion = "0.0.1"\n');
   writeFileSync(join(REPO, 'reports', 'x_trace.jsonl'), '{"event":1}\n');
+  writeFileSync(join(REPO, 'reports', 'x.md'), '# a report\n');
 
   const git = (args) => spawnSync('git', args, { cwd: REPO, encoding: 'utf8' });
   const init = git(['init', '--quiet']);
@@ -223,24 +242,25 @@ runModel('truth', clone(TRUTH), null);
   const before = run();
   const beforeOut = `${before.stdout ?? ''}${before.stderr ?? ''}`;
   check(
-    'E1: the check goes red on a repository whose index does not know the trace yet',
+    'E1: the check goes red on a repository whose index does not know the corpus yet',
     before.status === 1,
     `exit=${before.status}`,
   );
-  // The command is TAKEN from the output, not written out again here: a second
-  // copy of it would be a second source of truth, and this case would prove
-  // something about the copy rather than about the check.
-  const command = /git add -f -- (\S+)/.exec(beforeOut);
+  // The commands are TAKEN from the output, not written out again here: a
+  // second copy of them would be a second source of truth, and this case
+  // would prove something about the copy rather than about the check.  There
+  // is one per group -- the traces and the reports -- and BOTH have to run.
+  const commands = [...beforeOut.matchAll(/git add -f -- ([^\r\n]+)/g)].map((m) => m[1].split(' '));
   check(
-    'E1: and it prints the command that stages the trace',
-    command !== null,
-    command ? command[0] : beforeOut.split(/\r?\n/).filter((l) => l.startsWith('FIX')).join(' | '),
+    'E1: and it prints the commands that stage the trace and the report',
+    commands.length >= 2,
+    commands.length ? commands.map((c) => c.join(' ')).join(' | ') : beforeOut.split(/\r?\n/).filter((l) => l.startsWith('FIX')).join(' | '),
   );
-  if (command) {
-    git(['add', '-f', '--', command[1]]);
+  if (commands.length > 0) {
+    for (const paths of commands) git(['add', '-f', '--', ...paths]);
     const after = run();
     check(
-      'E1: and that very command turns the check green',
+      'E1: and those very commands turn the check green',
       after.status === 0,
       `exit=${after.status}`,
     );

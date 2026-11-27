@@ -31,7 +31,7 @@ __pycache__/
 /coveralls.json
 /_coverage/
 
-# THE RAW TRACES ARE EVIDENCE, NOT PACKAGE.
+# THE CORPUS STAYS IN THE REPOSITORY; THE PACKAGE DOES NOT CARRY IT.
 #
 # `moon publish` packs the working tree minus the files the ignore rules
 # match, and the registry refuses an archive it cannot read: the 0.1.35
@@ -39,11 +39,29 @@ __pycache__/
 # because the package carried 162,703,756 bytes of unpacked content and an
 # 80,863,997-byte entry, where the largest archive the registry had
 # accepted (0.1.34, read from the registry's own copy) carried 46,274,868
-# bytes and a 39,479,846-byte entry. The report, the sidecar and the
-# summary -- the artefacts a reader uses -- are small, and they stay.
+# bytes and a 39,479,846-byte entry.
 #
-# The traces stay in the repository, and they stay tracked: a trace that a
-# new corpus produces is committed with `git add -f` -- and when one of them
-# is missing from the index, the package envelope check says WHICH ignore rule
-# matched it and prints the command that stages it.
-/reports/*_trace.jsonl
+# The RAW TRACES were the reason, and they are the biggest files in the
+# tree. The REPORTS, the SIDECARS and the SUMMARIES went with them: the
+# corpus is evidence ABOUT this tree, and the repository carries it -- a
+# package a reader downloads does not need a copy of the measurements of
+# the project that shipped it. Before this rule the package carried nine
+# corpus files (the report, the sidecar and the summary of each of the
+# three committed corpora); the 0.1.38 package the registry still serves
+# has them, and that is its record.
+#
+# THE RULE IS MEASURED, NOT ASSUMED. An ignore rule matches a file even
+# when the file is TRACKED, and the packer leaves every matched file out:
+# the nineteen raw traces were tracked AND ignored at the same time, and
+# the registry's own copy of 0.1.38 carries none of them. The corpus
+# leaves the same way -- `git ls-files --cached --ignored --exclude-standard`
+# is what the envelope check measures, and it is git's own answer.
+#
+# The files stay TRACKED, because an ignore rule does not untrack anything:
+# `git ls-files` still lists them, the tree stays clean, and the corpus is
+# in the repository's history. A corpus file that is NEW is committed with
+# `git add -f` -- a plain `git add` refuses it, because the rule that keeps
+# the corpus out of the package is the very rule that makes git ignore it --
+# and when one of them is missing from the index, the package envelope check
+# says WHICH ignore rule matched it and prints the command that stages it.
+/reports/

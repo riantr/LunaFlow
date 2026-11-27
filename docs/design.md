@@ -1632,15 +1632,38 @@ repository — are **not** in the archive. That is not a preference: the registr
 **refused** the 0.1.35 upload with `400 Bad Request, detail: Invalid ZIP archive`
 when the package carried **162,703,756** bytes unpacked and an **80,863,997**-byte
 entry, where the largest archive it had served (**0.1.34**) carried **46,274,868**
-bytes and a **39,479,846**-byte entry. The limit is a check now:
+bytes and a **39,479,846**-byte entry.
+
+**AND NOW NEITHER DO THE REPORTS, THE SIDECARS AND THE SUMMARIES: the rule is
+`/reports/`, the whole corpus, and all of it stays in the repository.** The
+corpus is evidence *about* this tree — **nine** files, **1,871,067** bytes
+unpacked, measured on the committed corpus — and the repository carries it; a
+package a reader downloads does not need a copy of the measurements of the
+project that shipped it.
+
+**THE MECHANISM, because it is the part that has to be trusted.** An ignore
+rule matches a file **even when the file is tracked**, and the packer leaves
+every matched file out: the nineteen raw traces were tracked *and* ignored at
+the same time, and the registry's own copy of 0.1.38 carries none of them.
+`git ls-files --cached --ignored --exclude-standard` is git's own answer to
+"which files are ignored", and it is what the envelope check measures; it now
+lists **28** files under `reports/` where it listed **19** before. An ignore
+rule does not untrack anything, so `git ls-files` still lists all **28** of
+them, the tree stays clean, and the corpus is in the repository's history —
+and a corpus file that is NEW is committed with `git add -f`, because the rule
+that keeps the corpus out of the package is the very rule that makes a plain
+`git add` refuse it.
+
+The limit is a check now:
 `scripts/qa/package_envelope.mjs` measures the package the tree would publish and
 keeps it inside the envelope the registry has already accepted, and
 `docs/qa/PUBLISH_ENVELOPE.json` records where the measurement put the boundary.
-When a raw trace is on disk but not yet in the index, that check **measures which
+It asks both halves of the rule — **no** report, sidecar or summary is packed,
+and **every** one of them is still tracked by git — because the corpus leaving
+the package must not mean the corpus leaving the repository. When a corpus
+file is on disk but not yet in the index, that check **measures which
 ignore rule matched it** and prints the command that stages it — `git add -f` for
-a path the rule matches, `git add` for one it does not — because the rule that
-keeps the traces out of the package is the same rule that makes a plain `git add`
-refuse them.
+a path the rule matches, `git add` for one it does not.
 
 Memory is dominated by the trace array (one record per event, ~150–250 bytes) and the parsed AST; both are linear in the caps. The **76.3 MB** JSONL for doubleML is deliberate: it is the audit evidence. A production deployment should cap `--trials`/`--max-total-steps` or stream events to disk.
 

@@ -814,7 +814,7 @@ At the **file** level the default read **8 of 64** files here, **20 of 220** on 
 
 **THE PACKAGE THE REGISTRY COULD NOT READ, AND WHY IT COULD NOT.** The first upload of this release was **refused**: `400 Bad Request, detail: Invalid ZIP archive` — and the message names no limit, so the cause had to be measured rather than guessed. `moon publish` packs the working tree minus the files the ignore rules match, and the package carried the **raw traces**: **162,703,756** bytes unpacked and an **80,863,997**-byte entry. The largest archive the registry had served — **0.1.34**, read from the registry's own copy — carried **46,274,868** bytes and a **39,479,846**-byte entry. The compressed size was never the constraint: the registry serves a **14,725,180**-byte package (`moonbitstack/mooncrypt@0.5.2`), larger than the one it refused.
 
-**THE TRACES STAY IN THE REPOSITORY; THE PACKAGE DOES NOT CARRY THEM.** One `.gitignore` line keeps the raw traces out of the archive while they stay committed, and the artefacts a reader uses — the report, the sidecar, the summary — stay in it. The package this release publishes is **172 files**, and its largest entry is **993,480** bytes. `scripts/qa/package_envelope.mjs` keeps the package inside the envelope the registry has already accepted, so a release that would be refused fails **here** instead.
+**THE TRACES STAY IN THE REPOSITORY; THE PACKAGE DOES NOT CARRY THEM.** One `.gitignore` line keeps the raw traces out of the archive while they stay committed, and the artefacts a reader uses — the report, the sidecar, the summary — stay in it. The package this release publishes is **172 files**, and its largest entry is **993,480** bytes. **That is what 0.1.35 published, and this section is its record: the rule changed afterwards — the whole corpus leaves the package now — and the record is not rewritten.** See [The corpus is not in the package](#the-corpus-is-not-in-the-package). `scripts/qa/package_envelope.mjs` keeps the package inside the envelope the registry has already accepted, so a release that would be refused fails **here** instead.
 
 **TWO REAL DEFECTS CAME OUT OF THE LIFTING, AND BOTH ARE FIXED.** `contract_above` walked up the source lines with no upper bound, while the loop below it had one — and `start_line` is a parameter of a **published** function, so a caller could read past the end of the file. `P::peek` had no lower bound where `P::peek_at` had one. Both are fixed in the source rather than registered: a claim about this source that a guard can answer is **fixed**.
 
@@ -3390,8 +3390,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/selfscan_register_falsify.mjs` | **every check agrees** — the register check goes red on a dropped claim, a count that was not measured, a stale headline, a claim that is not made and a family that does not exist, and it stays green on a rewording it must not notice (on a **copy** of the register; the tracked source is never touched) |
 | `node scripts/qa/l1_coverage.mjs` | **every check agrees** — the default scan's coverage rule, measured: the default scan is truncated by no bound at all, the step budget stops it when it is made small, the count cap stops it when it is made small, the budget the run used is the one the source declares, and the report's coverage rows agree with the metrics that state them |
 | `node scripts/qa/l1_coverage_falsify.mjs` | **every check agrees** — the coverage check goes red when the metrics and the report disagree about how many functions were entered, when a truncation the report does not state is in the metrics, and when the report states the old count cap; and it stays green on a change that says nothing about the coverage (on **copies** of the artefacts; the tracked files are never touched) |
-| `node scripts/qa/package_envelope.mjs` | **5 passed, 0 failed** — the package the registry can read: the tree's own file set (**git's** ignore rules, not a re-implementation of them) is measured against the envelope the registry has already accepted, read from `docs/qa/PUBLISH_ENVELOPE.json`, and it says in both directions whether the raw traces are packed (they must not be) and tracked (they must be); when one is not tracked it says WHICH ignore rule matched it and prints the command that stages it, because the rule that keeps the traces out of the package is the same rule that makes a plain `git add` refuse them |
-| `node scripts/qa/package_envelope_falsify.mjs` | **22 passed, 0 failed** — the envelope check goes red on a package that carries more unpacked bytes than the registry has accepted, on one that carries a single file bigger than the registry has accepted, on a missing artefact, and on a trace that is packed or untracked; it goes red on a package with no trace at all, so it cannot pass vacuously; the failure it reports NAMES the way out — which ignore rule matched the trace, and the command that stages it — and it says `git add` alone when no rule matches, so the advice is never the wrong one; that command is then taken from the check's OWN output and run against a replica of this tree, so the advice is **proved to work**, not merely printed; and it stays green on a control (on **copies**; the tracked files are never touched) |
+| `node scripts/qa/package_envelope.mjs` | **6 passed, 0 failed** — the package the registry can read: the tree's own file set (**git's** ignore rules, not a re-implementation of them) is measured against the envelope the registry has already accepted, read from `docs/qa/PUBLISH_ENVELOPE.json`, and it says in both directions whether the corpus is packed (it must **not** be — neither the raw traces nor the reports, the sidecars and the summaries) and tracked (it must be); when one of them is not tracked it says WHICH ignore rule matched it and prints the command that stages it, because the rule that keeps the corpus out of the package is the same rule that makes a plain `git add` refuse it |
+| `node scripts/qa/package_envelope_falsify.mjs` | **25 passed, 0 failed** — the envelope check goes red on a package that carries more unpacked bytes than the registry has accepted, on one that carries a single file bigger than the registry has accepted, on a report that IS packed, on a report that is not tracked, and on a trace that is packed or untracked; it goes red on a package with no trace at all, so it cannot pass vacuously; the failure it reports NAMES the way out — which ignore rule matched the trace, and the command that stages it — and it says `git add` alone when no rule matches, so the advice is never the wrong one; that command is then taken from the check's OWN output and run against a replica of this tree, so the advice is **proved to work**, not merely printed; and it stays green on a control (on **copies**; the tracked files are never touched) |
 | `node scripts/qa/per_package.mjs` | **21 passed, 0 failed** — the per-package mode: every package the report names is a directory that holds a `moon.pkg`, the per-package traces hold every event exactly once and every event belongs to its own package, the report's package table adds up to the module, the report states the rule it followed, the two modes agree when no budget was reached, and with the **same one-step budget** the module-wide scan enters **1** function while the per-package scan enters one in **every** package — and, since the mode is the DEFAULT, that the **default** scan writes one trace per package, states the per-package rule and is identical to the explicit `--per-package` scan, while `--module-wide` writes one trace and no package table |
 | `node scripts/qa/per_package_falsify.mjs` | **12 passed, 0 failed** — the per-package check goes red when an event lands in the wrong package's trace, when a trace loses an event, when the report's package table does not add up, when the report states the module-wide rule, and when the **default** scan's metrics carry no packages line at all; and it stays green on a control (on **copies**; the tracked files are never touched) |
 | `node scripts/qa/published_items.mjs 0.1.38` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
@@ -3958,6 +3958,12 @@ moon run src/cli --target native -- analyze riantr/moonbit_doubleML@latest \
   --out reports --funnel --trials 4 --slice "theta_hat@aggregate_coef_se"
 ```
 
+**A CORPUS FILE THAT IS NEW IS COMMITTED WITH `git add -f`**, because the
+whole of `reports/` is matched by an ignore rule — the rule that keeps the
+corpus out of the published package. A plain `git add` refuses it, and the
+envelope check prints the exact command when a corpus file is on disk but
+not in the index. See [The corpus is not in the package](#the-corpus-is-not-in-the-package).
+
 **There is NO `--max-functions` cap in that recipe, and adding one changes every
 L1 number.** Measured on the committed artefacts: with `--max-functions 120` the
 doubleML run produces **198,694** trace events; without it, **508,422**. The cap
@@ -4035,6 +4041,55 @@ workload** has been run — the two analyzers were pointed at different modules,
 so the numbers are not comparable. The comparison baseline in
 `docs/design.md` §8 covers Frama-C / TrustInSoft Analyzer, Joern, CodeQL, SVF
 and Soot as a **design** comparison, not as a measured head-to-head.
+
+### The corpus is not in the package
+
+**THE REPORTS, THE SIDECARS, THE SUMMARIES AND THE RAW TRACES ALL LEAVE THE PACKAGE NOW, AND ALL OF THEM STAY IN THE REPOSITORY. The rule is one line — `/reports/` in `.gitignore` — and it is measured, not assumed.**
+
+**WHY THE RULE MOVED.** The raw traces were the reason the corpus was excluded at
+all: the 0.1.35 upload was refused for carrying **162,703,756** bytes unpacked and
+an **80,863,997**-byte entry, and the raw traces are the biggest files in this
+tree — **192,307,782** bytes of them, on disk. The **reports, the sidecars and the
+summaries** were kept in the package on the grounds that they are "the artefacts a
+reader uses" — **nine** files, **1,871,067** bytes unpacked, measured on the
+committed corpus. That ground does not hold: the corpus is evidence **about** this
+tree, the repository carries it, and a package a reader downloads does not need a
+copy of the measurements of the project that shipped it.
+
+**WHAT IT COSTS AND WHAT IT BUYS.** The package loses **nine** files and
+**1,871,067** bytes unpacked. Nothing a reader needs is lost: the analyser, the
+library API and the CLI are all still in it. And the package a release would
+publish is **measured**, not remembered — `scripts/qa/package_envelope.mjs` prints
+its own file count and byte total on every run.
+
+**THE MECHANISM IS MEASURED, IN BOTH DIRECTIONS.** An ignore rule matches a file
+**even when the file is tracked**, and the packer leaves every matched file out —
+the nineteen raw traces were tracked *and* ignored at the same time, and the
+registry's own copy of **0.1.38** carries none of them. `git ls-files --cached
+--ignored --exclude-standard` is git's own answer to "which files are ignored",
+it is what the envelope check measures, and it now lists **28** files under
+`reports/` — the whole corpus — where it listed **19** before.
+
+**AND THE FILES STAY TRACKED, BECAUSE AN IGNORE RULE DOES NOT UNTRACK ANYTHING.**
+`git ls-files` still lists all **28** of them, the tree stays clean, and the
+corpus is in the repository's history. **A corpus file that is NEW is committed
+with `git add -f`** — a plain `git add` refuses it, because the rule that keeps
+the corpus out of the package is the very rule that makes git ignore it — and when
+one of them is missing from the index, the envelope check says **WHICH** ignore
+rule matched it and prints the command that stages it.
+
+**THE CHECK NOW ASKS BOTH HALVES.** `scripts/qa/package_envelope.mjs` says that
+**no** report, sidecar or summary is packed, and that **every** one of them is
+still tracked by git — the corpus leaves the package, it does not leave the
+repository. Its falsifier proves both halves: **F3** puts a report back into the
+package and the check goes red; **F8** takes the reports out of the index and the
+check goes red and names the command; and **E1** takes the printed commands from
+the check's own output and runs them against a replica of this tree that carries
+both a trace and a report.
+
+**THE OLDER RELEASE NOTES KEEP THEIR OWN RECORD.** The 0.1.35 section still says
+that the artefacts stayed in the package, because that is what **0.1.35**
+published, and rewriting a release's record would falsify it.
 
 ### The pre-release rehearsal
 
@@ -4427,6 +4482,10 @@ than the one it refused.
 committed, and the artefacts a reader uses — the report, the sidecar, the
 summary — stay in it. The package this release publishes is **172 files**, and
 its largest entry is **993,480** bytes.
+
+**THE RULE MOVED AFTER THIS ROUND**, and the round keeps its own record: the
+whole corpus leaves the package now, not only the raw traces. See
+[The corpus is not in the package](#the-corpus-is-not-in-the-package).
 
 **AND THE LIMIT IS A CHECK NOW, not a story.** `scripts/qa/package_envelope.mjs`
 measures the package the tree would publish — with **git's own** ignore rules,
