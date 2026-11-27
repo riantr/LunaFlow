@@ -655,6 +655,21 @@ than the standalone module provided.
 
 **AND THE GATE IS GREEN, ALL OF IT: 59 steps, 59 passed, 0 failed, 0 unknown.** The tests are **358** on all three targets.
 
+**AND THE PARITY THIS RELEASE WAS FOR IS MEASURED: `@latest` NOW SAYS WHAT THIS TREE SAYS.** `moonx riantr/LunaFlow@latest` over this tree resolves **0.1.38** — the artefact it writes is named `riantr_LunaFlow_0.1.38` — and its summary was compared with the local build's, field by field: **all eighteen counters are equal** — files **68**, functions **1,230**, statements **7,888**, unsupported **382**, trace events **230,667**, steps **28,434**, taint sinks **45**, range variables **416**, dead code **0**, unreachable **0**, infinite loop **0**, level **1**, findings **72** — and the two findings sidecars are **IDENTICAL**: **72** rows each, and **not one** of them differs in its message or in its evidence. **The published release is the tree.** Before this release the same comparison said otherwise: the published 0.1.37 was one event and one claim short, and that gap WAS the fix.
+
+**THE PUBLISHED BYTES, MEASURED FROM THE REGISTRY'S OWN COPY — not from this tree.** A local build says what this source produces; it does not say what a reader downloads. So the record below is the cached package the registry served, `~/.moon/registry/cache/riantr/LunaFlow/0.1.38.zip`:
+
+| what | measurement |
+|---|---|
+| the published package | **2,132,359 bytes** |
+| SHA-256 | `8c7da2df2800a3ab6d1253f0c76f10236b57a0257ed76a71f5f01fd71b2770c4` |
+| what is in it | **186** files, **5,516,792** bytes unpacked, largest entry `LunaFlow_Logo.png` at **993,480** bytes, and **no raw trace** — the traces stay in the repository |
+| a clean consumer resolving it | `scripts/qa/verify_published.mjs 0.1.38` → **4 of 4 PASS**, `moon add` pins `riantr/LunaFlow@0.1.38`, the consumer builds and runs, and the published library API answers |
+| the published artefact over the fixture corpus | `scripts/qa/published_items.mjs 0.1.38` → **14 of 14 PASS**, and the published report matches the local build's on the same corpus — **29 findings** each. The published artefact also carries the **counterexample section**: its table and its sidecar agree, and the sidecar is **byte-identical** to the local build's — **2,204 bytes**, **9** rows |
+| the check that would catch a published artefact that does not | `scripts/qa/published_items_falsify.mjs 0.1.38` → **6 of 6 PASS**, on **copies** of the local artefacts |
+
+That is the release verified through the artefact a reader actually gets. It cannot be checked from the tree, which is why it is a separate row. And the **package the registry read** is the one the envelope check measured against the **real archive**: **186** files, **5,516,792** bytes unpacked, largest entry **993,480** bytes — inside the envelope the registry has already accepted (**46,274,868** and **39,479,846**).
+
 ### What changed in 0.1.37
 
 **THE DEFAULT SCAN NOW RUNS PACKAGE BY PACKAGE. A scan with no mode flag does what `--per-package` did, and `--module-wide` is the new name for what it used to do. The measurement that justified the mode is the measurement that decided the default: a module-wide budget is spent on the FIRST packages in file order, so the rest of the tree is never interpreted.**
@@ -3379,8 +3394,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/package_envelope_falsify.mjs` | **22 passed, 0 failed** — the envelope check goes red on a package that carries more unpacked bytes than the registry has accepted, on one that carries a single file bigger than the registry has accepted, on a missing artefact, and on a trace that is packed or untracked; it goes red on a package with no trace at all, so it cannot pass vacuously; the failure it reports NAMES the way out — which ignore rule matched the trace, and the command that stages it — and it says `git add` alone when no rule matches, so the advice is never the wrong one; that command is then taken from the check's OWN output and run against a replica of this tree, so the advice is **proved to work**, not merely printed; and it stays green on a control (on **copies**; the tracked files are never touched) |
 | `node scripts/qa/per_package.mjs` | **21 passed, 0 failed** — the per-package mode: every package the report names is a directory that holds a `moon.pkg`, the per-package traces hold every event exactly once and every event belongs to its own package, the report's package table adds up to the module, the report states the rule it followed, the two modes agree when no budget was reached, and with the **same one-step budget** the module-wide scan enters **1** function while the per-package scan enters one in **every** package — and, since the mode is the DEFAULT, that the **default** scan writes one trace per package, states the per-package rule and is identical to the explicit `--per-package` scan, while `--module-wide` writes one trace and no package table |
 | `node scripts/qa/per_package_falsify.mjs` | **12 passed, 0 failed** — the per-package check goes red when an event lands in the wrong package's trace, when a trace loses an event, when the report's package table does not add up, when the report states the module-wide rule, and when the **default** scan's metrics carry no packages line at all; and it stays green on a control (on **copies**; the tracked files are never touched) |
-| `node scripts/qa/published_items.mjs 0.1.37` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
-| `node scripts/qa/published_items_falsify.mjs 0.1.37` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
+| `node scripts/qa/published_items.mjs 0.1.38` | **14 passed, 0 failed** — the **published** artefact over the fixture corpus: the bounded tables, the lossless sidecar, D1, D2, and now the counterexample section — its table and its sidecar agree, and they are byte-identical to the local build's |
+| `node scripts/qa/published_items_falsify.mjs 0.1.38` | **6 passed, 0 failed** — the published-artefact check goes red when the local counterexamples differ by one byte, and when they are absent altogether (on a **copy** of the local artefacts) |
 | `node scripts/qa/gherkin.mjs` | **7 passed, 0 failed** — the acceptance scenarios, and a tree where the CLI binary was never built is **UNKNOWN** (exit 2) rather than a failure: a check that cannot RUN says nothing about the tree, and reporting it as a failure accuses the tree of being broken |
 | `node scripts/qa/e2e.mjs` | **70 passed, 0 failed** — the fixture, the two validation modules and the full doubleML run, with the trace **found** in the output directory and **summed** over the packages, and the output directory emptied before the run so no earlier run's file can be read |
 | `node scripts/qa/fuzz.mjs` | **110 passed, 0 failed** |
@@ -3394,7 +3409,7 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/counterexamples_falsify.mjs` | **every check agrees** — the counterexample check goes red when an argument is not its candidate, when a counterexample names a finding the report does not show, when a row disagrees with the sidecar and when a prose count is unsupported (on **copies** of the artefacts; the tracked files are never touched), and it stays green on a rewording it must not notice |
 | `node scripts/qa/host_requirements.mjs` | **107 imports, 106/106 covered** (+1 WASI import served by the host runtime) |
 | `node scripts/qa/core_compat.mjs` | **15 library + 1 test-only declaration(s) identical in every core compared** |
-| `node scripts/qa/verify_published.mjs 0.1.37` | **4 passed, 0 failed** |
+| `node scripts/qa/verify_published.mjs 0.1.38` | **4 passed, 0 failed** |
 `moon 0.1.20261126` (ccd306a, 2026-11-26), native backend, Windows 11, warm `.repos` cache.
 
 **The gate has THREE verdicts, not two.** A check can end in three ways, and
