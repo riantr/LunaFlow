@@ -10,7 +10,7 @@
     {
       "key": "this tree",
       "module": "riantr/LunaFlow",
-      "version": "0.1.38",
+      "version": "0.1.39",
       "dir": "."
     },
     {
@@ -30,10 +30,10 @@
     {
       "corpus": "this tree",
       "module": "riantr/LunaFlow",
-      "version": "0.1.38",
+      "version": "0.1.39",
       "dir": ".",
       "mode": "wide",
-      "wall_ms": 1318,
+      "wall_ms": 1322,
       "functions": 1234,
       "entered": 873,
       "skipped": 1,
@@ -51,15 +51,15 @@
       "trace_files": 1,
       "trace_total_bytes": 22729567,
       "trace_largest_bytes": 22729567,
-      "trace_largest_name": "riantr_LunaFlow_0.1.38_trace.jsonl"
+      "trace_largest_name": "riantr_LunaFlow_0.1.39_trace.jsonl"
     },
     {
       "corpus": "this tree",
       "module": "riantr/LunaFlow",
-      "version": "0.1.38",
+      "version": "0.1.39",
       "dir": ".",
       "mode": "per",
-      "wall_ms": 1320,
+      "wall_ms": 1261,
       "functions": 1234,
       "entered": 873,
       "skipped": 1,
@@ -77,15 +77,15 @@
       "trace_files": 10,
       "trace_total_bytes": 22729567,
       "trace_largest_bytes": 21961574,
-      "trace_largest_name": "riantr_LunaFlow_0.1.38_src_app_trace.jsonl"
+      "trace_largest_name": "riantr_LunaFlow_0.1.39_src_app_trace.jsonl"
     },
     {
       "corpus": "this tree",
       "module": "riantr/LunaFlow",
-      "version": "0.1.38",
+      "version": "0.1.39",
       "dir": ".",
       "mode": "free",
-      "wall_ms": 2187,
+      "wall_ms": 1328,
       "functions": 1234,
       "entered": 873,
       "skipped": 1,
@@ -103,7 +103,7 @@
       "trace_files": 10,
       "trace_total_bytes": 22729567,
       "trace_largest_bytes": 21961574,
-      "trace_largest_name": "riantr_LunaFlow_0.1.38_src_app_trace.jsonl"
+      "trace_largest_name": "riantr_LunaFlow_0.1.39_src_app_trace.jsonl"
     },
     {
       "corpus": "static_analysis",
@@ -111,7 +111,7 @@
       "version": "0.6.0",
       "dir": ".repos/riantr/moonbit_static_analysis/0.6.0",
       "mode": "wide",
-      "wall_ms": 11233,
+      "wall_ms": 11730,
       "functions": 3305,
       "entered": 711,
       "skipped": 746,
@@ -137,7 +137,7 @@
       "version": "0.6.0",
       "dir": ".repos/riantr/moonbit_static_analysis/0.6.0",
       "mode": "per",
-      "wall_ms": 9995,
+      "wall_ms": 10853,
       "functions": 3305,
       "entered": 1231,
       "skipped": 226,
@@ -163,7 +163,7 @@
       "version": "0.6.0",
       "dir": ".repos/riantr/moonbit_static_analysis/0.6.0",
       "mode": "free",
-      "wall_ms": 11393,
+      "wall_ms": 14060,
       "functions": 3305,
       "entered": 1457,
       "skipped": 0,
@@ -189,7 +189,7 @@
       "version": "0.164.68",
       "dir": ".repos/riantr/moonbit_doubleML/0.164.68",
       "mode": "wide",
-      "wall_ms": 21013,
+      "wall_ms": 19552,
       "functions": 2531,
       "entered": 274,
       "skipped": 1137,
@@ -215,7 +215,7 @@
       "version": "0.164.68",
       "dir": ".repos/riantr/moonbit_doubleML/0.164.68",
       "mode": "per",
-      "wall_ms": 17200,
+      "wall_ms": 19541,
       "functions": 2531,
       "entered": 274,
       "skipped": 1137,
@@ -241,7 +241,7 @@
       "version": "0.164.68",
       "dir": ".repos/riantr/moonbit_doubleML/0.164.68",
       "mode": "free",
-      "wall_ms": 152242,
+      "wall_ms": 163033,
       "functions": 2531,
       "entered": 1411,
       "skipped": 0,

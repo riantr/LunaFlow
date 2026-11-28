@@ -260,7 +260,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.38
+moon add riantr/LunaFlow@0.1.39
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -268,7 +268,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.38",
+  "riantr/LunaFlow@0.1.39",
 }
 ```
 
@@ -319,7 +319,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.38](https://mooncakes.io/docs/riantr/LunaFlow@0.1.38).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.39](https://mooncakes.io/docs/riantr/LunaFlow@0.1.39).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -639,6 +639,26 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.39
+
+**`@latest` PINNED THE OLDEST VERSION, AND THE REPORT DESCRIBED A TREE 24 DAYS OLDER THAN THE ONE THAT WAS ASKED FOR. 0.1.39 IS THE RELEASE THAT CARRIES THE FIX — and it is the first one that does: the published 0.1.38 still pins the OLDEST version the fetch left behind, for every module whose version carries a build hash, which is every module the toolchain itself ships. The published interface does not change: the `.mbti` this release publishes is byte-identical to the one 0.1.38 published, so no consumer's build can break.**
+
+**THE DEFECT, MEASURED ON THE TOOLCHAIN'S OWN STANDARD LIBRARY.** `moonx riantr/LunaFlow@latest moonbitlang/core@latest` analysed `moonbitlang/core` **0.1.20261102+97801ee1b** while the registry's latest was **0.1.20261126+3c0520448** — **24 days** newer — and the report's title named the OLDER tree. Every number in that report described the older tree: **1,444** files against the **1,542** of the tree that was asked for, **14,967** functions against **15,836**, **99,586** statements against **105,518**.
+
+**THE CAUSE IS THE COMPARISON, NOT THE FETCH.** The analyser pins the **newest** of the directories the fetch wrote, and the version comes from the FILESYSTEM rather than from a parsed log — that part was right. But a toolchain module's version is a DATE with a build hash on the end — `0.1.20261126+3c0520448` — and the comparison read the **whole** third segment as a number, so the hash made it unparseable: **every** toolchain version degraded to `[0, 1, 0]`, compared **equal** to every other toolchain version, and the first directory in the list won. The list is sorted, so the **oldest** won. `parse_int` returned its fallback for the whole segment the moment it met the `+`.
+
+**THE SCOPE IS EXACTLY THE MODULES THAT CARRY A BUILD HASH.** The three-number versions — `riantr/moonbit_doubleML@0.164.68`, `riantr/moonbit_static_analysis@0.6.0` — were never affected, and the committed corpus over them did not move. The toolchain's own modules all carry the hash, and all of them were affected.
+
+**THE FIX.** A version segment is read as its **leading number** (`20261126`), **every** segment is compared rather than the first three, and a tie is broken by the byte order of the two strings — so the comparison is an **order** and not "whichever directory the list handed over first". `parse_int` keeps its strict semantics on purpose: it reads CLI arguments and numbers in the tree, and a leading-digits rule there would change what `--max-functions 100abc` means. The fix is at the version layer, where the hash actually is.
+
+**THE FALSIFICATION IS PROVEN, NOT ASSUMED.** `scripts/qa/version_pin.mjs` plants a **DECOY** — a version directory one day older than the registry's latest, in a scratch probe of its own — so the candidate list holds a **wrong answer** and the check has something to reject. MEASURED: **with the fix reverted the check goes red and names what it analysed — the decoy, `files=1`** — and with the fix it is green, `files=1,542`. `scripts/qa/version_pin_falsify.mjs` proves the check can fail: a candidate **newer** than the registry's latest turns it red, a registry version that cannot be fetched takes it to **UNKNOWN** (exit 2) rather than to a pass, and the ordinary run stays green. Both are **gate steps now** — in the local gate and in CI.
+
+**THE PUBLISHED INTERFACE DOES NOT CHANGE.** The `.mbti` at `v0.1.38` and the one this release publishes are **byte-identical** — **26,207** bytes, **1,279** lines each — so `scripts/qa/release_interface.mjs` finds **0** breaks a consumer can see. The two new helpers are private.
+
+**AND THE MEASUREMENT MOVED, BECAUSE THIS TREE MEASURES ITSELF.** The per-package measurement was re-run with the driver after the version bump, not edited by hand. On this tree: **871 → 873** functions entered, **27,585 → 27,610** steps, **139,746 → 139,896** events, **22,707,387 → 22,729,567** bytes of trace, largest entry **21,939,394 → 21,961,574**. The two corpus rows did not move: they measure **pinned** corpora.
+
+**AND THE GATE IS GREEN, ALL OF IT: 61 steps, 61 passed, 0 failed, 0 unknown.** The tests are **360** on all three targets.
 
 ### What changed in 0.1.38
 

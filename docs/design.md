@@ -129,6 +129,19 @@ The version directory is the pin. Every reported location is relative to that di
 - `@latest` is normalized to the bare coordinate because `moon fetch` rejects a literal `latest` in a version field.
 - The resolved version is recorded in report §1 and in the file name (`<author>_<module>_<version>.md`).
 - If the caller passes an explicit version, no resolution happens; the report says so.
+- If the version comes from the DIRECTORIES the fetch wrote -- which is the
+  authority, because the fetch runs quiet and its log is not parsed -- the
+  analyzer pins the **newest** of them, and "newest" is a COMPARISON and not a
+  string order: each segment is read as its **leading number** (so a toolchain
+  version that carries a build hash, `0.1.20261126+3c0520448`, is ordered by
+  its date), **every** segment is compared rather than the first three, and a
+  tie is broken by the byte order of the two strings. MEASURED 2026-11-28: the
+  comparison read the whole segment as a number, so the hash made it
+  unparseable, every toolchain version compared EQUAL to every other one, and
+  `@latest` pinned the OLDEST version the fetch had written -- a tree 24 days
+  older than the registry's latest. The check that holds this is
+  `scripts/qa/version_pin.mjs`, and its falsifier is
+  `scripts/qa/version_pin_falsify.mjs`.
 - The local registry index (`~/.moon/registry/index/user/<author>/<module>.index`) is the source of truth for what "latest" means on this machine. It is refreshed by `moon update`; the report never silently re-resolves during a run.
 - The analyzer does **not** resolve the module's transitive dependencies, because it does not compile the target. This is why doubleML (which depends on `sqlite3` and `async`) can be analyzed without a native build. The optional coverage bridge (§5.8) is the only path that needs a working target build.
 
