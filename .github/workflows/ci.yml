@@ -544,6 +544,26 @@ jobs:
       - name: Check that the peer-scan check can fail
         run: node scripts/qa/peer_scan_falsify.mjs
 
+      # THE VERSION `@latest` RESOLVES TO.  The analyser pins the version the
+      # fetch wrote, and a toolchain module's version is a DATE with a build
+      # hash on the end -- "0.1.20261126+3c0520448".  MEASURED BUG (2026-11-28):
+      # the comparison read the whole segment as a number, so the hash made it
+      # unparseable, EVERY toolchain version compared EQUAL to every other one,
+      # and the OLDEST won.  The report then described a tree 24 days older
+      # than the registry's latest.
+      #
+      # The check plants a DECOY -- a version directory one day older, in a
+      # scratch probe of its own -- so the candidate list holds a wrong answer
+      # and the check has something to reject.  It needs the registry; without
+      # it, it exits 2 -- "could not decide" -- rather than passing quietly.
+      - name: Check the version `@latest` resolves to
+        run: node scripts/qa/version_pin.mjs
+
+      # ... and this one proves the check above can go RED, and that it says
+      # UNKNOWN -- not PASS, and not FAIL -- when it cannot decide.
+      - name: Check that the version-pin check can fail
+        run: node scripts/qa/version_pin_falsify.mjs
+
       # THE GATE LISTS MUST NOT DRIFT.  The peer scan above was CI step 56
       # and was never a local gate step, so five commits reported "gate
       # green" while CI was red on it.  This check asserts the one-way

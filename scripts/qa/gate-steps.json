@@ -46,6 +46,8 @@
   "node scripts/qa/ifds_spike.mjs --corpus fixtures --label fixtures-falsify --falsify",
   "node scripts/qa/peer_scan.mjs",
   "node scripts/qa/peer_scan_falsify.mjs",
+  "node scripts/qa/version_pin.mjs",
+  "node scripts/qa/version_pin_falsify.mjs",
   "node scripts/qa/gate_parity.mjs",
   "node scripts/qa/gate_parity.mjs --falsify",
   "node scripts/qa/headings.mjs README.md",

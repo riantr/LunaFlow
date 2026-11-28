@@ -507,6 +507,35 @@ separate defects — a garbage version on the Linux runner (a green run over an
 empty tree) and a version of `"."` on Windows. With the log gone, that whole
 class of bug is gone by construction.
 
+**AND THE DIRECTORIES ARE ORDERED, NOT JUST LISTED — AND THE ORDER WAS WRONG.**
+The analyser pins the **newest** of the directories the fetch wrote. A
+toolchain module's version is a DATE with a build hash on the end —
+`0.1.20261126+3c0520448` — and the comparison read the **whole** segment as a
+number, so the hash made it unparseable, **every** toolchain version degraded
+to `[0, 1, 0]`, compared **equal** to every other toolchain version, and the
+first directory in the list won. The list is sorted, so the **oldest** won.
+MEASURED 2026-11-28: `moonx riantr/LunaFlow@latest moonbitlang/core@latest`
+analysed `0.1.20261102+97801ee1b` while the registry's latest was
+`0.1.20261126+3c0520448` — **24 days** older, and **1,444** files against
+**1,542**. The segment is now read as its **leading number** (`20261126`), every
+segment is compared rather than the first three, and a tie is broken by the
+byte order of the two strings, so the comparison is an **order** and not a
+coincidence.
+
+**AND THE CHECK IS A CHECK, NOT A COMMENT.** `scripts/qa/version_pin.mjs`
+plants a **decoy** — a version directory one day older than the registry's
+latest, in a scratch probe of its own, so the candidate list holds a **wrong
+answer** and the check has something to reject. It asserts that the version the
+analyser analysed is the registry's latest, that it is the newest of the
+fetched versions under a **second implementation** of the rule written in
+JavaScript, and that the tree it read is the module and not the decoy.
+MEASURED: with the fix reverted the check goes **red** and names what it
+analysed — the decoy, `files=1` — and with the fix it is green, `files=1,542`.
+`scripts/qa/version_pin_falsify.mjs` proves the check can fail: a candidate
+**newer** than the registry's latest turns it red, a registry version that
+cannot be fetched takes it to **UNKNOWN** (exit 2) rather than to a pass, and
+the ordinary run stays green.
+
 **The contract is checked, not hoped for.**
 `scripts/qa/core_compat.mjs` fetches the registry's newest `moonbitlang/core`,
 finds every core on the machine, and compares the declarations this module
@@ -735,7 +764,7 @@ That is the release verified through the artefact a reader actually gets. It can
 
 | corpus | packages | `--module-wide` | `--per-package` (the default) | every function |
 |---|---|---|---|---|
-| this tree | 10 | 871 functions · 27,585 steps · 139,746 events · **65 of 68** files | **871** functions · 27,585 steps · 139,746 events · **65 of 68** files | 871 · 27,585 · 139,746 · 65 of 68 |
+| this tree | 10 | 873 functions · 27,610 steps · 139,896 events · **65 of 68** files | **873** functions · 27,610 steps · 139,896 events · **65 of 68** files | 873 · 27,610 · 139,896 · 65 of 68 |
 | `riantr/moonbit_static_analysis@latest` | 17 | 711 functions · 100,958 steps · 464,053 events · **70 of 270** files | **1,231** functions · 137,326 steps · 676,287 events · **132 of 270** files | 1,457 · 157,232 · 887,177 · 158 of 270 |
 | `riantr/moonbit_doubleML@latest` | **1** | 274 functions · 100,020 steps · 508,366 events · **27 of 220** files | **274** functions · 100,020 steps · 508,366 events · **27 of 220** files | 1,411 · 466,031 · 2,107,384 · 145 of 220 |
 
@@ -745,8 +774,8 @@ That is the release verified through the artefact a reader actually gets. It can
 
 | corpus | mode | trace files | total bytes | largest entry |
 |---|---|---|---|---|
-| this tree | module-wide | 1 | 22,707,387 | 22,707,387 |
-| this tree | `--per-package` | **10** | 22,707,387 | **21,939,394** |
+| this tree | module-wide | 1 | 22,729,567 | 22,729,567 |
+| this tree | `--per-package` | **10** | 22,729,567 | **21,961,574** |
 | `static_analysis` | module-wide | 1 | 76,591,727 | 76,591,727 |
 | `static_analysis` | `--per-package` | **17** | **112,175,918** | **78,902,704** |
 | `doubleML` | module-wide | 1 | 80,035,384 | 80,035,384 |
@@ -754,8 +783,8 @@ That is the release verified through the artefact a reader actually gets. It can
 
 **THE ANSWER IS NO, AND THERE ARE THREE REASONS, ALL MEASURED.**
 
-1. **The TOTAL is the binding constraint, and a split does not touch it.** The parts sum to the whole: this tree's ten files add up to the same **22,707,387** bytes its one file held. And the mode interprets MORE, so the total GROWS — on the static-analysis module from **76,591,727** to **112,175,918** bytes, because the extra coverage is extra evidence.
-2. **The LARGEST ENTRY does not reliably shrink either.** On the static-analysis module it GREW, from **76,591,727** to **78,902,704** bytes: `src/flow` holds **478,594** of the module's **676,287** events, so the coverage gain inside the biggest package outweighed the split. The split only helps when one package does not hold the whole module — and on this tree it took the largest entry from **22,707,387** to **21,939,394**, a **3.4 %** shave, because `src/app` holds almost everything.
+1. **The TOTAL is the binding constraint, and a split does not touch it.** The parts sum to the whole: this tree's ten files add up to the same **22,729,567** bytes its one file held. And the mode interprets MORE, so the total GROWS — on the static-analysis module from **76,591,727** to **112,175,918** bytes, because the extra coverage is extra evidence.
+2. **The LARGEST ENTRY does not reliably shrink either.** On the static-analysis module it GREW, from **76,591,727** to **78,902,704** bytes: `src/flow` holds **478,594** of the module's **676,287** events, so the coverage gain inside the biggest package outweighed the split. The split only helps when one package does not hold the whole module — and on this tree it took the largest entry from **22,729,567** to **21,961,574**, a **3.4 %** shave, because `src/app` holds almost everything.
 3. **The module whose trace BROKE the envelope is a single-package module.** The upload that 0.1.35's first attempt refused carried an **80,863,997**-byte entry — the doubleML trace, `reports/riantr_moonbit_doubleML@latest_0.164.64_trace.jsonl` as it was named then — and doubleML's files are all in its root package, so that trace **cannot be split at all**: one package, one file, **80,035,384** bytes either way.
 
 **SO THE WAY PAST THE PUBLISH CEILING IS THE ONE 0.1.35 TOOK**: the raw traces stay in the repository and out of the package. The per-package mode's contribution is to the ANALYSIS cap, and that one is real.
@@ -3360,9 +3389,9 @@ The gate, and the result it produced for this version:
 | `moon check --target native` | exit 0, 82 warnings, 0 errors |
 | `moon check --target wasm` | exit 0, 82 warnings, 0 errors |
 | `moon check --target js` | exit 0, 93 warnings, 0 errors |
-| `moon test src/app --target native` | **358 passed, 0 failed** |
-| `moon test src/app --target wasm` | **358 passed, 0 failed** |
-| `moon test src/app --target js` | **358 passed, 0 failed** |
+| `moon test src/app --target native` | **360 passed, 0 failed** |
+| `moon test src/app --target wasm` | **360 passed, 0 failed** |
+| `moon test src/app --target js` | **360 passed, 0 failed** |
 | `node scripts/qa/coverage_route.mjs` | **2 passed, 0 failed** (no reserved identifier, no stale trace) — and it reads the **whole** tree: the string-stripper it uses understands MoonBit's multi-line string, which has **no terminator**, so nothing after one is invisible to it |
 | `node scripts/qa/coverage_route_falsify.mjs` | **11 passed, 0 failed** — the coverage-route check goes red on a reserved identifier planted **after a multi-line literal**, in a file with no literal and before any literal, and names the file; and it stays green on a control (on **copies** of the tree; the tracked sources are never touched) |
 | `moon coverage report -f simp_caret` | exit 0 — the **default** format reads the whole tree |
@@ -3385,6 +3414,8 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/cfg_signatures_falsify.mjs` | **every check agrees** — the signature check goes red when the invariant is broken, and it names the function that broke it (on a **copy** of the tree; the source is not touched) |
 | `node scripts/qa/peer_scan.mjs` | **every check agrees** — the peer analyzer reports **no actionable finding in this project's own source**; the fixture corpus is deliberately vulnerable, so it is excluded, and the exclusion is printed. The verdict has a **coverage** as well as a count: the peer must withhold **no** finding, and the files it did not fully parse must be exactly the ones in `docs/qa/PEER_PARSE_GAPS.json` — **75 of 78** files fully understood. **It is a gate step now**, so a local run and CI measure the same thing |
 | `node scripts/qa/peer_scan_falsify.mjs` | **every check agrees** — the peer-scan check goes red when a gap is not recorded, when a gap that does not exist is recorded, when a construct's error kind is not the peer's own, and when the peer's report says it withheld a finding; and it stays green on a rewording it must not notice (on **copies** of the ledger and of the peer's captured report; the tracked files are never touched) |
+| `node scripts/qa/version_pin.mjs` | **every check agrees** — the version `@latest` resolves to: the analyser analyses the **registry's latest**, not the oldest version the fetch left behind. The candidate list is given a **decoy** — a version directory one day older, in a scratch probe of its own — so the answer is a choice and not the only possibility, and the tree that was read is checked by its file count. MEASURED: with the fix reverted the check went **red** and named the decoy it had analysed (`files=1`); with the fix it analyses the registry's version (`files=1,542`) |
+| `node scripts/qa/version_pin_falsify.mjs` | **5 passed, 0 failed** — the version-pin check goes red on a candidate **newer** than the registry's latest, and reaches **no verdict** (exit 2) on a registry version that cannot be fetched; and it stays green on the ordinary run |
 | `node scripts/qa/gate_parity.mjs` | **every check agrees** — every check CI runs is also a step of the local gate (the one-way invariant that a CI-only check broke once: a local 55/55 sat beside a red CI for five commits). The comparison is per SCRIPT, not per argument string, because CI runs `readme_table.mjs --no-selfscan` and `moon test --enable-coverage` where the gate runs the stricter full forms — those are reported as argument differences, not drift. The harmless direction (a gate check CI does not run) is **noted**, not failed. Proved to go red on **copies**: a local step removed is reported, a CI check that vanished stops being reported, and the unmodified pair gives the same answer |
 | `node scripts/qa/selfscan_register.mjs` | **every check agrees** — the register of the analyser's claims about its own source against a live self-scan: every claim is registered with the count that was measured, every registered claim is still made, the headline is the measured count, the rows add up to it, every family it names is a family the analyser has, every site it names is still in the source, and every claim an execution produced is either reproduced by an input or **listed in the report as one no input reproduced** |
 | `node scripts/qa/selfscan_register_falsify.mjs` | **every check agrees** — the register check goes red on a dropped claim, a count that was not measured, a stale headline, a claim that is not made and a family that does not exist, and it stays green on a rewording it must not notice (on a **copy** of the register; the tracked source is never touched) |
@@ -3639,7 +3670,7 @@ honest by re-running it against the newest one before every release.
 `moon 0.1.20261126` (ccd306a, 2026-11-26), the toolchain this release was
 verified on: `moon check` gave **82 / 82 / 93** warnings and **0** errors on
 native / wasm / js — the same three cells the gate table above publishes — and
-`moon test src/app` gave **358 passed, 0 failed** on each of the three. The measured
+`moon test src/app` gave **360 passed, 0 failed** on each of the three. The measured
 runs committed with the reports — the
 **Time** column is the `elapsed_ms` of the committed artefact itself, so every cell is
 traceable to a file in `reports/`:
@@ -3649,7 +3680,7 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.68 | 220 | 30,333 | 508,422 | 3,356 | 0 (no specs) | 0 | 265 | 16.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.6.0 | 270 | 18,336 | 676,331 | 190 | 0 (no specs) | 0 | 293 | 12.3 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 68 | 7,888 | 230,667 | 48 | 2 / 1 / 3 | 0 | 45 | 2,092 ms |
+| `LunaFlow` itself (`--dir .`) | 68 | 7,926 | 230,893 | 48 | 2 / 1 / 3 | 0 | 45 | 1,241 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
@@ -3882,7 +3913,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **68 files, 7,888 statements, 230,667 events, 48 L2
+On this tree the row reads **68 files, 7,926 statements, 230,893 events, 48 L2
 findings, 0 dead and 45 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third

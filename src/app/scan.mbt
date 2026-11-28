@@ -51,11 +51,37 @@ pub fn Coord::to_string(self : Coord) -> String {
 }
 
 ///|
+/// The leading integer of a version segment, or 0 when the segment has none.
+///
+/// A TOOLCHAIN module's version carries a build hash: "0.1.20261126+3c0520448".
+/// The third segment is the number 20261126 and the hash that follows it is
+/// not part of the number.
+///
+/// MEASURED 2026-11-28: `parse_int` returned its fallback for the WHOLE
+/// segment as soon as it met the "+", so every toolchain version degraded to
+/// [0, 1, 0], compared equal to every other toolchain version, and `@latest`
+/// pinned the OLDEST version the fetch had written -- 24 days older than the
+/// one the registry had just resolved.
+fn leading_int(s : String) -> Int32 {
+  let t = s.trim()
+  let mut i = 0
+  let mut value = 0
+  while i < t.length() {
+    let c = t.get_char(i).unwrap_or(' ')
+    if !is_digit(c) {
+      break
+    }
+    value = value * 10 + (c.to_int() - 48)
+    i = i + 1
+  }
+  value
+}
+
+///|
 pub fn version_parts(v : String) -> Array[Int32] {
   let parts : Array[Int32] = []
   for part in v.split(".") {
-    let digits = if part.length() > 0 { part.to_owned() } else { "0" }
-    parts.push(parse_int(digits, 0))
+    parts.push(leading_int(part.to_owned()))
   }
   while parts.length() < 3 {
     parts.push(0)
@@ -64,19 +90,57 @@ pub fn version_parts(v : String) -> Array[Int32] {
 }
 
 ///|
-pub fn compare_versions(a : String, b : String) -> Int32 {
-  let pa = version_parts(a)
-  let pb = version_parts(b)
+/// The byte-wise order of two strings.
+///
+/// `String` has no `Compare` in the toolchain's core, so the order is spelled
+/// out here instead of borrowed from one.
+fn compare_strings(a : String, b : String) -> Int32 {
+  let n = if a.length() < b.length() { a.length() } else { b.length() }
   let mut i = 0
-  while i < 3 {
-    if pa[i] < pb[i] {
+  while i < n {
+    let x = a.get_char(i).unwrap_or(' ').to_int()
+    let y = b.get_char(i).unwrap_or(' ').to_int()
+    if x < y {
       return -1
-    } else if pa[i] > pb[i] {
+    } else if x > y {
       return 1
     }
     i = i + 1
   }
-  0
+  if a.length() < b.length() {
+    -1
+  } else if a.length() > b.length() {
+    1
+  } else {
+    0
+  }
+}
+
+///|
+pub fn compare_versions(a : String, b : String) -> Int32 {
+  let pa = version_parts(a)
+  let pb = version_parts(b)
+  // EVERY segment, not just the first three: a version that says more than
+  // the other one says more, and stopping at three made "1.0.0.1" and
+  // "1.0.0.2" the same version.
+  let n = if pa.length() > pb.length() { pa.length() } else { pb.length() }
+  let mut i = 0
+  while i < n {
+    let x = if i < pa.length() { pa[i] } else { 0 }
+    let y = if i < pb.length() { pb[i] } else { 0 }
+    if x < y {
+      return -1
+    } else if x > y {
+      return 1
+    }
+    i = i + 1
+  }
+  // The numbers can tie while the versions are still different -- two builds
+  // of the same day -- and a comparison that ties is not an ORDER. The
+  // tie-break is the byte-wise order of the two strings. It claims nothing
+  // about which build was published first; it only makes the answer the same
+  // every time, instead of "whichever directory the list handed over first".
+  compare_strings(a, b)
 }
 
 ///|

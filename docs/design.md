@@ -1607,11 +1607,12 @@ seventeen packages whole**, and only `src/flow` spending its own budget; and the
 fixture's budget is never reached, so **every one of its 12** functions is
 entered. `--max-total-steps <n>` raises the budget; `--per-function` lifts it, and `--module-wide` spends it once for the whole module.
 
-**THE PER-PACKAGE MODE's SIZES, because the PUBLISH envelope is where its cost shows.** The envelope is the one the registry has already accepted (`docs/qa/PUBLISH_ENVELOPE.json`): **46,274,868** bytes unpacked and a **39,479,846**-byte largest entry. Measured with `--trials 4`: on this tree the split takes the trace from **22,707,387** bytes in one file to the same **22,707,387** bytes in ten, with the largest entry down to **21,939,394**; on the static-analysis module it GROWS, from **76,591,727** bytes in one file to **112,175,918** in seventeen, the largest entry up to **78,902,704**, because the mode interprets more and the evidence is more; on doubleML it does not change a byte, because there is one package — one file, **80,035,384** bytes. The ceiling is a limit on the TOTAL, and a split does not touch the total.
+**THE PER-PACKAGE MODE's SIZES, because the PUBLISH envelope is where its cost shows.** The envelope is the one the registry has already accepted (`docs/qa/PUBLISH_ENVELOPE.json`): **46,274,868** bytes unpacked and a **39,479,846**-byte largest entry. Measured with `--trials 4`: on this tree the split takes the trace from **22,729,567** bytes in one file to the same **22,729,567** bytes in ten, with the largest entry down to **21,961,574**; on the static-analysis module it GROWS, from **76,591,727** bytes in one file to **112,175,918** in seventeen, the largest entry up to **78,902,704**, because the mode interprets more and the evidence is more; on doubleML it does not change a byte, because there is one package — one file, **80,035,384** bytes. The ceiling is a limit on the TOTAL, and a split does not touch the total.
 
 **AND THE MEASUREMENT IS OF A MOVING TARGET, so the table moves with it.** The "this tree" row
 measures **this** repository: between 2026-11-24 and 2026-11-26 the source changed, this
-tree's own trace grew by **15,998** bytes (**22,691,389** → **22,707,387**), and the table
+tree's own trace grew by **15,998** bytes (**22,691,389** → **22,707,387**), and again on
+2026-11-28, by **22,180** more (**22,707,387** → **22,729,567**); each time the table
 kept the earlier measurement until a check caught it. The two corpus rows measure **pinned**
 corpora, so they move only when the registry moves. So `scripts/qa/measure_per_package.mjs`
 prints the README's rows ready to paste, and `scripts/qa/readme_table.mjs` compares the
@@ -1872,7 +1873,7 @@ These are verdicts on what fits **here**, not on the peer: the repair loop, the 
 | D5 | Machine-readable summaries and full traces | `reports/*_summary.json`, `reports/*_trace.jsonl` |
 | D6 | Acceptance checker | `scripts/verify.mjs` |
 | D7 | Usage documentation | `README.md` |
-| D8 | 358 unit/integration tests | `src/app/*_test.mbt` |
+| D8 | 360 unit/integration tests | `src/app/*_test.mbt` |
 
 The raw traces of D5 are committed to the repository and are **not** part of the
 published package (§7.2): the registry refuses an archive it cannot read, and they
@@ -1883,7 +1884,7 @@ are what made it unreadable.
 | ID | Criterion | Threshold | Measured |
 | --- | --- | --- | --- |
 | A1 | Build | `moon build src/cli --target native` exits 0 | 0 |
-| A2 | Tests | `moon test src/app --target native` ≥ 358 passed, 0 failed | 358/358 |
+| A2 | Tests | `moon test src/app --target native` ≥ 360 passed, 0 failed | 360/360 |
 | A3 | Acquisition | both coordinates resolve; resolved version recorded in §1 | 0.164.68, 0.6.0 |
 | A4 | Frontend coverage | ≥ 95 % statements understood on both modules | 99.08 %, 95.88 % |
 | A5 | CFG | ≥ 1 diagram per module; every diagram ≤ 90 nodes; Mermaid validator reports 0 issues | 8 diagrams each; validator clean |
