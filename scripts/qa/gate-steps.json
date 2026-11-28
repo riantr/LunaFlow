@@ -48,6 +48,8 @@
   "node scripts/qa/peer_scan_falsify.mjs",
   "node scripts/qa/version_pin.mjs",
   "node scripts/qa/version_pin_falsify.mjs",
+  "node scripts/qa/default_output.mjs",
+  "node scripts/qa/default_output_falsify.mjs",
   "node scripts/qa/gate_parity.mjs",
   "node scripts/qa/gate_parity.mjs --falsify",
   "node scripts/qa/headings.mjs README.md",
@@ -59,5 +61,7 @@
   "node scripts/qa/cfg_signatures.mjs",
   "node scripts/qa/cfg_signatures_falsify.mjs",
   "python .github/scripts/check_readme_sync.py",
-  "typos"
+  "typos",
+  "node scripts/qa/tree_intact_falsify.mjs",
+  "node scripts/qa/tree_intact.mjs"
 ]

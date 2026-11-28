@@ -377,11 +377,15 @@ test "the reproduction command is a coordinate that resolves" {
   // The coordinate the reader was asked for, carrying a version marker.
   let md = report_for("riantr/LunaFlow@latest")
   inspect(
-    md.contains(
-      "LunaFlow analyze riantr/LunaFlow@latest --out reports/ --funnel",
-    ),
+    md.contains("LunaFlow analyze riantr/LunaFlow@latest --funnel"),
     content="true",
   )
+  // The command names NO output directory.  It used to print `--out reports/`,
+  // and in a tree that carries a corpus `reports/` is the committed one: the
+  // command the report hands to a reader was a command that OVERWRITES THE
+  // EVIDENCE.  The default output directory is a build directory now, and the
+  // default is what the command uses.
+  inspect(md.contains("--out"), content="false")
   // The doubled marker is the defect: a coordinate may carry only ONE.
   inspect(md.contains("@latest@latest"), content="false")
   // The title is a coordinate too, and it used to carry two markers.
@@ -395,9 +399,7 @@ test "the reproduction command is a coordinate that resolves" {
 test "a coordinate without a version marker still gets one" {
   let md = report_for("riantr/LunaFlow")
   inspect(
-    md.contains(
-      "LunaFlow analyze riantr/LunaFlow@latest --out reports/ --funnel",
-    ),
+    md.contains("LunaFlow analyze riantr/LunaFlow@latest --funnel"),
     content="true",
   )
   inspect(md.contains("@latest@latest"), content="false")

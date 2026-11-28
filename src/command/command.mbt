@@ -115,7 +115,22 @@ fn Opts::default() -> Opts {
   {
     coord: "",
     dir: "",
-    out: "reports",
+    // THE DEFAULT OUTPUT DIRECTORY IS A BUILD DIRECTORY, NOT `reports`.
+    //
+    // MEASURED 2026-11-28: a bare `moonx riantr/LunaFlow@latest` wrote 13
+    // files into `reports/` -- which, in THIS repository, is the COMMITTED
+    // CORPUS: the report, the sidecar and the summary of the two corpora and
+    // of the fixture. A self-check therefore overwrote the evidence it was
+    // supposed to be compared against, and the overwrite looked like a change
+    // in the analysis.
+    //
+    // The default now lives under `_build/`, which is what a build directory
+    // is for: it is disposable, it is never tracked, and a run that nobody
+    // asked to keep leaves nothing behind in the tree it was pointed at.
+    //
+    // The corpus is still WRITTEN there, deliberately, by the measurement
+    // driver, which passes `--out reports` on purpose.
+    out: "_build/qa/lunaflow",
     trials: 8,
     max_functions: 0,
     max_total_steps: @app.DEFAULT_MAX_TOTAL_STEPS,
@@ -168,7 +183,7 @@ fn usage() -> String {
     #|
     #|Options:
     #|  --dir <path>        analyze a local directory (same as a path target)
-    #|  --out <dir>         report directory (default: reports)
+    #|  --out <dir>         report directory (default: _build/qa/lunaflow)
     #|  --trials <n>        synthesized input trials per function (default: 8)
     #|  --max-functions <n> cap on interpreted functions (default: 0, no cap;
     #|                      the default scan enters EVERY function)
@@ -234,7 +249,8 @@ fn arg_value(args : Array[String], i : Int32) -> String {
 ///|
 /// Value of a path/criterion option. An absent or empty value keeps the default
 /// (before this, `--out` with no value silently wrote artefacts into the
-/// working directory instead of failing or falling back to `reports/`).
+/// working directory instead of failing or falling back to the default
+/// output directory).
 fn arg_or(args : Array[String], i : Int32, fallback : String) -> String {
   let v = arg_value(args, i)
   if v == "" {

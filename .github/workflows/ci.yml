@@ -564,6 +564,22 @@ jobs:
       - name: Check that the version-pin check can fail
         run: node scripts/qa/version_pin_falsify.mjs
 
+      # THE DEFAULT OUTPUT DIRECTORY, AND THE CORPUS IT MUST NOT TOUCH.
+      # MEASURED BUG (2026-11-28): a bare `moonx riantr/LunaFlow@latest`
+      # wrote 13 files into `reports/` -- which, in this repository, is the
+      # COMMITTED CORPUS.  The self-check overwrote the evidence it was
+      # supposed to be compared against, and the overwrite read as a change
+      # in the analysis.  The default is a BUILD directory now, and this
+      # check says so on the repository's OWN corpus: a run with no
+      # `--out` must leave every committed file byte-identical.
+      - name: Check the default output directory
+        run: node scripts/qa/default_output.mjs
+
+      # ... and this one proves the check above can go RED: pointed at the
+      # OLD default, it must notice that the artefacts are not there.
+      - name: Check that the default-output check can fail
+        run: node scripts/qa/default_output_falsify.mjs
+
       # THE GATE LISTS MUST NOT DRIFT.  The peer scan above was CI step 56
       # and was never a local gate step, so five commits reported "gate
       # green" while CI was red on it.  This check asserts the one-way
@@ -571,3 +587,36 @@ jobs:
       # by the local gate.  The other direction is harmless and only noted.
       - name: Check that the gate lists have not drifted
         run: node scripts/qa/gate_parity.mjs
+
+      # THE TREE IS STILL THE TREE -- THE LAST STEP OF THE RUN.
+      #
+      # MEASURED BUG (2026-11-28): the local gate came back GREEN with all
+      # 28 committed corpus files -- 194,178,849 bytes -- DELETED from disk,
+      # and `git status` showed 28 deleted files.  Nothing in the gate was
+      # looking at the working tree: a gate that runs 63 checks and says
+      # GREEN has answered "did every check agree with what it claimed?" and
+      # NOT "is the tree still the tree?".  The two are different questions,
+      # and only the second one catches a check that destroys what it
+      # measures.
+      #
+      # The cause was this round's own new check: its first version CLEARED
+      # the directory it was told to expect artefacts in, and the falsifier
+      # pointed that at the old default -- which IS the committed corpus.
+      # So the check that was supposed to protect the corpus deleted it.
+      #
+      # This step asks git's own three questions: is every tracked file
+      # still on disk, is the corpus byte-identical to the index, and did a
+      # check leave stray files under the corpus.
+      #
+      # It is LAST on purpose: a step that runs early cannot see what a
+      # later step did.
+      - name: Check that the tree is still the tree
+        run: node scripts/qa/tree_intact.mjs
+
+      # ... and this one proves the check above can go RED: it asks the real
+      # check about git repositories of its OWN -- a tracked file deleted, a
+      # corpus file overwritten, a stray file left behind -- and asserts the
+      # check notices each one, and says the right reason.  The real corpus
+      # is never the thing at risk.
+      - name: Check that the tree-intact check can fail
+        run: node scripts/qa/tree_intact_falsify.mjs

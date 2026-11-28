@@ -260,7 +260,7 @@ without parsing prose.
 ## Install
 
 ```sh
-moon add riantr/LunaFlow@0.1.39
+moon add riantr/LunaFlow@0.1.40
 ```
 
 That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
@@ -268,7 +268,7 @@ That is a **module** dependency, and it belongs in the consumer's `moon.mod`.
 
 ```toml
 import {
-  "riantr/LunaFlow@0.1.39",
+  "riantr/LunaFlow@0.1.40",
 }
 ```
 
@@ -319,7 +319,7 @@ declaration here. Move this declaration to `moon.pkg`."*
 
 `src/cli` is the executable in the same module — the command line over the same
 library. Registry entry:
-[mooncakes.io/docs/riantr/LunaFlow@0.1.39](https://mooncakes.io/docs/riantr/LunaFlow@0.1.39).
+[mooncakes.io/docs/riantr/LunaFlow@0.1.40](https://mooncakes.io/docs/riantr/LunaFlow@0.1.40).
 
 From a checkout of the module directory, the same executable runs directly:
 
@@ -639,6 +639,30 @@ every package that uses it says so in
 `options("allow-experimental-packages": ...)`. And the minimum host toolchain
 moved up with the swap, because the artifact now asks the host for more symbols
 than the standalone module provided.
+
+### What changed in 0.1.40
+
+**THE DEFAULT OUTPUT DIRECTORY WAS THE REPOSITORY'S OWN COMMITTED CORPUS, AND A SELF-CHECK OVERWROTE THE EVIDENCE IT WAS MEANT TO BE COMPARED AGAINST. 0.1.40 IS THE RELEASE THAT CARRIES THE FIX — and the fix is a DECISION that was written down and then made: the 2026-11-25 QA round diagnosed this failure mode, left the behaviour unchanged and said, in so many words, "it is a decision for the maintainers". This is that decision.** The published interface does not change: the `.mbti` this release publishes is byte-identical to the one 0.1.39 published, so no consumer's build can break.
+
+**THE DEFECT, MEASURED ON THIS REPOSITORY.** A bare `moonx riantr/LunaFlow@latest` wrote **13** files into `reports/` — and `reports/` is, in this repository, the **COMMITTED CORPUS**: the report, the sidecar and the summary of the two corpora and of the fixture. The self-check therefore **overwrote the evidence it was supposed to be compared against**, and the overwrite read as a change in the analysis. MEASURED again while this release was being prepared: the same 13 files, `riantr_LunaFlow_0.1.39.*`, written into the corpus by a run with no `--out`.
+
+**THE FIX: THE DEFAULT IS A BUILD DIRECTORY.** It is `_build/qa/lunaflow` now. A build directory is what it is for — it is disposable, it is never tracked, and a run that nobody asked to keep leaves **nothing** behind in the tree it was pointed at. The corpus is still WRITTEN there, **deliberately**: the measurement driver passes `--out reports` on purpose, and the corpus stays committed evidence.
+
+**AND THE REPORT NO LONGER PRINTS A COMMAND THAT OVERWRITES THE CORPUS.** The reproduction line in the report's §10 used to read `--out reports/`. In a tree that carries a corpus, `reports/` IS the corpus, so the command the report handed to a reader was a command that **overwrote the evidence**. The output directory is not in `ReportInput` — adding a field to a `pub(all)` struct would break every consumer that builds one — so the command now says **nothing** about it and the default applies.
+
+**THE CHECK MEASURES THE REPOSITORY'S OWN CORPUS, BEFORE AND AFTER.** `scripts/qa/default_output.mjs` runs the analyser with no `--out` and asserts that the committed corpus is **byte-identical** afterwards — the same files, the same sizes, the same SHA-256 — and that the artefacts landed in the default build directory and in **nothing** else. **The default is READ OUT OF THE TOOL'S OWN SOURCE** — `Opts::default()` in `src/command/command.mbt` — because a check that carries the answer it is looking for cannot tell a fix from a coincidence, and cannot notice a change to the declaration. Its expectation is a **parameter**, so it can be asked a different question, and `scripts/qa/default_output_falsify.mjs` uses that: pointed at the old default (`reports`) the check goes **red** and says where the artefacts are not. **7** checks in the check, **13** in the falsifier.
+
+**AND THE GHERKIN SCENARIO CARRIES IT TOO.** The malformed-command-line scenario now asserts that nothing is written into the **corpus directory** as well as into the working directory — the two are different directories, and only the second was checked.
+
+**AND THE GATE WAS BLIND — THE CHECK THAT WAS SUPPOSED TO PROTECT THE CORPUS DELETED IT, AND 63 GREEN STEPS DID NOT SEE IT.** MEASURED 2026-11-28, while this release was being prepared: the first version of the new default-output check **cleared** the directory it was told to expect artefacts in, and its falsifier pointed that at the **old default** — which IS this repository's committed corpus. So the check DELETED all **28** corpus files — **194,178,849** bytes of committed evidence — and the gate came back **GREEN**, because **NOTHING IN IT LOOKED AT THE WORKING TREE**. `git status` showed 28 deleted files; the gate said "63 passed, 0 failed". The files were restored from the index, and the tree is clean again: **28** tracked, **28** on disk.
+
+**THE BLIND SPOT WAS NOT THE CHECK — IT WAS THE QUESTION THE GATE WAS ASKING.** A gate that runs 63 checks and says GREEN has answered "did every check agree with what it claimed?". It has NOT answered "is the tree still the tree?". Those are different questions, and only the second one catches a check that destroys what it measures. So the gate now ends with **two** steps that ask it: `scripts/qa/tree_intact.mjs` asks **git's own three** questions — is every tracked file still on disk, is the corpus byte-identical to the index, and did a check leave stray files under the corpus — and it is **last** on purpose, because a step that runs early cannot see what a later step did. `scripts/qa/tree_intact_falsify.mjs` proves it can go red on a tracked file **deleted**, on a corpus file **overwritten**, and on a **stray** file, against git repositories of its own.
+
+**AND THE CHECK THAT DELETED THE CORPUS WAS REWRITTEN, NOT PATCHED.** The default is now **read out of the tool's own source** instead of carried by the check, so a change to the declaration cannot pass unnoticed; the expected directory is cleared **only when it is inside the build tree**, so the corpus is never cleared whatever the expectation is; and every falsifier case runs against a **replica**, so the real corpus is never the thing at risk.
+
+**THE PUBLISHED INTERFACE DOES NOT CHANGE.** The `.mbti` at `v0.1.39` and the one this release publishes are **byte-identical** — **26,207** bytes, **1,279** lines each — so `scripts/qa/release_interface.mjs` finds **0** breaks a consumer can see. The default lives in a private `Opts` and in the usage text, and neither is published.
+
+**THE MEASUREMENT MOVED, BECAUSE THIS TREE MEASURES ITSELF.** The per-package measurement was re-run with the driver. On this tree: **7,926 → 7,927** statements, and the trace grew by the one statement. The two corpus rows did not move — they measure **pinned** corpora.
 
 ### What changed in 0.1.39
 
@@ -3296,7 +3320,7 @@ moonx riantr/moonbit_static_analysis@latest <target> [flags]
 |---|---|
 | `<target>` | registry coordinate (`author/module[@version]`) or a path. Omit it to scan the current directory. |
 | `--dir <dir>` | a tree to analyse, where it stands. It is the older spelling of the target slot and stays because every QA harness uses it. |
-| `--out <dir>` | where the report, the summary and the trace are written (default `reports`). |
+| `--out <dir>` | where the report, the summary and the trace are written (default **`_build/qa/lunaflow`** — a build directory, so a run nobody asked to keep leaves nothing behind in the tree it was pointed at). |
 | `--funnel` | run the full funnel — L1 dynamic, L2 abstract, L3 contracts, taint and slicing — instead of L1 alone. It also sets `--level 3`. |
 | `--level <n>` | the analysis level (default `1`). |
 | `--trials <n>` | how many samples the dynamic layer runs (default `8`). |
@@ -3451,6 +3475,10 @@ The gate, and the result it produced for this version:
 | `node scripts/qa/peer_scan_falsify.mjs` | **every check agrees** — the peer-scan check goes red when a gap is not recorded, when a gap that does not exist is recorded, when a construct's error kind is not the peer's own, and when the peer's report says it withheld a finding; and it stays green on a rewording it must not notice (on **copies** of the ledger and of the peer's captured report; the tracked files are never touched) |
 | `node scripts/qa/version_pin.mjs` | **every check agrees** — the version `@latest` resolves to: the analyser analyses the **registry's latest**, not the oldest version the fetch left behind. The candidate list is given a **decoy** — a version directory one day older, in a scratch probe of its own — so the answer is a choice and not the only possibility, and the tree that was read is checked by its file count. MEASURED: with the fix reverted the check went **red** and named the decoy it had analysed (`files=1`); with the fix it analyses the registry's version (`files=1,542`) |
 | `node scripts/qa/version_pin_falsify.mjs` | **5 passed, 0 failed** — the version-pin check goes red on a candidate **newer** than the registry's latest, and reaches **no verdict** (exit 2) on a registry version that cannot be fetched; and it stays green on the ordinary run |
+| `node scripts/qa/default_output.mjs` | **7 passed, 0 failed** — the default output directory: a run with no `--out` writes into `_build/qa/lunaflow` and into **nothing** else, and the **committed corpus is byte-identical** afterwards — the same files, the same sizes, the same SHA-256. The default is **read out of the tool's own source**, not carried by the check, and the expected directory is only ever cleared when it is **inside the build tree** — the corpus is never cleared. MEASURED: with the old default the same check wrote 13 files into `reports/` and went **red** |
+| `node scripts/qa/default_output_falsify.mjs` | **13 passed, 0 failed** — the default-output check goes red when it is pointed at the **old** default (`reports`), when it is handed a **source** that declares the old default, and when it runs against a replica whose corpus is at stake — and in every one of those cases **the corpus survives**. Every case runs against a **replica**, so the real corpus is never the thing at risk |
+| `node scripts/qa/tree_intact.mjs` | **4 passed, 0 failed** — the tree is still the tree: every tracked file is still on disk, the committed corpus is byte-identical to the index, and no stray file was left under the corpus. Git's own three answers, and the step is **last** on purpose — a step that runs early cannot see what a later step did |
+| `node scripts/qa/tree_intact_falsify.mjs` | **8 passed, 0 failed** — the tree-intact check goes red on a tracked file **deleted**, on a corpus file **overwritten**, and on a **stray** file left under the corpus, and it says the right reason each time. Every case runs against a git repository of its own |
 | `node scripts/qa/gate_parity.mjs` | **every check agrees** — every check CI runs is also a step of the local gate (the one-way invariant that a CI-only check broke once: a local 55/55 sat beside a red CI for five commits). The comparison is per SCRIPT, not per argument string, because CI runs `readme_table.mjs --no-selfscan` and `moon test --enable-coverage` where the gate runs the stricter full forms — those are reported as argument differences, not drift. The harmless direction (a gate check CI does not run) is **noted**, not failed. Proved to go red on **copies**: a local step removed is reported, a CI check that vanished stops being reported, and the unmodified pair gives the same answer |
 | `node scripts/qa/selfscan_register.mjs` | **every check agrees** — the register of the analyser's claims about its own source against a live self-scan: every claim is registered with the count that was measured, every registered claim is still made, the headline is the measured count, the rows add up to it, every family it names is a family the analyser has, every site it names is still in the source, and every claim an execution produced is either reproduced by an input or **listed in the report as one no input reproduced** |
 | `node scripts/qa/selfscan_register_falsify.mjs` | **every check agrees** — the register check goes red on a dropped claim, a count that was not measured, a stale headline, a claim that is not made and a family that does not exist, and it stays green on a rewording it must not notice (on a **copy** of the register; the tracked source is never touched) |
@@ -3715,7 +3743,7 @@ traceable to a file in `reports/`:
 | `riantr/moonbit_doubleML@latest` → 0.164.68 | 220 | 30,333 | 508,422 | 3,356 | 0 (no specs) | 0 | 265 | 16.0 s |
 | `riantr/moonbit_static_analysis@latest` → 0.6.0 | 270 | 18,336 | 676,331 | 190 | 0 (no specs) | 0 | 293 | 12.3 s |
 | `fixtures/vuln_demo` | 1 | 32 | 604 | 15 | 2 / 1 / 3 | 3 | 8 | 4 ms |
-| `LunaFlow` itself (`--dir .`) | 68 | 7,926 | 230,893 | 48 | 2 / 1 / 3 | 0 | 45 | 1,241 ms |
+| `LunaFlow` itself (`--dir .`) | 68 | 7,927 | 230,893 | 48 | 2 / 1 / 3 | 0 | 45 | 1,245 ms |
 
 The last row has no committed artefact — the self-scan is a run over this
 tree — so its time is the **minimum of five** runs, which is also how the deltas
@@ -3948,7 +3976,7 @@ arrays' lengths — and they are gone: the relation is in the value domain now,
 and a paired fixture says the layer can tell that shape from the same code with
 one of the two pushes removed. The number to read is the one in the table above.
 
-On this tree the row reads **68 files, 7,926 statements, 230,893 events, 48 L2
+On this tree the row reads **68 files, 7,927 statements, 230,893 events, 48 L2
 findings, 0 dead and 45 taint sinks**, and it moved for the three reasons this
 paragraph has been naming all along: the new checks are new source, and the
 analyzer is one of the modules it analyses. The **L2** column moved for a third
@@ -4375,6 +4403,15 @@ here: it is a decision for the maintainers, not a defect this fix patches. What 
 round adds is the **written-down** failure mode, and the finding that the gate is
 innocent — all **55** steps were run individually with a tree check and **none**
 writes to `reports/`.
+
+**AND THE MAINTAINERS HAVE NOW MADE THAT DECISION — 0.1.40 CHANGES THE DEFAULT
+OUTPUT DIRECTORY.** The default is a **build directory** now,
+`_build/qa/lunaflow`, so a run nobody asked to keep leaves nothing behind in the
+tree it was pointed at. See [What changed in 0.1.40](#what-changed-in-0-1-40) for
+the measurement, the check and the falsifier. The **non-existent** target that
+exits **0** is a separate defect and is **still open**: it writes into the build
+directory now, so it can no longer overwrite the corpus, but it still claims a
+clean scan of a tree that is not there.
 
 ### The QA round of 2026-11-23
 
@@ -4910,12 +4947,12 @@ condition is unknown rather than guessed.
   library.
 - `src/command` — the CLI implementation, shared by `src/cli` and the root
   package that `moonx` resolves.
-- `scripts/qa/` — thirty-five `.mjs` harnesses and tools (plus the `cli_bin.mjs`
+- `scripts/qa/` — sixty-eight `.mjs` harnesses and tools (plus the `cli_bin.mjs`
   helper the drivers share and the `gate.ps1` + `gate-steps.json` runner). Most
-  are dependency-free; fifteen of them drive the built binary as a real process
-  against the fixture, the two registry modules and a hostile-input corpus, two
-  more drive the **published** module through `moonx`, and the rest read
-  committed artefacts or run the compiler.
+  are dependency-free; twenty-eight of them drive the built binary as a real
+  process against the fixture, the two registry modules and a hostile-input
+  corpus, two more drive the **published** module through `moonx`, and the rest
+  read committed artefacts or run the compiler.
 - `docs/design.md` — the design record for the implementation in `src/app`.
 
 Outside this repository: **none that the registry knows about.** The registry

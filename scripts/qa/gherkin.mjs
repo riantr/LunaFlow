@@ -131,8 +131,17 @@ const steps = [
     const r = CLI(['analyze', '--dir', 'mod', '--out'], dir);
     ctx.run = r;
     ctx.cwdRootArtifacts = readdirSync(dir).filter((n) => /\.(md|jsonl)$/.test(n));
-    ctx.defaultDirArtifacts = existsSync(join(dir, 'reports'))
+    // The CORPUS directory is the one a tree that carries a corpus has, and
+    // it is the one the default must NOT write into: MEASURED 2026-11-28, a
+    // bare self-check wrote 13 files into this repository's committed
+    // `reports/`, overwriting the evidence it was to be compared against.
+    ctx.corpusArtifacts = existsSync(join(dir, 'reports'))
       ? readdirSync(join(dir, 'reports')).filter((n) => /\.(md|jsonl)$/.test(n))
+      : [];
+    // And the DEFAULT is a build directory now, so the artefacts went there.
+    const dflt = join(dir, '_build', 'qa', 'lunaflow');
+    ctx.defaultArtifacts = existsSync(dflt)
+      ? readdirSync(dflt).filter((n) => /\.(md|jsonl)$/.test(n))
       : [];
     return { ok: true, detail: `exit=${r.status}` };
   }],
@@ -228,7 +237,11 @@ const steps = [
   })],
   [/^no artifact is written into the working directory$/, (ctx) => ({
     ok: ctx.cwdRootArtifacts.length === 0,
-    detail: `root=${ctx.cwdRootArtifacts.length} reports/=${ctx.defaultDirArtifacts.length}`,
+    detail: `root=${ctx.cwdRootArtifacts.length}`,
+  })],
+  [/^no artifact is written into the corpus directory$/, (ctx) => ({
+    ok: ctx.corpusArtifacts.length === 0,
+    detail: `reports/=${ctx.corpusArtifacts.length}`,
   })],
   [/^the source tree is canonically formatted$/, () => {
     const r = spawnSync('moon fmt --check', { cwd: root, encoding: 'utf8', shell: true, timeout: 300000 });

@@ -276,7 +276,7 @@ like any other, and Phase 1 shows up in it.
 | the 0.1.29 release (`8e50769`) | 51 | 6,388 | 9,903 | 46 | 7 |
 | the D1+D2 tree (`7e35063`) | 53 | 6,579 | 9,903 | **59** | 7 |
 | the Phase-1 tree | 54 | 6,644 | 10,198 | **54** | 8 |
-| the repaired tree | 68 | 7,926 | 230,893 | **48** | 45 |
+| the repaired tree | 68 | 7,927 | 230,893 | **48** | 45 |
 
 The **59 → 54** is Phase 1: the blanket rule invented **five** findings on this
 tree — four in `src/app/interp.mbt` and one in `fixtures/vuln_demo` — and they

@@ -1516,6 +1516,53 @@ subcommand; both are kept because they are in the published documentation and
 in every QA harness. A target that LOOKS like a coordinate (`fixtures/x`) is
 resolved as one, which is the peer's rule too — a local path needs the `./`.
 
+**THE DEFAULT OUTPUT DIRECTORY IS A BUILD DIRECTORY: `_build/qa/lunaflow`.** The
+target slot decides WHAT is analysed; `--out` decides WHERE the artefacts go, and
+the default is `_build/qa/lunaflow` — under the build directory, never next to
+the sources. MEASURED 2026-11-28: the default used to be `reports`, and in a
+tree that carries a corpus `reports/` IS the committed corpus, so a bare
+`moonx riantr/LunaFlow@latest` wrote 13 files into the committed evidence and
+overwrote the artefacts it was about to be compared against. A tool that
+writes into the directory the user pointed it at is a tool that can destroy
+what the user pointed it at; the build directory is where a run nobody asked
+to keep belongs. The corpus is still written there — **deliberately**, by the
+measurement driver, which passes `--out reports` on purpose.
+
+The check that holds this is `scripts/qa/default_output.mjs`, and it measures
+the repository's OWN corpus: it snapshots the committed files before a run with
+no `--out`, runs the analyser, and requires the corpus to be **byte-identical**
+afterwards. Its falsifier is `scripts/qa/default_output_falsify.mjs`.
+
+**TWO RULES THE CHECK FOLLOWS, BOTH LEARNED THE HARD WAY (MEASURED 2026-11-28).**
+
+**THE EXPECTATION IS DERIVED, NOT CARRIED.** The default the tool uses is read out
+of the tool's OWN source — `Opts::default()` in `src/command/command.mbt` — and
+the run is MEASURED against it: the artefacts are found where they landed, not
+assumed to be where the check hoped. A check that carries the answer it is
+looking for cannot tell a fix from a coincidence, and cannot notice a change to
+the declaration at all. The falsifier proves this by handing the check a source
+that declares the old default: the check goes red, where a check with its own
+constant would have stayed green.
+
+**THE CHECK MAY ONLY CLEAR A DISPOSABLE DIRECTORY.** Clearing the expected
+directory is what tells "the run wrote this" from "this was already here" — the
+artefacts are deterministic, so a leftover would answer the question wrongly.
+So the check clears it, and **only when it is inside the build tree**. MEASURED:
+the first version of this check cleared whatever directory it was told to
+expect, and the falsifier pointed that at the old default — which IS the
+committed corpus. The check DELETED all 28 corpus files, and the 63-step gate
+came back GREEN, because **no step in the gate was looking at the working
+tree**. A check that destroys the thing it measures is not a check.
+
+**AND THE GATE ASKS A SECOND QUESTION NOW.** A gate that runs 63 checks and says
+GREEN has answered "did every check agree with what it claimed?" — not "is the
+tree still the tree?". The second question is the one that catches a check that
+destroys what it measures, so the gate now ends with `scripts/qa/tree_intact.mjs`,
+which asks git's own three questions: is every tracked file still on disk, is the
+corpus byte-identical to the index, and did a check leave stray files under the
+corpus. It is **last** on purpose: a step that runs early cannot see what a
+later step did.
+
 The **option surface** now matches the peer's as well. The five options below
 were added in 0.1.9, and each of them follows the peer's semantics:
 

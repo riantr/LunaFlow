@@ -47,6 +47,7 @@ Feature: LunaFlow acceptance runs
     When I pass --out with no value
     Then the run exits successfully
     And no artifact is written into the working directory
+    And no artifact is written into the corpus directory
 
   Scenario: The toolchain gates stay green
     Given the project working tree

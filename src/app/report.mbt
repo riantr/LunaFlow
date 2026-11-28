@@ -2429,10 +2429,19 @@ pub fn render_report(
   // `riantr/LunaFlow@latest@latest`, which the registry refuses with
   // "must contain a single version marker": a report that prints a command
   // which does not work is worse than one that prints none.
+  //
+  // IT DOES NOT NAME AN OUTPUT DIRECTORY.  It used to print `--out reports/`,
+  // and `reports/` is a real directory in the trees that carry a corpus: in
+  // this repository it is the COMMITTED one, so the command the report hands
+  // to a reader was a command that OVERWRITES THE EVIDENCE.  The output
+  // directory is not in `ReportInput` -- adding a field to a `pub(all)` struct
+  // would break every consumer that builds one -- so the command says
+  // nothing about it and the DEFAULT applies.  The default is a build
+  // directory now (`_build/qa/lunaflow`), which is disposable by construction.
   out.write_string(
     "```text\nLunaFlow analyze " +
     coord_without_version(input.coord) +
-    "@latest --out reports/ --funnel\n",
+    "@latest --funnel\n",
   )
   out.write_string("```\n\n")
   out.write_string(
